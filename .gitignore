@@ -1,0 +1,33 @@
+# Dependencies
+/vendor
+/node_modules
+
+# Environment & Credentials
+.env
+.env.backup
+.env.production
+
+# Build Artifacts & Caches
+/public/build
+/public/hot
+/storage/*.key
+.phpunit.result.cache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Framework Storage
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/framework/testing/*
+/storage/logs/*
+
+# IDE Specifics
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

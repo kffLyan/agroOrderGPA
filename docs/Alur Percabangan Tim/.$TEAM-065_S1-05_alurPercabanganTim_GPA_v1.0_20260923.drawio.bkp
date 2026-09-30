@@ -1,0 +1,141 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.6 Chrome/144.0.7559.236 Electron/40.8.4 Safari/537.36" version="29.6.6">
+  <diagram name="GitFlow-Sprint1" id="yodCiTs4OSWLsL0d1VV1">
+    <mxGraphModel dx="496" dy="321" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="jkSiwIaVK---VBjZKGys-148" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fontStyle=1;fontSize=18;fillColor=#330066;" value="main" vertex="1">
+          <mxGeometry height="42" width="100" x="390" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-149" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fontStyle=1;fontSize=16;fillColor=#6666FF;" value="feature/backend" vertex="1">
+          <mxGeometry height="42" width="180" x="370" y="295" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-150" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=50;fontStyle=1;fontSize=16;fillColor=#CC0000;" value="feature/frontend" vertex="1">
+          <mxGeometry height="42" width="180" x="370" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-151" edge="1" parent="1" style="edgeStyle=none;rounded=0;html=1;strokeWidth=1.5;dashed=1;dashPattern=2 3;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="316" as="sourcePoint" />
+            <mxPoint x="1590" y="316" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-152" edge="1" parent="1" style="edgeStyle=none;rounded=0;html=1;strokeWidth=1.5;dashed=1;dashPattern=2 3;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="560" y="461" as="sourcePoint" />
+            <mxPoint x="1590" y="461" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-153" edge="1" parent="1" style="edgeStyle=none;rounded=0;html=1;strokeWidth=1.5;dashed=1;dashPattern=2 3;endArrow=none;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1540" y="181" as="sourcePoint" />
+            <mxPoint x="1590" y="181" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-154" edge="1" parent="1" style="edgeStyle=none;rounded=0;html=1;strokeWidth=10;endArrow=none;strokeColor=#330066;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="520" y="181" as="sourcePoint" />
+            <mxPoint x="1530" y="181" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-155" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=9;endArrow=none;strokeColor=#6666FF;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="620" y="310" />
+              <mxPoint x="1210" y="310" />
+            </Array>
+            <mxPoint x="620" y="181" as="sourcePoint" />
+            <mxPoint x="1210" y="181" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-156" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=9;endArrow=none;strokeColor=#CC0000;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="620" y="460" />
+              <mxPoint x="1450" y="460" />
+            </Array>
+            <mxPoint x="620" y="181" as="sourcePoint" />
+            <mxPoint x="1450" y="181" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-157" edge="1" parent="1" style="edgeStyle=none;rounded=0;html=1;strokeWidth=9;endArrow=none;strokeColor=#7F00FF;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1285" y="181" as="sourcePoint" />
+            <mxPoint x="1285" y="461" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-158" parent="1" style="shape=ellipse;" value="" vertex="1">
+          <mxGeometry height="22" width="22" x="520" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-159" parent="1" style="shape=ellipse;" value="" vertex="1">
+          <mxGeometry height="22" width="22" x="609" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-160" parent="1" style="shape=ellipse;" value="" vertex="1">
+          <mxGeometry height="22" width="22" x="710" y="305" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-161" parent="1" style="shape=ellipse;" value="" vertex="1">
+          <mxGeometry height="22" width="22" x="790" y="305" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-162" parent="1" style="shape=ellipse;" value="" vertex="1">
+          <mxGeometry height="22" width="22" x="870" y="305" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-163" parent="1" style="shape=ellipse;strokeWidth=5;" value="" vertex="1">
+          <mxGeometry height="24" width="24" x="1198" y="169" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-164" parent="1" style="shape=ellipse;" value="" vertex="1">
+          <mxGeometry height="22" width="22" x="1050" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-165" parent="1" style="shape=ellipse;" value="" vertex="1">
+          <mxGeometry height="22" width="22" x="1130" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-166" parent="1" style="shape=ellipse;strokeWidth=5;" value="" vertex="1">
+          <mxGeometry height="24" width="24" x="1273" y="449" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-167" parent="1" style="shape=ellipse;" value="" vertex="1">
+          <mxGeometry height="22" width="22" x="1360" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-168" parent="1" style="shape=ellipse;strokeWidth=5;" value="" vertex="1">
+          <mxGeometry height="24" width="24" x="1438" y="169" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-169" parent="1" style="shape=ellipse;" value="" vertex="1">
+          <mxGeometry height="22" width="22" x="1519" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-170" parent="1" style="text;html=1;align=left;verticalAlign=middle;rotation=-40;fontSize=12;fontFamily=Helvetica;spacingLeft=4;spacingRight=4;fillColor=#333333;fontColor=#ffffff;strokeColor=#2D7600;" value="Initial commit: README &amp; license" vertex="1">
+          <mxGeometry height="20" width="210" x="510" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-171" parent="1" style="text;html=1;align=left;verticalAlign=middle;rotation=-40;fontSize=12;fontFamily=Helvetica;spacingLeft=4;spacingRight=4;fillColor=#333333;strokeColor=default;" value="setup: .gitignore baku &amp; docs baseline" vertex="1">
+          <mxGeometry height="20" width="235" x="609" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-172" parent="1" style="text;html=1;align=left;verticalAlign=middle;rotation=-45;fontSize=12;fontFamily=Helvetica;spacingLeft=4;spacingRight=4;fillColor=#333333;strokeColor=default;" value="feat(db): create migrations schema InnoDB 3NF" vertex="1">
+          <mxGeometry height="20" width="280" x="475" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-173" parent="1" style="text;html=1;align=left;verticalAlign=middle;rotation=-45;fontSize=12;fontFamily=Helvetica;spacingLeft=4;spacingRight=4;fillColor=#333333;strokeColor=default;" value="feat(db): add dummy seeders data" vertex="1">
+          <mxGeometry height="20" width="215" x="609" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-174" parent="1" style="text;html=1;align=left;verticalAlign=middle;rotation=-45;fontSize=12;fontFamily=Helvetica;spacingLeft=4;spacingRight=4;fillColor=#333333;strokeColor=default;" value="feat(core): setup connection helper &amp; healthcheck" vertex="1">
+          <mxGeometry height="20" width="290" x="615" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-175" parent="1" style="text;html=1;align=left;verticalAlign=middle;rotation=-45;fontSize=12;fontFamily=Helvetica;spacingLeft=4;spacingRight=4;fillColor=#333333;strokeColor=default;" value="Merge PR #1: Backend Foundation Ready" vertex="1">
+          <mxGeometry height="20" width="255" x="980" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-176" parent="1" style="text;html=1;align=left;verticalAlign=middle;rotation=-45;fontSize=12;fontFamily=Helvetica;spacingLeft=4;spacingRight=4;fillColor=#333333;strokeColor=default;" value="feat(ui): setup master layout &amp; token color" vertex="1">
+          <mxGeometry height="20" width="260" x="820" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-177" parent="1" style="text;html=1;align=left;verticalAlign=middle;rotation=-45;fontSize=12;fontFamily=Helvetica;spacingLeft=4;spacingRight=4;fillColor=#333333;strokeColor=default;" value="feat(ui): implement wireframe navbar &amp; catalog" vertex="1">
+          <mxGeometry height="20" width="285" x="892" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-178" parent="1" style="text;html=1;align=left;verticalAlign=middle;rotation=-45;fontSize=12;fontFamily=Helvetica;spacingLeft=4;spacingRight=4;fillColor=#333333;strokeColor=default;" value="Sync main to feature/frontend" vertex="1">
+          <mxGeometry height="20" width="200" x="1097" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-179" parent="1" style="text;html=1;align=left;verticalAlign=middle;rotation=-45;fontSize=12;fontFamily=Helvetica;spacingLeft=4;spacingRight=4;fillColor=#333333;strokeColor=default;" value="feat(ui): connect catalog to healthcheck button" vertex="1">
+          <mxGeometry height="20" width="275" x="1120" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-180" parent="1" style="text;html=1;align=left;verticalAlign=middle;rotation=-45;fontSize=12;fontFamily=Helvetica;spacingLeft=4;spacingRight=4;fillColor=#333333;strokeColor=default;" value="Merge PR #2: Gate 2 Foundation Complete" vertex="1">
+          <mxGeometry height="20" width="265" x="1210" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="jkSiwIaVK---VBjZKGys-181" parent="1" style="text;html=1;align=left;verticalAlign=middle;rotation=-45;fontSize=12;fontFamily=Helvetica;spacingLeft=4;spacingRight=4;fillColor=#333333;strokeColor=default;" value="tag: v0.2.0-sprint1-approved" vertex="1">
+          <mxGeometry height="20" width="200" x="1350" y="260" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

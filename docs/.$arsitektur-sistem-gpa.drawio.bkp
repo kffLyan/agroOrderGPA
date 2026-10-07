@@ -1,0 +1,131 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.6 Chrome/144.0.7559.236 Electron/40.8.4 Safari/537.36" version="29.6.6">
+  <diagram name="Page-1" id="hmsb2V9vGlhp1PCiDx0i">
+    <mxGraphModel dx="1226" dy="1893" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-1" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="3. DATA &amp; STORAGE LAYER (Persistence)" vertex="1">
+          <mxGeometry height="256" width="550" x="65" y="2240" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-2" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="2. APPLICATION LAYER (Laravel Web Server)" vertex="1">
+          <mxGeometry height="1896" width="610" x="24" y="246" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-3" parent="1" style="whiteSpace=wrap;strokeWidth=2;verticalAlign=top;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Service Layer (Business Logic Engine)" vertex="1">
+          <mxGeometry height="932" width="335" x="173" y="1057" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-4" parent="Y9s5YhJfQStA7NsULwRJ-3" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="OrderService&#xa;(Anti-Overselling &amp;amp; Row Locking &#39;FOR UPDATE&#39;)" vertex="1">
+          <mxGeometry height="102" width="260" x="46" y="43" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-5" parent="Y9s5YhJfQStA7NsULwRJ-3" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="StockService&#xa;(Alokasi Petani Binaan &amp;amp; Buffer Luar)" vertex="1">
+          <mxGeometry height="102" width="260" x="46" y="195" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-6" parent="Y9s5YhJfQStA7NsULwRJ-3" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="WeighingService&#xa;(Kalkulasi Bobot Riil Gudang)" vertex="1">
+          <mxGeometry height="102" width="260" x="46" y="347" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-7" parent="Y9s5YhJfQStA7NsULwRJ-3" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="DeliveryService&#xa;(Validasi Surat Jalan, PoD &amp;amp; Retur)" vertex="1">
+          <mxGeometry height="102" width="260" x="46" y="499" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-8" parent="Y9s5YhJfQStA7NsULwRJ-3" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="BillingService&#xa;(Rekap TOP Bulanan &amp;amp; Verifikasi Mutasi)" vertex="1">
+          <mxGeometry height="102" width="260" x="46" y="651" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-9" parent="Y9s5YhJfQStA7NsULwRJ-3" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="PdfGeneratorService&#xa;(Barryvdh / Dompdf Engine)" vertex="1">
+          <mxGeometry height="102" width="260" x="46" y="803" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-10" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Security &amp; Access Gate" vertex="1">
+          <mxGeometry height="480" width="330" x="175" y="399" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-11" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);verticalAlign=top;" value="1. PRESENTATION LAYER (Client &amp; UI Devices)" vertex="1">
+          <mxGeometry height="190" width="640" x="9" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-12" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Desktop Browser (Admin, Direktur, Klien)&#xa;Blade + Tailwind CSS" vertex="1">
+          <mxGeometry height="102" width="260" x="55" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-13" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Mobile Browser (Koordinator &amp;amp; Supir)&#xa;Mobile-First UI + Alpine.js" vertex="1">
+          <mxGeometry height="102" width="260" x="365" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-14" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Web Server (Nginx / Apache / PHP 8.x)" vertex="1">
+          <mxGeometry height="78" width="260" x="210" y="271" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-15" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Authentication (Bcrypt Hash)" vertex="1">
+          <mxGeometry height="78" width="260" x="210" y="424" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-16" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="RoleMiddleware (RBAC 5 Roles)&#xa;[Client, Admin, Koordinator, Supir, Direktur]" vertex="1">
+          <mxGeometry height="150" width="260" x="210" y="552" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-17" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Form Request Validation&#xa;(Sanitasi Input &amp;amp; Anti-SQLi/XSS)" vertex="1">
+          <mxGeometry height="102" width="260" x="210" y="752" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-18" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Controllers (Web Routes / HTTP Handlers)" vertex="1">
+          <mxGeometry height="78" width="260" x="210" y="929" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-19" parent="1" style="whiteSpace=wrap;strokeWidth=2;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="Eloquent ORM (Data Models &amp; Entity Relations)" vertex="1">
+          <mxGeometry height="78" width="260" x="78" y="2039" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-20" parent="1" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=10;strokeWidth=2;whiteSpace=wrap;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="MySQL Database&#xa;(17 Tabel Relasional, ACID Compliant)" vertex="1">
+          <mxGeometry height="134" width="215" x="100" y="2301" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-21" parent="1" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=10;strokeWidth=2;whiteSpace=wrap;fillColor=light-dark(#eeeeee,#1f2020);strokeColor=light-dark(#999999,#cccccc);fontColor=light-dark(#333333,#cccccc);" value="File Storage (Local / Public Disk)&#xa;• Foto PoD Supir&#xa;• Struk Bayar Klien&#xa;• Dokumen PDF Surat Jalan &amp;amp; Faktur" vertex="1">
+          <mxGeometry height="206" width="215" x="365" y="2265" as="geometry" />
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-22" edge="1" parent="1" source="Y9s5YhJfQStA7NsULwRJ-12" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.14;entryY=0;rounded=0;" target="Y9s5YhJfQStA7NsULwRJ-14" value="HTTPS Request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="185" y="246" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-23" edge="1" parent="1" source="Y9s5YhJfQStA7NsULwRJ-13" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.86;entryY=0;rounded=0;" target="Y9s5YhJfQStA7NsULwRJ-14" value="HTTPS Request">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="495" y="246" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-24" edge="1" parent="1" source="Y9s5YhJfQStA7NsULwRJ-14" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="Y9s5YhJfQStA7NsULwRJ-15" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-25" edge="1" parent="1" source="Y9s5YhJfQStA7NsULwRJ-15" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="Y9s5YhJfQStA7NsULwRJ-16" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-26" edge="1" parent="1" source="Y9s5YhJfQStA7NsULwRJ-16" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="Y9s5YhJfQStA7NsULwRJ-17" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-27" edge="1" parent="1" source="Y9s5YhJfQStA7NsULwRJ-17" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="Y9s5YhJfQStA7NsULwRJ-18" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-28" edge="1" parent="1" source="Y9s5YhJfQStA7NsULwRJ-19" style="curved=1;startArrow=block;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="Y9s5YhJfQStA7NsULwRJ-20" value="SQL Queries / DB Transaction">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-29" edge="1" parent="1" source="Y9s5YhJfQStA7NsULwRJ-18" style="curved=1;startArrow=none;endArrow=block;exitX=0.5;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="Y9s5YhJfQStA7NsULwRJ-3" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-30" edge="1" parent="1" source="Y9s5YhJfQStA7NsULwRJ-3" style="curved=1;startArrow=none;endArrow=block;exitX=0.12;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="Y9s5YhJfQStA7NsULwRJ-19" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="208" y="2014" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Y9s5YhJfQStA7NsULwRJ-31" edge="1" parent="1" source="Y9s5YhJfQStA7NsULwRJ-3" style="curved=1;dashed=1;dashPattern=2 3;startArrow=none;endArrow=block;exitX=0.87;exitY=1;entryX=0.5;entryY=0;rounded=0;" target="Y9s5YhJfQStA7NsULwRJ-21" value="Generate PDF / Simpan Media">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="473" y="2014" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -11,19 +11,23 @@ class Contract extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'product_id', 'contract_number',
-        'fixed_price_per_kg', 'top_days', 'committed_volume_per_cycle',
-        'status', 'approved_by', 'approved_at',
+        'user_id',
+        'product_id',
+        'contract_number',
+        'fixed_price_per_kg',
+        'top_days',
+        'committed_volume_per_cycle',
+        'status',
+        'approved_by',
+        'approved_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'fixed_price_per_kg' => 'decimal:2',
-            'committed_volume_per_cycle' => 'decimal:2',
-            'approved_at' => 'datetime',
-        ];
-    }
+    protected $casts = [
+        'top_days'                   => 'integer',
+        'fixed_price_per_kg'         => 'decimal:2',
+        'committed_volume_per_cycle' => 'decimal:2',
+        'approved_at'                => 'datetime',
+    ];
 
     public function user(): BelongsTo
     {

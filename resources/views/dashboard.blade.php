@@ -54,9 +54,18 @@
                             Daftar Tugas Pengantaran Subuh (Menunggu S2-05)
                         </span>
                     @elseif(Auth::user()->role === 'DIREKTUR')
-                        <span class="px-3 py-2 bg-gray-100 text-gray-700 rounded text-xs">
-                            Monitoring KPI & Approval Kontrak
-                        </span>
+                        <a href="{{ route('direktur.dashboard') }}" class="px-4 py-2 bg-[#153a01] hover:bg-[#0f2801] text-white rounded text-sm font-semibold transition">
+                            Buka Dasbor Eksekutif
+                        </a>
+                        <a href="{{ route('direktur.users.index') }}" class="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-sm font-semibold transition">
+                            Kelola Akun Pengguna
+                        </a>
+                        <a href="{{ route('direktur.contracts.index') }}" class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded text-sm font-semibold transition">
+                            Kelola Kontrak B2B
+                        </a>
+                        <a href="{{ route('direktur.reports.index') }}" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded text-sm font-semibold transition">
+                            Laporan Penjualan &amp; Ekspor
+                        </a>
                     @endif
                 </div>
             </div>

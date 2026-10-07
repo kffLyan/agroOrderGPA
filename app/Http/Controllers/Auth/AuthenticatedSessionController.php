@@ -26,27 +26,18 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
-        $user = Auth::user();
-
-        if (!$user->is_active) {
-            Auth:guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return redirect()->route('login')->withErrors([
-                'email' => 'Akun Anda dinonaktifkan oleh pengurus Koperasi GPA.',
-            ]);
-        }
-
         $request->session()->regenerate();
 
+        $user = $request->user();
+
+        // Alihkan langsung sesuai wewenang peran pengguna
         return match ($user->role) {
-            'KLIEN'       => redirect()->intended(route('klien.dashboard')),
-            'SEKRETARIS'  => redirect()->intended(route('sekretaris.dashboard')),
-            'KOORDINATOR' => redirect()->intended(route('koordinator.dashboard')),
-            'ARMADA'      => redirect()->intended(route('supir.dashboard')),
-            'DIREKTUR'    => redirect()->intended(route('direktur.dashboard')),
-            default       => redirect()->intended('/'),
+            'DIREKTUR'    => redirect()->route('direktur.dashboard'),
+            'SEKRETARIS'  => redirect()->route('sekretaris.dashboard'),
+            'KOORDINATOR' => redirect()->route('koordinator.dashboard'),
+            'ARMADA'      => redirect()->route('armada.dashboard'),
+            'KLIEN'       => redirect()->route('klien.dashboard'),
+            default       => redirect('/'),
         };
     }
 

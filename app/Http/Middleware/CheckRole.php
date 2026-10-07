@@ -15,7 +15,7 @@ class CheckRole
      * @param  Closure(Request): (Response)  $next
      * @param string ...$roles
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         // Cek apakah user sudah login
         if (!Auth::check()) {

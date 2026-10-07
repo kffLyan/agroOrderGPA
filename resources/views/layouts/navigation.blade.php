@@ -12,9 +12,24 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
+                    @if(Auth::user()->role === 'DIREKTUR')
+                        <x-nav-link :href="route('direktur.dashboard')" :active="request()->routeIs('direktur.dashboard')">
+                            {{ __('Dasbor Eksekutif') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('direktur.users.index')" :active="request()->routeIs('direktur.users.*')">
+                            {{ __('Kelola Akun') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('direktur.contracts.index')" :active="request()->routeIs('direktur.contracts.*')">
+                            {{ __('Kontrak B2B') }}
+                        </x-nav-link>
+                        <x-nav-link :href="route('direktur.reports.index')" :active="request()->routeIs('direktur.reports.*')">
+                            {{ __('Laporan Penjualan') }}
+                        </x-nav-link>
+                    @else
+                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                            {{ __('Dashboard') }}
+                        </x-nav-link>
+                    @endif
                 </div>
             </div>
 
@@ -67,9 +82,24 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
+            @if(Auth::user()->role === 'DIREKTUR')
+                <x-responsive-nav-link :href="route('direktur.dashboard')" :active="request()->routeIs('direktur.dashboard')">
+                    {{ __('Dasbor Eksekutif') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('direktur.users.index')" :active="request()->routeIs('direktur.users.*')">
+                    {{ __('Kelola Akun') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('direktur.contracts.index')" :active="request()->routeIs('direktur.contracts.*')">
+                    {{ __('Kontrak B2B') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('direktur.reports.index')" :active="request()->routeIs('direktur.reports.*')">
+                    {{ __('Laporan Penjualan') }}
+                </x-responsive-nav-link>
+            @else
+                <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                    {{ __('Dashboard') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

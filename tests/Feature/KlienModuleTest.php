@@ -124,6 +124,70 @@ class KlienModuleTest extends TestCase
         $showResponse->assertStatus(200);
     }
 
+    public function test_sekretaris_can_approve_order_to_terverifikasi(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $sekretaris = User::factory()->create([
+            'role' => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $koordinator = User::factory()->create([
+            'role' => 'KOORDINATOR',
+            'is_active' => true,
+        ]);
+
+        $product = \App\Models\Product::create([
+            'sku' => 'GPA-VGT-RMN02',
+            'name' => 'Selada Romaine B',
+            'unit' => 'kg',
+            'grade' => 'Grade A',
+            'base_price' => 14000.00,
+            'minimum_order' => 10.00,
+            'is_active' => true,
+        ]);
+
+        \App\Models\HarvestBatch::create([
+            'product_id' => $product->id,
+            'source_type' => 'PETANI_BINAAN',
+            'supplier_name' => 'Kelompok Tani Panundaan',
+            'batch_date' => now()->toDateString(),
+            'initial_quantity' => 500.00,
+            'available_quantity' => 500.00,
+            'inputted_by' => $koordinator->id,
+        ]);
+
+        $order = \App\Models\Order::create([
+            'order_number' => 'ORD-GPA-202610-9999',
+            'user_id' => $klien->id,
+            'target_delivery_date' => now()->addDays(2)->toDateString(),
+            'delivery_address' => 'Jl. Test No. 1',
+            'estimated_total' => 280000.00,
+            'grand_total' => 280000.00,
+            'status' => 'MENUNGGU_VERIFIKASI',
+        ]);
+
+        \App\Models\OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'ordered_qty' => 20.00,
+            'unit_price' => 14000.00,
+        ]);
+
+        $response = $this->actingAs($sekretaris)->post("/sekretaris/orders/{$order->id}/approve");
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'TERVERIFIKASI',
+            'verified_by' => $sekretaris->id,
+        ]);
+    }
+
     public function test_klien_can_upload_payment_proof_with_valid_status(): void
     {
         $klien = User::factory()->create([

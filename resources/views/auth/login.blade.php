@@ -23,53 +23,7 @@
     <main class="flex min-h-screen w-full flex-col">
         <div class="grid w-full flex-grow grid-cols-1 border-b border-line lg:grid-cols-12">
             {{-- LEFT PANEL: Corporate & Security Trust Column --}}
-            <section
-                class="flex flex-col justify-center border-b border-white/15 bg-brand p-8 md:p-12 lg:col-span-5 lg:border-b-0 lg:border-r lg:p-14">
-                <div class="mb-[48px] flex justify-center md:mb-[56px]">
-                    <img src="{{ asset('gpa.png') }}" alt="AgroOrder GPA"
-                        class="h-[110px] w-auto max-w-full object-contain md:h-[140px] xl:h-[160px]">
-                </div>
-
-                <div>
-                    <span
-                        class="mb-5 inline-flex items-center gap-1.5 rounded-sm border border-white/25 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-white/85">
-                        <span class="h-1.5 w-1.5 animate-pulse-ring rounded-full bg-accent"></span>
-                        Infrastruktur Logistik Agribisnis
-                    </span>
-
-                    <h1 class="mb-3 text-xl font-semibold leading-tight tracking-tight text-white md:text-2xl">
-                        Portal Terpadu Rantai Pasok Agribisnis
-                    </h1>
-                    <p class="mb-8 max-w-lg text-xs leading-relaxed text-white/80 md:text-sm">
-                        Infrastruktur digital enterprise untuk pengelolaan logistik agrikultur end-to-end, penimbangan
-                        metrologi presisi, dan verifikasi sertifikasi batch real-time.
-                    </p>
-
-                    <div class="mb-10 max-w-lg space-y-5">
-                        @foreach ([
-        ['Single Source of Truth Rantai Pasok', 'Sinkronisasi data multi-titik dari lahan produksi, hub konsolidasi, hingga titik bongkar pembeli.'],
-        ['Kepatuhan Penimbangan Riil (Rule 04 & 05 Net Weight)', 'Integrasi jembatan timbang digital bersertifikasi metrologi legal mencegah deviasi tara.'],
-        ['Audit Trail Forensik Kriptografis SHA-256 (Rule 09)', 'Setiap mutasi manifest, penyesuaian mutu, dan faktur ditandatangani hash permanen.'],
-        ['Otorisasi Berbasis Peran (RBAC 5 Aktor)', 'Pemisahan wewenang operasional ketat untuk integritas tata kelola korporat.'],
-    ] as [$highlight, $detail])
-                            <div class="flex items-start space-x-3">
-                                <div
-                                    class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-white/40 bg-surface">
-                                    <span class="material-symbols-outlined text-[13px] text-brand">check</span>
-                                </div>
-                                <div>
-                                    <h2 class="font-sans text-xs font-medium leading-none text-white md:text-sm">
-                                        {{ $highlight }}
-                                    </h2>
-                                    <p class="mt-1 font-sans text-[11px] text-white/85 md:text-xs">
-                                        {{ $detail }}
-                                    </p>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            </section>
+            <x-auth.left-panel />
 
             {{-- RIGHT PANEL: Clean Full-Height Form View --}}
             <section

@@ -1,0 +1,54 @@
+{
+    "object": "Product",
+    "version": "1.0",
+    "table": "products",
+    "description": "Komoditas yang dijual GPA beserta aturan minimum order dan harga dasar.",
+    "fields": [
+        { "name": "id", "type": "int", "required": true, "nullable": false, "note": "Primary key." },
+        { "name": "sku", "type": "string", "required": true, "nullable": false, "note": "Kode internal komoditas, contoh: VEG-ROM-01." },
+        { "name": "code", "type": "string", "required": true, "nullable": false, "note": "Kode display Elevation, contoh: KOM-VEG-002." },
+        { "name": "slug", "type": "string", "required": true, "nullable": false, "note": "Dipakai pada URL /katalog/{slug}." },
+        { "name": "name", "type": "string", "required": true, "nullable": false },
+        { "name": "grade", "type": "string", "required": false, "nullable": true, "note": "Contoh: Grade A Horeca." },
+        { "name": "category", "type": "enum", "required": true, "nullable": false, "note": "Kelompok komoditas." },
+        { "name": "origin", "type": "string", "required": false, "nullable": true, "note": "Sentra asal, contoh: Lembang Highland." },
+        { "name": "packaging", "type": "string", "required": false, "nullable": true, "note": "Contoh: Krat Bambu / Peti Kayu Halus 25kg." },
+        { "name": "pack_label", "type": "string", "required": false, "nullable": true, "note": "Contoh: Krat." },
+        { "name": "crate_kg", "type": "decimal", "required": false, "nullable": true, "note": "Berat per wadah dalam kilogram." },
+        { "name": "unit", "type": "string", "required": true, "nullable": false, "note": "Satuan jual, contoh: kg." },
+        { "name": "price", "type": "int", "required": true, "nullable": false, "note": "Harga dasar per unit dalam rupiah penuh." },
+        { "name": "min_order", "type": "decimal", "required": true, "nullable": false, "note": "Minimum order dalam kilogram. Dipakai validasi §8.1." },
+        { "name": "cold_chain", "type": "string", "required": false, "nullable": true, "note": "Contoh: 4-8 C Chilled." },
+        { "name": "photo_url", "type": "string", "required": false, "nullable": true },
+        { "name": "is_active", "type": "bool", "required": true, "nullable": false, "note": "Produk nonaktif disembunyikan dari katalog." },
+        { "name": "created_at", "type": "datetime", "required": true, "nullable": false },
+        { "name": "updated_at", "type": "datetime", "required": true, "nullable": false }
+    ],
+    "enums": {
+        "category": ["veg_leaf", "veg_fruit", "veg_flower", "fruit_highland"]
+    },
+    "relations": {
+        "inventory": "Inventory[]"
+    },
+    "example": {
+        "id": 1,
+        "sku": "VEG-ROM-01",
+        "code": "KOM-VEG-002",
+        "slug": "selada-romaine-lettuce",
+        "name": "Selada Romaine / Lettuce",
+        "grade": "Grade A Horeca",
+        "category": "veg_leaf",
+        "origin": "Lembang Highland",
+        "packaging": "Krat Bambu / Peti Kayu Halus 25kg",
+        "pack_label": "Krat",
+        "crate_kg": 20,
+        "unit": "kg",
+        "price": 15000,
+        "min_order": 10,
+        "cold_chain": "4-8 C Chilled",
+        "photo_url": "/storage/produk/veg-rom-01.jpg",
+        "is_active": true,
+        "created_at": "2026-01-12T08:00:00+07:00",
+        "updated_at": "2026-10-24T05:40:00+07:00"
+    }
+}

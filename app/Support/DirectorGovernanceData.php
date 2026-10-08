@@ -103,6 +103,7 @@ class DirectorGovernanceData
             'subtitle' => 'Konsol Otorisasi Kebijakan Utama Direksi, Kontrol Batas Kredit Korporat, Kalibrasi Batas Toleransi Mutu, & Log Forensik Keamanan Transaksi. Seluruh perubahan diproteksi append-only SHA-256 ledger.',
             'period' => 'PERIODE: OKTOBER 2026',
             'export_label' => 'Export Full Audit Log (.CSV)',
+            'access_label' => 'Kelola Akun Pengguna & RBAC',
             'integrity_label' => 'Uji Integritas Kriptografi',
             'lock_label' => 'Kunci Sistem Periode',
         ];

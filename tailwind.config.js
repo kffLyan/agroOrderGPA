@@ -47,6 +47,7 @@ export default {
                 },
                 brand: {
                     DEFAULT: '#153a01',
+                    strong: '#153a01',
                     hover: '#122b00',
                     soft: '#dce8cd',
                     deep: '#0c2401',

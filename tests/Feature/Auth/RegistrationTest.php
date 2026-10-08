@@ -48,9 +48,10 @@ class RegistrationTest extends TestCase
         $response = $this->get('/register');
 
         $response->assertStatus(200);
-        $response->assertSee('Formulir Pendaftaran Entitas Klien Baru');
-        $response->assertSee('Kirim Kode OTP');
-        $response->assertSee('Pakta Integritas Operasional');
+        $response->assertSee('Daftar Akun Klien Baru');
+        $response->assertSee('Portal Terpadu Rantai Pasok');
+        $response->assertSee('Sudah memiliki akun AgroOrder GPA?');
+        $response->assertSee(route('login'), false);
     }
 
     public function test_new_users_can_register(): void

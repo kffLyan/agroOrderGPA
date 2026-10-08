@@ -31,7 +31,7 @@
             'danger' => 'bg-danger-soft/40 text-danger outline outline-1 -outline-offset-1 outline-danger',
         ];
 
-        $actionArguments = array_map(
+        $auditArguments = array_map(
             static fn (array $row): string => (string) \Illuminate\Support\Js::from($row),
             $audit['rows'],
         );
@@ -56,6 +56,11 @@
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-2">
+                <a href="{{ route('director.access') }}"
+                    class="inline-flex items-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                    <x-gpa.icon name="users" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
+                    {{ $header['access_label'] }}
+                </a>
                 <button type="button" @click="exportAudit()"
                     class="inline-flex items-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
@@ -239,7 +244,7 @@
                             <tr @class([
                                 'align-top transition-colors hover:bg-surface-shell/50',
                                 'bg-danger-soft/25' => $row['blocked'],
-                            ]) x-show="matches({{ $actionArguments[$index] }})">
+                            ]) x-show="matches({{ $auditArguments[$index] }})">
                                 <td class="px-3 py-4 align-top">
                                     <p class="gpa-meta font-bold text-ink">{{ $row['date'] }}</p>
                                     <p class="mt-0.5 gpa-note text-ink-body">{{ $row['time'] }}</p>

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Client;
 
-use App\Models\User;
 use App\Support\ClientCatalogData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -30,26 +29,8 @@ class CatalogTest extends TestCase
 
         foreach (ClientCatalogData::commodities() as $commodity) {
             $response->assertSee($commodity['code']);
-            $response->assertSee($commodity['name']);
+            $response->assertSee($commodity['sku']);
         }
-    }
-
-    public function test_catalog_renders_reconciliation_rows_for_authenticated_client(): void
-    {
-        $user = User::factory()->create([
-            'business_name' => 'PT Kuliner Prima Nusantara',
-        ]);
-
-        $response = $this->actingAs($user)->get(route('catalog'));
-
-        $response->assertOk();
-
-        foreach (ClientCatalogData::reconciliation()['rows'] as $row) {
-            $response->assertSee($row['hub_code']);
-            $response->assertSee($row['origin']);
-        }
-
-        $response->assertSee('Rule 04 Compliance');
     }
 
     public function test_category_counts_include_every_commodity(): void

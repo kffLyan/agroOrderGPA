@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Armada\ArmadaDispatchController;
+use App\Http\Controllers\Armada\ArmadaPodController;
+use App\Http\Controllers\Armada\ArmadaStatusController;
+use App\Http\Controllers\Armada\ArmadaTasksController;
 use App\Http\Controllers\Client\CartController as ClientCartController;
 use App\Http\Controllers\Client\CatalogController as ClientCatalogController;
 use App\Http\Controllers\Client\DashboardController as ClientDashboardController;
@@ -12,6 +16,7 @@ use App\Http\Controllers\Coordinator\CoordinatorHarvestPlanController;
 use App\Http\Controllers\Coordinator\CoordinatorMonitoringController;
 use App\Http\Controllers\Coordinator\CoordinatorStockController;
 use App\Http\Controllers\Coordinator\CoordinatorWeighingController;
+use App\Http\Controllers\Director\DirectorAccessController;
 use App\Http\Controllers\Director\DirectorApprovalController;
 use App\Http\Controllers\Director\DirectorDashboardController;
 use App\Http\Controllers\Director\DirectorGovernanceController;
@@ -20,6 +25,13 @@ use App\Http\Controllers\Director\DirectorReportController;
 use App\Http\Controllers\Director\DirectorSalesController;
 use App\Http\Controllers\Director\DirectorVolumeController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Public\AboutController as PublicAboutController;
+use App\Http\Controllers\Public\CatalogController as PublicCatalogController;
+use App\Http\Controllers\Public\GalleryController as PublicGalleryController;
+use App\Http\Controllers\Public\HomeController as PublicHomeController;
+use App\Http\Controllers\Public\KontakController as PublicKontakController;
+use App\Http\Controllers\Public\MitraKontrakController as PublicMitraKontrakController;
+use App\Http\Controllers\Public\SupplyChainController as PublicSupplyChainController;
 use App\Http\Controllers\Staff\SecretaryDashboardController;
 use App\Http\Controllers\Staff\SecretaryDispatchController;
 use App\Http\Controllers\Staff\SecretaryInventoryController;
@@ -30,9 +42,28 @@ use App\Http\Controllers\Staff\SecretaryPaymentController;
 use App\Http\Controllers\Staff\SecretaryReportController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', fn () => redirect()->route('public.home'));
+
+Route::get('/beranda', PublicHomeController::class)
+    ->name('public.home');
+
+Route::get('/tentang-gpa', PublicAboutController::class)
+    ->name('public.about');
+
+Route::get('/mitra-kontrak', PublicMitraKontrakController::class)
+    ->name('public.mitra-kontrak');
+
+Route::get('/rantai-pasok', PublicSupplyChainController::class)
+    ->name('public.supply-chain');
+
+Route::get('/katalog-publik', PublicCatalogController::class)
+    ->name('public.catalog');
+
+Route::get('/galeri', PublicGalleryController::class)
+    ->name('public.gallery');
+
+Route::get('/kontak', PublicKontakController::class)
+    ->name('public.kontak');
 
 Route::get('/dashboard', ClientDashboardController::class)
     ->name('dashboard');
@@ -55,6 +86,18 @@ Route::get('/konsol-koordinator/monitoring', CoordinatorMonitoringController::cl
 Route::get('/konsol-koordinator/surat-jalan', CoordinatorDispatchController::class)
     ->name('coordinator.dispatch');
 
+Route::get('/armada/tugas', ArmadaTasksController::class)
+    ->name('armada.tasks');
+
+Route::get('/armada/scan-pod', ArmadaPodController::class)
+    ->name('armada.pod');
+
+Route::get('/armada/surat-jalan', ArmadaDispatchController::class)
+    ->name('armada.dispatch');
+
+Route::get('/armada/status', ArmadaStatusController::class)
+    ->name('armada.status');
+
 Route::get('/direktur', DirectorDashboardController::class)
     ->name('director.dashboard');
 
@@ -75,6 +118,9 @@ Route::get('/direktor/persetujuan-kontrak', DirectorApprovalController::class)
 
 Route::get('/direktor/pengaturan-tata-kelola', DirectorGovernanceController::class)
     ->name('director.governance');
+
+Route::get('/direktor/kelola-akun-rbac', DirectorAccessController::class)
+    ->name('director.access');
 
 Route::get('/konsol-sekretaris', SecretaryDashboardController::class)
     ->name('secretary.dashboard');

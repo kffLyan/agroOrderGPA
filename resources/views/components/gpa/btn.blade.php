@@ -15,13 +15,14 @@
         'secondary' => 'border-line-soft bg-surface-pill text-ink-body hover:border-line-board hover:bg-surface-disabled hover:text-ink',
         'dashed' => 'border-dashed border-line-board bg-surface text-ink-body hover:border-ink hover:bg-surface-pill hover:text-ink',
         'ghost' => 'border-transparent bg-transparent text-ink-body hover:bg-surface-pill hover:text-ink',
+        'inverse' => 'border-white/30 bg-brand text-white hover:border-white/50 hover:bg-brand-hover',
         'danger' => 'border-danger bg-danger text-white hover:border-danger-ink hover:bg-danger-ink',
     ];
 
     $sizes = [
-        'sm' => 'h-7 gap-1.5 px-2',
-        'md' => 'h-8 gap-2 px-3',
-        'lg' => 'h-9 gap-2 px-4',
+        'sm' => 'h-7 gap-1.5 px-2 text-[11px] leading-none',
+        'md' => 'h-8 gap-2 px-3 text-xs leading-none',
+        'lg' => 'h-9 gap-2 px-4 text-sm leading-none',
     ];
 
     $variantClass = $variants[$variant] ?? $variants['secondary'];

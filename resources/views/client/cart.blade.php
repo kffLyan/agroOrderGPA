@@ -62,26 +62,6 @@
         </div>
 
         {{-- ---------------------------------------------------------------- --}}
-        {{-- Peringatan Rule 04 --}}
-        {{-- ---------------------------------------------------------------- --}}
-        <section
-            class="flex flex-col gap-3 rounded-xl border-l-4 border-warning-caution bg-warning-cream py-4 pl-4 pr-4 shadow-sub sm:flex-row sm:items-start sm:gap-3 sm:pl-6 sm:pr-6">
-            <x-gpa.icon name="alert-triangle" class="mt-0.5 h-4 w-5 shrink-0 text-warning-caution" />
-
-            <div class="flex min-w-0 flex-col gap-1">
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="rounded bg-warning-caution px-1.5 py-0.5 gpa-micro-bold text-white">
-                        {{ $warning['chip'] }}
-                    </span>
-                    <h2 class="font-sans text-[15px] font-bold leading-5 text-warning-caution">
-                        {{ $warning['title'] }}
-                    </h2>
-                </div>
-                <p class="gpa-body leading-5 text-ink">{{ $warning['body'] }}</p>
-            </div>
-        </section>
-
-        {{-- ---------------------------------------------------------------- --}}
         {{-- Dua kolom: item & logistik  |  ringkasan estimasi PO --}}
         {{-- ---------------------------------------------------------------- --}}
         <div class="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_22rem] xl:gap-6">
@@ -104,10 +84,6 @@
                             </div>
                         </div>
 
-                        <span
-                            class="w-fit rounded-full bg-accent px-2.5 py-1 gpa-micro-bold text-success-ink">
-                            {{ $itemsSection['chip'] }}
-                        </span>
                     </header>
 
                     <div class="flex flex-col">

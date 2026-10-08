@@ -181,5 +181,7 @@ class DirectorGovernanceTest extends TestCase
         $response->assertSee('Kunci Sistem Periode');
         $response->assertSee('Cari Dokumen / Hash...', false);
         $response->assertSee('href="'.route('director.governance').'"', false);
+        $response->assertSee('href="'.route('director.access').'"', false);
+        $response->assertSee('Kelola Akun Pengguna &amp; RBAC', false);
     }
 }

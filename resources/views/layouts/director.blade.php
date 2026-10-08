@@ -33,6 +33,7 @@
             ['label' => 'Persetujuan Kontrak', 'icon' => 'badge-check', 'href' => route('director.approval'), 'active' => request()->routeIs('director.approval')],
             ['label' => 'Laporan', 'icon' => 'shield', 'href' => route('director.report'), 'active' => request()->routeIs('director.report')],
             ['label' => 'Pengaturan Tata Kelola', 'icon' => 'settings', 'href' => route('director.governance'), 'active' => request()->routeIs('director.governance')],
+            ['label' => 'Kelola Akun Pengguna & RBAC', 'icon' => 'users', 'href' => route('director.access'), 'active' => request()->routeIs('director.access')],
         ];
     @endphp
 

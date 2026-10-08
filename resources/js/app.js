@@ -2,7 +2,12 @@ import './bootstrap';
 
 import Alpine from 'alpinejs';
 import gpaToast from './components/gpa-toast';
+import gpaUpload from './components/gpa-upload';
 import registrationForm from './components/registration-form';
+import armadaDispatch from './components/armada-dispatch';
+import armadaPod from './components/armada-pod';
+import armadaStatus from './components/armada-status';
+import armadaTasks from './components/armada-tasks';
 import clientDashboard from './components/client-dashboard';
 import clientCatalog from './components/client-catalog';
 import clientCart from './components/client-cart';
@@ -29,13 +34,19 @@ import directorSales from './components/director-sales';
 import directorVolume from './components/director-volume';
 import directorReport from './components/director-report';
 import directorReceivables from './components/director-receivables';
+import directorAccess from './components/director-access';
 import directorApproval from './components/director-approval';
 import directorGovernance from './components/director-governance';
 
 window.Alpine = Alpine;
 
 Alpine.data('gpaToast', gpaToast);
+Alpine.data('gpaUpload', gpaUpload);
 Alpine.data('registrationForm', registrationForm);
+Alpine.data('armadaDispatch', armadaDispatch);
+Alpine.data('armadaPod', armadaPod);
+Alpine.data('armadaStatus', armadaStatus);
+Alpine.data('armadaTasks', armadaTasks);
 Alpine.data('clientDashboard', clientDashboard);
 Alpine.data('clientCatalog', clientCatalog);
 Alpine.data('clientCart', clientCart);
@@ -62,6 +73,7 @@ Alpine.data('directorSales', directorSales);
 Alpine.data('directorVolume', directorVolume);
 Alpine.data('directorReport', directorReport);
 Alpine.data('directorReceivables', directorReceivables);
+Alpine.data('directorAccess', directorAccess);
 Alpine.data('directorApproval', directorApproval);
 Alpine.data('directorGovernance', directorGovernance);
 

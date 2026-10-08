@@ -1,0 +1,26 @@
+{
+    "object": "InvoiceItem",
+    "version": "1.0",
+    "table": "invoice_items",
+    "description": "Baris tagihan yang selalu Traceable ke satu Surat Jalan agar alasan tagihan dapat ditelusuri (§14).",
+    "fields": [
+        { "name": "id", "type": "int", "required": true, "nullable": false },
+        { "name": "invoice_id", "type": "int", "required": true, "nullable": false },
+        { "name": "surat_jalan_id", "type": "int", "required": true, "nullable": false, "note": "Wajib. Inilah yang membuat invoice Traceable (Rule 09)." },
+        { "name": "description", "type": "string", "required": true, "nullable": false },
+        { "name": "weight", "type": "decimal", "required": false, "nullable": true, "note": "Total kilogram yang ditagih." },
+        { "name": "amount", "type": "int", "required": true, "nullable": false, "note": "Rupiah penuh. Dihitung dari berat aktual dikali harga, bukan estimasi order." }
+    ],
+    "relations": {
+        "invoice": "Invoice",
+        "surat_jalan": "SuratJalan"
+    },
+    "example": {
+        "id": 70011,
+        "invoice_id": 7001,
+        "surat_jalan_id": 9001,
+        "description": "Selada Romaine + Rosemary + Dill, periode 1-15 Okt 2026",
+        "weight": 795,
+        "amount": 18450000
+    }
+}

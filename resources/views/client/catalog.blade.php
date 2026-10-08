@@ -362,100 +362,11 @@
         </section>
 
         {{-- ---------------------------------------------------------------- --}}
-        {{-- Tabel rekonsiliasi gudang --}}
-        {{-- ---------------------------------------------------------------- --}}
-        <section id="rekonsiliasi-gudang" class="gpa-card overflow-hidden scroll-mt-24">
-            <header class="flex flex-col gap-3 border-b border-line-soft bg-surface-shell p-4 lg:p-5">
-                <div class="flex flex-col gap-2 lg:flex-row lg:items-start lg:justify-between">
-                    <div class="flex min-w-0 items-start gap-2.5">
-                        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand">
-                            <x-gpa.icon name="package" class="h-4 w-4 text-accent" />
-                        </span>
-                        <div class="min-w-0">
-                            <h2 class="font-sans text-sm font-bold leading-5 text-ink">
-                                {{ $reconciliation['title'] }}
-                            </h2>
-                            <p class="mt-0.5 gpa-body text-ink-body">{{ $reconciliation['subtitle'] }}</p>
-                        </div>
-                    </div>
-
-                    <div class="flex shrink-0 flex-wrap items-center gap-2">
-                        <span
-                            class="rounded-md bg-surface-disabled px-2.5 py-1 ring-1 ring-inset ring-line-board gpa-micro-bold text-ink-body">
-                            {{ $reconciliation['tolerance'] }}
-                        </span>
-                        <span
-                            class="rounded bg-surface-pill px-2.5 py-1 gpa-micro-bold text-ink-body">
-                            {{ $reconciliation['api_status'] }}
-                        </span>
-                    </div>
-                </div>
-            </header>
-
-            <div class="gpa-scroll-x">
-                <table class="w-full min-w-[68rem] border-collapse text-left">
-                    <thead>
-                        <tr class="border-b border-line-soft bg-surface-shell">
-                            @foreach (['Kode Item', 'Nama Komoditas', 'Origin Sentra', 'Buffer Stock', 'MOQ', 'Harga Franco', 'Spek Cold-Chain', 'Status Kuota', 'Aksi'] as $heading)
-                                <th scope="col" class="whitespace-nowrap px-4 py-2.5 gpa-micro text-ink-quiet">
-                                    {{ $heading }}
-                                </th>
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($reconciliation['rows'] as $row)
-                            <tr
-                                class="border-b border-line-hair last:border-0 {{ $row['critical'] ? 'bg-warning-row' : '' }}">
-                                <td class="whitespace-nowrap px-4 py-3 gpa-meta-lg font-bold text-ink">
-                                    {{ $row['hub_code'] }}
-                                </td>
-                                <td class="px-4 py-3 gpa-body font-medium text-ink">{{ $row['name'] }}</td>
-                                <td class="whitespace-nowrap px-4 py-3 gpa-body text-ink-body">{{ $row['origin'] }}</td>
-                                <td class="whitespace-nowrap px-4 py-3 gpa-meta-lg font-bold {{ $textTone($row['quota_tone']) }}">
-                                    {{ $kilogram($row['stock']) }}
-                                </td>
-                                <td class="whitespace-nowrap px-4 py-3 gpa-meta-lg text-ink-body">
-                                    {{ $kilogram($row['moq']) }}
-                                </td>
-                                <td class="whitespace-nowrap px-4 py-3 gpa-meta-lg font-bold text-ink">
-                                    {{ $rupiah($row['price']) }}
-                                </td>
-                                <td class="whitespace-nowrap px-4 py-3 gpa-body text-ink-body">{{ $row['cold_chain'] }}</td>
-                                <td class="px-4 py-3">
-                                    <span
-                                        class="inline-flex whitespace-nowrap rounded-md px-2 py-1 ring-1 ring-inset gpa-micro-bold {{ $chipClass($row['quota_tone']) }}">
-                                        {{ $row['quota_label'] }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <button type="button" @click="focusCommodity(@js($row['key']))"
-                                        class="inline-flex items-center gap-1 rounded-md border border-line-strong bg-surface px-2.5 py-1.5 gpa-micro-bold text-ink transition-colors hover:border-brand hover:bg-surface-shell">
-                                        <x-gpa.icon name="plus" class="h-3 w-3" />
-                                        Order
-                                    </button>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            <footer class="flex flex-col gap-2 border-t border-line-soft bg-surface-shell p-4 lg:flex-row lg:items-center lg:justify-between">
-                <p class="flex items-start gap-2 gpa-body text-ink-body">
-                    <x-gpa.icon name="scale" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-success-deep" />
-                    {{ $reconciliation['footer'] }}
-                </p>
-                <p class="gpa-micro shrink-0 text-ink-quiet">{{ $reconciliation['footer_note'] }}</p>
-            </footer>
-        </section>
-
-        {{-- ---------------------------------------------------------------- --}}
         {{-- Ringkasan draft PO (mengikuti badge Keranjang di sidebar) --}}
         {{-- ---------------------------------------------------------------- --}}
-        <div id="quick-reorder" class="scroll-mt-24">
+        <div id="quick-reorder" class="sticky bottom-4 z-10 scroll-mt-24">
             <section x-show="draftCount() > 0" x-cloak
-                class="gpa-card sticky bottom-4 flex flex-col gap-3 border border-brand-line p-4 shadow-pop lg:flex-row lg:items-center lg:justify-between">
+                class="gpa-card flex flex-col gap-3 border border-brand-line p-4 shadow-pop lg:flex-row lg:items-center lg:justify-between">
                 <div class="flex min-w-0 flex-col gap-1">
                     <p class="gpa-micro-bold text-success-deep">
                         Draft PO aktif · <span x-text="draftCount()"></span> item

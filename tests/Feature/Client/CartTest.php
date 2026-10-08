@@ -32,7 +32,6 @@ class CartTest extends TestCase
         $response->assertSee('Parameter Pengiriman &amp; Logistik', false);
         $response->assertSee('Ringkasan Estimasi PO');
         $response->assertSee('Ajukan Pesanan Estimasi (Submit PO)');
-        $response->assertSee(ClientCartData::warning()['title']);
     }
 
     public function test_cart_renders_all_docks_payment_methods_and_pic_roster(): void

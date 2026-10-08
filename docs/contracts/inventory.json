@@ -1,0 +1,35 @@
+{
+    "object": "Inventory",
+    "version": "1.0",
+    "table": "inventories",
+    "description": "Persediaan per produk dan per sumber. Angka stok tidak boleh berasal dari frontend (Rule 02) dan tidak boleh minus (Rule 03).",
+    "fields": [
+        { "name": "id", "type": "int", "required": true, "nullable": false },
+        { "name": "product_id", "type": "int", "required": true, "nullable": false, "note": "Relasi ke Product." },
+        { "name": "source", "type": "enum", "required": true, "nullable": false, "note": "Asal stok wajib diketahui (§7.3)." },
+        { "name": "supplier_id", "type": "int", "required": false, "nullable": true, "note": "Wajib untuk source = buffer_mitra." },
+        { "name": "available", "type": "decimal", "required": true, "nullable": false, "note": "Stok tersedia dalam kilogram. Tidak boleh negatif." },
+        { "name": "reserved", "type": "decimal", "required": true, "nullable": false, "note": "Stok yang sudah dialokasikan ke order berjalan." },
+        { "name": "incoming", "type": "decimal", "required": true, "nullable": false, "note": "Perkiraan panen masuk yang belum tiba." },
+        { "name": "unit", "type": "string", "required": true, "nullable": false, "note": "Selalu kg untuk fase utama." },
+        { "name": "updated_at", "type": "datetime", "required": true, "nullable": false }
+    ],
+    "enums": {
+        "source": ["petani_binaan", "buffer_mitra"]
+    },
+    "relations": {
+        "product": "Product",
+        "supplier": "Supplier | null"
+    },
+    "example": {
+        "id": 7,
+        "product_id": 1,
+        "source": "petani_binaan",
+        "supplier_id": null,
+        "available": 1250,
+        "reserved": 400,
+        "incoming": 800,
+        "unit": "kg",
+        "updated_at": "2026-10-24T05:40:00+07:00"
+    }
+}

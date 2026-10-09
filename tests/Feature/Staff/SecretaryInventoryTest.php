@@ -38,25 +38,9 @@ class SecretaryInventoryTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Manajemen Multi-Source Inventory &amp; Available- to-Promise (ATP)', false);
-        $response->assertSee('Anti Zero-Overselling Guard Aktif');
         $response->assertSee('Sinkronisasi Data Panen Koordinator');
         $response->assertSee('Ekspor Neraca Stok CSV');
         $response->assertSee('+ Alokasi Buffer Manual');
-    }
-
-    public function test_console_renders_rule_engine_safeguards(): void
-    {
-        $response = $this->get(route('secretary.inventory'));
-
-        $response->assertOk();
-        $response->assertSee('GPA Logistics Rule Engine // Automation Safeguards');
-        $response->assertSee('Status: 100% Operational');
-        $response->assertSee('Rule 02: Hard Lock Kuota PO Terkonfirmasi');
-        $response->assertSee('Strict');
-        $response->assertSee('garansi zero stock-out');
-        $response->assertSee('Rule 03: Auto-Switching ke Buffer Mitra Luar');
-        $response->assertSee('Auto &lt;20%', false);
-        $response->assertSee('di bawah 20% demand PO terbuka', false);
     }
 
     public function test_console_renders_supply_and_atp_metric_cards(): void
@@ -102,7 +86,6 @@ class SecretaryInventoryTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Neraca Pasokan Multi-Sumber Per Komoditas Inti');
-        $response->assertSee('5 Komoditas Standar GPA');
         $response->assertSee('Mutasi Terakhir: Hari Ini 11:24 WIB');
         $response->assertSee('Sumber Petani Binaan');
         $response->assertSee('Sumber Buffer Luar');
@@ -132,7 +115,6 @@ class SecretaryInventoryTest extends TestCase
         $response->assertSee('Kuota Aman');
 
         $response->assertSee('Total Kuota Bebas (ATP):');
-        $response->assertSee('Pagination: Locked to Single Operational Ledger');
     }
 
     public function test_ledger_totals_reconcile_with_metric_cards(): void
@@ -168,19 +150,11 @@ class SecretaryInventoryTest extends TestCase
         $response->assertSee('x-model="status"', false);
     }
 
-    public function test_console_renders_realtime_mutation_log_and_readiness_checks(): void
+    public function test_console_renders_readiness_checks(): void
     {
         $response = $this->get(route('secretary.inventory'));
 
         $response->assertOk();
-        $response->assertSee('Log Mutasi &amp; Eksekusi Penguncian Stok Realtime', false);
-        $response->assertSee('Stream: Live Feed');
-        $response->assertSee('Hard Lock: 180 kg Selada Romaine');
-        $response->assertSee('PO-B2B-8821');
-        $response->assertSee('Auto-Switch: Injeksi Buffer 85 kg Tomat Beef');
-        $response->assertSee('Batch-PK-092');
-        $response->assertSee('Lihat Audit Trail Lengkap');
-
         $response->assertSee('Kesiapan DO Batch &amp; Cold-Chain', false);
         $response->assertSee('18/18 PO Siap');
         $response->assertSee('Validasi Timbangan Hub Lembang');

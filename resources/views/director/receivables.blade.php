@@ -178,7 +178,6 @@
             <header class="flex flex-wrap items-start justify-between gap-4 pb-2">
                 <div class="min-w-0">
                     <div class="flex items-center gap-2">
-                        <x-gpa.icon name="chart" class="h-4 w-4 shrink-0 text-success-deep" />
                         <h2 class="text-[18px] font-bold leading-6 text-ink">{{ $aging['title'] }}</h2>
                     </div>
                     <p class="mt-1 text-[12px] leading-4 text-ink-body">{{ $aging['subtitle'] }}</p>
@@ -430,7 +429,6 @@
             <article class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
                 <header class="flex flex-wrap items-center justify-between gap-3 pb-2">
                     <div class="flex items-center gap-2">
-                        <x-gpa.icon name="clipboard" class="h-4 w-4 shrink-0 text-ink" />
                         <h2 class="text-[18px] font-bold leading-6 text-ink">{{ $policy['title'] }}</h2>
                     </div>
                     <span class="rounded bg-accent px-2 py-0.5 text-[10px] font-bold leading-3 tracking-[1px] text-ink {{ $mono }}">

@@ -133,13 +133,5 @@ export default function secretaryDispatch(rows = []) {
             );
         },
 
-        printProof() {
-            const row = this.selected;
-
-            this.run(
-                'Cetak Bukti Fisik',
-                row ? `Bukti timbangan ${row.sj} dikirim ke printer gudang ${row.warehouse}.` : 'Pilih dokumen terlebih dahulu.'
-            );
-        },
     };
 }

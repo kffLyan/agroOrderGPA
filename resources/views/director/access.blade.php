@@ -117,9 +117,6 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    <span class="gpa-note font-bold {{ $statusTone[$matrix['status_tone']] }}">
-                        {{ $matrix['status'] }}
-                    </span>
                     <button type="button" @click="syncRbacPolicy()"
                         class="inline-flex shrink-0 items-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                         <x-gpa.icon name="refresh" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
@@ -309,60 +306,5 @@
             </footer>
         </section>
 
-
-        {{-- Session policy, hardware whitelist, emergency authority --}}
-        <section class="grid gap-4 lg:grid-cols-3">
-            @foreach ($policies as $policy)
-                <article @class([
-                    'flex h-full flex-col gap-3 rounded-2xl bg-surface p-6 shadow-card',
-                    'outline outline-2 -outline-offset-2 outline-danger' => $policy['key'] === 'emergency',
-                ])>
-                    <div class="flex items-center gap-2">
-                        <x-gpa.icon :name="$policy['icon']"
-                            @class([
-                                'h-4 w-4 shrink-0',
-                                'text-danger' => $policy['key'] === 'emergency',
-                                'text-success-deep' => $policy['key'] !== 'emergency',
-                            ]) />
-                        <h2 class="gpa-section-title text-ink">{{ $policy['title'] }}</h2>
-                    </div>
-
-                    @if (isset($policy['items']))
-                        <dl class="flex flex-col gap-3">
-                            @foreach ($policy['items'] as $item)
-                                <div class="flex flex-col gap-1 border-b border-line-hair pb-3 last:border-b-0 last:pb-0">
-                                    <div class="flex flex-wrap items-start justify-between gap-2">
-                                        <dt class="text-[12px] font-bold leading-5 text-ink">{{ $item['title'] }}</dt>
-                                        <span @class([
-                                            'shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta',
-                                            $policyChip[$item['status_tone']],
-                                        ])>{{ $item['status'] }}</span>
-                                    </div>
-                                    <dd class="gpa-note leading-4 text-ink-body">{{ $item['description'] }}</dd>
-                                </div>
-                            @endforeach
-                        </dl>
-
-                        <p class="mt-auto flex items-start gap-2 border-t border-line-hair pt-3">
-                            <x-gpa.icon name="shield" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-success-deep" />
-                            <span class="gpa-note font-semibold text-ink-body">{{ $policy['foot_note'] }}</span>
-                        </p>
-                    @else
-                        <p class="text-[12px] leading-5 text-ink-body">{{ $policy['description'] }}</p>
-
-                        <p class="flex items-start gap-2 rounded bg-danger-soft/40 px-3 py-2.5 outline outline-1 -outline-offset-1 outline-danger">
-                            <x-gpa.icon name="alert-triangle" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-danger" />
-                            <span class="gpa-note font-semibold leading-4 text-danger">{{ $policy['warning'] }}</span>
-                        </p>
-
-                        <button type="button" @click="revokeAllSessions()"
-                            class="mt-auto inline-flex w-full items-center justify-center gap-2 rounded bg-danger px-4 py-3 gpa-meta-lg font-bold text-white shadow-sub transition-opacity hover:opacity-90">
-                            <x-gpa.icon name="alert-triangle" class="h-4 w-4 shrink-0" />
-                            {{ $policy['action'] }}
-                        </button>
-                    @endif
-                </article>
-            @endforeach
-        </section>
     </div>
 @endsection

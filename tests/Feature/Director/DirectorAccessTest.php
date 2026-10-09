@@ -83,7 +83,6 @@ class DirectorAccessTest extends TestCase
 
         $response->assertOk();
         $response->assertSee($matrix['title']);
-        $response->assertSee($matrix['status']);
         $response->assertSee($matrix['action']);
         $this->assertCount(6, $matrix['columns']);
         $this->assertCount(6, $matrix['rows']);
@@ -170,50 +169,6 @@ class DirectorAccessTest extends TestCase
         foreach ($keys as $key) {
             $response->assertSee($key === 'all' ? 'Semua Role (5)' : 'x-data="directorAccess(', false);
         }
-    }
-
-    public function test_session_policy_and_hardware_whitelist_cards_render(): void
-    {
-        $policies = DirectorAccessData::policies();
-
-        $response = $this->get(route('director.access'));
-
-        $response->assertOk();
-        $this->assertCount(3, $policies);
-
-        foreach ($policies as $policy) {
-            $response->assertSee($policy['title']);
-
-            foreach ($policy['items'] ?? [] as $item) {
-                $response->assertSee($item['title']);
-                $response->assertSee($item['status']);
-                $response->assertSee($item['description']);
-            }
-        }
-
-        $session = $policies[0];
-        $hardware = $policies[1];
-
-        $response->assertSee($session['foot_note']);
-        $response->assertSee($hardware['foot_note']);
-        $this->assertStringContainsString('28 Perangkat', $hardware['foot_note']);
-        $this->assertStringContainsString('900 Detik', $session['foot_note']);
-        $this->assertSame(28, DirectorAccessData::FIELD_DEVICES);
-    }
-
-    public function test_emergency_authority_card_renders_revoke_control(): void
-    {
-        $emergency = DirectorAccessData::policies()[2];
-
-        $response = $this->get(route('director.access'));
-
-        $response->assertOk();
-        $this->assertSame('emergency', $emergency['key']);
-        $response->assertSee($emergency['description']);
-        $response->assertSee($emergency['warning']);
-        $response->assertSee($emergency['action']);
-        $response->assertSee('revokeAllSessions()', false);
-        $this->assertStringContainsString('14 sesi aktif', $emergency['warning']);
     }
 
     public function test_console_exposes_header_actions_and_alpine_wiring(): void

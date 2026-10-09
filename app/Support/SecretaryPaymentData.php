@@ -159,7 +159,7 @@ class SecretaryPaymentData
             'rows' => self::queueRows(),
             'total' => 38450000,
             'total_label' => 'Rp 38.450.000',
-            'footer_left' => 'Memori Antrean: 5 dari 5 Ditampilkan',
+            'footer_left' => 'Antrean: 5 dari 5 Ditampilkan',
             'footer_right' => 'FIFO Queue Priority: Strict',
         ];
     }
@@ -371,7 +371,7 @@ class SecretaryPaymentData
     public static function audit(): array
     {
         return [
-            'title' => 'Riwayat Log Verifikasi Pembayaran Terakhir (Audit Trail)',
+            'title' => 'Riwayat Log Verifikasi Pembayaran Terakhir',
             'subtitle' => 'Ledger Buku Kas Realtime • Dilindungi Hash Kriptografi Immutable',
             'hash_label' => 'SHA-256: 7f8a9e4d01b92a3c8e54c03b (Immutable)',
             'columns' => [

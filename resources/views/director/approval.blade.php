@@ -105,13 +105,8 @@
                             <span class="h-1.5 w-1.5 rounded-full bg-white" aria-hidden="true"></span>
                             {{ $queue['badge'] }}
                         </span>
-                        <span class="gpa-meta font-semibold text-success-deep">{{ $queue['rule'] }}</span>
-                        <span class="rounded bg-surface-track px-2 py-0.5 text-[10px] font-bold leading-[15px] text-ink gpa-meta">
-                            {{ $queue['clearance'] }}
-                        </span>
                     </div>
                     <h2 class="gpa-section-title text-ink">{{ $queue['title'] }}</h2>
-                    <p class="max-w-3xl text-xs leading-4 text-ink-body">{{ $queue['description'] }}</p>
                 </div>
 
                 <div class="flex shrink-0 flex-col gap-1">
@@ -123,7 +118,6 @@
                     <div class="flex items-center gap-2">
                         <button type="button" @click="approveSelected()" :disabled="selectedCount === 0"
                             class="inline-flex items-center gap-1.5 rounded bg-accent px-3.5 py-1.5 gpa-meta-lg font-bold text-ink shadow-sub outline outline-1 -outline-offset-1 outline-brand-deep/30 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">
-                            <x-gpa.icon name="check" class="h-3 w-3 shrink-0" />
                             {{ $queue['batch_approve'] }}
                         </button>
                         <button type="button" @click="selectAll()"
@@ -194,14 +188,6 @@
                                 </td>
                                 <th scope="row" class="px-3 py-4 text-left align-top font-normal">
                                     <div class="flex items-start gap-2">
-                                        @if ($row['client_tone'] === 'solid')
-                                            <span class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-ink p-1">
-                                                <x-gpa.icon name="building" class="h-full w-full text-accent" />
-                                            </span>
-                                        @else
-                                            <x-gpa.icon name="building"
-                                                class="mt-0.5 h-4 w-4 shrink-0 {{ $clientTone[$row['client_tone']] }}" />
-                                        @endif
                                         <span class="min-w-0">
                                             <span class="block text-[13px] font-semibold leading-5 text-ink">
                                                 {{ $row['client'] }}

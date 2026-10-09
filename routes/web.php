@@ -24,6 +24,7 @@ use App\Http\Controllers\Director\DirectorReceivablesController;
 use App\Http\Controllers\Director\DirectorReportController;
 use App\Http\Controllers\Director\DirectorSalesController;
 use App\Http\Controllers\Director\DirectorVolumeController;
+use App\Http\Controllers\Prints\SuratJalanController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\AboutController as PublicAboutController;
 use App\Http\Controllers\Public\CatalogController as PublicCatalogController;
@@ -160,6 +161,9 @@ Route::get('/dokumen-faktur', ClientDocumentsController::class)
 
 Route::get('/dokumen-faktur/unggah-bukti', ClientPaymentProofController::class)
     ->name('documents.payment-proof');
+
+Route::get('/cetak/surat-jalan', SuratJalanController::class)
+    ->name('prints.surat-jalan');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

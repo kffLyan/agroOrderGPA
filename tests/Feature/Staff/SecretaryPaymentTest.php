@@ -32,23 +32,15 @@ class SecretaryPaymentTest extends TestCase
         $response->assertSee('SR');
     }
 
-    public function test_console_shows_heading_and_rule_11_policy_banner(): void
+    public function test_console_shows_heading_and_live_ingestion_badge(): void
     {
         $response = $this->get(route('secretary.payments'));
 
         $response->assertOk();
-        $response->assertSee('Sub-05 // Modul Verifikasi Pembayaran & Rekonsiliasi Kas');
         $response->assertSee('Konsol Verifikasi Pembayaran Manual &');
         $response->assertSee('Rekonsiliasi Kas');
-        $response->assertSee('Pemeriksaan dan validasi bukti transfer bank manual serta QRIS statis oleh Admin/Sekre Keuangan sesuai');
-        $response->assertSee('PRD App-GPA.md Section 15 & Rule 11 (Non-Gateway MVP Phase).');
         $response->assertSee('Live Ingestion: Bank');
         $response->assertSee('BCA / Mandiri Giro');
-
-        $response->assertSee('Kebijakan Kontrol Finansial PRD Rule 11 & Section 15.2:');
-        $response->assertSee('Mandatory Admin');
-        $response->assertSee('BUKAN berarti otomatis lunas');
-        $response->assertSee('menyetujui (Approve) bukti fisik rekening koran harian.');
     }
 
     public function test_console_renders_reconciliation_metric_cards(): void
@@ -88,7 +80,6 @@ class SecretaryPaymentTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Daftar Antrean Pembayaran Masuk');
-        $response->assertSee('5 Transaksi Pending Review');
         $response->assertSee('Auto-Sync');
         $response->assertSee('(30s)');
 
@@ -97,8 +88,7 @@ class SecretaryPaymentTest extends TestCase
         $response->assertSee('QRIS Statis GPA');
         $response->assertSee('Giro / TOP B2B');
 
-        $response->assertSee('Memori Antrean: 5 dari 5 Ditampilkan');
-        $response->assertSee('FIFO Queue Priority: Strict');
+        $response->assertSee('Antrean: 5 dari 5 Ditampilkan');
     }
 
     public function test_queue_lists_five_pending_payments_with_evidence(): void
@@ -177,17 +167,11 @@ class SecretaryPaymentTest extends TestCase
         $response->assertSee('Nominal slip &amp; rekening koran identik.', false);
     }
 
-    public function test_console_renders_rule_11_checklist_and_authorization_actions(): void
+    public function test_console_renders_rule_11_authorization_actions(): void
     {
         $response = $this->get(route('secretary.payments'));
 
         $response->assertOk();
-        $response->assertSee('Checklist Protokol Audit (PRD Rule 11.2):');
-        $response->assertSee('3/3 Terpenuhi');
-        $response->assertSee('Nominal slip sama persis dengan mutasi bank (');
-        $response->assertSee('Rekening tujuan sah sesuai Giro GPA Perusahaan (');
-        $response->assertSee('Tanggal &amp; jam mutasi valid di perbankan (', false);
-
         $response->assertSee('Catatan Verifikasi Sekre / Rekap Audit:');
         $response->assertSee('Stamp Audit Log');
         $response->assertSee('Mutasi BCA jam 10:15 WIB valid dan klop. Disetujui untuk cetak kuitansi sah.');
@@ -202,9 +186,7 @@ class SecretaryPaymentTest extends TestCase
         $response = $this->get(route('secretary.payments'));
 
         $response->assertOk();
-        $response->assertSee('Riwayat Log Verifikasi Pembayaran Terakhir (Audit Trail)');
-        $response->assertSee('Ledger Buku Kas Realtime • Dilindungi Hash Kriptografi Immutable');
-        $response->assertSee('SHA-256: 7f8a9e4d01b92a3c8e54c03b (Immutable)');
+        $response->assertSee('Riwayat Log Verifikasi Pembayaran Terakhir');
 
         $response->assertSee('Timestamp');
         $response->assertSee('ID Bayar');
@@ -292,10 +274,7 @@ class SecretaryPaymentTest extends TestCase
         $response->assertSee('rowClass(', false);
         $response->assertSee('isSettled(', false);
         $response->assertSee('isRejected(', false);
-        $response->assertSee('toggleCheck(', false);
-        $response->assertSee('isChecked(', false);
         $response->assertSee('checkComplete', false);
-        $response->assertSee('progressLabel', false);
         $response->assertSee('openProof(', false);
         $response->assertSee('approve()', false);
         $response->assertSee('reject()', false);

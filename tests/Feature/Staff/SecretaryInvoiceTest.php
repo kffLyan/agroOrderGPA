@@ -40,8 +40,6 @@ class SecretaryInvoiceTest extends TestCase
         $response->assertOk();
         $response->assertSee('Manajemen Faktur Penagihan &amp;', false);
         $response->assertSee('Monitoring Tempo (TOP) Klien B2B');
-        $response->assertSee('Konsolidasi Surat Jalan selesai kirim (PoD valid &amp; timbangan netto terverifikasi) menjadi lembar', false);
-        $response->assertSee('PRD App-GPA.md Section 14 &amp; 15.3: Term of Payment 14/30/45 Hari).', false);
         $response->assertSee('Ekspor CSV/Ledger');
         $response->assertSee('+ Faktur Manual Baru');
     }
@@ -77,11 +75,8 @@ class SecretaryInvoiceTest extends TestCase
         $response = $this->get(route('secretary.invoicing'));
 
         $response->assertOk();
-        $response->assertSee('Generator Faktur Konsolidasi Surat Jalan (Rule 14 &amp; 05)', false);
-        $response->assertSee('Otoritas Sekretariat Operasional // Automated Clearing Draft');
-        $response->assertSee('MODUL:');
-        $response->assertSee('MULTI-SJ BUNDLING V2.1');
-        $response->assertSee('Pilih Entitas Klien B2B (Terdaftar Kredit TOP):');
+        $response->assertSee('Generator Faktur Konsolidasi Surat Jalan', false);
+        $response->assertSee('Pilih Klien');
         $response->assertSee('Limit Plafon Kredit:');
         $response->assertSee('SISA:');
         $response->assertSee('Terfilter Otomatis oleh GPA-Engine');
@@ -92,7 +87,7 @@ class SecretaryInvoiceTest extends TestCase
         $response = $this->get(route('secretary.invoicing'));
 
         $response->assertOk();
-        $response->assertSee('Surat Jalan Siap Difakturkan (Hanya SJ &quot;Selesai&quot; dengan POD &amp; Bobot Netto Sah)', false);
+        $response->assertSee('Surat Jalan Siap Difakturkan', false);
         $response->assertSee('3 Dokumen Valid');
 
         $response->assertSee('No. Surat Jalan');
@@ -180,7 +175,6 @@ class SecretaryInvoiceTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Ledger Faktur &amp; Monitoring Penagihan Tempo (TOP)', false);
-        $response->assertSee('Real-time status tracking piutang berjalan klien B2B terikat Term of Payment.');
         $response->assertSee('Semua (42)');
         $response->assertSee('TOP 14');
         $response->assertSee('TOP 30');

@@ -22,15 +22,13 @@ class PublicMitraKontrakTest extends TestCase
         $this->get('/mitra-kontrak')->assertOk();
     }
 
-    public function test_title_and_breadcrumb_are_exposed(): void
+    public function test_title_and_navigation_are_exposed(): void
     {
         $response = $this->get(route('public.mitra-kontrak'));
 
         $response->assertSee('<title>Mitra Kontrak | AgroOrder GPA</title>', false);
-        $response->assertSee('aria-label="Remah roti"', false);
         $response->assertSee(route('public.home'), false);
         $response->assertSee('aria-current="page"', false);
-        $response->assertSee(PublicMitraKontrakData::hero()['breadcrumb'][1]);
     }
 
     public function test_navigation_marks_mitra_kontrak_as_current_page(): void

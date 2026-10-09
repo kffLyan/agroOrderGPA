@@ -23,12 +23,11 @@ class PublicSupplyChainTest extends TestCase
         $this->get('/rantai-pasok')->assertOk();
     }
 
-    public function test_title_and_breadcrumb_are_exposed(): void
+    public function test_title_and_navigation_are_exposed(): void
     {
         $response = $this->get(route('public.supply-chain'));
 
         $response->assertSee('<title>Rantai Pasok Terintegrasi | AgroOrder GPA</title>', false);
-        $response->assertSee('aria-label="Remah roti"', false);
         $response->assertSee(route('public.home'), false);
         $response->assertSee('aria-current="page"', false);
     }

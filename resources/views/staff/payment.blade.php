@@ -10,51 +10,16 @@
     <div class="space-y-6" x-data="secretaryPayments(@js($queue['rows']), @js($queue['filters']), @js($inspection['operator_code']), @js($audit['total_transactions']))">
         <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0">
-                <p class="flex items-center gap-2 gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">
-                    <x-gpa.icon name="banknote" class="h-[15px] w-[15px] shrink-0 text-success-deep" />
-                    {{ $heading['eyebrow'] }}
-                </p>
-
                 <h1 class="mt-2 font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $heading['title_before'] }}<br />
                     {{ $heading['title_after'] }}
                 </h1>
-
-                <p class="mt-3 max-w-3xl text-sm leading-5 text-ink-body">
-                    {{ $heading['subtitle_before'] }}
-                    <span class="font-semibold text-ink">{{ $heading['subtitle_rule'] }}</span>
-                </p>
             </div>
 
             <div class="flex shrink-0 items-center gap-3 rounded-xl bg-surface px-4 py-3 shadow-card outline outline-1 outline-line-hair">
                 <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-accent-deep" aria-hidden="true"></span>
                 <span class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $heading['badge_label'] }}</span>
                 <span class="gpa-meta-lg font-bold tracking-[0.88px] text-success-deep">{{ $heading['badge'] }}</span>
-            </div>
-        </section>
-
-        <section class="flex flex-col gap-3 rounded-xl bg-brand-deep p-4 outline outline-2 outline-accent-deep/40 sm:flex-row sm:items-center">
-            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-deep">
-                <x-gpa.icon name="receipt" class="h-5 w-5 shrink-0 text-ink" />
-            </span>
-
-            <div class="min-w-0">
-                <div class="flex flex-wrap items-center gap-2">
-                    <p class="gpa-micro-bold uppercase tracking-[1.08px] text-accent-deep">
-                        {{ $policy['label'] }}
-                    </p>
-                    <span class="rounded bg-success/40 px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-accent">
-                        {{ $policy['chip'] }}
-                    </span>
-                </div>
-
-                <p class="mt-1.5 text-sm leading-5 text-white">
-                    {{ $policy['body_before'] }}
-                    <span class="font-semibold text-accent-deep underline decoration-accent-deep underline-offset-2">
-                        {{ $policy['body_emphasis'] }}
-                    </span>
-                    {{ $policy['body_after'] }}
-                </p>
             </div>
         </section>
 
@@ -98,13 +63,9 @@
             <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft pb-4">
                     <div class="flex min-w-0 items-center gap-3">
-                        <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-track">
-                            <x-gpa.icon name="wallet" class="h-[18px] w-[18px] shrink-0 text-ink" />
-                        </span>
 
                         <div class="min-w-0">
                             <h2 class="font-sans text-lg font-bold leading-6 text-ink">{{ $queue['title'] }}</h2>
-                            <p class="gpa-micro-bold uppercase tracking-[1.08px] text-success-deep">{{ $queue['subtitle'] }}</p>
                         </div>
                     </div>
 
@@ -193,14 +154,12 @@
                         x-text="'Memori Antrean: ' + visibleRows().length + ' dari ' + queue.length + ' Ditampilkan'">
                         {{ $queue['footer_left'] }}
                     </p>
-                    <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $queue['footer_right'] }}</p>
                 </div>
             </section>
 
             <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card outline outline-2 outline-success">
                 <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft pb-4">
                     <div class="flex min-w-0 items-center gap-2">
-                        <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-accent-deep" aria-hidden="true"></span>
                         <div class="min-w-0">
                             <h2 class="font-sans text-lg font-bold leading-6 text-ink">{{ $inspection['title'] }}</h2>
                             <p class="gpa-micro-bold uppercase tracking-[1.08px] text-success-deep">
@@ -316,32 +275,6 @@
                     </div>
                 </div>
 
-                <div class="flex flex-col gap-2.5 rounded-xl bg-surface-shell p-4 outline outline-1 outline-line-hair">
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink">{{ $inspection['checklist_title'] }}</p>
-                        <span class="rounded bg-success-soft px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-success-deep outline outline-1 outline-success/50"
-                            x-text="progressLabel">3/3 Terpenuhi</span>
-                    </div>
-
-                    <ul class="flex flex-col gap-2">
-                        @foreach ($inspection['checklist'] as $index => $item)
-                            <li class="flex items-start gap-2.5">
-                                <button type="button" @click="toggleCheck({{ $index }})" role="checkbox"
-                                    :aria-checked="isChecked({{ $index }})"
-                                    :class="isChecked({{ $index }}) ? 'bg-brand' : 'bg-surface outline outline-1 outline-line-board'"
-                                    class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm text-white transition-colors">
-                                    <x-gpa.icon name="check" class="h-3 w-3 shrink-0" x-show="isChecked({{ $index }})" />
-                                </button>
-
-                                <p class="gpa-note leading-5 text-ink-body">
-                                    {{ $item['before'] }}<span class="font-mono font-bold text-ink"
-                                        x-text="field(selected, @js($item['key']))">{{ $default[$item['key']] }}</span>{{ $item['after'] }}
-                                </p>
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
-
                 <div class="flex flex-col gap-2">
                     <div class="flex flex-wrap items-center justify-between gap-2">
                         <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink">{{ $inspection['note_label'] }}</p>
@@ -380,20 +313,12 @@
         <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft pb-4">
                 <div class="flex min-w-0 items-center gap-3">
-                    <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-track">
-                        <x-gpa.icon name="scale" class="h-[18px] w-[18px] shrink-0 text-ink" />
-                    </span>
 
                     <div class="min-w-0">
                         <h2 class="font-sans text-lg font-bold leading-6 text-ink">{{ $audit['title'] }}</h2>
-                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $audit['subtitle'] }}</p>
                     </div>
                 </div>
 
-                <span class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-surface-track px-3 py-1.5 outline outline-1 outline-surface-disabled">
-                    <x-gpa.icon name="lock" class="h-[15px] w-[15px] shrink-0 text-ink-body" />
-                    <span class="font-mono text-2xs font-bold tracking-[0.88px] text-ink-body">{{ $audit['hash_label'] }}</span>
-                </span>
             </div>
 
             <div class="gpa-scroll-x rounded-xl outline outline-1 outline-line-board/60">

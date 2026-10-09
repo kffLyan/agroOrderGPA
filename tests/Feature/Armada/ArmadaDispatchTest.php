@@ -63,6 +63,7 @@ class ArmadaDispatchTest extends TestCase
         $response->assertSee('TERVALIDASI DISPATCH DOCK-03', false);
         $response->assertSee('SJ-GPA-202610-0001', false);
         $response->assertSee('#ORD-GPA-202610-0042', false);
+        $response->assertSee(route('prints.surat-jalan'), false);
         $response->assertSee('WAKTU DISPATCH', false);
         $response->assertSee('24 Okt 2026', false);
         $response->assertSee('05:42 WIB');

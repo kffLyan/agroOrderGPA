@@ -108,6 +108,12 @@
                     <span class="font-mono text-[11px] font-medium leading-[14px] tracking-[0.88px]">
                         <span class="text-ink-body">{{ $letter['po_label'] }}</span><span class="text-ink">{{ $letter['po_number'] }}</span>
                     </span>
+
+                    <a href="{{ route('prints.surat-jalan') }}"
+                        class="mt-1.5 inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 font-mono text-[9px] font-bold leading-3 tracking-[1.08px] text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-disabled">
+                        <x-gpa.icon name="printer" class="h-2.5 w-2.5 shrink-0" />
+                        CETAK SJ A4
+                    </a>
                 </div>
 
                 <div class="flex shrink-0 flex-col items-end">

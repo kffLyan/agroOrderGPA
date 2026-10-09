@@ -80,7 +80,6 @@
                 <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     Monitoring Volume Komoditas, Stok Panen<br>&amp; Kapasitas Pasokan
                 </h1>
-                <p class="max-w-3xl text-sm leading-5 text-ink-body">{{ $volumeHeader['subtitle'] }}</p>
             </div>
 
             <div class="flex shrink-0 flex-col items-stretch gap-3">
@@ -150,17 +149,11 @@
             <header class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-line-board">
                 <div class="flex min-w-0 flex-col gap-1">
                     <p class="flex items-center gap-2">
-                        <span class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-success-deep">
-                            <x-gpa.icon name="package" class="h-3 w-3 text-accent" />
-                        </span>
                         <h2 class="font-inter text-lg font-semibold leading-6 text-ink">{{ $commodities['title'] }}</h2>
                     </p>
                     <p class="text-xs leading-4 text-ink-body">{{ $commodities['subtitle'] }}</p>
                 </div>
 
-                <span class="rounded bg-surface-track px-2 py-1 gpa-micro-bold text-success-deep">
-                    {{ $volumeHeader['refresh_label'] }}
-                </span>
             </header>
 
             <div class="gpa-scroll-x overflow-x-auto py-1">
@@ -232,10 +225,6 @@
                 <header class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-line-board">
                     <div class="flex min-w-0 flex-col gap-1">
                         <p class="flex items-center gap-2">
-                            <span
-                                class="rounded bg-surface-track px-2 py-0.5 text-[9px] font-bold leading-3 gpa-micro-bold text-ink">
-                                {{ $trend['badge'] }}
-                            </span>
                             <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $trend['title'] }}</h2>
                         </p>
                         <p class="text-xs leading-4 text-ink-body">{{ $trend['subtitle'] }}</p>
@@ -281,7 +270,6 @@
                 </div>
 
                 <div class="flex flex-col gap-2">
-                    <p class="gpa-micro-bold text-success-deep">{{ $trend['metrology'] }}</p>
                     <p class="gpa-micro-bold text-ink">{{ $trend['peak_label'] }}</p>
                     <p class="gpa-micro-bold text-ink">{{ $trend['confidence_label'] }}</p>
                 </div>
@@ -292,10 +280,6 @@
                     <header class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-line-board">
                         <div class="flex min-w-0 flex-col gap-1">
                             <p class="flex items-center gap-2">
-                                <span
-                                    class="rounded bg-surface-track px-2 py-0.5 text-[9px] font-bold leading-3 gpa-micro-bold text-ink">
-                                    {{ $allocations['badge'] }}
-                                </span>
                                 <h2 class="font-sans text-lg font-semibold leading-6 text-ink">
                                     {{ $allocations['title'] }}
                                 </h2>

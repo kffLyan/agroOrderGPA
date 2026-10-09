@@ -55,14 +55,12 @@ class DirectorSalesTest extends TestCase
 
         $response->assertOk();
         $response->assertSee($header['title']);
-        $response->assertSee($header['subtitle']);
         $response->assertSee($header['export_label']);
         $response->assertSee($header['print_label']);
 
         foreach ($scopes as $scope) {
             $response->assertSee($scope['period']);
             $response->assertSee($scope['tab']);
-            $response->assertSee($scope['hint']);
         }
 
         $this->assertSame('WTD (Mingguan)', $scopes['WTD']['tab']);
@@ -129,7 +127,6 @@ class DirectorSalesTest extends TestCase
         $response->assertSee($trend['ceiling_label']);
         $response->assertSee($trend['bep_label']);
         $response->assertSee($trend['peak_label']);
-        $response->assertSee($trend['footer']);
 
         foreach ($trend['rows'] as $row) {
             $response->assertSee($row['week']);
@@ -170,7 +167,6 @@ class DirectorSalesTest extends TestCase
         $response = $this->get(route('director.sales'));
 
         $response->assertOk();
-        $response->assertSee($channels['badge']);
         $response->assertSee($channels['title']);
         $response->assertSee($channels['subtitle']);
         $response->assertSee($channels['total_label']);
@@ -197,11 +193,8 @@ class DirectorSalesTest extends TestCase
         $response = $this->get(route('director.sales'));
 
         $response->assertOk();
-        $response->assertSee($portfolio['badge']);
-        $response->assertSee($portfolio['rule']);
         $response->assertSee($portfolio['title']);
         $response->assertSee($portfolio['subtitle']);
-        $response->assertSee($portfolio['footer']);
         $response->assertSee($portfolio['verified']);
 
         foreach ($portfolio['columns'] as $column) {
@@ -287,7 +280,6 @@ class DirectorSalesTest extends TestCase
         $response = $this->get(route('director.sales'));
 
         $response->assertOk();
-        $response->assertSee($settlement['badge']);
         $response->assertSee($settlement['title']);
         $response->assertSee($settlement['subtitle']);
         $response->assertSee($settlement['total_label']);

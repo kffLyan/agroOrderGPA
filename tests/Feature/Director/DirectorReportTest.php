@@ -47,7 +47,6 @@ class DirectorReportTest extends TestCase
         $response->assertOk();
         $response->assertSee('Laporan Penjualan Eksekutif');
         $response->assertSee('IMMUTABLE ARCHIVE');
-        $response->assertSee('AUDIT TRAIL LOG TERMINAL');
     }
 
     public function test_lock_banner_states_archive_identity(): void

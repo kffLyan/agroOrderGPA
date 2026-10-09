@@ -36,7 +36,7 @@ class SecretaryDashboardTest extends TestCase
         $response = $this->get(route('secretary.dashboard'));
 
         $response->assertOk();
-        $response->assertSee('Dashboard Konsol Operasional &amp; Tata Kelola Administrasi (Sekretaris)', false);
+        $response->assertSee('Dashboard Konsol Operasional &amp; Tata Kelola Administrasi', false);
         $response->assertSee('Total Pesanan Masuk (Hari Ini)');
         $response->assertSee('Menunggu Verifikasi Sekre');
         $response->assertSee('Surat Jalan Siap Terbit');
@@ -67,7 +67,7 @@ class SecretaryDashboardTest extends TestCase
         $response->assertSee('Total 4 PO Pending');
     }
 
-    public function test_console_renders_pipeline_stock_and_alert_sections(): void
+    public function test_console_renders_pipeline_and_stock_sections(): void
     {
         $response = $this->get(route('secretary.dashboard'));
 
@@ -76,12 +76,8 @@ class SecretaryDashboardTest extends TestCase
         $response->assertSee('Batch Logistik: B-02');
         $response->assertSee('32 Menit / Order');
         $response->assertSee('Kesiapan Stok &amp; Buffer Panen', false);
-        $response->assertSee('Gudang Transit Cibitung');
         $response->assertSee('Stroberi Ciwidey');
         $response->assertSee('Kol Putih Medan');
-        $response->assertSee('Peringatan Operasional &amp; Logistik', false);
-        $response->assertSee('Sisa 91 Menit');
-        $response->assertSee('B-9021-UYX');
     }
 
     public function test_console_navigation_exposes_secretary_modules(): void

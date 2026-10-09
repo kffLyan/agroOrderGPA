@@ -214,13 +214,20 @@
 
                         <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft/60 pt-4">
                             <p class="gpa-note text-ink-quiet">LOCK STAMP: {{ $item['lock_stamp'] }}</p>
+                            <div class="flex items-center gap-2">
+                                <a href="{{ route('prints.surat-jalan') }}"
+                                    class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-surface px-4 outline outline-1 outline-line-board transition-colors hover:bg-surface-muted">
+                                    <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0 text-ink" />
+                                    <span class="gpa-meta-lg font-bold text-ink">Cetak SJ</span>
+                                </a>
                             <button type="button" @click="issue(@js($item['sj']))"
                                 :disabled="isIssued(@js($item['sj'])) || !canIssue(@js($item['sj']))"
                                 class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-accent px-4 shadow-sub outline outline-1 outline-success-deep transition-colors hover:bg-accent-deep disabled:cursor-not-allowed disabled:bg-surface-pill disabled:text-ink-quiet disabled:outline-line-board">
                                 <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0 text-ink" />
                                 <span class="gpa-meta-lg font-bold text-ink"
                                     x-text="isIssued(@js($item['sj'])) ? @js($item['issued_label']) : @js($item['issue_label'])">{{ $item['issue_label'] }}</span>
-                            </button>
+                                </button>
+                            </div>
                         </div>
                     </article>
                 @endforeach

@@ -89,7 +89,6 @@ class DirectorGovernanceTest extends TestCase
         $this->assertCount(5, $parameters['cards']);
 
         foreach ($parameters['cards'] as $card) {
-            $response->assertSee($card['rule']);
             $response->assertSee($card['status']);
             $response->assertSee($card['title']);
             $response->assertSee($card['config_id']);

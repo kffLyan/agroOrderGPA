@@ -9,9 +9,6 @@
                 <h1 class="max-w-4xl font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $heading['title'] }}
                 </h1>
-                <p class="mt-2 max-w-4xl text-sm leading-[1.4rem] text-ink-body">
-                    {{ $heading['subtitle'] }}
-                </p>
             </div>
 
             <div class="flex flex-wrap gap-2 px-6 py-5">
@@ -94,10 +91,8 @@
                     <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft px-6 py-5">
                         <div class="min-w-0">
                             <h2 class="flex items-center gap-2 font-sans text-lg font-bold text-ink">
-                                <x-gpa.icon name="shield" class="h-4 w-4 shrink-0 text-success-deep" />
                                 {{ $queue['title'] }}
                             </h2>
-                            <p class="mt-1 text-xs text-ink-body">{{ $queue['description'] }}</p>
                         </div>
                         <span class="shrink-0 rounded bg-surface-pill px-2 py-1 gpa-micro text-ink-body">
                             {{ $queue['chip'] }}
@@ -249,10 +244,8 @@
                     <div class="flex items-start justify-between gap-3 border-b border-line-soft pb-3">
                         <div class="min-w-0">
                             <h2 class="font-sans text-lg font-bold text-ink">{{ $stock['title'] }}</h2>
-                            <p class="mt-1 text-xs text-ink-body">{{ $stock['description'] }}</p>
                         </div>
-                        <x-gpa.icon :name="$stock['icon']" class="h-3 w-3 shrink-0 text-ink-body" />
-                    </div>
+                        </div>
 
                     <ul class="space-y-4 pt-4">
                         @foreach ($stock['rows'] as $row)
@@ -284,7 +277,6 @@
                     </ul>
 
                     <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
-                        <p class="gpa-note text-ink-body">{{ $stock['footer_left'] }}</p>
                         <button type="button"
                             @click="run('Alokasi Stok', 'Modul Stok membuka alokasi buffer panen per gudang transit.')"
                             class="gpa-meta-lg font-semibold tracking-[0.88px] text-success-deep hover:text-success">
@@ -293,52 +285,6 @@
                     </div>
                 </section>
 
-                <section class="gpa-panel p-6">
-                    <div class="flex items-center gap-2 border-b border-line-soft pb-3">
-                        <x-gpa.icon name="alert-circle" class="h-4 w-[17px] shrink-0 text-warning" />
-                        <h2 class="font-sans text-lg font-bold text-ink">{{ $alerts['title'] }}</h2>
-                    </div>
-
-                    <ul class="space-y-3 pt-3">
-                        @foreach ($alerts['items'] as $index => $item)
-                            <li x-show="! dismissed.includes({{ $index }})"
-                                class="rounded-xl border-l-4 bg-surface-shell p-3 {{ $item['card_class'] }}">
-                                <div class="flex items-start justify-between gap-2">
-                                    <div class="flex min-w-0 items-start gap-2">
-                                        <x-gpa.icon :name="$item['icon']" class="mt-0.5 h-4 w-4 shrink-0 {{ $item['icon_class'] }}" />
-                                        <p class="gpa-meta-lg font-bold leading-[0.875rem] tracking-[0.88px] text-ink">
-                                            {{ $item['title'] }}
-                                        </p>
-                                    </div>
-                                    <span class="shrink-0 gpa-note {{ $item['value_class'] }}">{{ $item['value'] }}</span>
-                                </div>
-                                <p class="mt-1 pl-6 text-xs leading-[1.375rem] text-ink-body">{{ $item['body'] }}</p>
-                                <button type="button" @click="dismiss({{ $index }})"
-                                    class="mt-1 pl-6 gpa-note text-ink-quiet underline underline-offset-2 hover:text-ink">
-                                    Arsipkan
-                                </button>
-                            </li>
-                        @endforeach
-
-                        <li x-cloak x-show="visibleAlerts(@js($alerts['items'])).length === 0"
-                            class="rounded-xl border border-dashed border-line-board bg-surface-shell px-3 py-6 text-center">
-                            <p class="text-xs font-semibold text-ink">Tidak ada peringatan aktif.</p>
-                            <p class="mt-1 gpa-note text-ink-quiet">Seluruh notifikasi telah diarsipkan.</p>
-                        </li>
-                    </ul>
-
-                    <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line-faint pt-3">
-                        <p class="flex items-center gap-1.5">
-                            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>
-                            <span class="gpa-note text-ink-body">{{ $alerts['footer_left'] }}</span>
-                        </p>
-                        <button type="button"
-                            @click="run('Arsip Notifikasi', 'Riwayat peringatan operasional dibuka.')"
-                            class="gpa-note text-ink underline underline-offset-2 hover:text-success-deep">
-                            {{ $alerts['footer_right'] }} &rarr;
-                        </button>
-                    </div>
-                </section>
             </div>
         </div>
     </div>

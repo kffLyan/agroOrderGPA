@@ -100,7 +100,6 @@ class DirectorDashboardTest extends TestCase
 
         $response->assertOk();
         $response->assertSee($weekly['title']);
-        $response->assertSee($weekly['subtitle']);
         $response->assertSee('W40: 275 T // Target Rp 110M');
         $response->assertSee('Rp 108M');
         $response->assertSee('W44 [Berjalan - H+4]: Target Rp 140M');

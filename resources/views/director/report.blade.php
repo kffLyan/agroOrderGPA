@@ -47,13 +47,6 @@
 
         {{-- ---------- Banner arsip terkunci ---------- --}}
         <section class="relative overflow-hidden rounded-xl bg-brand p-6 text-white shadow-card">
-            <span aria-hidden="true"
-                class="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden select-none">
-                <span
-                    class="rotate-[-14deg] text-[64px] font-extrabold uppercase leading-none tracking-[6px] text-white/[0.04] sm:text-[86px]">
-                    {{ $lock['watermark'] }}
-                </span>
-            </span>
 
             <div class="relative flex flex-col gap-4">
                 <div class="flex flex-wrap items-center gap-3">
@@ -169,16 +162,9 @@
         <section class="overflow-hidden rounded-xl border border-line-hair bg-surface shadow-sub">
             <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-hair px-4 py-3">
                 <div class="flex min-w-0 items-center gap-2.5">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft">
-                        <x-gpa.icon name="package" class="h-4 w-4 text-brand" />
-                    </span>
                     <h2 class="text-[13px] font-bold leading-5 text-ink">{{ $commodities['title'] }}</h2>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <span
-                        class="rounded-full bg-brand-deep px-2.5 py-1 text-[9px] font-bold tracking-[0.88px] text-accent {{ $ledgerFont }}">
-                        {{ $commodities['method_chip'] }}
-                    </span>
                     <span
                         class="rounded-full bg-warning-cream px-2.5 py-1 text-[9px] font-bold tracking-[0.88px] text-warning-deep outline outline-1 -outline-offset-1 outline-warning-border">
                         {{ $commodities['locked_chip'] }}
@@ -258,16 +244,9 @@
         <section class="overflow-hidden rounded-xl border border-line-hair bg-surface shadow-sub">
             <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-hair px-4 py-3">
                 <div class="flex min-w-0 items-center gap-2.5">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft">
-                        <x-gpa.icon name="building" class="h-4 w-4 text-brand" />
-                    </span>
                     <h2 class="text-[13px] font-bold leading-5 text-ink">{{ $clients['title'] }}</h2>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <span
-                        class="rounded-full bg-surface-track px-2.5 py-1 text-[9px] font-bold tracking-[0.88px] text-ink-body outline outline-1 -outline-offset-1 outline-line {{ $ledgerFont }}">
-                        {{ $clients['count_chip'] }}
-                    </span>
                     <span
                         class="rounded-full bg-accent px-2.5 py-1 text-[9px] font-bold tracking-[0.88px] text-ink">
                         {{ $clients['audit_chip'] }}
@@ -334,44 +313,6 @@
 
         {{-- ---------- Audit trail & sertifikat ---------- --}}
         <section class="grid grid-cols-1 gap-4 xl:grid-cols-5">
-            <article class="overflow-hidden rounded-xl border border-line-hair bg-brand-deep text-white shadow-sub xl:col-span-3">
-                <header class="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-3">
-                    <h2 class="flex items-center gap-2 text-[12px] font-bold uppercase tracking-[0.88px] text-accent gpa-meta">
-                        <x-gpa.icon name="clipboard" class="h-4 w-4" />
-                        {{ $audit['title'] }}
-                    </h2>
-                    <span class="text-[10px] text-white/60 {{ $ledgerFont }}">{{ $audit['version'] }}</span>
-                </header>
-
-                <ol class="flex flex-col gap-2 px-4 py-4 {{ $ledgerFont }} text-[11px] leading-5">
-                    @foreach ($audit['entries'] as $entry)
-                        <li @class([
-                            'rounded-lg px-3 py-2',
-                            'bg-accent/10 ring-1 ring-inset ring-accent/30' => $entry['highlighted'] ?? false,
-                            'bg-white/[0.03]' => ! ($entry['highlighted'] ?? false),
-                        ])>
-                            <span class="text-white/50">{{ $entry['timestamp'] }}</span>
-                            <span class="font-bold text-accent">{{ $entry['tag'] }}</span>
-                            <span class="text-white/80">{{ $entry['message'] }}</span>
-                            @if (! empty($entry['trailing']))
-                                <span class="block font-semibold text-accent">{{ $entry['trailing'] }}</span>
-                            @endif
-                        </li>
-                    @endforeach
-                </ol>
-
-                <footer class="flex flex-wrap items-center gap-3 border-t border-white/10 px-4 py-3 text-[10px] gpa-meta">
-                    <span class="inline-flex items-center gap-1.5 text-accent">
-                        <span class="relative flex h-1.5 w-1.5" aria-hidden="true">
-                            <span class="absolute inline-flex h-full w-full animate-pulse-ring rounded-full bg-accent"></span>
-                            <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent"></span>
-                        </span>
-                        {{ $audit['daemon'] }}
-                    </span>
-                    <span class="text-white/60">{{ $audit['integrity'] }}</span>
-                </footer>
-            </article>
-
             <article class="flex flex-col gap-3 rounded-xl border border-line-hair bg-surface p-4 shadow-sub xl:col-span-2">
                 <div class="flex items-start gap-3">
                     <span

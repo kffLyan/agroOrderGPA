@@ -39,8 +39,6 @@ class SecretaryDispatchTest extends TestCase
         $response->assertOk();
         $response->assertSee('Penerbitan Dokumen Resmi Surat Jalan &amp;', false);
         $response->assertSee('Penugasan Armada Logistik');
-        $response->assertSee('SJ-GPA-YYYYMM-XXXX');
-        $response->assertSee('Rule 04 &amp; Rule 05', false);
         $response->assertSee('Timbangan Digital Dock #01 &amp; #02 Terhubung', false);
     }
 
@@ -63,28 +61,12 @@ class SecretaryDispatchTest extends TestCase
         $response->assertSee('Ledger Tertutup');
     }
 
-    public function test_console_renders_rule_05_hard_gate_banner(): void
-    {
-        $response = $this->get(route('secretary.dispatch'));
-
-        $response->assertOk();
-        $response->assertSee('Kepatuhan Sistem Mutlak');
-        $response->assertSee('Syarat Mutlak Penerbitan Surat Jalan (Rule 05)');
-        $response->assertSee('[SAH TERA GUDANG]', false);
-        $response->assertSee('Dilarang keras menerbitkan Surat Jalan berbasis kuantitas estimasi pemesanan');
-        $response->assertSee('Selisih netto timbangan otomatis merevisi invoice penagihan');
-        $response->assertSee('Protokol Keamanan');
-        $response->assertSee('Integrity Hash: SHA-256');
-        $response->assertSee('Audit Stamp: Auto-Sync');
-    }
-
     public function test_queue_lists_three_documents_with_ready_and_pending_states(): void
     {
         $response = $this->get(route('secretary.dispatch'));
 
         $response->assertOk();
-        $response->assertSee('Antrean Penerbitan Dokumen SJ (Menunggu Dispatch Admin)');
-        $response->assertSee('Pemisahan ketat State Ready vs State Locked sesuai protokol validitas timbang tera gudang.');
+        $response->assertSee('Antrean Penerbitan Dokumen SJ');
         $response->assertSee('Semua Gudang (SUB-04)');
 
         $response->assertSee('Identitas PO &amp; Klien', false);
@@ -99,7 +81,6 @@ class SecretaryDispatchTest extends TestCase
         $response->assertSee('450.0 kg');
         $response->assertSee('447.2 kg');
         $response->assertSee('-2.8 kg (-0.62%)');
-        $response->assertSee('Revisi otomatis Rule 06');
         $response->assertSee('Sah Tera Gudang #02');
         $response->assertSee('Tera: Ir. Bambang Sutrisno');
         $response->assertSee('Isuzu Elf Box');
@@ -120,6 +101,7 @@ class SecretaryDispatchTest extends TestCase
         $response->assertSee('Kunci Estimasi Ditolak');
 
         $response->assertSee('Terbitkan Surat Jalan');
+        $response->assertSee(route('prints.surat-jalan'), false);
     }
 
     public function test_queue_netto_totals_reconcile_with_document_preview(): void
@@ -167,34 +149,6 @@ class SecretaryDispatchTest extends TestCase
         }
     }
 
-    public function test_console_renders_official_surat_jalan_draft_preview(): void
-    {
-        $response = $this->get(route('secretary.dispatch'));
-
-        $response->assertOk();
-        $response->assertSee('Preview Draf Format Resmi Surat Jalan');
-        $response->assertSee('Standar Resmi PRD Section 10');
-        $response->assertSee('Cetak Bukti Fisik');
-        $response->assertSee('PT Agro Pasti Ada');
-        $response->assertSee('Divisi Distribusi Rantai Pasok Segar Agrikultur Nasional');
-        $response->assertSee('Surat Jalan &amp; Pengantar Barang', false);
-        $response->assertSee('Rincian Komoditas Fisik Sah (Timbangan Tera Dock):');
-        $response->assertSee('Selada Romaine Super (Hydroponic Grade A)');
-        $response->assertSee('Tomat Beef Pilihan (Premium Greenhouse)');
-        $response->assertSee('LOT-RS-2410-09');
-        $response->assertSee('LOT-TB-2410-44');
-        $response->assertSee('Catatan Hukum Logistik:');
-        $response->assertSee('SOP Kontrak GPA Pasal 14');
-        $response->assertSee('Diserahkan Oleh');
-        $response->assertSee('Pengangkut Armada');
-        $response->assertSee('Diterima Lengkap Oleh');
-        $response->assertSee('Nama Jelas &amp; Stempel Perusahaan', false);
-        $response->assertSee('Halaman 1 dari 1 — Dokumen Logistik Terkendali');
-        $response->assertSee('Otorisasi Sah Gudang');
-        $response->assertSee('Sah Netto Tera');
-        $response->assertSee('Digital Weight Secure Lock');
-    }
-
     public function test_console_mounts_alpine_component_with_release_flow(): void
     {
         $response = $this->get(route('secretary.dispatch'));
@@ -207,7 +161,6 @@ class SecretaryDispatchTest extends TestCase
         $response->assertSee('issuedCount()', false);
         $response->assertSee('confirmRelease()', false);
         $response->assertSee('saveDraft()', false);
-        $response->assertSee('printProof()', false);
         $response->assertSee('x-model', false);
     }
 
@@ -216,8 +169,7 @@ class SecretaryDispatchTest extends TestCase
         $response = $this->get(route('secretary.dispatch'));
 
         $response->assertOk();
-        $response->assertSee('Rilis dan Selesaikan Surat Jalan Ini? (Rule 05 Enforced)');
-        $response->assertSee('menerbitkan QR armada supir, dan memperbarui status pesanan menjadi DISPATCH READY.');
+        $response->assertSee('Rilis dan Selesaikan Surat Jalan Ini?');
         $response->assertSee('Simpan Draft');
         $response->assertSee('Konfirmasi &amp; Terbitkan SJ Resmi', false);
     }

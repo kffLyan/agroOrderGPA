@@ -7,20 +7,15 @@
         $totals = $journal['totals'];
     @endphp
 
-    <div class="space-y-6" x-data="secretaryReports(@js($journal['rows']), @js($filters), @js($tabs), @js($journal['total_transactions']), @js($seal['hash']))">
+    <div class="space-y-6" x-data="secretaryReports(@js($journal['rows']), @js($filters), @js($tabs), @js($journal['total_transactions']))">
         <section class="flex flex-col gap-5 border-b border-line-board pb-6 xl:flex-row xl:items-start xl:justify-between">
             <div class="min-w-0">
-                <p class="flex items-center gap-2 gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">
-                    <x-gpa.icon name="chart" class="h-[15px] w-[15px] shrink-0 text-success-deep" />
-                    {{ $heading['eyebrow'] }}
-                </p>
 
                 <h1 class="mt-2 font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $heading['title_before'] }}<br />
                     {{ $heading['title_after'] }}
                 </h1>
 
-                <p class="mt-3 max-w-3xl text-sm leading-5 text-ink-body">{{ $heading['subtitle'] }}</p>
             </div>
 
             <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center xl:flex-col xl:items-stretch">
@@ -112,31 +107,11 @@
         </div>
 
         <section class="flex flex-col gap-4 rounded-2xl bg-surface-shell p-4 outline outline-1 outline-line-board/60 xl:flex-row">
-            <div class="flex shrink-0 flex-col justify-between gap-4 rounded-xl bg-brand p-6 outline outline-1 outline-success-deep xl:w-[299px]">
-                <div>
-                    <p class="flex items-center gap-2 gpa-micro-bold uppercase tracking-[1.08px] text-accent">
-                        <x-gpa.icon name="shield" class="h-4 w-4 shrink-0" />
-                        {{ $standards['eyebrow'] }}
-                    </p>
-
-                    <h2 class="mt-3 font-sans text-lg font-bold leading-6 text-white">{{ $standards['title'] }}</h2>
-
-                    <p class="mt-2 text-xs leading-5 text-accent/80">{{ $standards['body'] }}</p>
-                </div>
-
-                <p class="border-t border-ink/40 pt-3 font-mono text-2xs font-semibold tracking-[0.88px] text-accent">
-                    {{ $standards['footer'] }}
-                </p>
-            </div>
-
             <div class="grid flex-1 gap-3 lg:grid-cols-3">
                 @foreach ($standards['rules'] as $rule)
                     <article class="flex flex-col justify-between gap-3 rounded-xl bg-surface p-4 shadow-card">
                         <div>
                             <div class="flex flex-wrap items-center justify-between gap-2">
-                                <span class="rounded bg-accent px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-success-deep">
-                                    {{ $rule['chip'] }}
-                                </span>
                                 <span class="gpa-micro-bold uppercase tracking-[1.08px] text-success-deep">{{ $rule['tag'] }}</span>
                             </div>
 
@@ -145,10 +120,6 @@
                             <p class="mt-1.5 gpa-note leading-5 text-ink-body">{{ $rule['body'] }}</p>
                         </div>
 
-                        <p class="flex items-start gap-2 border-t border-line-soft pt-3 gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-success-deep">
-                            <x-gpa.icon name="check-circle" class="mt-px h-3.5 w-3.5 shrink-0" />
-                            {{ $rule['note'] }}
-                        </p>
                     </article>
                 @endforeach
             </div>
@@ -170,7 +141,6 @@
         <section class="flex flex-col overflow-hidden rounded-2xl bg-surface shadow-card">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line-board/60 bg-surface-shell px-4 py-2.5">
                 <p class="flex items-center gap-2 gpa-micro-bold uppercase tracking-[1.08px] text-ink">
-                    <x-gpa.icon name="receipt" class="h-[15px] w-[15px] shrink-0" />
                     {{ $journal['title'] }}
                 </p>
 
@@ -178,8 +148,6 @@
                     <span x-text="'Menampilkan ' + visibleRows().length + ' dari ' + {{ $journal['total_transactions'] }} + ' Transaksi'">
                         {{ $journal['meta_left'] }}
                     </span>
-                    <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
-                    <span class="text-success-deep">{{ $journal['meta_right'] }}</span>
                 </p>
             </div>
 
@@ -315,17 +283,9 @@
             <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft pb-4">
                     <div class="flex min-w-0 items-center gap-3">
-                        <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-track">
-                            <x-gpa.icon name="scale" class="h-[18px] w-[18px] shrink-0 text-ink" />
-                        </span>
-
                         <h2 class="font-sans text-lg font-bold leading-6 text-ink">{{ $deviation['title'] }}</h2>
                     </div>
 
-                    <span class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 gpa-micro-bold uppercase tracking-[1.08px] text-success-deep outline outline-1 outline-accent-deep">
-                        <x-gpa.icon name="badge-check" class="h-[15px] w-[15px] shrink-0" />
-                        {{ $deviation['badge'] }}
-                    </span>
                 </div>
 
                 <div class="grid gap-3 sm:grid-cols-3">
@@ -351,7 +311,6 @@
                 </p>
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
-                    <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $deviation['foot_left'] }}</p>
                     <p class="gpa-micro-bold uppercase tracking-[1.08px] text-success-deep">{{ $deviation['foot_right'] }}</p>
                 </div>
             </section>
@@ -390,35 +349,19 @@
             </section>
         </div>
 
-        <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card xl:flex-row xl:items-center xl:justify-between">
-            <div class="flex min-w-0 items-start gap-4">
-                <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand outline outline-1 outline-success-deep">
-                    <x-gpa.icon name="lock" class="h-5 w-5 shrink-0 text-accent" />
-                </span>
-
-                <div class="min-w-0">
-                    <p class="flex flex-wrap items-center gap-2 font-mono text-2xs font-bold tracking-[0.88px] text-ink">
-                        {{ $seal['label'] }}
-                        <span class="rounded bg-surface-shell px-2 py-1 text-success-deep outline outline-1 outline-line-board">{{ $seal['hash'] }}</span>
-                    </p>
-
-                    <p class="mt-1.5 max-w-2xl gpa-note leading-5 text-ink-body">{{ $seal['body'] }}</p>
-                </div>
-            </div>
-
-            <div class="flex shrink-0 flex-wrap items-center gap-2">
-                @foreach ($seal['actions'] as $action)
-                    <button type="button" @click="act(@js($action['key']))"
-                        @class([
-                            'inline-flex items-center gap-2 rounded-xl px-4 py-2.5 gpa-micro-bold uppercase tracking-[1.08px] transition-colors',
-                            'bg-brand text-accent outline outline-1 outline-success-deep hover:bg-brand-deep' => $action['variant'] === 'brand',
-                            'bg-surface-shell text-ink-body outline outline-1 outline-line-board hover:bg-surface-track' => $action['variant'] === 'ghost',
-                        ])>
-                        <x-gpa.icon :name="$action['icon']" class="h-4 w-4 shrink-0" />
-                        {{ $action['label'] }}
-                    </button>
-                @endforeach
-            </div>
-        </section>
+        <div
+            class="sticky bottom-4 z-20 flex w-full flex-wrap items-center justify-between gap-2 rounded-2xl bg-surface/95 p-3 shadow-card outline outline-1 outline-line-board/60 backdrop-blur">
+            @foreach ($seal['actions'] as $action)
+                <button type="button" @click="act(@js($action['key']))"
+                    @class([
+                        'inline-flex items-center gap-2 rounded-xl px-4 py-2.5 gpa-micro-bold uppercase tracking-[1.08px] transition-colors',
+                        'bg-brand text-accent outline outline-1 outline-success-deep hover:bg-brand-deep' => $action['variant'] === 'brand',
+                        'bg-surface-shell text-ink-body outline outline-1 outline-line-board hover:bg-surface-track' => $action['variant'] === 'ghost',
+                    ])>
+                    <x-gpa.icon :name="$action['icon']" class="h-4 w-4 shrink-0" />
+                    {{ $action['label'] }}
+                </button>
+            @endforeach
+        </div>
     </div>
 @endsection

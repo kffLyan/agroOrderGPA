@@ -55,7 +55,7 @@ class SecretaryDashboardData
     public static function heading(): array
     {
         return [
-            'title' => 'Dashboard Konsol Operasional & Tata Kelola Administrasi (Sekretaris)',
+            'title' => 'Dashboard Konsol Operasional & Tata Kelola Administrasi',
             'subtitle' => 'Monitoring terpusat status order masuk, rekonsiliasi pasokan harian, antrean verifikasi pembayaran manual, dan penerbitan dokumen logistik.',
         ];
     }
@@ -122,7 +122,6 @@ class SecretaryDashboardData
                 'value_class' => 'text-danger',
                 'unit_class' => 'font-semibold',
                 'note' => [
-                    ['text' => 'PRD Rule 03: ', 'class' => 'font-semibold text-ink'],
                     ['text' => 'Cek ketersediaan buffer gudang & limit kredit sebelum lock PO.', 'class' => 'text-ink-body'],
                 ],
                 'badge' => ['label' => 'Perlu Tindakan', 'class' => 'border-danger/30 bg-danger-soft text-danger-ink'],
@@ -164,7 +163,6 @@ class SecretaryDashboardData
                 'value_class' => 'text-warning',
                 'unit_class' => 'font-semibold',
                 'note' => [
-                    ['text' => 'PRD Rule 11: ', 'class' => 'font-semibold text-ink'],
                     ['text' => 'Pencocokan mutasi rekening koran BCA/QRIS sebelum release.', 'class' => 'text-ink-body'],
                 ],
                 'badge' => null,
@@ -271,7 +269,7 @@ class SecretaryDashboardData
                     ],
                 ],
             ],
-            'footer_left' => 'Menampilkan 4 dari 4 antrean prioritas cut-off 16:00 WIB',
+            'footer_left' => 'Menampilkan 4 dari 4 antrean',
             'footer_right' => 'Buka Seluruh Antrean PO',
         ];
     }
@@ -410,7 +408,7 @@ class SecretaryDashboardData
                     ],
                 ],
             ],
-            'footer_left' => 'Update Telemetri Sensor: 4 menit lalu',
+            'footer_left' => 'Update: 4 menit lalu',
             'footer_right' => 'Kelola Alokasi Stok',
         ];
     }

@@ -40,7 +40,7 @@ class SecretaryVerificationData
     {
         return [
             'title' => 'Konsol Verifikasi Pesanan & Kesiapan Alokasi (Sekretaris Desk)',
-            'subtitle' => 'Eksekusi validasi aturan bisnis: stok buffer, kuantitas netto riil (Rule 04), hard-gate surat jalan (Rule 05), serta rekonsiliasi manual.',
+            'subtitle' => 'Eksekusi validasi aturan bisnis: stok buffer, kuantitas netto riil, hard-gate surat jalan, serta rekonsiliasi manual.',
             'compliance_label' => 'Tingkat Kepatuhan Validasi',
             'compliance_value' => '100.0% (Zero Bypass)',
         ];
@@ -120,7 +120,7 @@ class SecretaryVerificationData
     public static function rule03(): array
     {
         return [
-            'title' => 'Validasi Stok & Alokasi Pasokan (Rule 03: Anti Stok Minus)',
+            'title' => 'Validasi Stok & Alokasi Pasokan',
             'foot_left' => 'Alokasi kuota petani telah disinkronkan ke Dasbor Koordinator Lapangan Sukabumi & Lembang.',
             'foot_right' => 'Rule 03 Status: Enforced & Verified',
         ];

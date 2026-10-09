@@ -419,7 +419,16 @@
                     <p class="text-xs font-medium leading-4 text-ink-body">
                         Rekap {{ $invoice['sj_count'] }} Surat Jalan Fisik ({{ $detail['strip'] }}):
                     </p>
-                    <p class="text-xs font-bold leading-4 text-ink">{{ $invoice['netto_net_label'] }}</p>
+                    <div class="flex items-center gap-3">
+                        <p class="text-xs font-bold leading-4 text-ink">{{ $invoice['netto_net_label'] }}</p>
+                        <a href="{{ route('prints.surat-jalan') }}"
+                            class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-ink px-2 py-1 text-white transition-colors hover:bg-brand-deep">
+                            <x-gpa.icon name="printer" class="h-3 w-3" />
+                            <span class="text-[11px] font-bold uppercase leading-[14px] tracking-[0.88px]">
+                                Cetak SJ
+                            </span>
+                        </a>
+                    </div>
                 </div>
 
                 <div class="flex flex-col gap-2.5 p-4">

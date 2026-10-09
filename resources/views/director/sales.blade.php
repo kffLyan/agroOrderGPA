@@ -71,7 +71,6 @@
                 <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $salesHeader['title'] }}
                 </h1>
-                <p class="max-w-2xl text-sm leading-5 text-ink-body">{{ $salesHeader['subtitle'] }}</p>
             </div>
 
             <div class="flex shrink-0 flex-col items-stretch gap-3">
@@ -148,7 +147,6 @@
                         @endforeach
                     </div>
 
-                    <p class="gpa-note text-ink-body">{{ $scope['hint'] }}</p>
                 </div>
             @endforeach
         </section>
@@ -217,7 +215,6 @@
             </div>
 
             <footer class="flex flex-wrap items-center justify-between gap-2 border-t border-line-board/60 pt-4">
-                <p class="max-w-3xl gpa-note text-ink-body">{{ $trend['footer'] }}</p>
                 <p class="gpa-note font-bold text-ink">{{ $trend['peak_label'] }}</p>
             </footer>
         </section>
@@ -226,8 +223,6 @@
         <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0 space-y-1">
-                    <span
-                        class="inline-block rounded bg-surface-track px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta text-ink outline outline-1 -outline-offset-1 outline-line-board">{{ $channels['badge'] }}</span>
                     <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $channels['title'] }}</h2>
                     <p class="text-xs leading-4 text-ink-body">{{ $channels['subtitle'] }}</p>
                 </div>
@@ -265,9 +260,6 @@
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board pb-4">
                 <div class="min-w-0 space-y-1">
                     <div class="flex flex-wrap items-center gap-2">
-                        <span
-                            class="rounded bg-accent px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta text-ink-strong outline outline-1 -outline-offset-1 outline-accent-deep">{{ $portfolio['badge'] }}</span>
-                        <span class="gpa-note font-semibold text-success-deep">{{ $portfolio['rule'] }}</span>
                     </div>
                     <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $portfolio['title'] }}</h2>
                     <p class="max-w-3xl text-xs leading-4 text-ink-body">{{ $portfolio['subtitle'] }}</p>
@@ -371,7 +363,6 @@
             </div>
 
             <footer class="flex flex-wrap items-center justify-between gap-2 border-t border-line-board/60 pt-3">
-                <p class="max-w-3xl gpa-note text-ink-body">{{ $portfolio['footer'] }}</p>
                 <p class="gpa-note font-bold text-ink">MARGIN FLOOR: 15.0%</p>
             </footer>
         </section>
@@ -380,7 +371,6 @@
         <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0 space-y-1">
-                    <span class="inline-block rounded bg-brand-deep px-2 py-1 text-[9px] font-bold leading-3 gpa-micro-bold text-accent-deep">{{ $settlement['badge'] }}</span>
                     <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $settlement['title'] }}</h2>
                     <p class="max-w-3xl text-xs leading-4 text-ink-body">{{ $settlement['subtitle'] }}</p>
                 </div>

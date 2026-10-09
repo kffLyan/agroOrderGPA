@@ -118,14 +118,14 @@ class SecretaryInvoiceData
     public static function generator(): array
     {
         return [
-            'title' => 'Generator Faktur Konsolidasi Surat Jalan (Rule 14 & 05)',
+            'title' => 'Generator Faktur Konsolidasi Surat Jalan',
             'subtitle' => 'Otoritas Sekretariat Operasional // Automated Clearing Draft',
             'badge_label' => 'MODUL:',
             'badge' => 'MULTI-SJ BUNDLING V2.1',
-            'client_label' => 'Pilih Entitas Klien B2B (Terdaftar Kredit TOP):',
+            'client_label' => 'Pilih Klien',
             'credit_label' => 'Limit Plafon Kredit:',
             'credit_sisa_label' => 'SISA:',
-            'documents_title' => 'Surat Jalan Siap Difakturkan (Hanya SJ "Selesai" dengan POD & Bobot Netto Sah)',
+            'documents_title' => 'Surat Jalan Siap Difakturkan',
             'documents_badge' => '3 Dokumen Valid',
             'engine_note' => 'Terfilter Otomatis oleh GPA-Engine',
             'columns' => [

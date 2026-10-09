@@ -20,6 +20,7 @@ class DocumentsTest extends TestCase
         $response->assertSee('Enterprise Top 30D');
         $response->assertSee('PT Kuliner Prima Nusantara');
         $response->assertSee(route('documents'), false);
+        $response->assertSee(route('prints.surat-jalan'), false);
         $response->assertSee('aria-current="page"', false);
     }
 

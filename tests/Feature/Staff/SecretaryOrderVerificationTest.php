@@ -42,7 +42,6 @@ class SecretaryOrderVerificationTest extends TestCase
         $response->assertSee('01 Antrean Verifikasi Pesanan');
         $response->assertSee('02 Konsolidasi Faktur &amp; Penagihan Tempo', false);
         $response->assertSee('03 Verifikasi Pembayaran Manual');
-        $response->assertSee('stok buffer, kuantitas netto riil (Rule 04), hard-gate surat jalan (Rule 05)');
     }
 
     public function test_queue_lists_three_orders_with_channel_filters(): void
@@ -85,27 +84,17 @@ class SecretaryOrderVerificationTest extends TestCase
         $response = $this->get(route('secretary.verification'));
 
         $response->assertOk();
-        $response->assertSee('Validasi Stok &amp; Alokasi Pasokan (Rule 03: Anti Stok Minus)', false);
+        $response->assertSee('Validasi Stok &amp; Alokasi Pasokan', false);
         $response->assertSee('Permintaan (PO)');
         $response->assertSee('Rencana Alokasi Pasokan (Harvest + Buffer)');
         $response->assertSee('Status Validasi');
-        $response->assertSee('Alokasi kuota petani telah disinkronkan');
-        $response->assertSee('Rule 03 Status: Enforced &amp; Verified', false);
-        $response->assertSee('SOP Wajib Sistem');
-        $response->assertSee('Pemberitahuan Aturan Bisnis #04 (Netto vs Estimasi):');
-        $response->assertSee('wajib menunggu Actual Net Weight');
-        $response->assertSee('Toleransi Shrinkage: Maksimal 2.5%');
     }
 
-    public function test_console_renders_hard_gate_checklist_and_order_actions(): void
+    public function test_console_renders_order_actions(): void
     {
         $response = $this->get(route('secretary.verification'));
 
         $response->assertOk();
-        $response->assertSee('Hard-Gate Checklist Sekretariat:');
-        $response->assertSee('Pastikan alokasi kebun petani aktif &amp; terverifikasi.', false);
-        $response->assertSee('Jangan terbitkan Surat Jalan sebelum verifikasi tonase riil timbangan.');
-        $response->assertSee('Klien tempo wajib memiliki saldo plafon aktif.');
         $response->assertSee('Tolak Pesanan');
         $response->assertSee('Minta Revisi Klien');
         $response->assertSee('Verifikasi &amp; Teruskan ke Koordinator Lapangan', false);
@@ -116,7 +105,6 @@ class SecretaryOrderVerificationTest extends TestCase
         $response = $this->get(route('secretary.verification'));
 
         $response->assertOk();
-        $response->assertSee('Rule 14 Preview');
         $response->assertSee('Konsolidasi Faktur Bulanan &amp; Penagihan Tempo', false);
         $response->assertSee('Cetak Draft Tagihan');
         $response->assertSee('Terbitkan Invoice Tempo (TOP 30)');
@@ -126,7 +114,6 @@ class SecretaryOrderVerificationTest extends TestCase
         $response->assertSee('10-0229', false);
         $response->assertSee('Actual Netto: 650.0 kg (Net Weight Valid)', false);
         $response->assertSee('BAP TTD Lengkap');
-        $response->assertSee('Total Tagihan Tempo Akumulatif Siap Terbit (Rule 14)');
         $response->assertSee('selected.deliveries_total', false);
         $response->assertSee('selected.deliveries_held', false);
     }
@@ -146,7 +133,7 @@ class SecretaryOrderVerificationTest extends TestCase
         $response = $this->get(route('secretary.dashboard'));
 
         $response->assertOk();
-        $response->assertSee('Dashboard Konsol Operasional &amp; Tata Kelola Administrasi (Sekretaris)', false);
+        $response->assertSee('Dashboard Konsol Operasional &amp; Tata Kelola Administrasi', false);
         $response->assertSee('Pipeline Siklus Pesanan Hari Ini');
         $response->assertDontSee('Konsolidasi Faktur Bulanan &amp; Penagihan Tempo', false);
     }

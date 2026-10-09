@@ -10,10 +10,10 @@
                     <h1 class="font-sans text-3xl font-extrabold leading-10 tracking-[-0.01em] text-brand">
                         {{ $heading['title'] }}
                     </h1>
-                    <p class="mt-2 max-w-4xl text-sm leading-[1.4rem] text-ink-body">{{ $heading['subtitle'] }}</p>
                 </div>
 
-                <div class="shrink-0 rounded-xl bg-surface px-4 py-2 text-right shadow-sub outline outline-1 outline-line-board">
+                <div
+                    class="shrink-0 rounded-xl bg-surface px-4 py-2 text-right shadow-sub outline outline-1 outline-line-board">
                     <p class="gpa-micro text-ink-quiet">{{ $heading['compliance_label'] }}</p>
                     <p class="gpa-meta-lg font-bold tracking-[0.28px] text-success-deep">
                         {{ $heading['compliance_value'] }}
@@ -26,7 +26,7 @@
                     <button type="button" @click="handleStep(@js($step))" @class([
                         'inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-left transition-colors',
                         'bg-brand shadow-sub text-accent' => $step['active'],
-                        'bg-surface text-ink-body outline outline-1 outline-line-board hover:bg-surface-muted' => ! $step['active'],
+                        'bg-surface text-ink-body outline outline-1 outline-line-board hover:bg-surface-muted' => !$step['active'],
                     ])>
                         <span class="h-2 w-2 shrink-0 rounded-full {{ $step['active'] ? 'bg-accent' : 'bg-line-board' }}"
                             aria-hidden="true"></span>
@@ -41,11 +41,9 @@
             </div>
         </section>
 
-        <div class="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
-            <section class="gpa-panel overflow-hidden">
-                <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-5">
+        <section class="gpa-panel overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-5">
                     <h2 class="flex items-center gap-2 font-sans text-lg font-bold text-ink">
-                        <x-gpa.icon name="package" class="h-[18px] w-[18px] shrink-0 text-success-deep" />
                         {{ $queue['title'] }}
                     </h2>
                     <span class="shrink-0 rounded-full bg-accent px-2 py-0.5 gpa-micro-bold text-success-ink">
@@ -85,7 +83,7 @@
                                         <p class="mt-0.5 text-xs leading-5 text-ink-body">{{ $order['meta'] }}</p>
                                     </div>
 
-                                    @if (! empty($order['chip']))
+                                    @if (!empty($order['chip']))
                                         <span class="shrink-0 rounded px-1.5 py-0.5 gpa-micro-bold {{ $order['chip']['class'] }}">
                                             {{ $order['chip']['label'] }}
                                         </span>
@@ -139,7 +137,8 @@
                     </p>
                 </div>
 
-                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft bg-surface-shell px-6 py-3">
+                <div
+                    class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft bg-surface-shell px-6 py-3">
                     <p class="gpa-note text-ink-body"
                         x-text="'Menampilkan ' + visibleCount() + ' dari ' + pendingCount() + ' pesanan menunggu verifikasi'">
                     </p>
@@ -148,39 +147,12 @@
                         <span x-text="'Tampilkan ' + resolved.length + ' PO Diproses'"></span>
                     </button>
                 </div>
-            </section>
-
-            <section class="gpa-panel bg-surface-shell p-4 outline outline-1 outline-line-board/50">
-                <h2 class="flex items-center gap-2 gpa-meta-lg font-bold tracking-[0.88px] text-ink">
-                    <x-gpa.icon name="badge-check" class="h-4 w-4 shrink-0 text-ink" />
-                    {{ $checklist['title'] }}:
-                </h2>
-
-                <ul class="mt-3 space-y-1.5">
-                    @foreach ($checklist['items'] as $index => $item)
-                        <li class="flex items-start gap-2">
-                            <input type="checkbox" id="hard-gate-{{ $index }}" value="{{ $index }}"
-                                x-model="checked" class="gpa-check">
-                            <label for="hard-gate-{{ $index }}"
-                                class="text-xs leading-5 text-ink-body">{{ $item }}</label>
-                        </li>
-                    @endforeach
-                </ul>
-
-                <p class="mt-4 flex items-center gap-1.5 border-t border-line-soft pt-3">
-                    <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
-                    <span class="gpa-note text-ink-body" x-text="checked.length + ' / ' + checklistTotal + ' poin terverifikasi'">
-                    </span>
-                </p>
-            </section>
-        </div>
+        </section>
 
         <section id="order-inspection" class="gpa-panel scroll-mt-24 p-6">
             <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft pb-4">
                 <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-2">
-                        <span class="rounded bg-surface-pill px-2 py-0.5 gpa-micro-bold text-ink"
-                            x-text="selected.source"></span>
                         <span class="gpa-note text-ink-quiet" x-text="selected.po_ref"></span>
                     </div>
                     <h2 class="mt-2 font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink"
@@ -211,7 +183,6 @@
             <div class="mt-6">
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <h3 class="flex items-center gap-2 font-sans text-lg font-bold text-ink">
-                        <x-gpa.icon name="gauge" class="h-5 w-[18px] shrink-0 text-success-deep" />
                         {{ $rule03['title'] }}
                     </h3>
 
@@ -295,50 +266,13 @@
                     </table>
                 </div>
 
-                <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
-                    <p class="gpa-note text-ink-quiet">{{ $rule03['foot_left'] }}</p>
-                    <p class="gpa-note text-ink-quiet">{{ $rule03['foot_right'] }}</p>
-                </div>
-            </div>
-
-            <div class="mt-6 rounded-xl bg-brand p-4 outline outline-2 outline-accent/50">
-                <div class="flex items-start gap-3">
-                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-ink">
-                        <x-gpa.icon name="info" class="h-4 w-4 text-accent" />
-                    </span>
-
-                    <div class="min-w-0">
-                        <span class="rounded bg-accent px-2 py-0.5 gpa-micro-bold text-ink">{{ $rule04['chip'] }}</span>
-                        <h4 class="mt-2 font-sans text-[0.9375rem] font-bold leading-5 text-white">
-                            {{ $rule04['title'] }}
-                        </h4>
-                        <p class="mt-1.5 text-sm leading-6 text-line-soft">
-                            {{ $rule04['body_before'] }}
-                            <span class="gpa-meta-lg font-bold tracking-[0.28px] text-accent"
-                                x-text="selected.rule04_qty"></span>
-                            {{ $rule04['body_mid'] }}
-                            <span class="font-semibold text-white underline underline-offset-2">
-                                {{ $rule04['highlight'] }}
-                            </span>
-                            {{ $rule04['body_after'] }}
-                        </p>
-
-                        <ul class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
-                            @foreach ($rule04['bullets'] as $bullet)
-                                <li class="flex items-center gap-1.5 gpa-note text-accent">
-                                    <span class="h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
-                                    {{ $bullet }}
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                </div>
             </div>
 
             <div
                 class="mt-4 grid gap-4 rounded-xl bg-surface-shell p-4 outline outline-1 outline-line-soft sm:grid-cols-2 lg:grid-cols-4">
                 <template x-for="cell in selected.pricing" :key="cell.label">
-                    <div :class="cell.highlight ? 'rounded-lg bg-surface px-3 py-2 outline outline-1 outline-success-deep/30' : ''">
+                    <div
+                        :class="cell.highlight ? 'rounded-lg bg-surface px-3 py-2 outline outline-1 outline-success-deep/30' : ''">
                         <p class="gpa-micro text-ink-quiet" x-text="cell.label"></p>
                         <p class="mt-1 gpa-meta-lg font-bold tracking-[0.28px]"
                             :class="cell.highlight ? 'text-success-deep' : 'text-ink'">
@@ -375,12 +309,11 @@
         <section class="gpa-panel overflow-hidden">
             <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft px-6 py-5">
                 <div class="min-w-0">
-                    <span class="rounded bg-ink px-2 py-0.5 gpa-micro-bold text-accent">{{ $rule14['chip'] }}</span>
                     <h2 class="mt-2 font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink">
                         {{ $rule14['title'] }}
                     </h2>
                     <p class="mt-1.5 max-w-3xl text-xs leading-5 text-ink-body">
-                        Akumulasi Delivery Order (DO) selesai kirim siap cetak faktur tagihan berkala untuk
+                        Akumulasi Delivery Order selesai kirim siap cetak faktur tagihan berkala untuk
                         <span class="font-semibold text-ink" x-text="selected.client"></span>
                         (Plafon Aktif: <span class="gpa-note text-success-deep" x-text="selected.plafon"></span>).
                     </p>
@@ -445,7 +378,8 @@
                                     <span class="gpa-note text-ink" x-text="row.subtotal"></span>
                                 </td>
                                 <td class="px-4 py-3 text-center">
-                                    <span class="inline-flex items-center gap-1 rounded bg-accent px-2 py-0.5 gpa-micro-bold text-success-ink">
+                                    <span
+                                        class="inline-flex items-center gap-1 rounded bg-accent px-2 py-0.5 gpa-micro-bold text-success-ink">
                                         <x-gpa.icon name="check" class="h-2.5 w-2.5 shrink-0" />
                                         BAP TTD Lengkap
                                     </span>
@@ -456,8 +390,9 @@
                 </table>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-2 border-t-2 border-brand bg-surface-track px-6 py-3">
-                <p class="gpa-note text-ink">Total Tagihan Tempo Akumulatif Siap Terbit (Rule 14)</p>
+            <div
+                class="flex flex-wrap items-center justify-between gap-2 border-t-2 border-brand bg-surface-track px-6 py-3">
+                <p class="gpa-note text-ink">Total Tagihan</p>
                 <p class="font-sans text-lg font-extrabold tracking-[-0.01em] text-success-deep"
                     x-text="selected.deliveries_total"></p>
                 <p class="gpa-note text-ink-quiet" x-text="selected.deliveries_held"></p>

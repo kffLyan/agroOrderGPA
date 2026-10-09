@@ -136,9 +136,6 @@
                 @foreach ($parameters['cards'] as $parameter)
                     <article class="flex h-full flex-col gap-3 rounded-xl bg-surface-shell/60 p-4 outline outline-1 -outline-offset-1 outline-line-board">
                         <div class="flex items-center justify-between gap-2">
-                            <span class="rounded bg-surface-track px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta text-ink">
-                                {{ $parameter['rule'] }}
-                            </span>
                             <span class="rounded px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta {{ $actionTone[$parameter['status_tone']] }}">
                                 {{ $parameter['status'] }}
                             </span>

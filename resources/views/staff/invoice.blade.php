@@ -6,17 +6,10 @@
     <div class="space-y-6" x-data="secretaryInvoicing(@js($clients), @js($ledger['rows']), @js($ledger['status_filters']), @js($ledger['total_invoices']))">
         <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0">
-                <x-gpa.icon name="invoice" class="h-3 w-3 shrink-0 text-success-deep" />
-
                 <h1 class="mt-2 font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $heading['title_before'] }}<br />
                     {{ $heading['title_after'] }}
                 </h1>
-
-                <p class="mt-3 max-w-3xl text-sm leading-5 text-ink-body">
-                    {{ $heading['subtitle_before'] }}
-                    <span class="font-semibold text-ink">{{ $heading['subtitle_rule'] }}</span>
-                </p>
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-3">
@@ -65,25 +58,14 @@
         <section class="overflow-hidden rounded-2xl shadow-card">
             <div class="flex flex-wrap items-center justify-between gap-3 bg-brand px-6 py-4">
                 <div class="flex min-w-0 items-center gap-3">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent">
-                        <x-gpa.icon name="file-text" class="h-4 w-4 shrink-0 text-ink" />
-                    </span>
 
                     <div class="min-w-0">
                         <h2 class="font-sans text-lg font-bold leading-6 text-surface">
                             {{ $generator['title'] }}
                         </h2>
-                        <p class="gpa-micro font-semibold uppercase tracking-[1.08px] text-accent">
-                            {{ $generator['subtitle'] }}
-                        </p>
                     </div>
                 </div>
 
-                <span
-                    class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-brand-deep/80 px-3 py-1.5 outline outline-1 outline-accent/30">
-                    <span class="gpa-micro-bold uppercase tracking-[1.08px] text-surface-disabled">{{ $generator['badge_label'] }}</span>
-                    <span class="gpa-micro-bold uppercase tracking-[1.08px] text-accent">{{ $generator['badge'] }}</span>
-                </span>
             </div>
 
             <div class="flex flex-col gap-6 bg-surface p-6">
@@ -245,10 +227,8 @@
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="min-w-0">
                     <h2 class="flex items-center gap-2 font-sans text-lg font-bold leading-6 text-ink">
-                        <x-gpa.icon name="chart" class="h-[18px] w-[18px] shrink-0 text-ink" />
                         {{ $ledger['title'] }}
                     </h2>
-                    <p class="mt-0.5 text-xs leading-4 text-ink-body">{{ $ledger['subtitle'] }}</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-1.5 rounded-xl bg-surface-shell p-1 outline outline-1 outline-line-board/50">

@@ -133,6 +133,7 @@ class CoordinatorDispatchTest extends TestCase
         }
 
         $response->assertSee('(4)');
+        $response->assertSee(route('prints.surat-jalan'), false);
     }
 
     public function test_queue_net_reconciles_with_gross_minus_tara_and_manifest_tonage(): void

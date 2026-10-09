@@ -52,11 +52,9 @@ class DirectorVolumeTest extends TestCase
         $response->assertOk();
         $response->assertSee('Monitoring Volume Komoditas, Stok Panen');
         $response->assertSee('&amp; Kapasitas Pasokan', false);
-        $response->assertSee($header['subtitle']);
         $response->assertSee($header['range_label']);
         $response->assertSee($header['range_value']);
         $response->assertSee($header['action_label']);
-        $response->assertSee($header['refresh_label']);
     }
 
     public function test_kpi_band_renders_four_reconciled_cards(): void
@@ -187,7 +185,6 @@ class DirectorVolumeTest extends TestCase
         $response->assertSee($trend['title']);
         $response->assertSee($trend['subtitle']);
         $response->assertSee($trend['peak_label']);
-        $response->assertSee($trend['metrology']);
         $response->assertSee($trend['confidence_label']);
         $this->assertCount(8, $trend['rows']);
 
@@ -257,7 +254,6 @@ class DirectorVolumeTest extends TestCase
         $response = $this->get(route('director.volume'));
 
         $response->assertOk();
-        $response->assertSee($allocations['badge']);
         $response->assertSee($allocations['title']);
         $response->assertSee($allocations['subtitle']);
         $response->assertSee($allocations['total_label']);

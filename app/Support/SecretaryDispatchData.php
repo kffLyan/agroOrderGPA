@@ -40,9 +40,9 @@ class SecretaryDispatchData
             'eyebrow' => 'Sub-04 // Modul Surat Jalan & Penugasan Armada',
             'title_before' => 'Penerbitan Dokumen Resmi Surat Jalan &',
             'title_after' => 'Penugasan Armada Logistik',
-            'subtitle_before' => 'Otorisasi penerbitan Surat Jalan (format:',
-            'subtitle_format' => 'SJ-GPA-YYYYMM-XXXX',
-            'subtitle_after' => ') berbasis Actual Net Weight penimbangan gudang terkunci (PRD App-GPA.md Section 10, Rule 04 & Rule 05).',
+            'subtitle_before' => 'Otorisasi penerbitan Surat Jalan',
+            'subtitle_format' => '',
+            'subtitle_after' => 'berbasis Actual Net Weight penimbangan gudang terkunci.',
             'badge' => 'Timbangan Digital Dock #01 & #02 Terhubung',
         ];
     }
@@ -128,7 +128,7 @@ class SecretaryDispatchData
     public static function queue(): array
     {
         return [
-            'title' => 'Antrean Penerbitan Dokumen SJ (Menunggu Dispatch Admin)',
+            'title' => 'Antrean Penerbitan Dokumen SJ',
             'subtitle' => 'Pemisahan ketat State Ready vs State Locked sesuai protokol validitas timbang tera gudang.',
             'chip' => 'Filter: Semua Gudang (SUB-04)',
             'columns' => [
@@ -159,7 +159,7 @@ class SecretaryDispatchData
                 'estimate' => '450.0 kg',
                 'netto' => '447.2 kg',
                 'deviation' => '-2.8 kg (-0.62%)',
-                'revision' => 'Revisi otomatis Rule 06',
+                'revision' => null,
                 'status_chip' => [
                     'label' => 'Sah Tera Gudang #02',
                     'class' => 'bg-accent text-ink outline outline-1 outline-success-deep',
@@ -219,7 +219,7 @@ class SecretaryDispatchData
                 'estimate' => '1.200.0 kg',
                 'netto' => '1.192.5 kg',
                 'deviation' => '-7.5 kg (-0.63%)',
-                'revision' => 'Revisi otomatis Rule 06',
+                'revision' => null,
                 'status_chip' => [
                     'label' => 'Sah Tera Gudang #01',
                     'class' => 'bg-accent text-ink outline outline-1 outline-success-deep',
@@ -379,7 +379,7 @@ class SecretaryDispatchData
     public static function letterhead(): array
     {
         return [
-            'company' => 'PT Agro Pasti Ada',
+            'company' => 'GREEN PASUNDAN AGRIKULTUR',
             'address' => 'Divisi Distribusi Rantai Pasok Segar Agrikultur Nasional',
             'address_line' => 'Jl. Pergudangan Agroniaga Kav. 14, Subang, Jawa Barat 41285',
             'contact' => 'Telp: (0260) 412-9088 | NPWP: 01.345.890.4-421.000',
@@ -425,11 +425,11 @@ class SecretaryDispatchData
     {
         return [
             [
-                'label' => 'Diserahkan Oleh',
-                'role' => 'Koordinator Gudang GPA',
-                'stamp' => '[Terverifikasi Digital]',
-                'name' => 'Ir. Bambang Sutrisno',
-                'note' => 'Gudang Subang // 08:38 WIB',
+                'label' => 'Menerima',
+                'role' => '',
+                'stamp' => '(Stempel & Tanda Tangan Penerima)',
+                'name' => '(............................................)',
+                'note' => 'Nama Jelas & Stempel Perusahaan',
             ],
             [
                 'label' => 'Pengangkut Armada',
@@ -439,11 +439,11 @@ class SecretaryDispatchData
                 'note' => 'SIM: 8810293102 // B 9421 TX',
             ],
             [
-                'label' => 'Diterima Lengkap Oleh',
-                'role' => 'Penerima Barang Dock',
-                'stamp' => '(Stempel & Tanda Tangan Penerima)',
-                'name' => '(............................................)',
-                'note' => 'Nama Jelas & Stempel Perusahaan',
+                'label' => 'Hormat Kami',
+                'role' => 'Koperasi Produsen Green Pasundan Agriculture',
+                'stamp' => '[Terverifikasi Digital]',
+                'name' => 'Ir. Bambang Sutrisno',
+                'note' => '',
             ],
         ];
     }
@@ -454,7 +454,7 @@ class SecretaryDispatchData
     public static function release(): array
     {
         return [
-            'title' => 'Rilis dan Selesaikan Surat Jalan Ini? (Rule 05 Enforced)',
+            'title' => 'Rilis dan Selesaikan Surat Jalan Ini?',
             'body_before' => 'Otorisasi akan mengunci timbangan riil',
             'body_after' => ', menerbitkan QR armada supir, dan memperbarui status pesanan menjadi DISPATCH READY.',
             'draft_label' => 'Simpan Draft',

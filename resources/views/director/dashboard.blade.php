@@ -42,14 +42,9 @@
                 <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $header['title'] }}
                 </h1>
-                <p class="max-w-3xl text-sm leading-5 text-ink-body">{{ $header['subtitle'] }}</p>
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-3">
-                <p class="flex flex-col rounded-lg bg-surface px-3 py-2 text-right outline outline-1 -outline-offset-1 outline-line-board">
-                    <span class="gpa-note text-ink-body">{{ $header['period_label'] }}</span>
-                    <span class="gpa-meta-lg font-bold text-ink">{{ $header['period_value'] }}</span>
-                </p>
                 <button type="button" @click="printPdf()"
                     class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-white shadow-sub outline outline-1 -outline-offset-1 outline-success transition-colors hover:bg-brand-hover">
                     <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0" />
@@ -79,18 +74,18 @@
 
                         <p class="gpa-figure text-[30px] leading-9 text-ink">
                             {{ $kpi['value'] }}
-                            @if (! empty($kpi['value_suffix']))
+                            @if (!empty($kpi['value_suffix']))
                                 <span class="gpa-meta-lg font-normal text-success-deep">{{ $kpi['value_suffix'] }}</span>
                             @endif
                         </p>
 
-                        @if (! empty($kpi['badge']) && $kpi['variant'] === 'badge')
+                        @if (!empty($kpi['badge']) && $kpi['variant'] === 'badge')
                             <div class="flex flex-wrap items-center gap-1.5">
                                 <span
                                     class="rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta {{ $badgeTone[$kpi['tone']] }}">{{ $kpi['badge'] }}</span>
                                 <span class="gpa-meta-lg text-ink-body">{{ $kpi['value_note'] }}</span>
                             </div>
-                        @elseif (! empty($kpi['split']))
+                        @elseif (!empty($kpi['split']))
                             <p class="text-xs font-bold leading-4">
                                 @foreach ($kpi['split'] as $part)
                                     <span class="{{ $splitTone[$part['tone']] }}">{{ $part['text'] }}</span>
@@ -102,7 +97,7 @@
                                     class="rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta {{ $badgeTone['success'] }}">{{ $kpi['badge'] }}</span>
                                 <span class="gpa-meta-lg text-ink-body">{{ $kpi['value_note'] }}</span>
                             </div>
-                        @elseif (! empty($kpi['value_note']))
+                        @elseif (!empty($kpi['value_note']))
                             <p class="text-xs leading-4 text-ink-body">{{ $kpi['value_note'] }}</p>
                         @endif
                     </div>
@@ -115,7 +110,8 @@
                                     <span class="gpa-note font-bold text-ink">{{ $kpi['progress']['value'] }}</span>
                                 </div>
                                 <div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
-                                    <div class="h-full rounded-full bg-success-deep" style="width: {{ $kpi['progress']['percent'] }}%"></div>
+                                    <div class="h-full rounded-full bg-success-deep"
+                                        style="width: {{ $kpi['progress']['percent'] }}%"></div>
                                 </div>
                             </div>
                         @elseif (isset($kpi['cta']))
@@ -146,7 +142,6 @@
                 <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                     <div class="min-w-0">
                         <h2 class="gpa-section-title text-ink">{{ $weekly['title'] }}</h2>
-                        <p class="mt-1 gpa-meta font-medium text-ink-body">{{ $weekly['subtitle'] }}</p>
                     </div>
                     <ul class="flex flex-wrap items-center gap-3">
                         @foreach ($weekly['legend'] as $item)
@@ -219,7 +214,8 @@
                                     </p>
                                 </div>
                                 <div class="h-2 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
-                                    <div class="h-full rounded-full {{ $row['bar'] }}" style="width: {{ $row['share'] }}%"></div>
+                                    <div class="h-full rounded-full {{ $row['bar'] }}" style="width: {{ $row['share'] }}%">
+                                    </div>
                                 </div>
                             </div>
                         @endforeach
@@ -232,7 +228,8 @@
                                 <div
                                     class="flex flex-1 flex-col items-center gap-0.5 rounded bg-surface-shell p-2 text-center outline outline-1 -outline-offset-1 outline-line-board">
                                     <p class="text-[10px] leading-[15px] text-ink-body gpa-meta">{{ $channel['name'] }}</p>
-                                    <p class="pt-0.5 text-[14px] font-bold leading-5 text-ink gpa-meta">{{ $channel['share'] }}%</p>
+                                    <p class="pt-0.5 text-[14px] font-bold leading-5 text-ink gpa-meta">{{ $channel['share'] }}%
+                                    </p>
                                     <p class="text-[9px] leading-[13.5px] text-success-deep gpa-meta">
                                         {{ $channel['tons_label'] }} T
                                     </p>

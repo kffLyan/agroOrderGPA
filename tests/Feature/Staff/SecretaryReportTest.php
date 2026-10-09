@@ -37,10 +37,8 @@ class SecretaryReportTest extends TestCase
         $response = $this->get(route('secretary.reports'));
 
         $response->assertOk();
-        $response->assertSee('Sub-06 // Modul Rekapitulasi Laporan Operasional &amp; Distribusi', false);
         $response->assertSee('Laporan Rekapitulasi Operasional,');
         $response->assertSee('Distribusi &amp; Penjualan', false);
-        $response->assertSee('Kompilasi audit transaksi harian, mingguan, dan bulanan berbasis data penimbangan aktual dan Surat Jalan terverifikasi (PRD App-GPA.md Section 6.2, 14, 15, &amp; 22).', false);
 
         $response->assertSee('Sinkronisasi Audit (04:00 WIB)');
         $response->assertSee('Ekspor Rekapitulasi (.csv / .xlsx)');
@@ -107,27 +105,16 @@ class SecretaryReportTest extends TestCase
         $response = $this->get(route('secretary.reports'));
 
         $response->assertOk();
-        $response->assertSee('Standar Integritas');
-        $response->assertSee('Kepatuhan Penagihan Buku Besar');
-        $response->assertSee('Protokol wajib untuk menjamin validitas hukum, kepatuhan audit metrologi, dan transparansi antara supir, gudang, dan klien B2B.');
-        $response->assertSee('App-GPA Engine Verif // Hash SHA-256 Enforced');
-
-        $response->assertSee('PRD Rule 04');
         $response->assertSee('Mutlak Timbangan Sah');
         $response->assertSee('Net Weight Binding');
         $response->assertSee('Dilarang menagih berbasis estimasi PO.');
-        $response->assertSee('64 transaksi terkunci timbangan sah');
 
-        $response->assertSee('PRD Rule 05');
         $response->assertSee('Toleransi &lt;= 0.5%', false);
         $response->assertSee('Deviasi Bobot Loading Dock');
         $response->assertSee('Jika deviasi &gt; 0.5%, faktur diblokir otomatis untuk mediasi.', false);
-        $response->assertSee('-0.19% rata-rata deviasi bulan ini (Lolos)');
 
-        $response->assertSee('PRD Rule 14');
         $response->assertSee('Trifecta Audit');
         $response->assertSee('Dokumen Rantai 3-Arah');
-        $response->assertSee('3 berkas sinkron 100% per invoice');
     }
 
     public function test_console_renders_four_recap_tabs_with_sales_tab_active(): void
@@ -146,9 +133,8 @@ class SecretaryReportTest extends TestCase
         $response = $this->get(route('secretary.reports'));
 
         $response->assertOk();
-        $response->assertSee('Jurnal Buku Transaksi Riil // Actual Weight Binding Enforced');
+        $response->assertSee('Jurnal Buku Transaksi');
         $response->assertSee('Menampilkan 6 dari 64 Transaksi');
-        $response->assertSee('Terverifikasi Tera Metrologi #MET-2024-88');
 
         $response->assertSee('No Faktur / Ref SJ');
         $response->assertSee('Klien B2B &amp; Lokasi', false);
@@ -240,7 +226,6 @@ class SecretaryReportTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('Analisis Deviasi Kumulatif Timbangan');
-        $response->assertSee('Tera Metrologi Sah');
         $response->assertSee('PO Estimasi Awal');
         $response->assertSee('483.90 Ton');
         $response->assertSee('Kalkulasi Kontrak B2B');
@@ -253,7 +238,6 @@ class SecretaryReportTest extends TestCase
 
         $response->assertSee('phantom weight');
         $response->assertSee('MET-7741-KBL-2024');
-        $response->assertSee('Metrological Protocol: ISO/IEC 17025 Accredited');
         $response->assertSee('Status: Compliant &amp; Secured', false);
     }
 
@@ -276,18 +260,15 @@ class SecretaryReportTest extends TestCase
         $response->assertSee('Integrity Score: 100%');
     }
 
-    public function test_console_renders_integrity_hash_and_distribution_actions(): void
+    public function test_console_renders_distribution_actions(): void
     {
         $response = $this->get(route('secretary.reports'));
 
         $response->assertOk();
-        $response->assertSee('Stempel Hash Integritas SHA-256 (Immutable Ledger):');
-        $response->assertSee('7f8a9e4d01b92a3c8e54c03b');
-        $response->assertSee('Laporan ini berstatus Dokumen Sah Korporat PT Guna Panen Agro, mengikat akuntansi fiskal dan operasional armada.');
-
         $response->assertSee('Unduh Rekapitulasi Lengkap Excel (.xlsx)');
         $response->assertSee('Cetak Laporan Resmi (.pdf)');
         $response->assertSee('Kirim Rekapitulasi ke Konsol Direktur Utama');
+        $response->assertDontSee('Stempel Hash Integritas SHA-256 (Immutable Ledger):');
     }
 
     public function test_report_data_reconciles_journal_totals_kpis_and_deviation_analysis(): void

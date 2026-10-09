@@ -260,7 +260,7 @@ class SecretaryReportData
     public static function journal(): array
     {
         return [
-            'title' => 'Jurnal Buku Transaksi Riil // Actual Weight Binding Enforced',
+            'title' => 'Jurnal Buku Transaksi',
             'meta_left' => 'Menampilkan 6 dari 64 Transaksi',
             'meta_right' => 'Terverifikasi Tera Metrologi #MET-2024-88',
             'total_transactions' => 64,

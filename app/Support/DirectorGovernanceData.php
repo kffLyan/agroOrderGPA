@@ -119,7 +119,7 @@ class DirectorGovernanceData
         return [
             [
                 'key' => 'ledger',
-                'eyebrow' => 'METRIC #01 // INTEGRITAS LEDGER',
+                'eyebrow' => 'INTEGRITAS LEDGER',
                 'chip' => 'ACTIVE GUARD',
                 'chip_tone' => 'success',
                 'value' => '100% VALID',
@@ -130,7 +130,7 @@ class DirectorGovernanceData
             ],
             [
                 'key' => 'credit',
-                'eyebrow' => 'METRIC #02 // KONTROL KREDIT B2B',
+                'eyebrow' => 'KONTROL KREDIT B2B',
                 'chip' => 'CEILING LIMIT',
                 'chip_tone' => 'neutral',
                 'value' => self::amount(self::CREDIT_CEILING),
@@ -143,7 +143,7 @@ class DirectorGovernanceData
             ],
             [
                 'key' => 'approval',
-                'eyebrow' => 'METRIC #03 // DIR APPROVAL STATUS',
+                'eyebrow' => 'DIR APPROVAL STATUS',
                 'chip' => 'VERIFIED',
                 'chip_tone' => 'success',
                 'value' => self::APPROVED_CONTRACTS.' Kontrak Disetujui',
@@ -154,7 +154,7 @@ class DirectorGovernanceData
             ],
             [
                 'key' => 'guard',
-                'eyebrow' => 'METRIC #04 // HARD-GUARD COMPLIANCE',
+                'eyebrow' => 'HARD-GUARD COMPLIANCE',
                 'chip' => 'POLICY ENGINE',
                 'chip_tone' => 'neutral',
                 'value' => '0 Pelanggaran',
@@ -267,11 +267,11 @@ class DirectorGovernanceData
             'filter_label' => 'Filter',
             'ledger_status' => 'LEDGER STATUS: CONTINUOUS APPEND // PREVIOUS BLOCK HASH MATCHED 100%',
             'columns' => [
-                'TIMESTAMP / WIB',
+                'TIMESTAMP',
                 'AKTOR & USER ID',
                 'KATEGORI AKSI',
                 'DOKUMEN TERKAIT',
-                'RINCIAN PERUBAHAN / KEPUTUSAN',
+                'RINCIAN PERUBAHAN',
                 'STATUS HASH SHA-256',
             ],
             'rows' => self::auditRows(),

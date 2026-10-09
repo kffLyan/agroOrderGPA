@@ -45,14 +45,9 @@
         {{-- Page header --}}
         <section class="flex flex-wrap items-start justify-between gap-4 border-b border-line-board/80 pb-4">
             <div class="min-w-0 space-y-1">
-                <p class="gpa-eyebrow flex items-center gap-2">
-                    <x-gpa.icon name="settings" class="h-3.5 w-3.5 text-success-deep" />
-                    {{ $header['eyebrow'] }}
-                </p>
                 <h1 class="font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
                     {{ $header['title'] }}
                 </h1>
-                <p class="max-w-3xl text-sm leading-5 text-ink-body">{{ $header['subtitle'] }}</p>
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-2">
@@ -122,7 +117,6 @@
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0">
                     <h2 class="gpa-section-title text-ink">{{ $parameters['title'] }}</h2>
-                    <p class="mt-1 gpa-meta font-medium text-ink-body">{{ $parameters['subtitle'] }}</p>
                 </div>
 
                 <button type="button" @click="editParameters()"
@@ -177,7 +171,6 @@
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0">
                     <h2 class="gpa-section-title text-ink">{{ $audit['title'] }}</h2>
-                    <p class="mt-1 gpa-meta font-medium text-ink-body">{{ $audit['subtitle'] }}</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
@@ -289,56 +282,5 @@
             </footer>
         </section>
 
-        {{-- Critical controls --}}
-        <section class="grid gap-4 lg:grid-cols-2">
-            @foreach ($controls as $control)
-                <article @class([
-                    'flex h-full flex-col gap-3 rounded-2xl bg-surface p-6 shadow-card',
-                    'outline outline-2 -outline-offset-2 outline-danger' => $control['protocol_tone'] === 'danger',
-                    'outline outline-2 -outline-offset-2 outline-success-deep' => $control['protocol_tone'] === 'success',
-                ])>
-                    <div class="flex flex-wrap items-center justify-between gap-2">
-                        <h2 class="gpa-micro-bold {{ $statusTone[$control['protocol_tone']] }}">
-                            {{ $control['protocol'] }}
-                        </h2>
-                        <span class="gpa-note font-bold {{ $statusTone[$control['status_tone']] }}">
-                            {{ $control['status'] }}
-                        </span>
-                    </div>
-
-                    <h3 class="gpa-section-title text-ink">{{ $control['title'] }}</h3>
-                    <p class="text-[12px] leading-5 text-ink-body">{{ $control['description'] }}</p>
-
-                    <dl class="flex flex-col gap-2 border-t border-line-hair pt-3">
-                        @foreach ($control['facts'] as $fact)
-                            <div class="flex flex-wrap items-start justify-between gap-2">
-                                <dt class="gpa-note text-ink-body">{{ $fact['label'] }}</dt>
-                                <dd class="gpa-meta text-right font-bold {{ $factTone[$fact['tone'] ?? 'ink'] }}">
-                                    {{ $fact['value'] }}
-                                </dd>
-                            </div>
-                        @endforeach
-                    </dl>
-
-                    <footer class="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-line-hair pt-4">
-                        <span class="inline-flex items-center gap-1 gpa-note font-semibold text-ink-body">
-                            <x-gpa.icon name="key" class="h-3 w-3 shrink-0" />
-                            {{ $control['authority'] }}
-                        </span>
-                        <button type="button"
-                            @click="{{ $control['key'] === 'freeze' ? 'toggleFreeze()' : 'configureSuccession()' }}"
-                            @class([
-                                'inline-flex items-center gap-1.5 rounded px-3.5 py-2 gpa-meta-lg font-bold shadow-sub transition-opacity hover:opacity-90',
-                                'bg-danger text-white' => $control['key'] === 'freeze',
-                                'bg-ink text-accent' => $control['key'] !== 'freeze',
-                            ])>
-                            <x-gpa.icon :name="$control['key'] === 'freeze' ? 'lock' : 'users'"
-                                class="h-3.5 w-3.5 shrink-0" />
-                            {{ $control['action'] }}
-                        </button>
-                    </footer>
-                </article>
-            @endforeach
-        </section>
     </div>
 @endsection

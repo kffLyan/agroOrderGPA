@@ -48,14 +48,9 @@
         <section class="flex flex-col gap-4">
             <header class="flex flex-wrap items-start justify-between gap-4 border-b border-line-board/80 pb-4">
                 <div class="min-w-0 space-y-1">
-                    <p class="gpa-eyebrow flex items-center gap-2">
-                        <x-gpa.icon name="users" class="h-3.5 w-3.5 text-success-deep" />
-                        {{ $header['eyebrow'] }}
-                    </p>
                     <h1 class="font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
                         {{ $header['title'] }}
                     </h2>
-                    <p class="max-w-3xl text-sm leading-5 text-ink-body">{{ $header['subtitle'] }}</p>
                 </div>
 
                 <div class="flex shrink-0 flex-wrap items-center gap-2">
@@ -113,7 +108,6 @@
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0">
                     <h2 class="gpa-section-title text-ink">{{ $matrix['title'] }}</h2>
-                    <p class="mt-1 gpa-meta font-medium text-ink-body">{{ $matrix['subtitle'] }}</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
@@ -138,9 +132,6 @@
                                         'text-center text-ink-body' => $index !== 0,
                                     ])>
                                     {{ $column['label'] }}
-                                    <span class="mt-0.5 block text-[9px] font-medium normal-case tracking-normal text-ink-body/80">
-                                        {{ $column['rule'] }}
-                                    </span>
                                 </th>
                             @endforeach
                         </tr>
@@ -182,7 +173,6 @@
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0">
                     <h2 class="gpa-section-title text-ink">{{ $directory['title'] }}</h2>
-                    <p class="mt-1 gpa-meta font-medium text-ink-body">{{ $directory['subtitle'] }}</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">

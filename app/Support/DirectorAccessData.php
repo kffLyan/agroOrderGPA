@@ -139,7 +139,7 @@ class DirectorAccessData
     public static function matrix(): array
     {
         return [
-            'title' => 'Matriks Hak Akses & Wewenang 5 Peran (PRD Section 6 & 7.1 Matrix Table)',
+            'title' => 'Hak Akses & Wewenang 5 Role',
             'subtitle' => 'Pemisahan ketat tugas komputasi dan otorisasi. Seluruh wewenang diatur dengan token kriptografi per sesi.',
             'status' => 'STATUS: IMMUTABLE AUDIT ACTIVE',
             'status_tone' => 'success',

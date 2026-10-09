@@ -37,7 +37,7 @@ class DirectorReportData
     /**
      * Jabatan penandatangan utama laporan.
      */
-    public const SIGNATORY_ROLE = 'DIR-01 // Direktur Utama PT Agro Pasti Ada';
+    public const SIGNATORY_ROLE = 'Direktur Utama Green Pasundan Agriculture';
 
     /**
      * Nomor sertifikat audit yang menyertai arsip.
@@ -139,12 +139,12 @@ class DirectorReportData
     public static function lock(): array
     {
         return [
-            'badge' => '[STATUS: LAPORAN TELAH DIKUNCI & DISAHKAN // IMMUTABLE ARCHIVE]',
+            'badge' => 'STATUS: LAPORAN TELAH DIKUNCI',
             'watermark' => 'LOCKED_SHA256',
             'period' => self::PERIOD,
             'locked_at' => self::LOCKED_AT,
             'signatory' => self::SIGNATORY,
-            'signatory_role' => 'DIR-01 // Direktur Utama',
+            'signatory_role' => 'Direktur Utama',
             'hash_label' => 'SHA-256:',
             'hash' => self::HASH,
             'audit_button' => 'LIHAT LOG AUDIT FORENSIK',
@@ -167,19 +167,19 @@ class DirectorReportData
                 [
                     'label' => 'PERIODE:',
                     'value' => self::PERIOD_SHORT,
-                    'chip' => '[TERKUNCI / LOCKED]',
+                    'chip' => 'LOCKED',
                     'chip_tone' => 'warning',
                 ],
                 [
                     'label' => 'SEGMENTASI:',
                     'value' => 'Semua Klien B2B',
-                    'chip' => '[FROZEN]',
+                    'chip' => 'FROZEN',
                     'chip_tone' => 'neutral',
                 ],
                 [
                     'label' => 'KOMODITAS:',
                     'value' => $commodityCount.' Komoditas Inti',
-                    'chip' => '[FROZEN]',
+                    'chip' => 'FROZEN',
                     'chip_tone' => 'neutral',
                 ],
             ],
@@ -335,7 +335,7 @@ class DirectorReportData
                 'Status Audit',
             ],
             'rows' => $rows,
-            'total_label' => 'TOTAL KONSOLIDASI (5 KOMODITAS)',
+            'total_label' => 'TOTAL KONSOLIDASI',
             'total_po_kg' => $poTotal,
             'total_po_label' => number_format($poTotal, 0, ',', '.').' kg',
             'total_tera_kg' => $teraTotal,
@@ -443,11 +443,11 @@ class DirectorReportData
             : round(array_sum($contractTerms) / count($contractTerms), 1);
 
         return [
-            'title' => 'Tabel 2: Rekapitulasi Penjualan Klien B2B & Status Pembayaran Tempo (TOP)',
+            'title' => 'Rekapitulasi Penjualan Klien B2B & Status Pembayaran Tempo (TOP)',
             'count_chip' => $poTotal.' TOTAL PO // 0 SENGKETA',
             'audit_chip' => 'AR-AUDIT COMPLETED',
             'columns' => [
-                'Entitas Klien / Mitra B2B',
+                'Klien / Mitra B2B',
                 'Frek. PO',
                 'Volume Tera Sah (kg)',
                 'Total Tagihan Bruto',
@@ -457,7 +457,7 @@ class DirectorReportData
                 'Status Piutang',
             ],
             'rows' => $rows,
-            'total_label' => 'TOTAL REKAPITULASI B2B (Q4 2026)',
+            'total_label' => 'TOTAL REKAPITULASI',
             'total_po_count' => $poTotal,
             'total_po_label' => $poTotal.' PO',
             'total_volume_kg' => $volumeTotal,
@@ -527,8 +527,8 @@ class DirectorReportData
         return [
             'title' => 'Lembar Pengesahan Digital Direksi & Sertifikat Audit',
             'certificate' => self::CERTIFICATE,
-            'seal_caption' => 'GPA AUDIT SEAL // PUBLIC KEY VERIFIED',
-            'authority_label' => 'PENANDATANGAN UTAMA (DIRECTORATE AUTHORITY):',
+            'seal_caption' => 'GPA AUDIT SEAL',
+            'authority_label' => 'PENANDATANGAN UTAMA:',
             'signatory' => self::SIGNATORY,
             'signatory_role' => self::SIGNATORY_ROLE,
             'lock_time_label' => 'WAKTU PENGUNCIAN:',

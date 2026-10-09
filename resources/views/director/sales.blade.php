@@ -64,10 +64,6 @@
         {{-- Page header + scope pita KPI --}}
         <section class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0 space-y-1">
-                <p class="gpa-eyebrow flex items-center gap-2">
-                    <x-gpa.icon name="banknote" class="h-3.5 w-3.5 text-success-deep" />
-                    {{ $salesHeader['eyebrow'] }}
-                </p>
                 <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $salesHeader['title'] }}
                 </h1>
@@ -156,7 +152,6 @@
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0">
                     <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $trend['title'] }}</h2>
-                    <p class="mt-1 max-w-3xl text-xs leading-4 text-ink-body">{{ $trend['subtitle'] }}</p>
                 </div>
 
                 <ul class="flex flex-wrap items-center gap-3">
@@ -224,7 +219,6 @@
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0 space-y-1">
                     <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $channels['title'] }}</h2>
-                    <p class="text-xs leading-4 text-ink-body">{{ $channels['subtitle'] }}</p>
                 </div>
 
                 <p class="gpa-note font-bold text-ink">{{ $channels['total_label'] }}</p>
@@ -262,7 +256,6 @@
                     <div class="flex flex-wrap items-center gap-2">
                     </div>
                     <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $portfolio['title'] }}</h2>
-                    <p class="max-w-3xl text-xs leading-4 text-ink-body">{{ $portfolio['subtitle'] }}</p>
                 </div>
 
                 <button type="button" @click="verifyPortfolio()"
@@ -372,7 +365,6 @@
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0 space-y-1">
                     <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $settlement['title'] }}</h2>
-                    <p class="max-w-3xl text-xs leading-4 text-ink-body">{{ $settlement['subtitle'] }}</p>
                 </div>
 
                 <p class="gpa-note font-bold text-ink">{{ $settlement['total_label'] }}</p>
@@ -408,14 +400,10 @@
                     <span class="min-w-0">
                         <span class="block font-sans text-base font-bold leading-6 text-ink">{{ $settlement['seal']['title'] }}</span>
                         <span class="mt-0.5 block gpa-note text-success-deep">{{ $settlement['seal']['note'] }}</span>
-                        <span class="mt-1 block gpa-note text-ink-body">{{ $settlement['seal']['meta'] }}</span>
                     </span>
                 </div>
 
                 <div class="flex shrink-0 items-center gap-2">
-                    <span class="inline-flex items-center rounded bg-surface px-3 py-2 outline outline-1 -outline-offset-1 outline-line-board">
-                        <span class="rounded bg-ink-strong px-2 py-1 gpa-note font-bold text-accent-deep">{{ $settlement['seal']['chip'] }}</span>
-                    </span>
                     <button type="button" @click="sealRecap()"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 gpa-note font-bold text-ink outline outline-1 -outline-offset-1 outline-accent-deep transition-colors hover:bg-accent-deep hover:text-ink">
                         <x-gpa.icon name="shield" class="h-3.5 w-3.5 shrink-0" />

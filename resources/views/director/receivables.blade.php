@@ -120,9 +120,6 @@
                 <h1 class="font-sans text-[28px] font-extrabold leading-9 tracking-[0.6px] text-ink sm:text-[32px] sm:leading-10">
                     {{ $header['title'] }}
                 </h1>
-                <p class="mt-2 max-w-4xl text-[14px] leading-5 text-ink-body">
-                    {{ $header['subtitle'] }}
-                </p>
             </div>
 
             <div class="flex items-center gap-2">
@@ -180,7 +177,6 @@
                     <div class="flex items-center gap-2">
                         <h2 class="text-[18px] font-bold leading-6 text-ink">{{ $aging['title'] }}</h2>
                     </div>
-                    <p class="mt-1 text-[12px] leading-4 text-ink-body">{{ $aging['subtitle'] }}</p>
                 </div>
 
                 <span
@@ -231,7 +227,6 @@
             <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-board bg-surface-shell/40 p-6">
                 <div class="min-w-0">
                     <h2 class="text-[18px] font-bold leading-6 text-ink">{{ $ledger['title'] }}</h2>
-                    <p class="mt-1 text-[12px] leading-4 text-ink-body">{{ $ledger['subtitle'] }}</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
@@ -426,59 +421,11 @@
 
         {{-- ---------- Kebijakan pembekuan & protokol verifikasi ---------- --}}
         <section class="flex flex-col gap-4">
-            <article class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
-                <header class="flex flex-wrap items-center justify-between gap-3 pb-2">
-                    <div class="flex items-center gap-2">
-                        <h2 class="text-[18px] font-bold leading-6 text-ink">{{ $policy['title'] }}</h2>
-                    </div>
-                    <span class="rounded bg-accent px-2 py-0.5 text-[10px] font-bold leading-3 tracking-[1px] text-ink {{ $mono }}">
-                        {{ $policy['chip'] }}
-                    </span>
-                </header>
-
-                <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                    @foreach ($policy['rules'] as $rule)
-                        <article class="flex flex-col gap-2 rounded-xl bg-surface-shell p-4 outline outline-1 -outline-offset-1 outline-line-board">
-                            <div class="flex items-center gap-2">
-                                <x-gpa.icon :name="$rule['icon']"
-                                    class="h-3.5 w-3.5 shrink-0 {{ $ruleTone[$rule['tone']] ?? $ruleTone['danger'] }}" />
-                                <h3 class="text-[11px] font-bold leading-[14px] tracking-[0.88px] text-ink {{ $mono }}">
-                                    {{ $rule['rule'] }}
-                                </h3>
-                            </div>
-                            <p class="text-[12px] leading-[19.5px] text-ink-body">{{ $rule['body'] }}</p>
-                            <div class="mt-auto flex items-center justify-between gap-3 border-t border-line-board pt-1">
-                                <span class="text-[9px] font-semibold leading-3 tracking-[1.08px] text-success-deep {{ $mono }}">
-                                    {{ $rule['threshold_label'] }}
-                                </span>
-                                <span class="text-[9px] font-bold leading-3 tracking-[1.08px] text-success-deep {{ $mono }}">
-                                    {{ $rule['status_label'] }}
-                                </span>
-                            </div>
-                        </article>
-                    @endforeach
-                </div>
-
-                <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[#EFF4DC] p-3 outline outline-1 -outline-offset-1 outline-accent-deep">
-                    <div class="flex items-center gap-2">
-                        <x-gpa.icon name="shield" class="h-4 w-4 shrink-0 text-success-deep" />
-                        <p class="text-[12px] font-medium leading-4 text-ink">{{ $policy['bypass_note'] }}</p>
-                    </div>
-                    <button type="button" @click="openBypassLog()"
-                        class="text-[11px] font-bold leading-[14px] tracking-[0.88px] text-ink transition-colors hover:text-success-deep {{ $mono }}">
-                        {{ $policy['bypass_action'] }} →
-                    </button>
-                </div>
-            </article>
-
             <article class="flex flex-col justify-between gap-6 rounded-2xl bg-surface p-6 shadow-card">
                 <div class="flex flex-col gap-2">
                     <header class="flex items-center gap-2 pb-2">
-                        <x-gpa.icon :name="$verification['icon']" class="h-4 w-4 shrink-0 text-success-deep" />
                         <h2 class="text-[18px] font-bold leading-6 text-ink">{{ $verification['title'] }}</h2>
                     </header>
-
-                    <p class="text-[12px] leading-[19.5px] text-ink-body">{{ $verification['body'] }}</p>
 
                     <div class="flex flex-col gap-2 pt-2">
                         <div class="flex items-center justify-between gap-3 rounded-lg bg-surface-shell p-2.5">

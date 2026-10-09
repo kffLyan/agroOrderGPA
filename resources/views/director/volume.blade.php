@@ -73,10 +73,6 @@
         {{-- Page header + range badge + aksi rekonsiliasi --}}
         <section class="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-line-board">
             <div class="min-w-0 space-y-1">
-                <p class="gpa-eyebrow flex flex-wrap items-center gap-2">
-                    <span class="h-3 w-36 rounded bg-surface-track" aria-hidden="true"></span>
-                    {{ $volumeHeader['eyebrow_meta'] }}
-                </p>
                 <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     Monitoring Volume Komoditas, Stok Panen<br>&amp; Kapasitas Pasokan
                 </h1>
@@ -151,7 +147,6 @@
                     <p class="flex items-center gap-2">
                         <h2 class="font-inter text-lg font-semibold leading-6 text-ink">{{ $commodities['title'] }}</h2>
                     </p>
-                    <p class="text-xs leading-4 text-ink-body">{{ $commodities['subtitle'] }}</p>
                 </div>
 
             </header>
@@ -284,7 +279,6 @@
                                     {{ $allocations['title'] }}
                                 </h2>
                             </p>
-                            <p class="text-xs leading-4 text-ink-body">{{ $allocations['subtitle'] }}</p>
                         </div>
 
                         <span class="rounded bg-accent px-2 py-1 text-[9px] font-bold leading-3 gpa-micro-bold text-ink-strong">
@@ -321,7 +315,7 @@
                 </div>
 
                 <footer class="border-t border-line-board pt-3">
-                    <div class="flex items-center justify-between gap-3 border-t border-line-board pt-3">
+                    <div class="flex items-center justify-between gap-3 pt-3">
                         <span class="text-[11px] font-medium leading-[14px] tracking-[0.88px] font-mono text-success-deep">
                             {{ $allocations['total_label'] }}
                         </span>

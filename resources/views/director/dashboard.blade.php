@@ -35,10 +35,6 @@
         {{-- Page header --}}
         <section class="flex flex-wrap items-center justify-between gap-4 border-b border-line-board/80 pb-4">
             <div class="min-w-0 space-y-1">
-                <p class="gpa-eyebrow flex items-center gap-2">
-                    <x-gpa.icon name="chart" class="h-3.5 w-3.5 text-success-deep" />
-                    {{ $header['eyebrow'] }}
-                </p>
                 <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $header['title'] }}
                 </h1>
@@ -191,7 +187,6 @@
 
                 <footer>
                     <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-board pt-4">
-                        <p class="gpa-note text-ink-body">{{ $weekly['source'] }}</p>
                         <p class="gpa-note font-bold text-ink">{{ $weekly['deviation'] }}</p>
                     </div>
                 </footer>
@@ -200,7 +195,6 @@
             <div class="gpa-panel flex flex-col justify-between gap-4 p-6">
                 <header class="border-b border-line-board/60 pb-3">
                     <h2 class="gpa-section-title text-ink">{{ $commodities['title'] }}</h2>
-                    <p class="mt-1 gpa-meta font-medium text-ink-body">{{ $commodities['subtitle'] }}</p>
                 </header>
 
                 <div class="flex flex-col gap-4">
@@ -241,8 +235,6 @@
 
                 <footer>
                     <div class="flex flex-wrap items-start justify-between gap-2 border-t border-line-board pt-4">
-                        <p class="gpa-note font-semibold text-success-deep">{{ $commodities['footer_left'] }}</p>
-                        <p class="gpa-note font-semibold text-success-deep">{{ $commodities['footer_right'] }}</p>
                     </div>
                 </footer>
             </div>
@@ -254,7 +246,6 @@
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0">
                     <h2 class="gpa-section-title text-ink">{{ $receivables['title'] }}</h2>
-                    <p class="mt-1 max-w-3xl text-xs leading-4 text-ink-body">{{ $receivables['description'] }}</p>
                 </div>
                 <p class="gpa-meta font-bold text-success-deep">{{ $receivables['total_label'] }}</p>
             </header>

@@ -48,14 +48,9 @@
         {{-- Page header --}}
         <section class="flex flex-wrap items-center justify-between gap-4 border-b border-line-board/80 pb-4">
             <div class="min-w-0 space-y-1">
-                <p class="gpa-eyebrow flex items-center gap-2">
-                    <x-gpa.icon name="badge-check" class="h-3.5 w-3.5 text-success-deep" />
-                    {{ $header['eyebrow'] }}
-                </p>
                 <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $header['title'] }}
                 </h1>
-                <p class="max-w-3xl text-sm leading-5 text-ink-body">{{ $header['subtitle'] }}</p>
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-3">
@@ -279,8 +274,6 @@
 
             <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-line-board/60 pt-3">
                 <p class="flex items-start gap-2">
-                    <span class="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
-                    <span class="max-w-3xl gpa-note font-semibold text-ink-body">{{ $queue['audit_note'] }}</span>
                 </p>
                 <div class="flex flex-col items-end gap-1">
                     <p class="gpa-note font-bold text-ink">{{ $queue['total_note'] }}</p>

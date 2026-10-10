@@ -1,0 +1,46 @@
+{
+    "object": "ProofOfDelivery",
+    "version": "1.0",
+    "table": "proof_of_deliveries",
+    "description": "Bukti penerimaan di lokasi klien. Wajib lengkap sebelum delivery ditandai selesai (Rule 06). Setelah terkunci tidak dapat diedit.",
+    "fields": [
+        { "name": "id", "type": "int", "required": true, "nullable": false },
+        { "name": "delivery_id", "type": "int", "required": true, "nullable": false },
+        { "name": "surat_jalan_id", "type": "int", "required": true, "nullable": false },
+        { "name": "receiver_name", "type": "string", "required": true, "nullable": false, "note": "Nama penerima di lokasi, boleh berbeda dari penerima kontrak." },
+        { "name": "receiver_role", "type": "string", "required": false, "nullable": true, "note": "Contoh: Receiving." },
+        { "name": "received_at", "type": "datetime", "required": true, "nullable": false },
+        { "name": "signature_path", "type": "string", "required": true, "nullable": false, "note": "Path file tanda tangan digital." },
+        { "name": "photo_paths", "type": "json", "required": false, "nullable": true, "note": "Daftar path foto kondisi barang di lokasi." },
+        { "name": "geolocation", "type": "json", "required": false, "nullable": true, "note": "Object dengan latitude dan longitude." },
+        { "name": "note", "type": "text", "required": false, "nullable": true },
+        { "name": "submitted_by", "type": "int", "required": true, "nullable": false, "note": "Supir yang mengirim bukti." },
+        { "name": "submitted_at", "type": "datetime", "required": true, "nullable": false },
+        { "name": "locked_at", "type": "datetime", "required": false, "nullable": true }
+    ],
+    "relations": {
+        "delivery": "Delivery",
+        "surat_jalan": "SuratJalan"
+    },
+    "example": {
+        "id": 12001,
+        "delivery_id": 3001,
+        "surat_jalan_id": 9001,
+        "receiver_name": "Rani Puspita",
+        "receiver_role": "Receiving",
+        "received_at": "2026-10-24T06:58:00+07:00",
+        "signature_path": "/storage/pod/sj-9001-signature.png",
+        "photo_paths": [
+            "/storage/pod/sj-9001-1.jpg",
+            "/storage/pod/sj-9001-2.jpg"
+        ],
+        "geolocation": {
+            "latitude": -6.46381,
+            "longitude": 106.90061
+        },
+        "note": "Barang diterima lengkap, 2 krat rosemary di Mumbai.",
+        "submitted_by": 21,
+        "submitted_at": "2026-10-24T07:01:00+07:00",
+        "locked_at": "2026-10-24T07:02:00+07:00"
+    }
+}

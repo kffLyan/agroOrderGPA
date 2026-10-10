@@ -1,0 +1,47 @@
+{
+    "object": "Return",
+    "version": "1.0",
+    "table": "returns",
+    "description": "Retur barang di lokasi klien setelah barang diterima. Retur memengaruhi invoice dan dapat memunculkan kompensasi kuota (§13).",
+    "fields": [
+        { "name": "id", "type": "int", "required": true, "nullable": false },
+        { "name": "delivery_id", "type": "int", "required": true, "nullable": false },
+        { "name": "order_item_id", "type": "int", "required": true, "nullable": false },
+        { "name": "product_id", "type": "int", "required": true, "nullable": false },
+        { "name": "quantity", "type": "decimal", "required": true, "nullable": false, "note": "Berat retur dalam kilogram." },
+        { "name": "containers", "type": "int", "required": false, "nullable": true },
+        { "name": "reason_code", "type": "enum", "required": true, "nullable": false },
+        { "name": "note", "type": "text", "required": false, "nullable": true },
+        { "name": "occurred_at", "type": "datetime", "required": true, "nullable": false, "note": "Waktu pencatatan retur oleh supir di lokasi." },
+        { "name": "recorded_by", "type": "int", "required": true, "nullable": false },
+        { "name": "compensation_id", "type": "int", "required": false, "nullable": true, "note": "Kompensasi yang dihasilkan, bila ada." }
+    ],
+    "enums": {
+        "reason_code": [
+            "rusak",
+            "tidak_segera_dikembalikan",
+            "kualitas_berbeda",
+            "produk_tidak_cocok",
+            "susut_berlebih"
+        ]
+    },
+    "relations": {
+        "delivery": "Delivery",
+        "order_item": "OrderItem",
+        "product": "Product",
+        "compensation": "Compensation | null"
+    },
+    "example": {
+        "id": 4001,
+        "delivery_id": 3001,
+        "order_item_id": 101,
+        "product_id": 1,
+        "quantity": 2,
+        "containers": 1,
+        "reason_code": "kualitas_berbeda",
+        "note": "Daun luar layu, lapisan dalam masih aman.",
+        "occurred_at": "2026-10-24T07:05:00+07:00",
+        "recorded_by": 21,
+        "compensation_id": null
+    }
+}

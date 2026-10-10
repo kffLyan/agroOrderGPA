@@ -1,0 +1,42 @@
+{
+    "object": "Invoice",
+    "version": "1.0",
+    "table": "invoices",
+    "description": "Tagihan periode untuk klien kontrak. Invoice harus Traceable ke Surat Jalan (§14, Rule 09). Faktur pajak PKP menjadi fase lanjutan.",
+    "fields": [
+        { "name": "id", "type": "int", "required": true, "nullable": false },
+        { "name": "number", "type": "string", "required": true, "nullable": false, "note": "Format INV-GPA-YYYYMM-XXXX." },
+        { "name": "client_id", "type": "int", "required": true, "nullable": false },
+        { "name": "period_start", "type": "date", "required": true, "nullable": false },
+        { "name": "period_end", "type": "date", "required": true, "nullable": false },
+        { "name": "issue_date", "type": "date", "required": true, "nullable": false },
+        { "name": "due_date", "type": "date", "required": false, "nullable": true, "note": "Kosong untuk klien reguler yang langsung transfer." },
+        { "name": "status", "type": "enum", "required": true, "nullable": false },
+        { "name": "subtotal", "type": "int", "required": true, "nullable": false, "note": "Rupiah penuh." },
+        { "name": "notes", "type": "text", "required": false, "nullable": true },
+        { "name": "created_at", "type": "datetime", "required": true, "nullable": false },
+        { "name": "updated_at", "type": "datetime", "required": true, "nullable": false }
+    ],
+    "enums": {
+        "status": ["draft", "terkirim", "lunas", "overdue"]
+    },
+    "relations": {
+        "client": "User",
+        "items": "InvoiceItem[]",
+        "payments": "Payment[]"
+    },
+    "example": {
+        "id": 7001,
+        "number": "INV-GPA-202610-0007",
+        "client_id": 12,
+        "period_start": "2026-10-01",
+        "period_end": "2026-10-15",
+        "issue_date": "2026-10-16",
+        "due_date": "2026-10-30",
+        "status": "terkirim",
+        "subtotal": 18450000,
+        "notes": "Periode 1-15 Oktober 2026.",
+        "created_at": "2026-10-16T09:00:00+07:00",
+        "updated_at": "2026-10-18T14:20:00+07:00"
+    }
+}

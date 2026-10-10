@@ -1,0 +1,50 @@
+{
+    "object": "SuratJalan",
+    "version": "1.0",
+    "table": "surat_jalans",
+    "description": "Dokumen accompanying barang milik klien. Tidak boleh terbit sebelum Actual Weight lengkap (Rule 05). Setelah terbit, dokumen bersifat immutable; koreksi lewat retur dan nota (§10).",
+    "fields": [
+        { "name": "id", "type": "int", "required": true, "nullable": false },
+        { "name": "number", "type": "string", "required": true, "nullable": false, "note": "Format SJ-GPA-YYYYMM-XXXX." },
+        { "name": "order_id", "type": "int", "required": true, "nullable": false },
+        { "name": "client_id", "type": "int", "required": true, "nullable": false },
+        { "name": "status", "type": "enum", "required": true, "nullable": false },
+        { "name": "issue_date", "type": "date", "required": true, "nullable": false },
+        { "name": "dispatch_at", "type": "datetime", "required": true, "nullable": false, "note": "Menjadi acuan hitung mundur 45 menit untuk supir." },
+        { "name": "planned_arrival", "type": "datetime", "required": false, "nullable": true },
+        { "name": "hub_code", "type": "string", "required": true, "nullable": false, "note": "Contoh: H-04." },
+        { "name": "dock", "type": "string", "required": true, "nullable": false, "note": "Contoh: Central Kitchen Ciracas Hub." },
+        { "name": "total_weight", "type": "decimal", "required": true, "nullable": false, "note": "Total berat aktual seluruh baris, kilogram." },
+        { "name": "total_containers", "type": "int", "required": true, "nullable": false },
+        { "name": "issued_by", "type": "int", "required": true, "nullable": false, "note": "Sekre penerbit dokumen." },
+        { "name": "locked_at", "type": "datetime", "required": false, "nullable": true, "note": "Setelah terisi, seluruh field tidak boleh diubah." },
+        { "name": "created_at", "type": "datetime", "required": true, "nullable": false },
+        { "name": "updated_at", "type": "datetime", "required": true, "nullable": false }
+    ],
+    "enums": {
+        "status": ["draft", "issued", "in_transit", "completed", "cancelled"]
+    },
+    "relations": {
+        "order": "Order",
+        "items": "OrderItem[]",
+        "pod": "ProofOfDelivery | null"
+    },
+    "example": {
+        "id": 9001,
+        "number": "SJ-GPA-202610-0042",
+        "order_id": 42,
+        "client_id": 12,
+        "status": "issued",
+        "issue_date": "2026-10-24",
+        "dispatch_at": "2026-10-24T05:45:00+07:00",
+        "planned_arrival": "2026-10-24T06:45:00+07:00",
+        "hub_code": "H-04",
+        "dock": "Central Kitchen Ciracas Hub",
+        "total_weight": 795,
+        "total_containers": 40,
+        "issued_by": 5,
+        "locked_at": "2026-10-24T05:44:00+07:00",
+        "created_at": "2026-10-24T05:40:00+07:00",
+        "updated_at": "2026-10-24T05:44:00+07:00"
+    }
+}

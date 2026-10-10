@@ -19,8 +19,21 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'client_type',
         'name',
+        'business_name',
         'email',
+        'phone',
+        'email_is_placeholder',
+        'address',
+        'delivery_zone',
+        'delivery_window',
+        'vehicle_access',
+        'delivery_notes',
+        'payment_method',
+        'preferred_commodities',
+        'otp_verified_at',
+        'integrity_accepted_at',
         'password',
     ];
 
@@ -43,6 +56,10 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'email_is_placeholder' => 'boolean',
+            'preferred_commodities' => 'array',
+            'otp_verified_at' => 'datetime',
+            'integrity_accepted_at' => 'datetime',
             'password' => 'hashed',
         ];
     }

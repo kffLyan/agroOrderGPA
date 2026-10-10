@@ -1,11 +1,324 @@
-@import 'tailwindcss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@layer base {
+    :root {
+        --gpa-color-canvas: #f8faf3;
+        --gpa-color-surface: #ffffff;
+        --gpa-color-surface-muted: #f0f4e8;
+        --gpa-color-surface-sunken: #e9eddd;
+        --gpa-color-ink: #191c18;
+        --gpa-color-ink-muted: #4a5243;
+        --gpa-color-ink-subtle: #6f7a62;
+        --gpa-color-line: #d7e0c9;
+        --gpa-color-line-strong: #6f7a62;
+        --gpa-color-brand: #153a01;
+        --gpa-color-success: #4e7a03;
+        --gpa-color-danger: #ba1a1a;
+        --gpa-radius: 0.25rem;
+        --gpa-radius-sm: 0.125rem;
+        --gpa-radius-card: 0.5rem;
+        --gpa-control-height: 2.375rem;
+        --gpa-shadow-card: 0 2px 6px 0 rgb(0 0 0 / 0.1);
+    }
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    html {
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        font-family: theme('fontFamily.sans');
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'tnum';
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--gpa-color-brand);
+        outline-offset: 2px;
+    }
+
+    ::selection {
+        background-color: var(--gpa-color-brand);
+        color: #ffffff;
+    }
+
+    /* Netralisasi warna bawaan @tailwindcss/forms agar seluruh warna form
+       tetap berasal dari palet login.blade.php. */
+    [type='checkbox'],
+    [type='radio'],
+    [type='file'],
+    select {
+        border-color: var(--gpa-color-line-strong);
+    }
+
+    [type='checkbox'],
+    [type='radio'] {
+        color: var(--gpa-color-brand);
+    }
+
+    ::placeholder {
+        color: var(--gpa-color-ink-subtle);
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+}
+
+@layer components {
+    .gpa-control {
+        width: 100%;
+        min-height: var(--gpa-control-height);
+        border: 1px solid var(--gpa-color-line-strong);
+        border-radius: var(--gpa-radius);
+        background-color: var(--gpa-color-surface);
+        padding: 0.5rem 0.625rem;
+        font-family: theme('fontFamily.mono');
+        font-size: 0.75rem;
+        line-height: 1rem;
+        color: var(--gpa-color-ink);
+        transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+    }
+
+    .gpa-control::placeholder {
+        color: var(--gpa-color-ink-subtle);
+    }
+
+    .gpa-control:hover:not(:disabled) {
+        border-color: var(--gpa-color-brand);
+    }
+
+    .gpa-control:focus {
+        outline: none;
+        border-color: var(--gpa-color-brand);
+        box-shadow: 0 0 0 2px rgb(21 58 1 / 0.16);
+    }
+
+    .gpa-control:disabled {
+        background-color: var(--gpa-color-surface-sunken);
+        color: var(--gpa-color-ink-subtle);
+        cursor: not-allowed;
+    }
+
+    .gpa-control[aria-invalid='true'] {
+        border-color: var(--gpa-color-danger);
+    }
+
+    .gpa-control[aria-invalid='true']:focus {
+        box-shadow: 0 0 0 2px rgb(186 26 26 / 0.16);
+    }
+
+    .gpa-label {
+        display: block;
+        font-family: theme('fontFamily.mono');
+        font-size: 0.6875rem;
+        line-height: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: var(--gpa-color-ink);
+    }
+
+    .gpa-hint {
+        display: block;
+        font-family: theme('fontFamily.mono');
+        font-size: 0.6875rem;
+        line-height: 0.95rem;
+        color: var(--gpa-color-ink-muted);
+    }
+
+    .gpa-error {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.25rem;
+        font-size: 0.6875rem;
+        line-height: 0.95rem;
+        font-weight: 500;
+        color: var(--gpa-color-danger);
+    }
+
+    .gpa-eyebrow {
+        font-family: theme('fontFamily.mono');
+        font-size: 0.625rem;
+        line-height: 0.875rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--gpa-color-ink-subtle);
+    }
+
+    .gpa-mono-xs {
+        font-family: theme('fontFamily.mono');
+        font-size: 0.6875rem;
+        line-height: 1rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Tipografi mono dari design system dashboard B2B. */
+    .gpa-micro {
+        font-family: theme('fontFamily.mono');
+        font-size: 0.5625rem;
+        line-height: 0.75rem;
+        letter-spacing: 0.12em;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .gpa-micro-bold {
+        font-family: theme('fontFamily.mono');
+        font-size: 0.5625rem;
+        line-height: 0.75rem;
+        letter-spacing: 0.12em;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .gpa-meta {
+        font-family: theme('fontFamily.mono');
+        font-size: 0.625rem;
+        line-height: 0.875rem;
+        letter-spacing: 0.1em;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .gpa-meta-lg {
+        font-family: theme('fontFamily.mono');
+        font-size: 0.6875rem;
+        line-height: 0.875rem;
+        letter-spacing: 0.07em;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Catatan mono non-uppercase 9px untuk footer kartu, ringkasan baris, dan
+       label rechtabel pada konsol operasional sekretaris. */
+    .gpa-note {
+        font-family: theme('fontFamily.mono');
+        font-size: 0.5625rem;
+        line-height: 0.875rem;
+        letter-spacing: 0.108em;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .gpa-nav {
+        font-family: theme('fontFamily.mono');
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+        letter-spacing: 0.05em;
+    }
+
+    .gpa-figure {
+        font-family: theme('fontFamily.sans');
+        font-size: 1.5rem;
+        line-height: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+    }
+
+    .gpa-section-title {
+        font-family: theme('fontFamily.sans');
+        font-size: 1.125rem;
+        line-height: 1.5rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+    }
+
+    .gpa-body {
+        font-family: theme('fontFamily.sans');
+        font-size: 0.75rem;
+        line-height: 1rem;
+    }
+
+    .gpa-card {
+        background-color: var(--gpa-color-surface);
+        border-radius: 1rem;
+        box-shadow: 0 2px 6px 0 rgb(0 0 0 / 0.1);
+    }
+
+    .gpa-hairline {
+        border-top: 1px solid rgb(195 201 185 / 0.6);
+    }
+
+    .gpa-check {
+        appearance: none;
+        flex: none;
+        width: 1rem;
+        height: 1rem;
+        margin-top: 0.125rem;
+        border: 1px solid var(--gpa-color-line-strong);
+        border-radius: var(--gpa-radius-sm);
+        background-color: var(--gpa-color-surface);
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
+        cursor: pointer;
+        transition: background-color 120ms ease, border-color 120ms ease;
+    }
+
+    .gpa-check:hover {
+        border-color: var(--gpa-color-brand);
+    }
+
+    .gpa-check:checked {
+        border-color: var(--gpa-color-brand);
+        background-color: var(--gpa-color-brand);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8.5 6.2 11.5 13 4.5'/%3E%3C/svg%3E");
+    }
+
+    .gpa-check--radio {
+        border-radius: 9999px;
+    }
+
+    .gpa-check--radio:checked {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23ffffff' stroke-width='2.5'%3E%3Ccircle cx='8' cy='8' r='3'/%3E%3C/svg%3E");
+    }
+
+    .gpa-panel {
+        background-color: var(--gpa-color-surface);
+        border-radius: var(--gpa-radius-card);
+        box-shadow: var(--gpa-shadow-card);
+    }
+
+    .gpa-scroll-x {
+        overflow-x: auto;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .gpa-scroll-x::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .gpa-scroll-x::-webkit-scrollbar-thumb {
+        background-color: var(--gpa-color-line-strong);
+        border-radius: 9999px;
+    }
+}
+
+@media print {
+    body:has(.coordinator-returns-page) {
+        background: #fff !important;
+    }
+
+    body:has(.coordinator-returns-page) > div > header,
+    body:has(.coordinator-returns-page) > div > div > aside,
+    .coordinator-returns-page .no-print {
+        display: none !important;
+    }
+
+    body:has(.coordinator-returns-page) > div > div > main {
+        width: 100% !important;
+        max-width: none !important;
+        padding: 0 !important;
+    }
+
+    .coordinator-returns-page .gpa-panel {
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+
+    .coordinator-returns-page .report-table-wrap {
+        overflow: visible !important;
+    }
 }

@@ -3,7 +3,8 @@
 @section('title', 'Faktur & Tagihan')
 
 @section('content')
-    <div class="space-y-6" x-data="secretaryInvoicing(@js($clients), @js($ledger['rows']), @js($ledger['status_filters']), @js($ledger['total_invoices']))">
+    <div class="space-y-6"
+        x-data="secretaryInvoicing(@js($clients), @js($ledger['rows']), @js($ledger['status_filters']), @js($ledger['total_invoices']), @js(route('prints.invoice', ['invoice' => '__invoice__'])))">
         <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0">
                 <h1 class="mt-2 font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">

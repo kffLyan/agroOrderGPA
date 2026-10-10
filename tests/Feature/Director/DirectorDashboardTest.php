@@ -27,7 +27,7 @@ class DirectorDashboardTest extends TestCase
         $response = $this->get(route('director.dashboard'));
 
         $response->assertOk();
-        $response->assertSee('Dashboard Eksekutif // Monitoring Bisnis &amp; Otorisasi Direktur', false);
+        $response->assertSee('Ringkasan Kinerja Direktur');
         $response->assertSee('Direktur');
         $response->assertSee('Asep Tember');
         $response->assertSee('ID : 001');
@@ -50,31 +50,31 @@ class DirectorDashboardTest extends TestCase
         $response = $this->get(route('director.dashboard'));
 
         $response->assertOk();
-        $response->assertSee('OMZET Q4 YTD');
+        $response->assertSee('OMZET Q4 TAHUN INI');
         $response->assertSee('Rp 482.650.000');
         $response->assertSee('Target: Rp 600.000.000');
-        $response->assertSee('+14.2% MoM');
+        $response->assertSee('+14.2% dari bulan lalu');
         $response->assertSee('80.4% (84.6% Terbayar)');
-        $response->assertSee('VOLUME KOMODITAS');
+        $response->assertSee('JUMLAH KOMODITAS');
         $response->assertSee('38.450');
         $response->assertSee('68%');
-        $response->assertSee('Binaan (26.15 T)');
+        $response->assertSee('Kebun binaan (26.15 ton)');
         $response->assertSee('32%');
-        $response->assertSee('Buffer (12.3 T)');
-        $response->assertSee('100% Tera Sah Metrologi');
-        $response->assertSee('PIUTANG TERBUKA');
+        $response->assertSee('Cadangan (12.3 ton)');
+        $response->assertSee('Timbangan sudah ditera');
+        $response->assertSee('TAGIHAN BELUM DIBAYAR');
         $response->assertSee('Rp 74.320.000');
-        $response->assertSee('2 Klien Tempo &lt;7 Hari', false);
-        $response->assertSee('Rasio Tertagih: 91.2%');
-        $response->assertSee('KEPATUHAN SLA');
+        $response->assertSee('2 pelanggan jatuh tempo &lt;7 hari', false);
+        $response->assertSee('Sudah tertagih: 91.2%');
+        $response->assertSee('KETEPATAN LAYANAN');
         $response->assertSee('98.6%');
-        $response->assertSee('Retur Fisik: 0.82% (Batas: &lt;1.50%)', false);
-        $response->assertSee('OTORISASI DIREKTUR');
-        $response->assertSee('MUTLAK');
+        $response->assertSee('Barang dikembalikan: 0.82% (Batas: &lt;1.50%)', false);
+        $response->assertSee('PERSETUJUAN DIREKTUR');
+        $response->assertSee('WAJIB');
         $response->assertSee('3 Kontrak');
         $response->assertSee('Total Nilai: ');
         $response->assertSee('Rp 385.000.000');
-        $response->assertSee('Tinjau Sekarang');
+        $response->assertSee('Lihat pengajuan');
     }
 
     public function test_revenue_progress_and_volume_split_are_reconciled(): void
@@ -84,7 +84,7 @@ class DirectorDashboardTest extends TestCase
 
         $this->assertSame(round(482_650_000 / 600_000_000 * 100, 1), $byKey['revenue']['progress']['percent']);
         $this->assertSame('80.4% (84.6% Terbayar)', $byKey['revenue']['progress']['value']);
-        $this->assertSame('68% Binaan (26.15 T) : 32% Buffer (12.3 T)', $byKey['volume']['value_note']);
+        $this->assertSame('68% kebun binaan (26.15 ton) : 32% cadangan (12.3 ton)', $byKey['volume']['value_note']);
 
         // Porsi volume harus utuh: 26.15 T + 12.3 T = 38.45 T dan 68% + 32% = 100%.
         $this->assertSame(68 + 32, 100);
@@ -100,12 +100,11 @@ class DirectorDashboardTest extends TestCase
 
         $response->assertOk();
         $response->assertSee($weekly['title']);
-        $response->assertSee('W40: 275 T // Target Rp 110M');
-        $response->assertSee('Rp 108M');
-        $response->assertSee('W44 [Berjalan - H+4]: Target Rp 140M');
-        $response->assertSee('Realisasi: Rp 112.650.000 (80.5%)');
-        $response->assertSee('202.5 Ton Terdistribusi');
-        $response->assertSee($weekly['source']);
+        $response->assertSee('W40: 275 ton | Target Rp 110 juta');
+        $response->assertSee('Rp 108 juta');
+        $response->assertSee('W44 (berjalan, hari ke-4): Target Rp 140 juta');
+        $response->assertSee('Omzet: Rp 112.650.000 (80.5%)');
+        $response->assertSee('Terkirim 202.5 ton');
         $response->assertSee($weekly['deviation']);
 
         foreach ($weekly['legend'] as $legend) {
@@ -122,7 +121,7 @@ class DirectorDashboardTest extends TestCase
         $response = $this->get(route('director.dashboard'));
 
         foreach ($rows as $row) {
-            $response->assertSee('Realisasi: '.$row['realized_label'].' ('.$row['ratio_label'].')');
+            $response->assertSee('Omzet: '.$row['realized_label'].' ('.$row['ratio_label'].')');
             $response->assertSee('style="width: '.$row['bar_percent'].'%"', false);
         }
 
@@ -145,14 +144,10 @@ class DirectorDashboardTest extends TestCase
 
         $response->assertOk();
         $response->assertSee($commodities['title']);
-        $response->assertSee('Realisasi Volume Q4 (Total 38.45 Ton)');
         $response->assertSee($channels['title']);
         $response->assertSee('Horeca &amp; Inflight', false);
         $response->assertSee('25.0');
         $response->assertSee('3.85');
-        $response->assertSee($commodities['footer_left']);
-        $response->assertSee($commodities['footer_right']);
-
         $this->assertSame(38.45, $commodities['total_tons']);
         $this->assertSame(38.45, $channels['total_tons']);
         $this->assertSame(100, $channels['total_share']);
@@ -164,12 +159,12 @@ class DirectorDashboardTest extends TestCase
         $response = $this->get(route('director.dashboard'));
 
         $response->assertOk();
-        $response->assertSee('OTORISASI DIREKTUR');
-        $response->assertSee('MUTLAK');
+        $response->assertSee('PERSETUJUAN DIREKTUR');
+        $response->assertSee('WAJIB');
         $response->assertSee('3 Kontrak');
         $response->assertSee('Total Nilai: ');
         $response->assertSee('Rp 385.000.000');
-        $response->assertSee('Tinjau Sekarang');
+        $response->assertSee('Lihat pengajuan');
         $response->assertSee(route('director.approval'), false);
 
         // Antrean Tier-1 kini menjadi modul tunggal, bukan lagi bagian dashboard.
@@ -187,13 +182,13 @@ class DirectorDashboardTest extends TestCase
         $response->assertOk();
         $response->assertSee($receivables['title']);
         $response->assertSee($receivables['total_label']);
-        $response->assertSee('NORMAL (0 - 15 HARI)');
+        $response->assertSee('BELUM JATUH TEMPO (0 - 15 HARI)');
         $response->assertSee('Rp 120.000.000');
-        $response->assertSee('MENUJU TEMPO (16 - 30 HARI)');
+        $response->assertSee('JATUH TEMPO (16 - 30 HARI)');
         $response->assertSee('Rp 65.300.000');
-        $response->assertSee('LEWAT TEMPO (1 - 14 HARI)');
+        $response->assertSee('LEWAT JATUH TEMPO (1 - 14 HARI)');
         $response->assertSee('Rp 32.200.000');
-        $response->assertSee('OVERDUE KRITIS (&gt; 15 HARI)', false);
+        $response->assertSee('TERLAMBAT LEBIH DARI 15 HARI');
         $response->assertSee('Rp 18.000.000');
         $response->assertSee($receivables['note']['emphasis']);
         $response->assertSee($receivables['audit_action']);

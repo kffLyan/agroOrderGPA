@@ -24,33 +24,6 @@
             'dropoffBase' => $dispatch['dropoff_base'],
             'dropoffTotal' => $dispatch['dropoff_total'],
         ]))">
-        {{-- PRD Rule 06 & 12: hard gate PoD --}}
-        <section class="gpa-card flex flex-wrap items-start justify-between gap-4 border border-line-hair border-l-4 border-l-brand p-4">
-            <div class="flex min-w-0 items-start gap-3">
-                <span class="flex h-10 w-9 shrink-0 items-center justify-center rounded-lg bg-brand text-accent">
-                    <x-gpa.icon :name="$mandate['icon']" class="h-4 w-5 shrink-0" />
-                </span>
-                <div class="min-w-0 space-y-2">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <h1 class="gpa-section-title text-ink">{{ $mandate['title'] }}</h1>
-                        <span
-                            class="shrink-0 rounded bg-accent px-2 py-0.5 gpa-micro-bold text-ink outline outline-1 outline-success-deep">
-                            {{ $mandate['badge'] }}
-                        </span>
-                    </div>
-                    <p class="max-w-4xl text-sm leading-5 text-ink-body">
-                        {{ $mandate['body_lead'] }} <strong class="font-semibold text-ink">{{ $mandate['body_emphasis'] }}</strong> {{ $mandate['body_tail'] }}
-                    </p>
-                </div>
-            </div>
-
-            <div class="shrink-0 text-right">
-                <p class="gpa-micro-bold text-ink-quiet">{{ $mandate['protocol_label'] }}</p>
-                <p class="mt-1 rounded bg-surface-shell px-4 py-1 font-mono text-[11px] font-bold text-ink outline outline-1 outline-line-board/50">
-                    {{ $mandate['protocol_value'] }}
-                </p>
-            </div>
-        </section>
 
         {{-- KPI row --}}
         <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -121,10 +94,8 @@
                 <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/40 pb-3">
                     <div class="min-w-0">
                         <h2 class="gpa-section-title flex items-center gap-2 text-ink">
-                            <x-gpa.icon name="truck" class="h-4 w-4 shrink-0 text-success-deep" />
                             {{ $dispatch['title'] }}
                         </h2>
-                        <p class="mt-1 font-mono text-[11px] font-medium leading-4 text-ink-body">{{ $dispatch['subtitle'] }}</p>
                     </div>
                     <button type="button" @click="refreshTelemetry()"
                         class="shrink-0 rounded-lg bg-surface-shell px-3 py-1 gpa-note text-ink outline outline-1 outline-line-board/50 transition-colors hover:bg-surface-muted">
@@ -217,14 +188,6 @@
                         </tbody>
                     </table>
                 </div>
-
-                <footer class="space-y-1 border-t border-line-board/40 pt-2">
-                    <p class="flex items-center gap-2 gpa-micro-bold text-ink-quiet">
-                        <span class="h-2 w-2 rounded-full bg-accent" aria-hidden="true"></span>
-                        {{ $dispatch['footer_left'] }}
-                    </p>
-                    <p class="gpa-micro-bold text-ink-quiet">{{ $dispatch['footer_right'] }}</p>
-                </footer>
             </div>
 
             {{-- PoD verification dossier --}}
@@ -232,10 +195,8 @@
                 <header class="flex flex-wrap items-start justify-between gap-2 border-b border-line-board/40 pb-2">
                     <div class="min-w-0">
                         <h2 class="gpa-section-title flex items-center gap-2 text-ink">
-                            <x-gpa.icon :name="$dossier['icon']" class="h-4 w-4 shrink-0 text-success-deep" />
                             {{ $dossier['title'] }}
                         </h2>
-                        <p class="mt-1 font-mono text-[11px] font-medium leading-4 text-ink-body">{{ $dossier['subtitle'] }}</p>
                     </div>
                     <span class="shrink-0 rounded px-2 py-0.5 gpa-micro-bold text-ink outline outline-1"
                         :class="hasDossier() ? 'bg-accent outline-success-deep' : 'bg-surface-shell text-ink-quiet outline-line-board/50'"

@@ -30,22 +30,21 @@
     <div class="mx-auto flex w-full max-w-[576px] flex-col gap-5 px-4 pb-24 pt-2">
 
         {{-- Judul halaman --}}
-        <section class="flex flex-col gap-0.5 border-b border-line-board pb-2">
+        <section class="flex flex-col gap-0.5 rounded-lg bg-surface p-4 shadow-card">
             <h1 class="text-2xl font-bold leading-8 text-ink">{!! $intro['title'] !!}</h1>
-            <p class="text-xs font-normal leading-4 text-ink-body">{!! $intro['subtitle'] !!}</p>
         </section>
 
         {{-- Rute pengantaran --}}
-        <section class="flex flex-col gap-1 pb-3 pt-3">
-            <header class="flex items-center justify-between gap-2 px-0.5">
+        <section class="flex flex-col gap-2 rounded-lg bg-surface px-4 py-[18px] shadow-card">
+            <header class="flex items-center justify-between gap-2">
                 <p class="font-mono text-[9px] font-bold leading-3 tracking-[1.08px] text-ink-body">{{ $route['label'] }}</p>
                 <p class="font-mono text-[9px] font-bold leading-3 tracking-[1.08px] text-success-deep">{{ $route['badge'] }}</p>
             </header>
 
-            <div class="flex items-start justify-center gap-1">
+            <div class="flex w-full items-stretch gap-1">
                 @foreach ($route['stops'] as $stop)
                     <div @class([
-                        'relative flex h-28 flex-col items-start gap-0.5 overflow-hidden p-2',
+                        'relative flex h-28 min-w-0 flex-1 flex-col items-start gap-0.5 overflow-hidden p-2',
                         'rounded-lg',
                         $stop['active']
                             ? 'bg-surface shadow-sub outline outline-2 -outline-offset-2 outline-ink'
@@ -53,11 +52,6 @@
                     ])>
                         <p class="flex items-center gap-1">
                             <span @class(['h-1.5 w-1.5 shrink-0 rounded-full', $toneDot[$stop['dot']]])></span>
-                            <span @class([
-                                'font-mono text-[9px] leading-3 tracking-[1.08px]',
-                                'font-bold',
-                                $toneText[$stop['status_tone']],
-                            ])>{{ $stop['status'] }}</span>
                         </p>
 
                         <p @class([
@@ -186,21 +180,6 @@
 
         {{-- Rincian muatan--}}
         <section class="flex flex-col gap-2 rounded-lg bg-surface px-4 py-[18px] shadow-card">
-            <header class="flex flex-col gap-1.5 border-b border-surface-soft pb-4">
-                <p class="flex items-center gap-1">
-                    <x-gpa.icon name="scale" class="h-[11px] w-[11px] shrink-0 text-success-deep" />
-                    <span class="font-mono text-[9px] font-bold uppercase leading-3 tracking-[1.08px] text-success-deep">{{ $cargo['rule'] }}</span>
-                </p>
-
-                <div class="flex items-start gap-2 rounded bg-surface-shell p-2 outline outline-1 -outline-offset-1 outline-line-board">
-                    <x-gpa.icon name="badge-check" class="mt-0.5 h-[15px] w-3 shrink-0 text-success-deep" />
-
-                    <span class="flex flex-col items-start">
-                        <span class="font-mono text-[9px] font-bold leading-3 tracking-[1.08px] text-ink">{{ $cargo['stamp']['title'] }}</span>
-                        <span class="font-mono text-[9px] font-semibold leading-3 tracking-[1.08px] text-ink-body">{!! $cargo['stamp']['body'] !!}</span>
-                    </span>
-                </div>
-            </header>
 
             <div class="flex flex-col gap-2">
                 @foreach ($cargo['items'] as $item)
@@ -244,7 +223,7 @@
                 @endforeach
             </div>
 
-            <div class="flex flex-col gap-2 rounded-lg bg-ink p-2">
+            <div class="flex flex-col gap-2 rounded-lg bg-brand p-2">
                 <div class="flex items-center justify-between gap-2">
                     <span class="font-mono text-[9px] font-bold uppercase leading-3 tracking-[0.45px] text-accent">{{ $cargo['total']['label'] }}</span>
                     <x-gpa.icon name="calculator" class="h-[13px] w-[13px] shrink-0 text-accent" />

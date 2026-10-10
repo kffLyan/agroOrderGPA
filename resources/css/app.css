@@ -295,3 +295,30 @@
         border-radius: 9999px;
     }
 }
+
+@media print {
+    body:has(.coordinator-returns-page) {
+        background: #fff !important;
+    }
+
+    body:has(.coordinator-returns-page) > div > header,
+    body:has(.coordinator-returns-page) > div > div > aside,
+    .coordinator-returns-page .no-print {
+        display: none !important;
+    }
+
+    body:has(.coordinator-returns-page) > div > div > main {
+        width: 100% !important;
+        max-width: none !important;
+        padding: 0 !important;
+    }
+
+    .coordinator-returns-page .gpa-panel {
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+
+    .coordinator-returns-page .report-table-wrap {
+        overflow: visible !important;
+    }
+}

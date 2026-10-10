@@ -24,7 +24,6 @@
         <section class="flex flex-col gap-3 rounded-2xl bg-surface p-4 shadow-card">
             <header class="flex items-center justify-between gap-2 border-b border-line-board/60 pb-2.5">
                 <div class="flex items-center gap-1.5">
-                    <x-gpa.icon name="file-text" class="h-4 w-4 shrink-0 text-success-deep" />
                     <p class="gpa-meta font-bold text-ink">TARGET PENYERAHAN #{{ $target['sj'] }}</p>
                 </div>
                 <span class="rounded bg-accent px-2 py-0.5 text-[9px] font-bold leading-3 gpa-meta text-ink outline outline-1 -outline-offset-1 outline-success-deep">
@@ -65,6 +64,62 @@
             </div>
         </section>
 
+        {{-- Status pengiriman --}}
+        <section class="flex flex-col gap-2 rounded-xl bg-accent/10 p-3 outline outline-1 -outline-offset-1 outline-accent/30">
+            <header class="flex items-center gap-2">
+                <x-gpa.icon name="truck" class="h-4 w-4 shrink-0 text-accent" />
+                <h2 class="text-sm font-semibold text-ink">STATUS PENGIRIMAN</h2>
+            </header>
+            <div class="flex items-center gap-2 text-xs">
+                <span class="inline-flex items-center gap-1 rounded-full bg-accent px-2 py-1 text-[10px] font-bold text-ink">
+                    <span class="h-1.5 w-1.5 rounded-full bg-success-deep animate-pulse-ring" aria-hidden="true"></span>
+                    DALAM PENGIRIMAN
+                </span>
+                <span class="text-ink-quiet">Menuju {{ $target['dock'] }}</span>
+            </div>
+            <p class="text-[10px] text-ink-body">Estimasi tiba: 07:30 WIB • Jarak: 12 km</p>
+        </section>
+
+        {{-- Arrival / Serah Terima step --}}
+        <section class="flex flex-col gap-3 rounded-2xl bg-surface p-4 shadow-card" x-data>
+            <header class="flex items-center gap-2 border-b border-line-board/60 pb-2">
+                <h2 class="text-lg font-semibold leading-6 text-ink">SERAH TERIMA DI DOCK</h2>
+            </header>
+
+            <div class="flex flex-col gap-2">
+                <p class="text-xs text-ink-body">Ketika tiba di {{ $target['dock'] }}, lakukan serah terima:</p>
+
+                <div class="flex flex-col gap-2 rounded-lg bg-surface-shell p-3 outline outline-1 -outline-offset-1 outline-line-board">
+                    <p class="gpa-micro-bold text-ink-body">CHECKLIST SERAH TERIMA:</p>
+                    <label class="flex items-start gap-2">
+                        <input type="checkbox" class="gpa-check mt-0.5" @change="run('Serah Terima', 'PIC hadir di dock', 'info')">
+                        <span class="text-xs leading-4 text-ink">PIC penerima hadir dengan identitas jelas</span>
+                    </label>
+                    <label class="flex items-start gap-2">
+                        <input type="checkbox" class="gpa-check mt-0.5" @change="run('Serah Terima', 'Cap basah stempel dock', 'info')">
+                        <span class="text-xs leading-4 text-ink">Cap basah stempel dock & tanda tangan PIC</span>
+                    </label>
+                    <label class="flex items-start gap-2">
+                        <input type="checkbox" class="gpa-check mt-0.5" @change="run('Serah Terima', 'Muatan diserahkan utuh', 'info')">
+                        <span class="text-xs leading-4 text-ink">Muatan diserahkan utuh, tidak ada kerusakan</span>
+                    </label>
+                    <label class="flex items-start gap-2">
+                        <input type="checkbox" class="gpa-check mt-0.5" @change="run('Serah Terima', 'Berat cocok di timbangan ulang', 'info')">
+                        <span class="text-xs leading-4 text-ink">Berat cocok di timbangan ulang dock (selisih ≤ 2%)</span>
+                    </label>
+                    <label class="flex items-start gap-2">
+                        <input type="checkbox" class="gpa-check mt-0.5" @change="run('Serah Terima', 'Suhu reefer stabil', 'info')">
+                        <span class="text-xs leading-4 text-ink">Suhu reefer stabil di rentang target (+2°C s.d. +6°C)</span>
+                    </label>
+                </div>
+
+                <button type="button" @click="run('Serah Terima Selesai', 'Muatan diserahkan ke PIC. Status: Selesai.', 'success')"
+                    class="flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 shadow-pop text-ink font-bold">
+                    SERAH TERIMA & SELESAIKAN
+                </button>
+            </div>
+        </section>
+
         @foreach ($steps as $step)
             <section @class([
                 'flex flex-col gap-3 rounded-2xl bg-surface p-4 shadow-card',
@@ -82,7 +137,7 @@
                     </div>
 
                     <span class="shrink-0 rounded px-2 py-0.5 text-[9px] font-bold leading-3 gpa-meta {{ $badgeTone[$step['badge_tone']] }}">
-                        {{ str_replace(' ', '<br>', $step['badge']) }}
+                        {{ str_replace(' ', ' ', $step['badge']) }}
                     </span>
                 </header>
 
@@ -270,7 +325,6 @@
         {{-- Status kondisi muatan dan retur --}}
         <section class="flex flex-col gap-3.5 rounded-2xl bg-surface p-4 shadow-card">
             <header class="flex items-center gap-2 border-b border-line-board/60 pb-2">
-                <x-gpa.icon name="clipboard" class="h-4 w-4 shrink-0 text-success-deep" />
                 <h2 class="text-lg font-semibold leading-6 text-ink">{{ $condition_title }}</h2>
             </header>
 
@@ -344,11 +398,6 @@
             <p x-show="!canLock()" x-cloak
                 class="text-center text-[9px] font-semibold leading-3 gpa-meta text-danger">
                 Langkah wajib belum lengkap: <span x-text="blockers().join(', ')"></span>
-            </p>
-
-            <p class="flex items-center justify-center gap-1 text-center text-[9px] font-semibold leading-3 gpa-meta text-ink-body">
-                <x-gpa.icon name="bolt" class="h-2.5 w-2.5 shrink-0 text-success-deep" />
-                {{ $closure['note'] }}
             </p>
         </section>
     </div>

@@ -14,7 +14,10 @@
     'flex h-full flex-col overflow-hidden rounded-xl border border-line-hair bg-surface shadow-sub transition hover:shadow-card',
     'opacity-75' => ! $item['available'],
 ])>
-    <div class="relative flex h-36 flex-col items-center justify-center gap-1 bg-surface-muted px-4 pt-6 text-center">
+    <div class="relative flex h-36 flex-col justify-end gap-1 overflow-hidden bg-surface-muted px-4 pb-3 pt-6 text-left">
+        <img src="{{ asset($item['image_path']) }}" alt="{{ $item['name'] }}"
+            class="absolute inset-0 h-full w-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent"></div>
         <div class="absolute left-3 top-3 flex flex-wrap gap-1.5">
             @foreach ($item['badges'] as $badge)
                 <span
@@ -22,11 +25,10 @@
             @endforeach
         </div>
 
-        <span class="absolute right-3 top-3 gpa-mono-xs text-ink-subtle">{{ $item['sku'] }}</span>
+        <span class="absolute right-3 top-3 rounded bg-white/90 px-1.5 py-0.5 gpa-mono-xs text-ink">{{ $item['sku'] }}</span>
 
-        <x-gpa.icon name="leaf" class="h-6 w-6 shrink-0 text-success" />
-        <p class="text-sm font-bold leading-snug text-brand-strong">{{ $item['botanical'] }}</p>
-        <p class="gpa-mono-xs italic text-ink-body">{{ $item['latin'] }}</p>
+        <p class="relative text-sm font-bold leading-snug text-white">{{ $item['botanical'] }}</p>
+        <p class="relative gpa-mono-xs italic text-white/90">{{ $item['latin'] }}</p>
     </div>
 
     <div class="flex flex-1 flex-col gap-3 p-4">

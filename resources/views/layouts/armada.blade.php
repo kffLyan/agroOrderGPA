@@ -62,7 +62,7 @@
         </a>
 
         <header class="{{ $headerShell }}">
-            <x-gpa.brand-mark class="h-8 w-8 shrink-0 {{ $headerTone === 'light' ? 'text-brand' : 'text-accent' }}" />
+            <img src="{{ asset('gpaleaves.png') }}" alt="" class="h-8 w-8 shrink-0 object-contain">
 
             <div class="flex min-w-0 flex-1 flex-col">
                 <span class="{{ $brandTitle }}">{{ $brand }}</span>
@@ -82,30 +82,38 @@
 
         <nav class="fixed inset-x-0 bottom-0 z-40 border-t-2 border-line-hair bg-surface shadow-pop"
             aria-label="Navigasi armada">
-            <div class="mx-auto flex w-full max-w-[512px] items-stretch">
+            <div class="mx-auto flex h-16 w-full max-w-[512px] items-start">
                 @foreach ($navigation as $item)
                     @php
                         $itemKey = $item['key'] ?? '';
                         $isActive = $itemKey === $activeKey;
                         $isLinked = isset($navigationRoutes[$itemKey]);
+                        $iconSize = match ($itemKey) {
+                            'tasks' => 'h-[17px] w-[15px]',
+                            'dispatch' => 'h-[17px] w-[13px]',
+                            'pod' => 'h-[18px] w-[17px]',
+                            'fleet' => 'h-[13px] w-[18px]',
+                            default => 'h-[10px] w-[13px]',
+                        };
                     @endphp
 
                     @if ($isActive)
-                        <span aria-current="page"
-                            class="flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2.5 text-ink-body">
-                            <x-gpa.icon :name="$item['icon']" class="h-[18px] w-[18px] shrink-0" />
-                            <span class="pt-0.5 text-center font-mono text-[11px] font-normal leading-5">{{ $item['label'] }}</span>
+                        <span aria-current="page" class="flex h-full flex-1 justify-center">
+                            <span class="relative -top-2 flex h-[62px] w-14 shrink-0 flex-col items-center justify-center rounded-b-lg border-t-4 border-accent bg-brand py-1 text-accent shadow-[0px_5px_6px_rgba(0,0,0,0.25)]">
+                                <x-gpa.icon :name="$item['icon']" class="{{ $iconSize }} shrink-0" />
+                                <span class="pt-0.5 text-center font-mono text-[11px] font-semibold leading-5">{{ $item['label'] }}</span>
+                            </span>
                         </span>
                     @elseif ($isLinked)
                         <a href="{{ route($navigationRoutes[$itemKey]) }}"
-                            class="flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2.5 text-ink-body">
-                            <x-gpa.icon :name="$item['icon']" class="h-[17px] w-[17px] shrink-0" />
+                            class="relative top-0.5 flex h-[62px] flex-1 flex-col items-center justify-center gap-0.5 bg-surface px-1 py-1 text-ink-body">
+                            <x-gpa.icon :name="$item['icon']" class="{{ $iconSize }} shrink-0" />
                             <span class="pt-0.5 text-center font-mono text-[11px] font-normal leading-5">{{ $item['label'] }}</span>
                         </a>
                     @else
                         <button type="button" @click="openMenu('{{ $item['label'] }}')"
-                            class="flex flex-1 flex-col items-center justify-center gap-0.5 px-1 py-2.5 text-ink-body">
-                            <x-gpa.icon :name="$item['icon']" class="h-[15px] w-[15px] shrink-0" />
+                            class="relative top-0.5 flex h-[62px] flex-1 flex-col items-center justify-center gap-0.5 bg-surface px-1 py-1 text-ink-body">
+                            <x-gpa.icon :name="$item['icon']" class="{{ $iconSize }} shrink-0" />
                             <span class="pt-0.5 text-center font-mono text-[11px] font-normal leading-5">{{ $item['label'] }}</span>
                         </button>
                     @endif

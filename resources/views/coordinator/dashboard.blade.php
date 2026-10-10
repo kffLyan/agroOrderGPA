@@ -6,9 +6,8 @@
     <div class="space-y-6" x-data="coordinatorConsole(@js($supply['rows']), @js($packing['orders']), @js($gate['logs']))">
 
         {{-- Page header --}}
-        <section class="flex flex-wrap items-end justify-between gap-4 border-b border-line-soft pb-6">
+        <section class="flex flex-wrap items-end justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0">
-                <p class="gpa-eyebrow">{{ $heading['eyebrow'] }}</p>
                 <h1 class="mt-1.5 font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $heading['title_before'] }}<br class="hidden sm:block">
                     {{ $heading['title_after'] }}
@@ -63,19 +62,15 @@
             @endforeach
         </section>
 
-        {{-- Manajemen Stok Panen & Buffer Stock --}}
+        {{-- Stok panen dan cadangan --}}
         <section class="gpa-panel overflow-hidden">
             <div class="flex flex-wrap items-center justify-between gap-4 border-b border-line-soft bg-surface-shell px-4 py-4">
                 <div class="flex min-w-0 items-center gap-2">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink px-2">
-                        <x-gpa.icon name="package" class="h-4 w-4 shrink-0 text-accent" />
-                    </span>
                     <div class="min-w-0">
                         <h2 class="gpa-section-title text-ink">
                             {{ $supply['title'] }}<br class="hidden md:block">
-                            <span class="text-ink-body">{{ $supply['subtitle'] }}</span>
                         </h2>
-                        <p class="mt-1 max-w-2xl text-xs leading-4 text-ink-body">{{ $supply['description'] }}</p>
+                        <p class="mt-1 text-xs leading-4 text-ink-body">{{ $supply['description'] }}</p>
                     </div>
                 </div>
 
@@ -176,22 +171,22 @@
             </div>
         </section>
 
-        {{-- Packing & Gate log --}}
+        {{-- Persiapan pesanan dan catatan timbang --}}
         <div class="grid items-start gap-4">
             {{-- Persiapan Pesanan & Packing Cold-Chain --}}
             <section class="gpa-panel p-4">
                 <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft pb-2">
                     <div class="flex min-w-0 items-center gap-2">
-                        <x-gpa.icon name="package" class="h-4 w-4 shrink-0 text-success-deep" />
                         <div class="min-w-0">
                             <h2 class="gpa-section-title text-ink">{{ $packing['title'] }}</h2>
-                            <p class="mt-1 gpa-note text-ink-body">{{ $packing['subtitle'] }}</p>
+                            <p class="mt-1 text-xs leading-4 text-ink-body">{{ $packing['subtitle'] }}</p>
                         </div>
                     </div>
 
-                    <span class="shrink-0 rounded bg-accent px-2 py-1 gpa-micro-bold text-success-ink">
+                    <span class="shrink-0 rounded bg-accent px-2 py-1 gpa-micro-bold text-ink">
                         {{ $packing['chip'] }}
                     </span>
+
                 </div>
 
                 <div class="mt-4 grid gap-4">
@@ -212,18 +207,18 @@
 
                             <div class="mt-2 grid gap-2 sm:grid-cols-3">
                                 <div class="min-w-0">
-                                    <p class="text-2xs font-semibold uppercase leading-3 tracking-[0.1em] text-ink-body">Alokasi
-                                        Total</p>
+                                    <p class="text-2xs font-semibold uppercase leading-3 tracking-[0.1em] text-ink-body">Total
+                                        Pesanan</p>
                                     <p class="gpa-meta text-ink" x-text="order.allocation"></p>
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-2xs font-semibold uppercase leading-3 tracking-[0.1em] text-ink-body">Bay /
-                                        Pack Station</p>
+                                    <p class="text-2xs font-semibold uppercase leading-3 tracking-[0.1em] text-ink-body">Area
+                                        Pengemasan</p>
                                     <p class="gpa-meta text-success-deep" x-text="order.bay"></p>
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-2xs font-semibold uppercase leading-3 tracking-[0.1em] text-ink-body">Status
-                                        SOP Pack</p>
+                                        Pengemasan</p>
                                     <p class="gpa-meta text-ink" x-text="order.status"></p>
                                 </div>
                             </div>
@@ -238,12 +233,11 @@
 
                     <p x-cloak x-show="visibleOrders().length === 0"
                         class="rounded-lg bg-surface-shell/60 px-3 py-6 text-center">
-                        <span class="block text-xs font-semibold text-ink">Tidak ada batch staging yang cocok.</span>
+                        <span class="block text-xs font-semibold text-ink">Tidak ada persiapan pesanan yang cocok.</span>
                     </p>
                 </div>
 
                 <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line-soft/60 pt-2">
-                    <p class="gpa-note text-ink-body">{{ $packing['footer']['label'] }}</p>
                     <button type="button" @click="openColdHub()"
                         class="inline-flex items-center gap-1 gpa-meta-lg font-bold text-success-deep transition-colors hover:text-success">
                         {{ $packing['footer']['link'] }}
@@ -256,14 +250,12 @@
             <section class="gpa-panel p-4">
                 <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft pb-2">
                     <div class="flex min-w-0 items-center gap-2">
-                        <x-gpa.icon name="check-circle" class="h-4 w-4 shrink-0 text-success-deep" />
                         <div class="min-w-0">
                             <h2 class="gpa-section-title text-ink">{{ $gate['title'] }}</h2>
-                            <p class="mt-1 gpa-note text-ink-body">{{ $gate['subtitle'] }}</p>
+                            <p class="mt-1 text-xs leading-4 text-ink-body">{{ $gate['subtitle'] }}</p>
                         </div>
                     </div>
 
-                    <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
                 </div>
 
                 <div class="mt-4 grid gap-2">
@@ -305,12 +297,11 @@
 
                     <p x-cloak x-show="visibleLogs().length === 0"
                         class="rounded-lg bg-surface-shell/40 px-3 py-6 text-center">
-                        <span class="block text-xs font-semibold text-ink">Tidak ada tiket timbangan yang cocok.</span>
+                        <span class="block text-xs font-semibold text-ink">Tidak ada catatan timbang yang cocok.</span>
                     </p>
                 </div>
 
                 <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line-soft/60 pt-2">
-                    <p class="gpa-note text-ink-body">{{ $gate['footer']['label'] }}</p>
                     <button type="button" @click="act('ticket')"
                         class="inline-flex items-center gap-1 rounded bg-ink px-3 py-1.5 text-accent transition-colors hover:bg-ink-muted">
                         <x-gpa.icon name="plus" class="h-2.5 w-2.5 shrink-0" />

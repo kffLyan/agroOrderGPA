@@ -115,7 +115,7 @@
         x-data="directorReceivables(@js($ledger['rows']), @js($policy), @js($verification), @js($ledger['active_contracts']))">
 
         {{-- ---------- Kop halaman ---------- --}}
-        <header class="flex flex-wrap items-end justify-between gap-4 border-b border-line-board pb-2">
+        <header class="flex flex-wrap items-end justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0">
                 <h1 class="font-sans text-[28px] font-extrabold leading-9 tracking-[0.6px] text-ink sm:text-[32px] sm:leading-10">
                     {{ $header['title'] }}

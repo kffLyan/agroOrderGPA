@@ -51,7 +51,7 @@
                     </button>
 
                     <a href="{{ route('secretary.dashboard') }}" class="flex min-w-0 items-center gap-3">
-                        <x-gpa.brand-mark class="h-7 w-7 shrink-0 text-accent" />
+                        <img src="{{ asset('gpaleaves.png') }}" alt="" class="h-7 w-7 shrink-0 object-contain">
                         <span class="flex min-w-0 flex-col">
                             <span class="truncate font-inter text-lg font-extrabold uppercase leading-6 text-white">
                                 AgroOrder GPA

@@ -87,7 +87,7 @@ class ArmadaPodData
             'brand' => 'AGROORDER GPA',
             'role' => 'Armada Logistik',
             'plate' => self::ARMADA_PLATE,
-            'tone' => 'brand',
+            'tone' => 'light',
         ];
     }
 
@@ -128,7 +128,7 @@ class ArmadaPodData
                 'key' => 'manifest',
                 'step' => '1',
                 'title' => 'Foto Fisik Surat Jalan',
-                'title_tail' => '(Cap Basah)',
+                'title_tail' => '',
                 'badge' => 'WAJIB CAP DOCK',
                 'badge_tone' => 'accent',
                 'viewfinder_label' => 'VIEWFINDER RATIO 3:4 OCR READY',
@@ -154,7 +154,7 @@ class ArmadaPodData
                 'key' => 'dock',
                 'step' => '2',
                 'title' => 'Foto Dock & Muatan',
-                'title_tail' => '(Geo-Lock)',
+                'title_tail' => '',
                 'badge' => 'SENSOR TELEMETRI',
                 'badge_tone' => 'warning',
                 'telemetry' => [
@@ -233,6 +233,34 @@ class ArmadaPodData
             'action' => 'VALIDASI & SELESAIKAN PENGIRIMAN',
             'action_tail' => '(LOCK POD)',
             'note' => 'Otomatis mengunci status Selesai di Pusat & menerbitkan Invoice B2B.',
+            'arrival_action' => 'SERAH TERIMA & SELESAIKAN',
+            'arrival_note' => 'Muatan diserahkan ke PIC, PoD tervalidasi, status: Dalam Pengiriman → Selesai.',
+        ];
+    }
+
+    /**
+     * Detail retur untuk kondisi discrepancy.
+     *
+     * @return array<string, mixed>
+     */
+    public static function retur(): array
+    {
+        return [
+            'title' => 'FORM RETUR & ALASAN MUTU',
+            'weight_label' => 'Berat Retur (kg)',
+            'weight_placeholder' => 'Contoh: 5.5',
+            'reason_label' => 'Alasan Mutu',
+            'reasons' => [
+                'Daun Layu / Kuning',
+                'Krat / Wadah Pecah',
+                'Suhu Reefer Tidak Stabil',
+                'Selisih Berat > Toleransi',
+                'Kemasian Tidak Sesuai',
+                'Lainnya',
+            ],
+            'notes_label' => 'Catatan Tambahan',
+            'notes_placeholder' => 'Detail kondisi fisik, jumlah krat rusak, dll.',
+            'action' => 'SELESAI CATATAN RETUR',
         ];
     }
 

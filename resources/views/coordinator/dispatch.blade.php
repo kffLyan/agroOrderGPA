@@ -21,17 +21,12 @@
     <div class="space-y-6"
         x-data="coordinatorDispatch(@js($queue['items']), @js($manifest['rows']), @js($manifest['filters']), @js($readyDocs))">
         {{-- Page header --}}
-        <section class="flex flex-wrap items-start justify-between gap-4">
+        <section class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0">
-                <p class="gpa-eyebrow flex items-center gap-2">
-                    <x-gpa.icon name="truck" class="h-4 w-4 text-success-deep" />
-                    {{ $header['eyebrow'] }}
-                </p>
                 <h1 class="mt-2 font-sans text-3xl font-extrabold leading-10 tracking-[-0.01em] text-ink">
                     {{ $header['title_before'] }}<br class="hidden sm:block">
                     {{ $header['title_after'] }}
                 </h1>
-                <p class="mt-2 max-w-3xl text-sm leading-5 text-ink-body">{{ $header['subtitle'] }}</p>
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-2">
@@ -56,31 +51,6 @@
                         </span>
                     </button>
                 @endforeach
-            </div>
-        </section>
-
-        {{-- Rule 05 integrity banner --}}
-        <section
-            class="flex flex-col gap-4 rounded-xl border border-l-4 border-warning bg-warning-cream p-4 shadow-sub lg:flex-row lg:items-start lg:justify-between">
-            <div class="flex items-start gap-4">
-                <span class="shrink-0 rounded-lg bg-warning p-1.5">
-                    <x-gpa.icon name="alert-triangle" class="h-4 w-4 text-warning-soft" />
-                </span>
-                <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="gpa-micro-bold text-warning-deep">{{ $sop['title'] }}</h2>
-                        <span
-                            class="rounded bg-warning/10 px-1.5 py-0.5 gpa-micro-bold text-warning outline outline-1 outline-warning/30">
-                            {{ $sop['badge'] }}
-                        </span>
-                    </div>
-                    <p class="mt-1.5 max-w-4xl text-xs font-medium leading-4 text-ink">{{ $sop['body'] }}</p>
-                </div>
-            </div>
-
-            <div class="shrink-0 rounded bg-surface px-3 py-1 outline outline-1 outline-line-hair">
-                <p class="gpa-micro-bold text-warning">{{ $sop['cert_prefix'] }}</p>
-                <p class="gpa-micro-bold text-warning">{{ $sop['cert_value'] }}</p>
             </div>
         </section>
 
@@ -159,12 +129,8 @@
         <section class="space-y-4">
             <header class="flex flex-wrap items-center justify-between gap-3">
                 <div class="flex items-center gap-2">
-                    <span class="rounded-lg bg-brand p-1.5">
-                        <x-gpa.icon name="printer" class="h-4 w-4 text-accent" />
-                    </span>
                     <h2 class="gpa-section-title text-ink">{{ $queue['title'] }}</h2>
                 </div>
-                <p class="gpa-note text-ink-quiet" x-text="queueMeta()">{{ $queue['meta'] }}</p>
             </header>
 
             <div class="grid gap-4 2xl:grid-cols-2">
@@ -239,10 +205,8 @@
             <header class="flex flex-wrap items-start justify-between gap-4 border-b border-line-soft/60 pb-3">
                 <div class="min-w-0">
                     <h2 class="gpa-section-title flex items-center gap-2 text-ink">
-                        <span class="h-2.5 w-2.5 rounded-full bg-success-deep" aria-hidden="true"></span>
                         {{ $manifest['title'] }}
                     </h2>
-                    <p class="mt-1 max-w-3xl text-xs leading-4 text-ink-body">{{ $manifest['subtitle'] }}</p>
                 </div>
 
                 <div class="relative shrink-0">
@@ -368,13 +332,8 @@
         {{-- Batch operations --}}
         <section class="gpa-panel flex flex-wrap items-center justify-between gap-4 p-4">
             <div class="flex items-center gap-3">
-                <span
-                    class="flex h-10 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-shell outline outline-1 outline-line-board/40">
-                    <x-gpa.icon name="clipboard" class="h-4 w-4 text-ink" />
-                </span>
                 <div class="min-w-0">
                     <h2 class="gpa-section-title text-ink">{{ $batch['title'] }}</h2>
-                    <p class="mt-1 max-w-xl text-xs leading-4 text-ink-body">{{ $batch['subtitle'] }}</p>
                 </div>
             </div>
 

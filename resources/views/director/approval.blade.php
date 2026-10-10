@@ -46,7 +46,7 @@
         x-data="directorApproval(@js($queue['rows']), @js($queue))">
 
         {{-- Page header --}}
-        <section class="flex flex-wrap items-center justify-between gap-4 border-b border-line-board/80 pb-4">
+        <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0 space-y-1">
                 <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $header['title'] }}

@@ -33,18 +33,11 @@
             'baseWeighKg' => $baseWeighKg,
         ]))">
         {{-- Page header --}}
-        <section class="flex flex-wrap items-start justify-between gap-4">
+        <section class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0">
-                <p class="gpa-eyebrow flex items-center gap-2">
-                    <x-gpa.icon name="package" class="h-4 w-4 text-success-deep" />
-                    PERSIAPAN PESANAN &amp; PACKING COLD-CHAIN
-                </p>
                 <h1 class="mt-2 font-sans text-3xl font-extrabold leading-10 tracking-[-0.01em] text-ink">
                     Sortir, Sanitasi Krat &amp; Pre-Cooling
                 </h1>
-                <p class="mt-2 max-w-3xl text-sm leading-5 text-ink-body">
-                    Hard gate kualitas wajib tuntas sebelum batch boleh masuk antrean timbangan netto dan dokumen dispatch.
-                </p>
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-2">
@@ -58,43 +51,6 @@
                     <x-gpa.icon name="leaf" class="h-3.5 w-3.5 shrink-0" />
                     <span class="gpa-meta-lg font-bold">Cold-Chain Aktif</span>
                 </span>
-            </div>
-        </section>
-
-        {{-- Rule 04 & 09 mandate --}}
-        <section class="rounded-xl border border-l-4 border-brand bg-surface p-4 shadow-sub">
-            <header
-                class="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft/60 pb-2">
-                <div class="flex items-start gap-2">
-                    <span class="mt-0.5 shrink-0 text-brand">
-                        <x-gpa.icon name="shield" class="h-4 w-4" />
-                    </span>
-                    <h2 class="gpa-micro-bold text-ink-strong">{{ $mandate['title'] }}</h2>
-                </div>
-                <span
-                    class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand px-2.5 py-0.5">
-                    <span class="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true"></span>
-                    <span class="gpa-micro-bold text-accent">{{ $mandate['badge'] }}</span>
-                </span>
-            </header>
-
-            <div class="grid gap-4 pt-2 sm:grid-cols-2 2xl:grid-cols-4">
-                @foreach ($mandate['stages'] as $stage)
-                    <article class="flex flex-col justify-between gap-2 rounded-lg bg-surface-shell p-2 outline outline-1 outline-line-board/40">
-                        <div class="space-y-1">
-                            <div class="flex items-start justify-between gap-2">
-                                <p class="gpa-micro-bold text-success-deep">{{ $stage['stage'] }}</p>
-                                <x-gpa.icon :name="$stage['icon']" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
-                            </div>
-                            <h3 class="text-sm font-bold leading-5 text-ink">{{ $stage['title'] }}</h3>
-                            <p class="text-xs leading-5 text-ink-body">{{ $stage['body'] }}</p>
-                        </div>
-                        <div class="flex items-center justify-between gap-2 border-t border-line-soft/60 pt-2">
-                            <p class="gpa-note text-ink-quiet">{{ $stage['sop'] }}</p>
-                            <p class="gpa-micro-bold text-success-deep">{{ $stage['tag'] }}</p>
-                        </div>
-                    </article>
-                @endforeach
             </div>
         </section>
 
@@ -167,7 +123,6 @@
                 <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft/60 pb-3">
                     <div class="min-w-0">
                         <h2 class="gpa-section-title text-ink">{{ $queue['title'] }}</h2>
-                        <p class="mt-1 text-xs leading-4 text-ink-body">{{ $queue['subtitle'] }}</p>
                     </div>
                     <button type="button" @click="refreshQueue()"
                         class="shrink-0 rounded bg-surface-shell px-2 py-0.5 gpa-note text-ink-body outline outline-1 outline-line-board/50 transition-colors hover:bg-surface-muted">
@@ -241,12 +196,7 @@
 
             {{-- Active workstation --}}
             <div class="relative flex flex-col gap-4 overflow-hidden rounded-2xl bg-surface p-4 shadow-card">
-                <span
-                    class="absolute right-4 top-0 rounded-b-lg bg-brand px-3 py-1 gpa-micro-bold text-accent"
-                    x-text="tabLabel()">{{ $station['tab_prefix'] }} MEJA #{{ substr($queue['rows'][0]['station'], -2) }}</span>
-
                 <header class="space-y-1 pt-6">
-                    <p class="gpa-micro-bold text-success-deep">{{ $station['eyebrow'] }}</p>
                     <h2 class="gpa-section-title text-ink" x-text="buyer()">{{ $queue['rows'][0]['buyer'] }}</h2>
                     <div class="flex flex-wrap items-center gap-2 pt-1">
                         <span class="gpa-meta font-bold text-ink" x-text="poLabel()">#{{ $queue['rows'][0]['po'] }}</span>
@@ -344,10 +294,8 @@
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft/60 pb-3">
                 <div class="min-w-0">
                     <h2 class="gpa-section-title flex items-center gap-2 font-inter text-ink">
-                        <x-gpa.icon name="clipboard" class="h-4 w-4 shrink-0 text-success-deep" />
                         {{ $qc['title'] }}
                     </h2>
-                    <p class="mt-1 font-inter text-xs leading-4 text-ink-body" x-text="qcSubtitle()">{{ $qc['subtitle'] }}</p>
                 </div>
 
                 <div class="flex shrink-0 items-center gap-2 rounded-lg bg-accent/30 px-3 py-1.5 outline outline-1 outline-success-deep">

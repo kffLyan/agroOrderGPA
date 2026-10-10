@@ -14,14 +14,12 @@
         ]))">
 
         {{-- Page header --}}
-        <section class="flex flex-wrap items-center justify-between gap-4 border-b border-line-board/30 pb-6">
+        <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0">
-                <p class="gpa-eyebrow">{{ $header['eyebrow'] }}</p>
                 <h1 class="mt-1 font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $header['title_before'] }}<br>
                     {{ $header['title_after'] }}
                 </h1>
-                <p class="mt-2 max-w-2xl text-sm leading-5 text-ink-body">{{ $header['subtitle'] }}</p>
             </div>
 
             <div class="shrink-0 rounded-lg bg-surface px-3 py-2 outline outline-1 -outline-offset-1 outline-line-board/50">
@@ -79,49 +77,6 @@
             </div>
         </section>
 
-        {{-- PRD rules --}}
-        <section class="grid gap-4 md:grid-cols-2">
-            @foreach ($rules as $rule)
-                @php $danger = $rule['tone'] === 'danger'; @endphp
-                <article @class([
-                    'flex items-start gap-2 rounded-xl bg-surface p-4 shadow-card',
-                    'border-l-4 border-success-deep' => ! $danger,
-                    'border-l-4 border-line-board/40' => $danger,
-                ])>
-                    <span class="shrink-0 rounded bg-accent p-1 pt-[9px]">
-                        <x-gpa.icon :name="$rule['icon']"
-                            class="h-4 w-4 shrink-0 {{ $danger ? 'text-danger-ink' : 'text-success-ink' }}" />
-                    </span>
-
-                    <div class="min-w-0 space-y-0.5">
-                        <div class="flex flex-wrap items-center gap-1">
-                            <span @class([
-                                'rounded px-1.5 py-0.5 text-[10px] font-bold uppercase leading-3 tracking-[1px]',
-                                'bg-accent text-success-ink' => ! $danger,
-                                'bg-danger-soft text-danger-ink' => $danger,
-                            ])>{{ $rule['badge'] }}</span>
-
-                            <span @class([
-                                'text-2xs font-bold uppercase leading-3 tracking-[0.45px]',
-                                'text-ink-body' => ! $danger,
-                                'text-danger' => $danger,
-                            ])>{{ $rule['meta'] }}</span>
-                        </div>
-
-                        <p class="text-xs leading-4">
-                            @foreach ($rule['segments'] as $segment)
-                                <span @class([
-                                    'font-semibold text-ink' => $segment['tone'] === 'strong',
-                                    'font-semibold underline text-success-deep' => $segment['tone'] === 'link',
-                                    'font-bold text-danger' => $segment['tone'] === 'danger',
-                                ])>{{ $segment['text'] }}</span>
-                            @endforeach
-                        </p>
-                    </div>
-                </article>
-            @endforeach
-        </section>
-
         {{-- Order banner --}}
         <section class="relative flex flex-col justify-center gap-4 rounded-xl bg-brand p-4 outline outline-1 -outline-offset-1 outline-success-deep/30">
             <div class="flex flex-wrap items-center gap-4">
@@ -164,12 +119,11 @@
         </section>
 
         {{-- Terminal + QC grading --}}
-        <div class="grid items-start gap-6 xl:grid-cols-2">
+        <div class="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             {{-- Terminal Input Penimbangan Massa Fisik --}}
-            <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
+            <section class="flex h-full min-w-0 flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line-board/30 pb-4">
                     <div class="flex min-w-0 items-center gap-2">
-                        <x-gpa.icon name="scale" class="h-5 w-5 shrink-0 text-success-deep" />
                         <div class="min-w-0">
                             <h2 class="text-lg leading-6 font-semibold text-ink">{{ $terminal['title'] }}</h2>
                             <p class="text-2xs font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
@@ -267,10 +221,9 @@
             </section>
 
             {{-- Form Quality Control & Grading Sortir Fisik --}}
-            <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
+            <section class="flex h-full min-w-0 flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line-board/30 pb-4">
                     <div class="flex min-w-0 items-center gap-2">
-                        <x-gpa.icon name="eye" class="h-5 w-5 shrink-0 text-success-deep" />
                         <div class="min-w-0">
                             <h2 class="text-lg leading-6 font-semibold text-ink">{{ $grading['title'] }}</h2>
                             <p class="text-2xs font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
@@ -284,7 +237,7 @@
                     </span>
                 </div>
 
-                <div class="overflow-hidden rounded-xl outline outline-1 -outline-offset-1 outline-line-board/40">
+                <div class="gpa-scroll-x overflow-x-auto rounded-xl outline outline-1 -outline-offset-1 outline-line-board/40">
                     <div class="bg-surface-shell">
                         <div class="flex items-center">
                             @foreach ($grading['columns'] as $index => $column)
@@ -394,12 +347,11 @@
         </div>
 
         {{-- Rekonsiliasi + Finansial + Audit --}}
-        <div class="grid items-start gap-6 xl:grid-cols-2">
+        <div class="grid items-stretch gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             {{-- Rekonsiliasi Sumber Pasokan --}}
-            <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
+            <section class="flex h-full min-w-0 flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line-board/30 pb-2">
                     <div class="flex min-w-0 items-center gap-2">
-                        <x-gpa.icon name="package" class="h-[18px] w-[18px] shrink-0 text-success-deep" />
                         <h2 class="text-lg leading-6 font-semibold text-ink">{{ $reconciliation['title'] }}</h2>
                     </div>
 
@@ -455,11 +407,10 @@
                 </div>
             </section>
 
-            <div class="flex flex-col gap-6">
+            <div class="flex h-full min-w-0 flex-col">
                 {{-- Perhitungan Finansial Otomatis --}}
-                <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 outline outline-2 -outline-offset-2 outline-success-deep/50">
+                <section class="flex h-full min-w-0 flex-col gap-4 rounded-2xl bg-surface p-6 outline outline-2 -outline-offset-2 outline-success-deep/50">
                     <div class="flex items-center gap-2 border-b border-line-board/30 pb-2">
-                        <x-gpa.icon :name="$financial['icon']" class="h-4 w-4 shrink-0 text-success-deep" />
                         <div class="min-w-0">
                             <h2 class="text-lg leading-6 font-semibold text-ink">{{ $financial['title'] }}</h2>
                             <p class="text-2xs font-bold uppercase leading-3 tracking-[1.08px] text-success-deep gpa-micro-bold">
@@ -509,15 +460,6 @@
                     </div>
                 </section>
 
-                {{-- Integritas Audit Forensik --}}
-                <section class="flex flex-col gap-1 rounded-xl bg-surface p-4 shadow-card">
-                    <div class="flex items-center gap-1">
-                        <x-gpa.icon name="shield" class="h-[13px] w-[13px] shrink-0 text-success-deep" />
-                        <p class="text-2xs font-bold uppercase leading-3 tracking-[1.08px] text-ink gpa-micro-bold">{{ $audit['title'] }}</p>
-                    </div>
-
-                    <p class="text-2xs font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">{{ $audit['body'] }}</p>
-                </section>
             </div>
         </div>
 

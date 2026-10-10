@@ -29,9 +29,8 @@
         <header class="border-b border-line-faint bg-brand text-white">
             <div class="mx-auto flex w-full max-w-6xl items-center gap-2 px-4 py-3 sm:gap-3 sm:px-6">
                 <a href="{{ route('public.home') }}" class="flex shrink-0 items-center gap-3">
-                    <span
-                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent text-brand-deep">
-                        <x-gpa.icon name="leaf" class="h-5 w-5" />
+                    <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+                        <img src="{{ asset('gpaleaves.png') }}" alt="" class="h-8 w-8 object-contain">
                     </span>
                     <span class="hidden min-w-0 flex-col leading-none sm:flex">
                         <span class="truncate text-lg font-extrabold uppercase tracking-tight md:text-xl">AgroOrder

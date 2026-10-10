@@ -425,4 +425,55 @@ class SecretaryInvoiceData
             ],
         ];
     }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function printDocument(string $invoiceId): ?array
+    {
+        $invoice = collect(self::ledgerRows())->firstWhere('id', $invoiceId);
+
+        if ($invoice === null) {
+            return null;
+        }
+
+        $client = collect(self::clients())->firstWhere('contract', $invoice['contract']);
+        $documents = $client['documents'] ?? [];
+
+        return [
+            'brand' => 'PT AGRO PASTI ADA',
+            'company_lines' => [
+                'AgroOrder GPA Logistics & Supply Network',
+                'Kawasan Industri Sentul, Jl. Raya Babakan Madang No. 88, Kab. Bogor, Jawa Barat 16810',
+                'Telp: (021) 8792-4421 | NPWP: 42.819.330.1-914.000',
+            ],
+            'invoice' => $invoice,
+            'client' => [
+                'name' => $invoice['client'],
+                'contract' => $invoice['contract'],
+                'npwp' => $client['npwp'] ?? 'Data NPWP mengikuti dokumen kontrak',
+            ],
+            'delivery_documents' => $documents,
+            'items' => array_map(static fn (array $document): array => [
+                'code' => $document['sj'],
+                'name' => $document['commodity'],
+                'qty' => $document['weight'],
+                'price' => $document['weight'] > 0
+                    ? $document['value'] / $document['weight']
+                    : 0,
+                'amount' => $document['value'],
+            ], $documents),
+            'totals' => [
+                'qty' => array_sum(array_column($documents, 'weight')),
+                'amount' => $invoice['total'],
+                'document_count' => $invoice['sj_count'],
+            ],
+            'payment' => [
+                'bank' => 'Bank Central Asia (BCA)',
+                'branch' => 'KCU Sentul',
+                'account' => '8820-192-001',
+                'name' => 'PT AGRO PASTI ADA',
+            ],
+        ];
+    }
 }

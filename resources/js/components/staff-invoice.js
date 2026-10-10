@@ -2,7 +2,7 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', '
 
 const normalize = (value) => String(value ?? '').toLowerCase();
 
-export default function secretaryInvoicing(clients = [], ledger = [], statusFilters = {}, totalInvoices = 42) {
+export default function secretaryInvoicing(clients = [], ledger = [], statusFilters = {}, totalInvoices = 42, invoiceUrlTemplate = '') {
     const clientList = Array.isArray(clients) ? clients : [];
     const ledgerRows = Array.isArray(ledger) ? ledger : [];
 
@@ -16,6 +16,7 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
             ...(statusFilters ?? {}),
         },
         totalInvoices: Number(totalInvoices) || 0,
+        invoiceUrlTemplate,
         clientId: clientList[0]?.id ?? null,
         selected: clientList[0]?.documents?.map((document) => document.sj) ?? [],
         termsFilter: 'all',
@@ -240,11 +241,16 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
         },
 
         viewInvoice(row) {
-            this.run('Detail Faktur', `${row.id} — ${row.client} • ${row.total_label} • ${row.terms_label} • jatuh tempo ${row.due}.`);
+            window.location.assign(this.invoiceUrl(row));
         },
 
         printInvoice(row) {
-            this.run('Cetak Faktur', `Berkas ${row.id} dikirim ke printer sekretariat (salinan klien + arsip penagihan).`);
+            window.open(this.invoiceUrl(row), '_blank', 'noopener');
+        },
+
+        invoiceUrl(row) {
+            return this.invoiceUrlTemplate
+                .replace('__invoice__', encodeURIComponent(row.id));
         },
 
         followUp(row) {

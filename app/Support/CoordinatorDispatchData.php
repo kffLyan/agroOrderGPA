@@ -128,7 +128,7 @@ class CoordinatorDispatchData
     public static function queue(): array
     {
         return [
-            'title' => 'Antrean Penerbitan Surat Jalan (Timbangan Terkunci)',
+            'title' => 'Antrean Penerbitan Surat Jalan',
             'meta' => '2 ORDER MENUNGGU DOKUMEN CETAK',
             'items' => [
                 [

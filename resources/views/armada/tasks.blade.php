@@ -30,7 +30,7 @@
 
         {{-- Identitas supir bertugas --}}
         <section class="flex flex-col gap-3 rounded-xl bg-surface p-4 shadow-card">
-            <header class="flex items-start justify-between gap-3 border-b border-surface-disabled pb-1">
+            <header class="flex items-start justify-between gap-3 border-surface-disabled pb-1">
                 <div class="flex min-w-0 flex-col gap-1">
                     <p class="gpa-micro-bold text-ink-quiet">{{ $assignment['label'] }}</p>
 
@@ -58,77 +58,6 @@
                 </div>
             </header>
 
-            <div class="flex items-stretch gap-1">
-                @foreach ($telemetry as $item)
-                    <div class="flex flex-1 items-center justify-between gap-2 rounded bg-surface-shell px-2 py-3 outline outline-1 -outline-offset-1 outline-line-board/60">
-                        <div class="flex min-w-0 flex-col gap-0.5">
-                            <p class="gpa-micro-bold text-ink-quiet">{{ $item['label'] }}</p>
-
-                            <p class="flex items-baseline gap-1">
-                                <span class="font-mono text-sm font-bold leading-5 tracking-[0.28px] text-ink">{{ $item['value'] }}</span>
-                                @isset($item['unit'])
-                                    <span class="font-mono text-[9px] font-normal leading-3 tracking-[1.08px] text-ink">{{ $item['unit'] }}</span>
-                                @endisset
-                            </p>
-
-                            <p class="font-mono text-[9px] font-bold uppercase leading-3 tracking-[1.08px] {{ $telemetryTone[$item['tone']] }}">
-                                {{ $item['note'] }}<br>{{ $item['note_tail'] ?? '' }}
-                            </p>
-                        </div>
-
-                        <x-gpa.icon :name="$item['icon']" class="h-[25px] w-[25px] shrink-0 text-ink-body" />
-                    </div>
-                @endforeach
-            </div>
-        </section>
-
-        {{-- Manifest berjalan --}}
-        <section class="relative flex flex-col gap-3 overflow-hidden rounded-xl bg-ink px-4 pb-4 pt-7 shadow-card">
-            <header class="flex items-center justify-between gap-2">
-                <p class="flex items-center gap-1.5">
-                    <x-gpa.icon name="truck" class="h-[15px] w-[14px] shrink-0 text-accent" />
-                    <span class="font-mono text-sm font-bold leading-5 tracking-[0.28px] text-accent">
-                        {{ $manifest['label'] }} {{ $manifest['code'] }}
-                    </span>
-                </p>
-
-                <span class="rounded bg-brand px-2 py-0.5 font-mono text-[9px] font-semibold uppercase leading-3 tracking-[0.9px] text-surface-pill outline outline-1 -outline-offset-1 outline-ink-quiet/30">
-                    {{ $manifest['badge'] }}
-                </span>
-            </header>
-
-            <div class="flex items-stretch gap-2 border-y border-ink-quiet/40 py-2">
-                @foreach ($manifest['metrics'] as $index => $metric)
-                    <div @class([
-                        'flex flex-1 flex-col items-center gap-0.5',
-                        'border-x border-ink-quiet/40 px-1' => $index === 1,
-                    ])>
-                        <p class="text-center font-mono text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-surface-pill">
-                            {{ $metric['label'] }}
-                        </p>
-                        <p @class([
-                            'text-center font-mono text-[11px] font-bold leading-[14px] tracking-[0.88px]',
-                            'text-white' => $index !== 2,
-                            'text-accent' => $index === 2,
-                        ])>{!! $metric['value'] !!}</p>
-                    </div>
-                @endforeach
-            </div>
-
-            <div class="flex items-start gap-2 rounded-lg bg-white/10 p-2.5 outline outline-1 -outline-offset-1 outline-success-deep/20">
-                <x-gpa.icon name="bolt" class="mt-0.5 h-[13px] w-3 shrink-0 text-accent" />
-
-                <div class="flex flex-col gap-0.5 pt-0.5">
-                    <p class="font-mono text-[10px] font-bold uppercase leading-3 tracking-[1px] text-accent">
-                        {{ $manifest['traffic_label'] }}
-                    </p>
-                    <p class="text-xs font-normal leading-[19.5px] text-surface-track">
-                        {{ $manifest['traffic'] }}
-                    </p>
-                </div>
-            </div>
-
-            <span class="pointer-events-none absolute right-8 top-[141px] h-28 w-28 rounded-full bg-success-deep/10" aria-hidden="true"></span>
         </section>
 
         {{-- Filter status antrean --}}
@@ -149,13 +78,9 @@
         {{-- Judul antrean --}}
         <section class="flex items-center justify-between gap-2 pt-1">
             <p class="flex items-center gap-1.5">
-                <x-gpa.icon name="map-pin" class="h-[15px] w-[15px] shrink-0 text-success-deep" />
                 <span class="text-lg font-semibold leading-6 text-ink">{{ $queue_title }}</span>
             </p>
 
-            <p class="font-mono text-[9px] font-bold uppercase leading-3 tracking-[1.08px] text-ink-quiet">
-                {{ $queue_compliance }}
-            </p>
         </section>
 
         {{-- Kartu titik bongkar --}}
@@ -266,21 +191,6 @@
                     {{ $support['action'] }}
                 </button>
             </header>
-
-            <div class="flex flex-col gap-1 border-t border-surface-disabled pt-2.5">
-                <p class="font-mono text-[9px] font-bold uppercase leading-3 tracking-[1.08px] text-ink-quiet">{{ $support['audit_title'] }}</p>
-
-                @foreach ($support['audit'] as $audit)
-                    <p class="flex items-center justify-between gap-2">
-                        <span class="font-mono text-[9px] font-semibold leading-3 tracking-[1.08px] text-ink-body">{!! $audit['label'] !!}</span>
-                        <span class="font-mono text-[9px] font-bold leading-3 tracking-[1.08px] text-success-deep">{{ $audit['status'] }}</span>
-                    </p>
-                @endforeach
-            </div>
-
-            <p class="flex flex-col items-center gap-0.5 pt-1 text-center font-mono text-[9px] font-semibold leading-3 tracking-[1.08px] text-ink-quiet">
-                {!! $support['footer'] !!}
-            </p>
         </section>
     </div>
 @endsection

@@ -27,7 +27,7 @@ class CoordinatorDashboardTest extends TestCase
         $response = $this->get(route('coordinator.dashboard'));
 
         $response->assertOk();
-        $response->assertSee('Dashboard Operasional Pasokan &amp; Kesiapan', false);
+        $response->assertSee('Ringkasan Pasokan &amp; Kesiapan', false);
         $response->assertSee('Koordinator Lapangan');
         $response->assertSee('Agus Tusan');
         $response->assertSee('ID : 002');
@@ -49,15 +49,15 @@ class CoordinatorDashboardTest extends TestCase
         $response = $this->get(route('coordinator.dashboard'));
 
         $response->assertOk();
-        $response->assertSee('Pesanan Terverifikasi (Siap Pack)');
+        $response->assertSee('Pesanan Siap Dikemas');
         $response->assertSee('1.840');
         $response->assertSee('28 PO Aktif');
-        $response->assertSee('100% Terlock');
-        $response->assertSee('Komoditas Butuh Timbang');
+        $response->assertSee('100% Terkunci');
+        $response->assertSee('Komoditas Perlu Ditimbang');
         $response->assertSee('82.4%');
-        $response->assertSee('5.93 / 7.20 TON');
+        $response->assertSee('5.93 / 7.20 ton');
         $response->assertSee('-1.18%');
-        $response->assertSee('In Tolerance');
+        $response->assertSee('Dalam Batas');
     }
 
     public function test_console_renders_supply_table_reconciliation(): void
@@ -68,7 +68,7 @@ class CoordinatorDashboardTest extends TestCase
 
         $response->assertOk();
         $response->assertSee($supply['title']);
-        $response->assertSee($supply['description'], false);
+        $response->assertSee($supply['description']);
         $response->assertSee('1.920 KG');
         $response->assertSee('1.840 KG');
         $response->assertSee('+80 KG');
@@ -119,8 +119,9 @@ class CoordinatorDashboardTest extends TestCase
 
         $response->assertOk();
         $response->assertSee($packing['title']);
+        $response->assertSee($packing['subtitle']);
         $response->assertSee($packing['chip'], false);
-        $response->assertSee('Buka Kontrol Cold-Storage Hub');
+        $response->assertSee('Buka pengaturan ruang dingin');
 
         $this->assertSame([85, 62, 35], array_column($packing['orders'], 'percent'));
         $this->assertJsPayload($response, $packing['orders']);
@@ -134,8 +135,8 @@ class CoordinatorDashboardTest extends TestCase
 
         $response->assertOk();
         $response->assertSee($gate['title']);
-        $response->assertSee('Timbangan Digital Metrologi #MET-SUB-01');
-        $response->assertSee('Input Tiket Baru');
+        $response->assertSee($gate['subtitle']);
+        $response->assertSee('Tambah tiket');
 
         foreach ($gate['logs'] as $log) {
             $response->assertSee($log['ticket'], false);

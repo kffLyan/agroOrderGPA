@@ -199,13 +199,9 @@
                                 ])>{{ $card['grade'] }}</span>
                             </div>
 
-                            <div
-                                class="flex h-36 flex-col items-center justify-center gap-1 rounded-xl border border-line-hair bg-[linear-gradient(171deg,#F6F8F2_0%,#EAF2D7_100%)] p-3 text-center">
-                                <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm">
-                                    <x-gpa.icon name="leaf" class="h-4 w-4 text-success" />
-                                </span>
-                                <span class="font-mono text-xs font-bold leading-4 text-brand">{{ $card['image'] }}</span>
-                                <span class="font-mono text-[10px] leading-[15px] text-success">{{ $card['caption'] }}</span>
+                            <div class="h-36 overflow-hidden rounded-xl border border-line-hair">
+                                <img src="{{ asset($card['image_path']) }}" alt="{{ $card['name'] }}"
+                                    class="h-full w-full object-cover">
                             </div>
 
                             <p class="text-xs leading-[19.5px] text-[#5C6B57]">{!! nl2br(e($card['body'])) !!}</p>

@@ -71,7 +71,7 @@
         x-data="directorVolume(@js($commodities['rows']), @js($trend['rows']), @js($allocations['rows']))">
 
         {{-- Page header + range badge + aksi rekonsiliasi --}}
-        <section class="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-line-board">
+        <section class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0 space-y-1">
                 <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     Monitoring Volume Komoditas, Stok Panen<br>&amp; Kapasitas Pasokan
@@ -141,87 +141,77 @@
         </section>
 
         {{-- Neraca volume lima komoditas inti --}}
-        <section class="flex flex-col gap-4">
-            <header class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-line-board">
-                <div class="flex min-w-0 flex-col gap-1">
-                    <p class="flex items-center gap-2">
-                        <h2 class="font-inter text-lg font-semibold leading-6 text-ink">{{ $commodities['title'] }}</h2>
-                    </p>
-                </div>
-
+        <section class="flex min-h-[420px] w-full flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
+            <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-board pb-3">
+                <h2 class="font-inter text-lg font-semibold leading-6 text-ink">{{ $commodities['title'] }}</h2>
             </header>
 
-            <div class="gpa-scroll-x overflow-x-auto py-1">
-                <div class="flex min-w-[980px] gap-4">
-                    @foreach ($commodities['rows'] as $index => $row)
-                        <button type="button" @click="inspectCommodity({{ $commodityArguments[$index] }})"
-                            class="flex h-full w-[196px] shrink-0 flex-col justify-between gap-6 rounded-2xl bg-surface p-4 text-left shadow-card transition-colors hover:bg-surface-shell">
-                            <span class="flex flex-col gap-1">
+            <div class="grid flex-1 grid-cols-1 gap-4 py-1 sm:grid-cols-2 xl:grid-cols-5">
+                @foreach ($commodities['rows'] as $index => $row)
+                    <button type="button" @click="inspectCommodity({{ $commodityArguments[$index] }})"
+                        class="flex h-full min-w-0 flex-col justify-between gap-6 rounded-xl bg-surface-shell p-4 text-left outline outline-1 -outline-offset-1 outline-line-board/60 transition-colors hover:bg-surface-muted">
+                        <span class="flex flex-col gap-1">
+                            <span class="flex items-center justify-between gap-2">
+                                <span
+                                    class="rounded px-1.5 py-0.5 text-[9px] font-bold leading-3 gpa-micro-bold text-ink outline outline-1 -outline-offset-1 outline-line-board bg-surface-shell">
+                                    {{ $row['code'] }}
+                                </span>
+                                <span class="text-[11px] font-bold leading-[14px] tracking-[0.88px] font-mono {{ $shareTone[$row['share_tone']] }}">
+                                    {{ $row['share_label'] }}
+                                </span>
+                            </span>
+
+                            <span class="block pt-1.5 font-sans text-lg font-semibold leading-6 text-ink">
+                                {{ $row['name'] }}
+                            </span>
+                            <span class="block font-sans text-xs leading-4 text-ink-body">{{ $row['grade'] }}</span>
+
+                            <span class="mt-5 flex flex-col gap-2 border-y border-line-board/60 py-2">
                                 <span class="flex items-center justify-between gap-2">
-                                    <span
-                                        class="rounded px-1.5 py-0.5 text-[9px] font-bold leading-3 gpa-micro-bold text-ink outline outline-1 -outline-offset-1 outline-line-board bg-surface-shell">
-                                        {{ $row['code'] }}
-                                    </span>
-                                    <span class="text-[11px] font-bold leading-[14px] tracking-[0.88px] font-mono {{ $shareTone[$row['share_tone']] }}">
-                                        {{ $row['share_label'] }}
+                                    <span class="font-mono text-xs leading-4 text-ink-body">Realisasi:</span>
+                                    <span class="text-right font-mono text-base font-bold leading-6 text-ink">
+                                        {{ $row['value_label'] }}<br>Ton
                                     </span>
                                 </span>
 
-                                <span class="block pt-1.5 font-sans text-lg font-semibold leading-6 text-ink">
-                                    {{ $row['name'] }}
+                                <span class="flex items-center justify-between gap-2">
+                                    <span class="font-mono text-xs leading-4 text-success-deep">&bull; Binaan:</span>
+                                    <span class="font-mono text-xs leading-4 text-ink">{{ $row['farmer_label'] }}</span>
                                 </span>
-                                <span class="block font-sans text-xs leading-4 text-ink-body">{{ $row['grade'] }}</span>
+
+                                <span class="flex items-center justify-between gap-2">
+                                    <span class="font-mono text-xs leading-4 text-success-deep">&bull; Buffer:</span>
+                                    <span class="font-mono text-xs leading-4 text-ink">{{ $row['buffer_label'] }}</span>
+                                </span>
 
                                 <span
-                                    class="mt-5 flex flex-col gap-2 border-y border-line-board/60 py-2">
-                                    <span class="flex items-center justify-between gap-2">
-                                        <span class="font-mono text-xs leading-4 text-ink-body">Realisasi:</span>
-                                        <span class="text-right font-mono text-base font-bold leading-6 text-ink">
-                                            {{ $row['value_label'] }}<br>Ton
-                                        </span>
+                                    class="flex items-center justify-between gap-2 border-t border-surface-track pt-1">
+                                    <span class="font-mono text-xs font-medium leading-4 text-ink-body">
+                                        Sisa Kuota<br>Bebas:
                                     </span>
-
-                                    <span class="flex items-center justify-between gap-2">
-                                        <span class="font-mono text-xs leading-4 text-success-deep">&bull; Binaan:</span>
-                                        <span class="font-mono text-xs leading-4 text-ink">{{ $row['farmer_label'] }}</span>
-                                    </span>
-
-                                    <span class="flex items-center justify-between gap-2">
-                                        <span class="font-mono text-xs leading-4 text-success-deep">&bull; Buffer:</span>
-                                        <span class="font-mono text-xs leading-4 text-ink">{{ $row['buffer_label'] }}</span>
-                                    </span>
-
                                     <span
-                                        class="flex items-center justify-between gap-2 border-t border-surface-track pt-1">
-                                        <span class="font-mono text-xs font-medium leading-4 text-ink-body">
-                                            Sisa Kuota<br>Bebas:
-                                        </span>
-                                        <span
-                                            class="rounded px-1.5 py-0.5 font-mono text-xs font-bold leading-4 {{ $headroomTone[$row['headroom_tone']] }}">
-                                            {{ $row['headroom_label'] }}
-                                        </span>
+                                        class="rounded px-1.5 py-0.5 font-mono text-xs font-bold leading-4 {{ $headroomTone[$row['headroom_tone']] }}">
+                                        {{ $row['headroom_label'] }}
                                     </span>
                                 </span>
                             </span>
+                        </span>
 
-                            <span
-                                class="w-full rounded px-1.5 py-1 text-center text-[9px] font-bold leading-3 gpa-micro-bold {{ $statusTone[$row['status_tone']] }}">
-                                {{ $row['status'] }}
-                            </span>
-                        </button>
-                    @endforeach
-                </div>
+                        <span
+                            class="w-full rounded px-1.5 py-1 text-center text-[9px] font-bold leading-3 gpa-micro-bold {{ $statusTone[$row['status_tone']] }}">
+                            {{ $row['status'] }}
+                        </span>
+                    </button>
+                @endforeach
             </div>
         </section>
 
         {{-- Grafik mingguan + matriks alokasi kontrak B2B --}}
-        <section class="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-            <div class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
+        <section class="grid items-stretch gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+            <div class="flex min-h-[420px] flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
                 <header class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-line-board">
                     <div class="flex min-w-0 flex-col gap-1">
-                        <p class="flex items-center gap-2">
-                            <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $trend['title'] }}</h2>
-                        </p>
+                        <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $trend['title'] }}</h2>
                         <p class="text-xs leading-4 text-ink-body">{{ $trend['subtitle'] }}</p>
                     </div>
 

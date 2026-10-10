@@ -1,6 +1,6 @@
 @extends('layouts.director')
 
-@section('title', 'Dashboard Eksekutif // Ringkasan Kinerja')
+@section('title', 'Dashboard Direktur')
 
 @section('content')
     @php
@@ -33,7 +33,7 @@
     <div class="mx-auto flex max-w-[1280px] flex-col gap-6">
 
         {{-- Page header --}}
-        <section class="flex flex-wrap items-center justify-between gap-4 border-b border-line-board/80 pb-4">
+        <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0 space-y-1">
                 <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $header['title'] }}
@@ -132,7 +132,7 @@
             @endforeach
         </section>
 
-        {{-- Weekly trend + commodity distribution --}}
+        {{-- Tren omzet mingguan dan pembagian komoditas --}}
         <section class="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
             <div class="gpa-panel flex flex-col justify-between gap-6 p-6">
                 <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
@@ -159,7 +159,7 @@
                                     'text-[#C6904A]' => $row['status'] === 'running',
                                     'text-success-deep' => $row['status'] !== 'running',
                                 ])>
-                                    Realisasi: {{ $row['realized_label'] }} ({{ $row['ratio_label'] }})
+                                    Omzet: {{ $row['realized_label'] }} ({{ $row['ratio_label'] }})
                                 </p>
                             </div>
 
@@ -204,7 +204,7 @@
                                 <div class="flex items-start justify-between gap-2">
                                     <p class="gpa-meta font-bold text-ink">{{ $row['name'] }}</p>
                                     <p class="gpa-meta font-semibold text-success-deep">
-                                        {{ $row['tons_label'] }} Ton ({{ $row['share'] }}%)
+                                        {{ $row['tons_label'] }} ton ({{ $row['share'] }}%)
                                     </p>
                                 </div>
                                 <div class="h-2 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
@@ -225,7 +225,7 @@
                                     <p class="pt-0.5 text-[14px] font-bold leading-5 text-ink gpa-meta">{{ $channel['share'] }}%
                                     </p>
                                     <p class="text-[9px] leading-[13.5px] text-success-deep gpa-meta">
-                                        {{ $channel['tons_label'] }} T
+                                        {{ $channel['tons_label'] }} ton
                                     </p>
                                 </div>
                             @endforeach
@@ -241,7 +241,7 @@
         </section>
 
 
-        {{-- Receivables aging --}}
+        {{-- Pemantauan tagihan --}}
         <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0">

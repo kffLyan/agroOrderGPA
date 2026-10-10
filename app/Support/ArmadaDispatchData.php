@@ -70,8 +70,8 @@ class ArmadaDispatchData
                     'badge' => 'STOP #1',
                     'badge_tone' => 'ink',
                     'dot' => 'success',
-                    'status' => 'SIAP BERANGKAT',
-                    'status_tone' => 'success',
+                    'status' => 'DALAM PENGIRIMAN',
+                    'status_tone' => 'accent',
                     'number' => 'SJ-202610-0001',
                     'number_tone' => 'strong',
                     'client' => 'PT Kuliner Prima Nusantara',
@@ -243,7 +243,7 @@ class ArmadaDispatchData
         ];
     }
 
-    /**
+/**
      * Gate pass security dock, status segel, dan aksi keberangkatan.
      *
      * @return array<string, mixed>
@@ -255,14 +255,14 @@ class ArmadaDispatchData
             'expiry_label' => 'EXP:',
             'expiry_minutes' => 45,
             'token' => 'TOKEN: GPA-795-B9284-SEC',
-            'hint' => 'Tunjukkan ke pos security gerbang sentral<br>hub &amp; dock penerima.',
+            'hint' => 'Tunjukkan ke pos security gerbang sentral<br>hub & dock penerima.',
             'seal' => [
                 'label' => 'STATUS SEGEL KONTAINER',
                 'value' => 'Segel Digital Aktif (Terkunci Otomatis)',
             ],
-            'action' => 'MULAI PENGIRIMAN (ON-ROUTE)',
-            'action_note' => 'Status GPS Logbook &amp; Reefer Tracker Aktif<br>Terkoneksi',
+            'action' => 'MULAI PENGIRIMAN',
+            'action_note' => 'Status GPS Logbook & Reefer Tracker Aktif<br>Terkoneksi — Status: Dalam Pengiriman',
             'report' => 'Lapor Kendala / Selisih Muatan',
-        ];
+];
     }
 }

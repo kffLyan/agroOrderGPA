@@ -44,7 +44,7 @@ class DirectorDashboardData
             'initials' => self::initials($name),
             'branch' => 'Kantor Pusat GPA - Lantai 3',
             'email' => $user?->email ?? 'direktur@agroorder.co.id',
-            'period' => 'W44-2026 // Q4 YTD',
+            'period' => 'Minggu 44 2026 | Kuartal 4',
         ];
     }
 
@@ -54,12 +54,12 @@ class DirectorDashboardData
     public static function header(): array
     {
         return [
-            'eyebrow' => 'RINGKASAN EKSEKUTIF',
-            'title' => 'Dashboard Eksekutif // Monitoring Bisnis & Otorisasi Direktur',
-            'subtitle' => 'Konsolidasi metrik strategis penjualan, neraca komoditas, manajemen risiko piutang B2B, dan otorisasi kontrak tier-1 berbasis regulasi Metrologi Legal UU No. 2/1981.',
-            'period_label' => 'PERIODE AUDIT AKTIF',
-            'period_value' => 'W44-2026 // Q4 YTD',
-            'print_label' => 'Cetak Dokumen Otorisasi',
+            'eyebrow' => 'RINGKASAN DIREKTUR',
+            'title' => 'Ringkasan Kinerja Direktur',
+            'subtitle' => 'Pantau omzet, jumlah komoditas, tagihan pelanggan, dan pengajuan yang perlu disetujui.',
+            'period_label' => 'PERIODE',
+            'period_value' => 'Minggu 44 2026 | Kuartal 4',
+            'print_label' => 'Cetak Dokumen Persetujuan',
         ];
     }
 
@@ -79,14 +79,14 @@ class DirectorDashboardData
             [
                 'key' => 'revenue',
                 'variant' => 'progress',
-                'label' => 'OMZET Q4 YTD',
+                'label' => 'OMZET Q4 TAHUN INI',
                 'icon' => 'chart',
                 'tone' => 'success',
                 'value' => self::rupiah($revenue),
                 'value_note' => 'Target: '.self::rupiah($revenueTarget),
-                'badge' => '+14.2% MoM',
+                'badge' => '+14.2% dari bulan lalu',
                 'progress' => [
-                    'label' => 'Progress Target',
+                    'label' => 'Pencapaian target',
                     'value' => self::percent($revenue / $revenueTarget * 100, 1).'% (84.6% Terbayar)',
                     'percent' => round($revenue / $revenueTarget * 100, 1),
                 ],
@@ -94,52 +94,52 @@ class DirectorDashboardData
             [
                 'key' => 'volume',
                 'variant' => 'volume',
-                'label' => 'VOLUME KOMODITAS',
+                'label' => 'JUMLAH KOMODITAS',
                 'icon' => 'package',
                 'tone' => 'success',
                 'value' => number_format($volumeKg, 0, '.', '.'),
-                'value_suffix' => 'kg ('.number_format($volumeKg / 1000, 2, '.', '.').' T)',
-                'value_note' => self::percent($volumeTurbine / $volumeKg * 100, 0).'% Binaan ('
-                    .self::decimal($volumeTurbine / 1000).' T) : '
-                    .self::percent($volumeBuffer / $volumeKg * 100, 0).'% Buffer ('
-                    .self::decimal($volumeBuffer / 1000).' T)',
+                'value_suffix' => 'kg ('.number_format($volumeKg / 1000, 2, '.', '.').' ton)',
+                'value_note' => self::percent($volumeTurbine / $volumeKg * 100, 0).'% kebun binaan ('
+                    .self::decimal($volumeTurbine / 1000).' ton) : '
+                    .self::percent($volumeBuffer / $volumeKg * 100, 0).'% cadangan ('
+                    .self::decimal($volumeBuffer / 1000).' ton)',
                 'split' => [
                     ['text' => self::percent($volumeTurbine / $volumeKg * 100, 0).'%', 'tone' => 'ink'],
-                    ['text' => ' Binaan ('.self::decimal($volumeTurbine / 1000).' T) : ', 'tone' => 'muted'],
+                    ['text' => ' Kebun binaan ('.self::decimal($volumeTurbine / 1000).' ton) : ', 'tone' => 'muted'],
                     ['text' => self::percent($volumeBuffer / $volumeKg * 100, 0).'%', 'tone' => 'ink'],
-                    ['text' => ' Buffer ('.self::decimal($volumeBuffer / 1000).' T)', 'tone' => 'muted'],
+                    ['text' => ' Cadangan ('.self::decimal($volumeBuffer / 1000).' ton)', 'tone' => 'muted'],
                 ],
-                'footer_left' => '100% Tera Sah Metrologi',
-                'footer_right' => 'UU 2/1981',
+                'footer_left' => 'Timbangan sudah ditera',
+                'footer_right' => 'UU No. 2/1981',
             ],
             [
                 'key' => 'receivable',
                 'variant' => 'badge',
-                'label' => 'PIUTANG TERBUKA',
+                'label' => 'TAGIHAN BELUM DIBAYAR',
                 'icon' => 'alert-triangle',
                 'tone' => 'warning',
                 'value' => self::rupiah(74_320_000),
                 'value_note' => '12 Kontrak',
-                'badge' => '2 Klien Tempo <7 Hari',
-                'footer_left' => 'Rasio Tertagih: 91.2%',
-                'footer_right' => 'Rp 45.2M Near-Due',
+                'badge' => '2 pelanggan jatuh tempo <7 hari',
+                'footer_left' => 'Sudah tertagih: 91.2%',
+                'footer_right' => 'Jatuh tempo dekat: Rp 45,2 juta',
             ],
             [
                 'key' => 'sla',
                 'variant' => 'badge',
-                'label' => 'KEPATUHAN SLA',
+                'label' => 'KETEPATAN LAYANAN',
                 'icon' => 'check-circle',
                 'tone' => 'success',
                 'value' => '98.6%',
                 'value_suffix' => 'Tuntas',
-                'value_note' => 'Retur Fisik: 0.82% (Batas: <1.50%)',
-                'footer_left' => 'MUTU GRADE A/B+',
-                'footer_right' => 'Cold-Chain Valid',
+                'value_note' => 'Barang dikembalikan: 0.82% (Batas: <1.50%)',
+                'footer_left' => 'MUTU PILIHAN A/B+',
+                'footer_right' => 'Suhu pengiriman terjaga',
             ],
             [
                 'key' => 'authorization',
                 'variant' => 'highlight',
-                'label' => 'OTORISASI DIREKTUR',
+                'label' => 'PERSETUJUAN DIREKTUR',
                 'icon' => 'shield',
                 'tone' => 'danger',
                 'value' => '3 Kontrak',
@@ -148,8 +148,8 @@ class DirectorDashboardData
                     ['text' => 'Total Nilai: ', 'tone' => 'body'],
                     ['text' => self::rupiah($authorizationValue), 'tone' => 'strong'],
                 ],
-                'badge' => 'MUTLAK',
-                'cta' => 'Tinjau Sekarang',
+                'badge' => 'WAJIB',
+                'cta' => 'Lihat pengajuan',
             ],
         ];
     }
@@ -162,62 +162,62 @@ class DirectorDashboardData
         $rows = [
             [
                 'week' => 'W40',
-                'label' => 'W40: 275 T // Target Rp 110M',
+                'label' => 'W40: 275 ton | Target Rp 110 juta',
                 'volume_ton' => 275,
                 'target' => 110_000_000,
                 'realized' => 108_000_000,
                 'ratio' => 98.1,
                 'status' => 'closed',
-                'bar_label' => 'Rp 108M',
-                'volume_label' => '275 Ton Panen',
+                'bar_label' => 'Rp 108 juta',
+                'volume_label' => 'Panen 275 ton',
                 'marker' => 81.1,
             ],
             [
                 'week' => 'W41',
-                'label' => 'W41: 290 T // Target Rp 120M',
+                'label' => 'W41: 290 ton | Target Rp 120 juta',
                 'volume_ton' => 290,
                 'target' => 120_000_000,
                 'realized' => 124_000_000,
                 'ratio' => 103.3,
                 'status' => 'closed',
-                'bar_label' => 'Rp 124M',
-                'volume_label' => '290 Ton Panen',
+                'bar_label' => 'Rp 124 juta',
+                'volume_label' => 'Panen 290 ton',
                 'marker' => 81.1,
             ],
             [
                 'week' => 'W42',
-                'label' => 'W42: 315 T // Target Rp 135M',
+                'label' => 'W42: 315 ton | Target Rp 135 juta',
                 'volume_ton' => 315,
                 'target' => 135_000_000,
                 'realized' => 138_000_000,
                 'ratio' => 102.2,
                 'status' => 'closed',
-                'bar_label' => 'Rp 138M',
-                'volume_label' => '315 Ton Panen',
+                'bar_label' => 'Rp 138 juta',
+                'volume_label' => 'Panen 315 ton',
                 'marker' => 81.1,
             ],
             [
                 'week' => 'W43',
-                'label' => 'W43: 338 T // Target Rp 140M',
+                'label' => 'W43: 338 ton | Target Rp 140 juta',
                 'volume_ton' => 338,
                 'target' => 140_000_000,
                 'realized' => 140_000_000,
                 'ratio' => 100.0,
                 'status' => 'closed',
-                'bar_label' => 'Rp 140M',
-                'volume_label' => '338 Ton Panen',
+                'bar_label' => 'Rp 140 juta',
+                'volume_label' => 'Panen 338 ton',
                 'marker' => 81.1,
             ],
             [
                 'week' => 'W44',
-                'label' => 'W44 [Berjalan - H+4]: Target Rp 140M',
+                'label' => 'W44 (berjalan, hari ke-4): Target Rp 140 juta',
                 'volume_ton' => 202.5,
                 'target' => 140_000_000,
                 'realized' => 112_650_000,
                 'ratio' => 80.5,
                 'status' => 'running',
-                'bar_label' => 'Rp 112.65M',
-                'volume_label' => '202.5 Ton Terdistribusi',
+                'bar_label' => 'Rp 112,65 juta',
+                'volume_label' => 'Terkirim 202.5 ton',
                 'marker' => 66.1,
             ],
         ];
@@ -232,16 +232,16 @@ class DirectorDashboardData
         }
 
         return [
-            'title' => 'Tren Omzet vs Target Mingguan & Realisasi Panen',
-            'subtitle' => 'Siklus W40 - W44 (Realisasi Tonase vs Cash Inflow)',
+            'title' => 'Omzet dan Target Mingguan',
+            'subtitle' => 'Minggu 40-44: jumlah panen dan omzet',
             'legend' => [
-                ['label' => 'Realisasi Omzet (Juta Rp)', 'swatch' => 'bg-brand'],
-                ['label' => 'Target Rencana', 'swatch' => 'bg-accent-edge'],
-                ['label' => 'Volume (Ton)', 'swatch' => 'bg-accent-deep'],
+                ['label' => 'Omzet', 'swatch' => 'bg-brand'],
+                ['label' => 'Target', 'swatch' => 'bg-accent-edge'],
+                ['label' => 'Panen (ton)', 'swatch' => 'bg-accent-deep'],
             ],
             'rows' => $rows,
-            'source' => 'SUMBER DATA: CORE TRANSAKSI TIMBANGAN ELEKTRONIK HUBS',
-            'deviation' => 'DEVIASI TERTINGGI: +3.3% (W41)',
+            'source' => 'Sumber: data timbangan digital dari pusat distribusi',
+            'deviation' => 'Selisih terbesar: +3.3% (W41)',
         ];
     }
 
@@ -265,8 +265,8 @@ class DirectorDashboardData
         $total = array_sum(array_column($rows, 'tons'));
 
         return [
-            'title' => 'Distribusi 5 Komoditas Inti & Kanal',
-            'subtitle' => 'Realisasi Volume Q4 (Total '.number_format($total, 2, '.', '').' Ton)',
+            'title' => '5 Komoditas Utama & Saluran Penjualan',
+            'subtitle' => 'Jumlah Q4 (Total '.number_format($total, 2, '.', '').' ton)',
             'rows' => $rows,
             'total_tons' => $total,
             'footer_left' => 'BUFFER RASIO SEHAT: 1 : 2.1',
@@ -290,7 +290,7 @@ class DirectorDashboardData
         }
 
         return [
-            'title' => 'SEGMENTASI KANAL PENJUALAN',
+            'title' => 'SALURAN PENJUALAN',
             'rows' => $rows,
             'total_share' => array_sum(array_column($rows, 'share')),
             'total_tons' => array_sum(array_column($rows, 'tons')),
@@ -305,34 +305,34 @@ class DirectorDashboardData
         $buckets = [
             [
                 'key' => 'normal',
-                'label' => 'NORMAL (0 - 15 HARI)',
+                'label' => 'BELUM JATUH TEMPO (0 - 15 HARI)',
                 'value' => 120_000_000,
-                'detail' => '8 Klien // Siklus Penagihan Aman',
-                'status' => 'STATUS: BERSIH',
+                'detail' => '8 pelanggan // Pembayaran lancar',
+                'status' => 'STATUS: LANCAR',
                 'tone' => 'success',
             ],
             [
                 'key' => 'due',
-                'label' => 'MENUJU TEMPO (16 - 30 HARI)',
+                'label' => 'JATUH TEMPO (16 - 30 HARI)',
                 'value' => 65_300_000,
-                'detail' => '4 Klien // Reminder Otomatis Terkirim',
-                'status' => 'STATUS: NOTICE AKTIF',
+                'detail' => '4 pelanggan // Pengingat otomatis terkirim',
+                'status' => 'STATUS: DIINGATKAN',
                 'tone' => 'ink',
             ],
             [
                 'key' => 'late',
-                'label' => 'LEWAT TEMPO (1 - 14 HARI)',
+                'label' => 'LEWAT JATUH TEMPO (1 - 14 HARI)',
                 'value' => 32_200_000,
-                'detail' => '2 Klien // Somasi Administratif I',
-                'status' => 'WARNING LEVEL 2',
+                'detail' => '2 pelanggan // Surat teguran pertama',
+                'status' => 'PERLU TINDAKAN',
                 'tone' => 'caution',
             ],
             [
                 'key' => 'critical',
-                'label' => 'OVERDUE KRITIS (> 15 HARI)',
+                'label' => 'TERLAMBAT LEBIH DARI 15 HARI',
                 'value' => 18_000_000,
                 'detail' => '1 Klien (CV Mitra Boga Nusantara)',
-                'status' => 'AUTO FREEZE PO: DIKUNCI',
+                'status' => 'PESANAN BARU: DITAHAN OTOMATIS',
                 'tone' => 'danger',
             ],
         ];
@@ -342,18 +342,18 @@ class DirectorDashboardData
         }
 
         return [
-            'title' => 'Lembar Pengawasan Piutang & Aging Tagihan Klien (TOP)',
-            'description' => 'Pencegahan defisit kas melalui automated credit hold, pembekuan repeat order, dan penagihan berjenjang.',
-            'total_label' => 'TOTAL PIUTANG TERBUKA: Rp 235.500.000',
+            'title' => 'Pemantauan Tagihan Pelanggan',
+            'description' => 'Pantau tagihan yang jatuh tempo dan tindak lanjuti keterlambatan.',
+            'total_label' => 'TOTAL TAGIHAN BELUM DIBAYAR: Rp 235.500.000',
             'total' => array_sum(array_column($buckets, 'value')),
             'buckets' => $buckets,
             'note' => [
-                'lead' => 'Sistem mendeteksi CV Mitra Boga Nusantara menunggak Rp 18.000.000 melampaui 18 hari dari TOP. Pengiriman baru telah',
-                'emphasis' => 'DIKUNCI SECARA OTOMATIS',
-                'tail' => 'oleh bot kepatuhan.',
+                'lead' => 'CV Mitra Boga Nusantara terlambat membayar Rp 18.000.000 selama 18 hari. Pengiriman baru',
+                'emphasis' => 'DITAHAN OTOMATIS',
+                'tail' => 'sampai tagihan dibayar.',
             ],
-            'audit_action' => 'Buka Catatan Audit',
-            'dispensation_action' => 'Dispensasi Direktur',
+            'audit_action' => 'Lihat catatan',
+            'dispensation_action' => 'Ajukan pengecualian',
         ];
     }
 

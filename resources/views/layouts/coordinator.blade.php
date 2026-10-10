@@ -32,7 +32,7 @@
             ['label' => 'Manajemen Stok', 'icon' => 'package', 'href' => route('coordinator.stock'), 'active' => request()->routeIs('coordinator.stock')],
             ['label' => 'Surat Jalan & Logistik', 'icon' => 'truck', 'href' => route('coordinator.dispatch'), 'active' => request()->routeIs('coordinator.dispatch')],
             ['label' => 'Monitoring', 'icon' => 'chart', 'href' => route('coordinator.monitoring'), 'active' => request()->routeIs('coordinator.monitoring')],
-            ['label' => 'Laporan Retur', 'icon' => 'refresh', 'href' => null],
+            ['label' => 'Laporan Retur', 'icon' => 'refresh', 'href' => route('coordinator.returns'), 'active' => request()->routeIs('coordinator.returns')],
         ];
     @endphp
 
@@ -51,7 +51,7 @@
                     </button>
 
                     <a href="{{ route('coordinator.dashboard') }}" class="flex min-w-0 items-center gap-3">
-                        <x-gpa.brand-mark class="h-7 w-7 shrink-0 text-accent" />
+                        <img src="{{ asset('gpaleaves.png') }}" alt="" class="h-7 w-7 shrink-0 object-contain">
                         <span class="flex min-w-0 flex-col">
                             <span class="truncate font-inter text-lg font-extrabold uppercase leading-6 text-white">
                                 AgroOrder GPA

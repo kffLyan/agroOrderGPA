@@ -51,7 +51,7 @@ class ArmadaPodTest extends TestCase
         $response->assertSee('Dock Head');
     }
 
-    public function test_console_renders_three_mandatory_capture_steps(): void
+public function test_console_renders_three_mandatory_capture_steps(): void
     {
         $response = $this->get(route('armada.pod'));
 
@@ -64,7 +64,6 @@ class ArmadaPodTest extends TestCase
         $response->assertSee('HIGH CONTRAST');
         $response->assertSee('READY TO CAPTURE');
         $response->assertSee('Ambil Foto Surat Jalan');
-        $response->assertSee('Foto Dock &amp; Muatan', false);
         $response->assertSee('(Geo-Lock)');
         $response->assertSee('SENSOR TELEMETRI');
         $response->assertSee('GEO: -6.6124, 106.8142 (Ciracas)');
@@ -74,13 +73,12 @@ class ArmadaPodTest extends TestCase
         $response->assertSee('DOCK BONGKAR C-2');
         $response->assertSee('OPTICAL GRID: LOCKED');
         $response->assertSee('AMBIENT LUX: 420 lx');
-        $response->assertSee('Ambil Foto Dock Muatan');
         $response->assertSee('Tanda Tangan Digital');
         $response->assertSee('CANVAS SENTUH ELEKTRONIK');
         $response->assertSee('Hendra Kurniawan');
     }
 
-    public function test_console_renders_pre_upload_checklist(): void
+public function test_console_renders_pre_upload_checklist(): void
     {
         $response = $this->get(route('armada.pod'));
 
@@ -88,7 +86,6 @@ class ArmadaPodTest extends TestCase
         $response->assertSee('VERIFIKASI PRA-UNGGAH:');
         $response->assertSee('Cap stempel basah penerima terbaca jelas');
         $response->assertSee('Tanda tangan PIC penerima ada');
-        $response->assertSee('Nama terang tertulis jelas &amp; sesuai identitas', false);
     }
 
     public function test_console_renders_condition_options_with_clear_option_selected(): void

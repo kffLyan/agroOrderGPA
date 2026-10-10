@@ -226,7 +226,7 @@ class CoordinatorMonitoringData
                 ['key' => 'weight', 'label' => 'Bobot Netto Pas'],
                 ['key' => 'gps', 'label' => 'Radius GPS'],
             ],
-            'notes_label' => 'CATATAN KOORDINATOR GUDANG (DISIMPAN DI AUDIT TRAIL)',
+            'notes_label' => 'CATATAN KOORDINATOR GUDANG',
             'decision_label' => 'STATUS PUTUSAN:',
             'decision' => [
                 ['key' => 'approved', 'label' => 'APPROVED (VALID)', 'tone' => 'success-deep'],

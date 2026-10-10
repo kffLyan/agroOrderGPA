@@ -14,6 +14,7 @@ use App\Http\Controllers\Coordinator\CoordinatorDashboardController;
 use App\Http\Controllers\Coordinator\CoordinatorDispatchController;
 use App\Http\Controllers\Coordinator\CoordinatorHarvestPlanController;
 use App\Http\Controllers\Coordinator\CoordinatorMonitoringController;
+use App\Http\Controllers\Coordinator\CoordinatorReturnsController;
 use App\Http\Controllers\Coordinator\CoordinatorStockController;
 use App\Http\Controllers\Coordinator\CoordinatorWeighingController;
 use App\Http\Controllers\Director\DirectorAccessController;
@@ -25,6 +26,8 @@ use App\Http\Controllers\Director\DirectorReportController;
 use App\Http\Controllers\Director\DirectorSalesController;
 use App\Http\Controllers\Director\DirectorVolumeController;
 use App\Http\Controllers\Prints\SuratJalanController;
+use App\Http\Controllers\Prints\SecretaryInvoiceController as PrintsSecretaryInvoiceController;
+use App\Http\Controllers\Prints\ReturnActController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\AboutController as PublicAboutController;
 use App\Http\Controllers\Public\CatalogController as PublicCatalogController;
@@ -83,6 +86,9 @@ Route::get('/konsol-koordinator/rencana-panen', CoordinatorHarvestPlanController
 
 Route::get('/konsol-koordinator/monitoring', CoordinatorMonitoringController::class)
     ->name('coordinator.monitoring');
+
+Route::get('/konsol-koordinator/laporan-retur', CoordinatorReturnsController::class)
+    ->name('coordinator.returns');
 
 Route::get('/konsol-koordinator/surat-jalan', CoordinatorDispatchController::class)
     ->name('coordinator.dispatch');
@@ -164,6 +170,12 @@ Route::get('/dokumen-faktur/unggah-bukti', ClientPaymentProofController::class)
 
 Route::get('/cetak/surat-jalan', SuratJalanController::class)
     ->name('prints.surat-jalan');
+
+Route::get('/cetak/faktur/{invoice}', PrintsSecretaryInvoiceController::class)
+    ->name('prints.invoice');
+
+Route::get('/cetak/berita-acara-retur', ReturnActController::class)
+    ->name('prints.return-act');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

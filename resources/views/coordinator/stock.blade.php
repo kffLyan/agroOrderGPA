@@ -17,15 +17,10 @@
         {{-- Page header --}}
         <section class="gpa-panel flex flex-wrap items-center justify-between gap-4 p-6">
             <div class="min-w-0">
-                <p class="gpa-eyebrow flex items-center gap-2">
-                    <x-gpa.icon name="package" class="h-4 w-4 text-success-deep" />
-                    {{ $header['eyebrow'] }}
-                </p>
+
                 <h1 class="mt-2 font-sans text-3xl font-extrabold leading-10 tracking-[-0.01em] text-ink">
                     {{ $header['title_before'] }}<br class="hidden sm:block">
                     {{ $header['title_after'] }}
-                </h1>
-                <p class="mt-2 max-w-3xl text-sm leading-5 text-ink-body">{{ $header['subtitle'] }}</p>
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-2">
@@ -41,26 +36,6 @@
                         <span class="gpa-meta-lg font-bold">{{ $action['label'] }}</span>
                     </button>
                 @endforeach
-            </div>
-        </section>
-
-        {{-- Quality & stock integrity protocol --}}
-        <section
-            class="flex flex-col gap-4 rounded-xl border border-l-4 border-success-deep bg-accent/30 p-4 lg:flex-row lg:items-start lg:justify-between">
-            <div class="flex items-start gap-4">
-                <x-gpa.icon name="shield" class="mt-0.5 h-4 w-4 shrink-0 text-success-deep" />
-                <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="gpa-micro-bold text-success-deep">{{ $protocol['title'] }}</h2>
-                        <span class="rounded bg-ink px-1.5 py-0.5 gpa-micro-bold text-accent">{{ $protocol['badge'] }}</span>
-                    </div>
-                    <p class="mt-1.5 max-w-4xl text-xs leading-5 text-ink-body">{{ $protocol['body'] }}</p>
-                </div>
-            </div>
-
-            <div class="shrink-0 text-left lg:text-right">
-                <p class="gpa-micro-bold text-ink-body">{{ $protocol['validation_label'] }}</p>
-                <p class="mt-1 font-mono text-lg font-bold leading-6 text-success-deep">{{ $protocol['validation_value'] }}</p>
             </div>
         </section>
 
@@ -308,12 +283,8 @@
         <section class="gpa-panel p-6">
             <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-board/40 pb-3">
                 <div class="flex items-center gap-2">
-                    <span class="rounded bg-accent p-1.5">
-                        <x-gpa.icon name="clipboard" class="block h-4 w-4 text-ink" />
-                    </span>
                     <div>
                         <h2 class="font-sans text-lg font-bold leading-6 tracking-[-0.01em] text-ink">{{ $intake['title'] }}</h2>
-                        <p class="gpa-micro-bold mt-0.5 text-ink-quiet">{{ $intake['subtitle'] }}</p>
                     </div>
                 </div>
                 <span class="rounded bg-ink px-1.5 py-0.5 gpa-micro-bold text-accent">{{ $intake['badge'] }}</span>
@@ -371,7 +342,6 @@
         <section class="gpa-panel p-4">
             <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-board/40 pb-2">
                 <div class="flex items-center gap-2">
-                    <x-gpa.icon name="clock" class="h-4 w-4 text-success-deep" />
                     <h2 class="font-sans text-lg font-bold leading-6 tracking-[-0.01em] text-ink">{{ $logs['title'] }}</h2>
                 </div>
                 <span class="inline-flex items-center gap-1.5">

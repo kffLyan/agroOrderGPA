@@ -43,7 +43,7 @@
         x-data="directorGovernance(@js($audit['rows']), @js($audit))">
 
         {{-- Page header --}}
-        <section class="flex flex-wrap items-start justify-between gap-4 border-b border-line-board/80 pb-4">
+        <section class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0 space-y-1">
                 <h1 class="font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
                     {{ $header['title'] }}

@@ -74,7 +74,7 @@ class ArmadaStatusData
         $unitCode = 'SUPIR-GPA-'.$driverCode;
 
         return [
-            'section' => 'BAGIAN 01 // DATA PENGEMUDI & UNIT',
+            'section' => 'DATA PENGEMUDI & UNIT',
             'code_label' => 'KODE: DRV-',
             'code' => $driverCode,
             'initials' => 'JP',
@@ -104,7 +104,7 @@ class ArmadaStatusData
     public static function telemetry(): array
     {
         return [
-            'section' => 'BAGIAN 02 // TELEMETRI IOT TERKONEKSI',
+            'section' => 'TELEMETRI IOT TERKONEKSI',
             'badge' => 'LIVE',
             'badge_tail' => 'SENSOR',
             'chiller' => [
@@ -155,7 +155,7 @@ class ArmadaStatusData
     public static function trip(): array
     {
         return [
-            'section' => 'BAGIAN 03 // AUDIT PRE-TRIP',
+            'section' => 'AUDIT PRE-TRIP',
             'title' => 'KELAIKAN',
             'subtitle' => 'Checklist Kelaikan',
             'subtitle_tail' => 'Pagi',
@@ -208,7 +208,7 @@ class ArmadaStatusData
     public static function performance(): array
     {
         return [
-            'section' => 'BAGIAN 04 // REKAP KINERJA',
+            'section' => 'REKAP KINERJA',
             'title' => 'KONSINYASI',
             'subtitle' => 'Shift Pagi &bull; R-01 (Bogor-Jkt)',
             'badge' => 'BATCH',
@@ -251,7 +251,7 @@ class ArmadaStatusData
     public static function support(): array
     {
         return [
-            'section' => 'BAGIAN 05 // DUKUNGAN OPERASIONAL',
+            'section' => 'DUKUNGAN OPERASIONAL',
             'section_tail' => '& HUB',
             'badge' => 'HOTLINE',
             'badge_tail' => '24/7',

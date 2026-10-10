@@ -54,13 +54,13 @@ class CoordinatorDashboardData
     public static function heading(): array
     {
         return [
-            'eyebrow' => 'Sub-00 // Modul Koordinator Lapangan',
-            'title_before' => 'Dashboard Operasional Pasokan & Kesiapan',
+            'eyebrow' => 'DASHBOARD KOORDINATOR',
+            'title_before' => 'Ringkasan Pasokan & Kesiapan',
             'title_after' => 'Panen',
-            'subtitle' => 'Monitoring kesiapan alokasi kuota petani binaan, intake gate timbangan netto, staging cold-chain 4'."\u{00B0}".'C, dan sinkronisasi real-time pemenuhan PO ritel/horeka terverifikasi.',
+            'subtitle' => 'Pantau kuota panen, hasil timbang, persiapan pesanan dingin 4'."\u{00B0}".'C, dan pemenuhan pesanan pelanggan.',
             'actions' => [
-                ['key' => 'export', 'label' => 'Export Rekap (CSV)', 'icon' => 'download', 'variant' => 'ghost'],
-                ['key' => 'filter', 'label' => 'Filter Sentra', 'icon' => 'filter', 'variant' => 'ink'],
+                ['key' => 'export', 'label' => 'Unduh Rekap (CSV)', 'icon' => 'download', 'variant' => 'ghost'],
+                ['key' => 'filter', 'label' => 'Pilih Sentra', 'icon' => 'filter', 'variant' => 'ink'],
             ],
         ];
     }
@@ -73,47 +73,47 @@ class CoordinatorDashboardData
         return [
             [
                 'key' => 'verified',
-                'label' => 'Pesanan Terverifikasi (Siap Pack)',
+                'label' => 'Pesanan Siap Dikemas',
                 'icon' => 'badge-check',
                 'value' => '1.840',
                 'unit' => 'KG',
                 'unit_tone' => 'text-ink-body',
                 'foot_label' => 'Terdiri dari',
                 'foot_value' => '28 PO Aktif',
-                'chip' => ['label' => '100% Terlock', 'class' => 'bg-accent text-success-ink'],
+                'chip' => ['label' => '100% Terkunci', 'class' => 'bg-accent text-success-ink'],
             ],
             [
                 'key' => 'weighing',
-                'label' => 'Komoditas Butuh Timbang',
+                'label' => 'Komoditas Perlu Ditimbang',
                 'icon' => 'package',
                 'value' => '5',
                 'unit' => 'Komoditas Inti',
                 'unit_tone' => 'text-ink-body',
                 'foot_label' => 'Intake Masuk:',
                 'foot_value' => '12 Batch',
-                'chip' => ['label' => '8 Proses / 4 Queue', 'class' => 'bg-surface-pill text-ink'],
+                'chip' => ['label' => '8 Diproses / 4 Antrean', 'class' => 'bg-surface-pill text-ink'],
             ],
             [
                 'key' => 'buffer',
-                'label' => 'Kapasitas Buffer Stock Aktif',
+                'label' => 'Kapasitas Stok Cadangan',
                 'icon' => 'gauge',
                 'value' => '82.4%',
                 'unit' => 'Terpakai',
                 'unit_tone' => 'text-success-deep',
-                'foot_label' => 'Pre-Cool & Chiller A/B',
-                'foot_value' => '5.93 / 7.20 TON',
+                'foot_label' => 'Pendinginan & Chiller A/B',
+                'foot_value' => '5.93 / 7.20 ton',
                 'chip' => null,
             ],
             [
                 'key' => 'shrinkage',
-                'label' => 'Deviasi Susut Timbangan Riil',
+                'label' => 'Susut Setelah Ditimbang',
                 'icon' => 'scale',
                 'value' => '-1.18%',
-                'unit' => 'Shrinkage',
+                'unit' => 'Susut',
                 'unit_tone' => 'text-success-deep',
-                'foot_label' => 'Toleransi SOP: Max',
+                'foot_label' => 'Batas SOP:',
                 'foot_value' => '-2.5%',
-                'chip' => ['label' => 'In Tolerance', 'class' => 'bg-accent text-success-ink'],
+                'chip' => ['label' => 'Dalam Batas', 'class' => 'bg-accent text-success-ink'],
             ],
         ];
     }
@@ -126,22 +126,22 @@ class CoordinatorDashboardData
     public static function supply(): array
     {
         return [
-            'title' => 'Manajemen Stok Panen & Buffer Stock',
+            'title' => 'Stok Panen & Stok Cadangan',
             'subtitle' => '(Kontrol Pasokan)',
-            'description' => 'Sistem Penjaga Anti-Overselling: Verifikasi kuota panen binaan sebelum pembukaan alokasi pemenuhan PO.',
+            'description' => 'Cek kuota panen sebelum membagikan stok ke pesanan, agar jumlah yang dijanjikan tidak melebihi pasokan.',
             'totals' => [
-                ['label' => 'Total Stok Terkontrol', 'value' => '1.920 KG', 'tone' => 'text-ink'],
-                ['label' => 'Terkunci PO Aktif', 'value' => '1.840 KG', 'tone' => 'text-success-deep'],
-                ['label' => 'Sisa Bebas Buffer', 'value' => '+80 KG', 'tone' => 'text-ink'],
+                ['label' => 'Total Stok', 'value' => '1.920 KG', 'tone' => 'text-ink'],
+                ['label' => 'Untuk Pesanan Aktif', 'value' => '1.840 KG', 'tone' => 'text-success-deep'],
+                ['label' => 'Sisa Stok Cadangan', 'value' => '+80 KG', 'tone' => 'text-ink'],
             ],
             'columns' => [
-                'Komoditas & Varietas',
-                'Order Aktif (PO)',
-                'Pasokan Binaan (Subang)',
-                'Buffer Stok Luar',
+                'Komoditas',
+                'Pesanan Aktif',
+                'Pasokan Petani',
+                'Stok Cadangan',
                 'Total Tersedia',
-                'Status Alokasi & Gap',
-                'Aksi Kontrol',
+                'Status & Selisih',
+                'Tindakan',
             ],
             'rows' => self::supplyRows(),
         ];
@@ -233,44 +233,44 @@ class CoordinatorDashboardData
     public static function packing(): array
     {
         return [
-            'title' => 'Persiapan Pesanan & Packing Cold-Chain',
-            'subtitle' => '3 Batch Staging Sedang Berjalan Pada Bay 01-03',
-            'chip' => 'Chiller Target: 4'."\u{00B0}".'C '."\u{00B1}".' 0.5'."\u{00B0}".'C',
+            'title' => 'Persiapan & Pengemasan Pesanan',
+            'subtitle' => '3 batch sedang disiapkan di area 01-03',
+            'chip' => 'Suhu chiller: 4'."\u{00B0}".'C (batas '."\u{00B1}".'0.5'."\u{00B0}".'C)',
             'orders' => [
                 [
                     'po' => 'PO-HTL-2201',
                     'client' => 'Hotel Grand Pasundan Ritel (Bandung)',
-                    'dispatch' => 'Dispatch: 16:30 WIB',
+                    'dispatch' => 'Kirim: 16:30 WIB',
                     'dispatch_tone' => 'accent',
                     'allocation' => '680 KG (Selada & Tomat)',
                     'bay' => 'Bay-02 (Cold 3.8'."\u{00B0}".'C)',
-                    'status' => '85% Sortir Selesai',
+                    'status' => '85% sortir selesai',
                     'percent' => 85,
                 ],
                 [
                     'po' => 'PO-RES-1049',
                     'client' => 'Restoran Segar Nusantara (Jakarta Hub)',
-                    'dispatch' => 'Dispatch: 17:00 WIB',
+                    'dispatch' => 'Kirim: 17:00 WIB',
                     'dispatch_tone' => 'accent',
                     'allocation' => '540 KG (Brokoli & Kol)',
                     'bay' => 'Bay-01 (Cold 4.1'."\u{00B0}".'C)',
-                    'status' => '62% Packing Peti',
+                    'status' => '62% dikemas',
                     'percent' => 62,
                 ],
                 [
                     'po' => 'PO-EXP-0082',
                     'client' => 'Sentra Supermarket Eksklusif (Bekasi)',
-                    'dispatch' => 'Dispatch: 18:15 WIB',
+                    'dispatch' => 'Kirim: 18:15 WIB',
                     'dispatch_tone' => 'ink',
-                    'allocation' => '620 KG (Mix 5 Komoditas)',
-                    'bay' => 'Bay-03 (Pre-Cool)',
-                    'status' => '35% Pending Intake',
+                    'allocation' => '620 KG (5 komoditas)',
+                    'bay' => 'Area-03 (Pendinginan Awal)',
+                    'status' => '35% menunggu stok',
                     'percent' => 35,
                 ],
             ],
             'footer' => [
-                'label' => 'SOP Monitoring: Thermal Sensor Kalibrasi ISO 17025',
-                'link' => 'Buka Kontrol Cold-Storage Hub',
+                'label' => 'Prosedur pemantauan suhu: sensor sesuai ISO 17025',
+                'link' => 'Buka pengaturan ruang dingin',
             ],
         ];
     }
@@ -281,46 +281,46 @@ class CoordinatorDashboardData
     public static function gate(): array
     {
         return [
-            'title' => 'Log Intake Timbangan Gate-01',
-            'subtitle' => 'Tiket Timbangan Netto Fisik Real-Time',
+            'title' => 'Catatan Timbangan Gate-01',
+            'subtitle' => 'Hasil timbang bersih terkini',
             'logs' => [
                 [
-                    'ticket' => 'GATE-LOG #8821',
+                    'ticket' => 'TIKET GATE #8821',
                     'time' => '13:58 WIB',
                     'name' => 'Asep Sobana',
                     'commodity' => 'Selada Romaine',
                     'gross' => 495,
                     'tare' => 15,
                     'net' => 480,
-                    'qc' => 'QC Pass: Grade A',
-                    'note' => 'Brix 4.2 '."\u{2022}".' Water 94%',
+                    'qc' => 'Lolos QC: Grade A',
+                    'note' => 'Brix 4.2 '."\u{2022}".' Kadar air 94%',
                 ],
                 [
-                    'ticket' => 'GATE-LOG #8820',
+                    'ticket' => 'TIKET GATE #8820',
                     'time' => '13:42 WIB',
                     'name' => 'Dedi Rohimat',
                     'commodity' => 'Tomat Beef',
                     'gross' => 418,
                     'tare' => 18,
                     'net' => 400,
-                    'qc' => 'QC Pass: Grade A',
-                    'note' => 'Susut -0.9% (Lolos)',
+                    'qc' => 'Lolos QC: Grade A',
+                    'note' => 'Susut -0.9% (sesuai batas)',
                 ],
                 [
-                    'ticket' => 'GATE-LOG #8819',
+                    'ticket' => 'TIKET GATE #8819',
                     'time' => '13:15 WIB',
                     'name' => 'Kurniawan',
                     'commodity' => 'Brokoli Highland',
                     'gross' => 366,
                     'tare' => 16,
                     'net' => 350,
-                    'qc' => 'QC Pass: Grade A+',
-                    'note' => 'Staging Cold Bay-01',
+                    'qc' => 'Lolos QC: Grade A+',
+                    'note' => 'Disimpan di ruang dingin 01',
                 ],
             ],
             'footer' => [
-                'label' => 'Timbangan Digital Metrologi #MET-SUB-01',
-                'action' => 'Input Tiket Baru',
+                'label' => 'Timbangan digital tera #MET-SUB-01',
+                'action' => 'Tambah tiket',
             ],
         ];
     }
@@ -334,10 +334,10 @@ class CoordinatorDashboardData
             'left' => [
                 ['label' => 'Gate-01 Aktif', 'tone' => 'success'],
                 ['label' => 'Sinkron 13:58 WIB', 'tone' => 'success'],
-                ['label' => '3 Batch Staging', 'tone' => 'ink'],
+                ['label' => '3 batch disiapkan', 'tone' => 'ink'],
                 ['label' => 'Kalibrasi ISO 17025', 'tone' => 'ink'],
             ],
-            'right' => 'Terakhir sinkron penuh: 14:00 WIB '."\u{2022}".' Deviasi susut -1.18% masih dalam toleransi SOP.',
+            'right' => 'Pembaruan terakhir: 14:00 WIB '."\u{2022}".' Susut -1.18%, masih dalam batas SOP.',
         ];
     }
 

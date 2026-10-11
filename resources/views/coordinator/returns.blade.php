@@ -27,6 +27,16 @@
             ['label' => 'Keterangan / Tindakan Disposisi'],
             ['label' => 'Status', 'alignment' => 'text-center'],
         ];
+
+        $batchRows = collect($report['batch_rows']);
+        $mutationRows = collect($report['mutation_rows']);
+        $grossTotal = $batchRows->sum('gross');
+        $netTotal = $batchRows->sum('net');
+        $lossTotal = $batchRows->sum('loss');
+        $lossPercent = $grossTotal > 0 ? ($lossTotal / $grossTotal) * 100 : 0;
+        $mutationCount = $mutationRows->count();
+        $movementTotal = $mutationRows->sum('movement_kg');
+        $returnTotal = $mutationRows->sum('return');
     @endphp
 
     <div class="coordinator-returns-page space-y-6"
@@ -40,6 +50,7 @@
                 <h1 class="mt-2 font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $report['header']['title'] }}
                 </h1>
+                <p class="mt-1 gpa-note text-ink-body">{{ $report['header']['subtitle'] }}</p>
             </div>
             <div class="no-print flex shrink-0 flex-wrap items-center gap-2">
                 <button type="button" @click="exportCsv()"
@@ -95,7 +106,7 @@
                     <x-gpa.icon name="package" class="h-4 w-4 text-ink-body" />
                 </div>
                 <p class="font-inter text-2xl font-bold tracking-tight text-ink">
-                    <span x-text="numberFormat(summary().gross)">42.850</span>
+                    <span x-text="numberFormat(summary().gross)">{{ number_format($grossTotal, 0, ',', '.') }}</span>
                     <span class="gpa-meta font-medium text-ink-body">kg</span>
                 </p>
                 <footer class="flex justify-between gap-2 border-t border-line-soft pt-2 gpa-micro text-ink-body">
@@ -110,7 +121,7 @@
                     <x-gpa.icon name="scale" class="h-4 w-4 text-success-deep" />
                 </div>
                 <p class="font-inter text-2xl font-bold tracking-tight text-ink">
-                    <span x-text="numberFormat(summary().net)">42.380</span>
+                    <span x-text="numberFormat(summary().net)">{{ number_format($netTotal, 0, ',', '.') }}</span>
                     <span class="gpa-meta font-medium text-ink-body">kg</span>
                 </p>
                 <footer class="flex justify-between gap-2 border-t border-line-soft pt-2 gpa-micro text-ink-body">
@@ -125,8 +136,8 @@
                     <x-gpa.icon name="chart" class="h-4 w-4 text-ink-body" />
                 </div>
                 <p class="font-inter text-2xl font-bold tracking-tight text-ink">
-                    <span x-text="'-' + numberFormat(summary().lossPercent, 2)">-1,09</span>%
-                    <span class="gpa-meta font-medium text-ink-body">(<span x-text="'-' + numberFormat(summary().loss)">-470</span> kg)</span>
+                    <span x-text="'-' + numberFormat(summary().lossPercent, 2)">-{{ number_format($lossPercent, 2, ',', '.') }}</span>%
+                    <span class="gpa-meta font-medium text-ink-body">(<span x-text="'-' + numberFormat(summary().loss)">-{{ number_format($lossTotal, 0, ',', '.') }}</span> kg)</span>
                 </p>
                 <footer class="flex justify-between gap-2 border-t border-line-soft pt-2 gpa-micro text-ink-body">
                     <span>Toleransi &lt; 2.0%</span>
@@ -140,11 +151,11 @@
                     <x-gpa.icon name="alert-triangle" class="h-4 w-4 text-warning-deep" />
                 </div>
                 <p class="font-inter text-2xl font-bold tracking-tight text-warning-deep">
-                    <span x-text="numberFormat(summary().loss)">470</span>
+                    <span x-text="numberFormat(summary().loss)">{{ number_format($lossTotal, 0, ',', '.') }}</span>
                     <span class="gpa-meta font-medium text-ink-body">kg</span>
                 </p>
                 <footer class="flex justify-between gap-2 border-t border-line-soft pt-2 gpa-micro text-ink-body">
-                    <span><span x-text="summary().mutationCount">4</span> Catatan Mutasi</span>
+                    <span><span x-text="summary().mutationCount">{{ $mutationCount }}</span> Catatan Mutasi</span>
                     <span class="rounded border border-warning/50 bg-warning-soft/40 px-1.5 py-0.5 font-semibold uppercase text-warning-deep">Terlampir</span>
                 </footer>
             </article>
@@ -155,7 +166,6 @@
                 <h2 class="gpa-meta-lg font-semibold uppercase text-ink">
                     Rekapitulasi Pasokan Panen &amp; Timbangan Netto
                 </h2>
-                <p class="gpa-note text-ink-body">Periode Timbang Shift Pagi: 06:00–11:00 WIB</p>
             </div>
             <div class="report-table-wrap gpa-scroll-x">
                 <table class="w-full min-w-[1120px] border-collapse text-left">
@@ -233,13 +243,13 @@
                             </th>
                             <td
                                 class="px-3 py-2 text-right font-mono text-xs font-bold tabular-nums text-ink-strong"
-                                x-text="numberFormat(summary().gross)">42.850</td>
+                                x-text="numberFormat(summary().gross)">{{ number_format($grossTotal, 0, ',', '.') }}</td>
                             <td
                                 class="px-3 py-2 text-right font-mono text-xs font-bold tabular-nums text-ink-strong"
-                                x-text="numberFormat(summary().net)">42.380</td>
+                                x-text="numberFormat(summary().net)">{{ number_format($netTotal, 0, ',', '.') }}</td>
                             <td class="whitespace-nowrap px-3 py-2 text-right font-mono text-xs font-bold tabular-nums text-ink-strong">
-                                <span x-text="'-' + numberFormat(summary().loss)">-470</span>
-                                (<span x-text="'-' + numberFormat(summary().lossPercent, 2)">-1,09</span>%)
+                                <span x-text="'-' + numberFormat(summary().loss)">-{{ number_format($lossTotal, 0, ',', '.') }}</span>
+                                (<span x-text="'-' + numberFormat(summary().lossPercent, 2)">-{{ number_format($lossPercent, 2, ',', '.') }}</span>%)
                             </td>
                             <td colspan="2" class="px-3 py-2 text-center gpa-micro text-ink-body"></td>
                         </tr>
@@ -253,7 +263,7 @@
                 <h2 class="gpa-meta-lg font-semibold uppercase text-ink">
                     Rekapitulasi Mutasi Buffer Stock &amp; Retur Lapangan
                 </h2>
-                <p class="gpa-note text-ink-body"><span x-text="visibleMutationRows().length">4</span> catatan mutasi</p>
+                <p class="gpa-note text-ink-body"><span x-text="visibleMutationRows().length">{{ $mutationCount }}</span> catatan mutasi</p>
             </div>
             <div class="report-table-wrap gpa-scroll-x">
                 <table class="w-full min-w-[980px] border-collapse text-left">
@@ -334,10 +344,10 @@
                             </th>
                             <td
                                 class="px-3 py-2 text-right font-mono text-xs font-bold tabular-nums text-ink-strong"
-                                x-text="numberFormat(summary().movement) + ' kg'">57.290 kg</td>
+                                x-text="numberFormat(summary().movement) + ' kg'">{{ number_format($movementTotal, 0, ',', '.') }} kg</td>
                             <td
                                 class="px-3 py-2 text-right font-mono text-xs font-bold tabular-nums text-warning-deep"
-                                x-text="numberFormat(summary().returned) + ' kg'">-190 kg</td>
+                                x-text="numberFormat(summary().returned) + ' kg'">{{ number_format($returnTotal, 0, ',', '.') }} kg</td>
                             <td colspan="2" class="px-3 py-2 text-center gpa-micro text-ink-body"></td>
                         </tr>
                     </tfoot>

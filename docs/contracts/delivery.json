@@ -1,0 +1,47 @@
+{
+    "object": "Delivery",
+    "version": "1.0",
+    "table": "deliveries",
+    "description": "Proses pengiriman yang Ditugaskan ke awak armada. Satu order dapat dipecah menjadi beberapa delivery untuk multi-drop (§11).",
+    "fields": [
+        { "name": "id", "type": "int", "required": true, "nullable": false },
+        { "name": "order_id", "type": "int", "required": true, "nullable": false },
+        { "name": "client_id", "type": "int", "required": true, "nullable": false, "note": "Disalin dari order untuk mempercepat tampilan supir." },
+        { "name": "surat_jalan_id", "type": "int", "required": false, "nullable": true, "note": "Wajib terisi sebelum status berubah ke dalam_pengiriman (Rule 05)." },
+        { "name": "driver_id", "type": "int", "required": false, "nullable": true, "note": "Relasi ke User dengan role supir." },
+        { "name": "vehicle_plate", "type": "string", "required": false, "nullable": true, "note": "Contoh: B 9284 TDA." },
+        { "name": "hub", "type": "string", "required": true, "nullable": false, "note": "Contoh: Sta Hub Bogor-04." },
+        { "name": "sequence", "type": "int", "required": true, "nullable": false, "note": "Urutan stop pada manifest berjalan." },
+        { "name": "status", "type": "enum", "required": true, "nullable": false, "note": "Status utama §11." },
+        { "name": "eta", "type": "datetime", "required": false, "nullable": true },
+        { "name": "arrived_at", "type": "datetime", "required": false, "nullable": true },
+        { "name": "completed_at", "type": "datetime", "required": false, "nullable": true, "note": "Hanya terisi setelah PoD lengkap (Rule 06)." },
+        { "name": "created_at", "type": "datetime", "required": true, "nullable": false },
+        { "name": "updated_at", "type": "datetime", "required": true, "nullable": false }
+    ],
+    "enums": {
+        "status": ["siap_kirim", "dalam_pengiriman", "selesai", "selesai_retur", "batal"]
+    },
+    "relations": {
+        "order": "Order",
+        "surat_jalan": "SuratJalan | null",
+        "driver": "User | null",
+        "items": "DeliveryItem[]"
+    },
+    "example": {
+        "id": 3001,
+        "order_id": 42,
+        "client_id": 12,
+        "surat_jalan_id": 9001,
+        "driver_id": 21,
+        "vehicle_plate": "B 9284 TDA",
+        "hub": "Sta Hub Bogor-04",
+        "sequence": 1,
+        "status": "dalam_pengiriman",
+        "eta": "2026-10-24T06:45:00+07:00",
+        "arrived_at": null,
+        "completed_at": null,
+        "created_at": "2026-10-24T05:45:00+07:00",
+        "updated_at": "2026-10-24T05:52:00+07:00"
+    }
+}

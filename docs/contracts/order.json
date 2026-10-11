@@ -1,0 +1,63 @@
+{
+    "object": "Order",
+    "version": "1.0",
+    "table": "orders",
+    "description": "Permintaan pembelian dari klien. Order quantity bersifat estimasi; kuantitas final mengikuti Actual Weight (§5.2, Rule 04).",
+    "fields": [
+        { "name": "id", "type": "int", "required": true, "nullable": false },
+        { "name": "number", "type": "string", "required": true, "nullable": false, "note": "Format ORD-GPA-YYYYMM-XXXX." },
+        { "name": "client_id", "type": "int", "required": true, "nullable": false, "note": "Relasi ke User." },
+        { "name": "client_type", "type": "enum", "required": true, "nullable": false, "note": "Menentukan alur pembayaran §15.2 dan §15.3." },
+        { "name": "status", "type": "enum", "required": true, "nullable": false, "note": "Alur status §5.3. Tidak boleh berubah sembarangan." },
+        { "name": "source", "type": "enum", "required": true, "nullable": false, "note": "Asal order: portal, whatsapp, telepon, atau manual sekre." },
+        { "name": "order_date", "type": "date", "required": true, "nullable": false },
+        { "name": "delivery_date", "type": "date", "required": true, "nullable": false },
+        { "name": "delivery_window", "type": "string", "required": false, "nullable": true, "note": "Contoh: 06:00 - 07:15." },
+        { "name": "dock", "type": "string", "required": false, "nullable": true, "note": "Contoh: Central Kitchen Ciracas Hub." },
+        { "name": "payment_method", "type": "enum", "required": true, "nullable": false, "note": "Fase utama tanpa payment gateway (Rule 12)." },
+        { "name": "top_days", "type": "int", "required": false, "nullable": true, "note": "Wajib untuk payment_method = top." },
+        { "name": "verified_by", "type": "int", "required": false, "nullable": true, "note": "Sekre yang memverifikasi order." },
+        { "name": "verified_at", "type": "datetime", "required": false, "nullable": true },
+        { "name": "notes", "type": "text", "required": false, "nullable": true },
+        { "name": "created_at", "type": "datetime", "required": true, "nullable": false },
+        { "name": "updated_at", "type": "datetime", "required": true, "nullable": false }
+    ],
+    "enums": {
+        "client_type": ["reguler", "kontrak"],
+        "status": [
+            "draft",
+            "verifikasi",
+            "packing",
+            "siap_kirim",
+            "dalam_pengiriman",
+            "selesai",
+            "selesai_retur",
+            "batal"
+        ],
+        "source": ["portal", "whatsapp", "telepon", "manual_sekre"],
+        "payment_method": ["transfer", "qris", "cod", "top"]
+    },
+    "relations": {
+        "client": "User",
+        "items": "OrderItem[]"
+    },
+    "example": {
+        "id": 42,
+        "number": "ORD-GPA-202610-0042",
+        "client_id": 12,
+        "client_type": "kontrak",
+        "status": "packing",
+        "source": "portal",
+        "order_date": "2026-10-23",
+        "delivery_date": "2026-10-24",
+        "delivery_window": "06:00 - 07:15",
+        "dock": "Central Kitchen Ciracas Hub",
+        "payment_method": "top",
+        "top_days": 14,
+        "verified_by": 5,
+        "verified_at": "2026-10-23T10:12:00+07:00",
+        "notes": null,
+        "created_at": "2026-10-23T09:40:00+07:00",
+        "updated_at": "2026-10-24T05:30:00+07:00"
+    }
+}

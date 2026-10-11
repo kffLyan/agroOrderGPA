@@ -1,0 +1,59 @@
+{
+    "object": "User",
+    "version": "1.0",
+    "table": "users",
+    "description": "Satu tabel untuk semua peran: klien, admin/sekre, koordinator, supir, direktur. Pemisahan akses ditegakkan lewat role, bukan tabel terpisah (Rule 08).",
+    "fields": [
+        { "name": "id", "type": "int", "required": true, "nullable": false },
+        { "name": "name", "type": "string", "required": true, "nullable": false },
+        { "name": "email", "type": "string", "required": true, "nullable": false },
+        { "name": "phone", "type": "string", "required": true, "nullable": false },
+        { "name": "role", "type": "enum", "required": true, "nullable": false, "note": "Menentukan konsol dan middleware yang boleh diakses." },
+        { "name": "is_active", "type": "bool", "required": true, "nullable": false },
+        { "name": "otp_verified_at", "type": "datetime", "required": false, "nullable": true, "note": "Kosong berarti akun belum terverifikasi OTP." },
+        { "name": "integrity_accepted_at", "type": "datetime", "required": false, "nullable": true, "note": "Wajib terisi sebelum akun dapat masuk sistem (Rule 13)." },
+        { "name": "client_type", "type": "enum", "required": false, "nullable": true, "note": "Wajib untuk role = client." },
+        { "name": "business_name", "type": "string", "required": false, "nullable": true, "note": "Nama usaha atau kanal penjualan." },
+        { "name": "business_type", "type": "string", "required": false, "nullable": true, "note": "Contoh: Restoran." },
+        { "name": "npwp", "type": "string", "required": false, "nullable": true },
+        { "name": "address", "type": "text", "required": false, "nullable": true },
+        { "name": "delivery_zone", "type": "enum", "required": false, "nullable": true, "note": "Menentukan kurir dan tarif ongkir." },
+        { "name": "delivery_window", "type": "string", "required": false, "nullable": true },
+        { "name": "vehicle_access", "type": "string", "required": false, "nullable": true, "note": "Contoh: Truck box chilling 3 ton." },
+        { "name": "payment_method", "type": "enum", "required": false, "nullable": true, "note": "Metode pembayaran yang dipilih klien saat pendaftaran." },
+        { "name": "preferred_commodities", "type": "json", "required": false, "nullable": true, "note": "Daftar id produk yang sering dibeli." },
+        { "name": "created_at", "type": "datetime", "required": true, "nullable": false },
+        { "name": "updated_at", "type": "datetime", "required": true, "nullable": false }
+    ],
+    "enums": {
+        "role": ["client", "admin", "koordinator", "supir", "direktur"],
+        "client_type": ["reguler", "kontrak"],
+        "delivery_zone": ["jabodetabek", "luar_jabodetabek"],
+        "payment_method": ["transfer", "qris", "cod", "top"]
+    },
+    "relations": {
+        "orders": "Order[]"
+    },
+    "example": {
+        "id": 12,
+        "name": "Budi Santoso",
+        "email": "budi@contoh.co.id",
+        "phone": "+6281234567890",
+        "role": "client",
+        "is_active": true,
+        "otp_verified_at": "2026-01-12T08:20:00+07:00",
+        "integrity_accepted_at": "2026-01-12T08:25:00+07:00",
+        "client_type": "kontrak",
+        "business_name": "Kitchen Sentral Group",
+        "business_type": "Restoran dan Katering",
+        "npwp": "01.234.567.8-901.000",
+        "address": "Jl. Industri No. 12, Ciracas, Jakarta Timur",
+        "delivery_zone": "jabodetabek",
+        "delivery_window": "06:00 - 07:15",
+        "vehicle_access": "Truck box chilling 3 ton",
+        "payment_method": "top",
+        "preferred_commodities": [1, 4, 9],
+        "created_at": "2026-01-12T08:10:00+07:00",
+        "updated_at": "2026-10-24T05:30:00+07:00"
+    }
+}

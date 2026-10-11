@@ -1,0 +1,26 @@
+{
+    "object": "OrderItem",
+    "version": "1.0",
+    "table": "order_items",
+    "description": "Baris pesanan per produk. order_quantity adalah permintaan awal, bukan nilai transaksi final (Rule 04).",
+    "fields": [
+        { "name": "id", "type": "int", "required": true, "nullable": false },
+        { "name": "order_id", "type": "int", "required": true, "nullable": false },
+        { "name": "product_id", "type": "int", "required": true, "nullable": false },
+        { "name": "order_quantity", "type": "decimal", "required": true, "nullable": false, "note": "Estimasi klien dalam kilogram." },
+        { "name": "price", "type": "int", "required": true, "nullable": false, "note": "Harga dasar per kilogram, rupiah penuh." },
+        { "name": "note", "type": "string", "required": false, "nullable": true }
+    ],
+    "relations": {
+        "order": "Order",
+        "product": "Product"
+    },
+    "example": {
+        "id": 101,
+        "order_id": 42,
+        "product_id": 1,
+        "order_quantity": 500,
+        "price": 15000,
+        "note": "Grade A Horeca, krat berlubang steril"
+    }
+}

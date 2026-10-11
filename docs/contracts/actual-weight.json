@@ -1,0 +1,32 @@
+{
+    "object": "ActualWeight",
+    "version": "1.0",
+    "table": "actual_weights",
+    "description": "Hasil penimbangan riil di gudang. Wajib ada sebelum Surat Jalan terbit (Rule 05).",
+    "fields": [
+        { "name": "id", "type": "int", "required": true, "nullable": false },
+        { "name": "order_item_id", "type": "int", "required": true, "nullable": false },
+        { "name": "gross_weight", "type": "decimal", "required": true, "nullable": false, "note": "Berat kotor sebelum-sortir dalam kilogram." },
+        { "name": "tare", "type": "decimal", "required": true, "nullable": false, "note": "Berat wadah, contoh: 50.0." },
+        { "name": "actual_weight", "type": "decimal", "required": true, "nullable": false, "note": "Berat bersih aktual. Acuan nilai transaksi final §5.2." },
+        { "name": "deviation", "type": "decimal", "required": true, "nullable": false, "note": "Selisih(actual_weight - order_quantity), boleh negatif." },
+        { "name": "device_id", "type": "string", "required": true, "nullable": false, "note": "Identitas timbangan." },
+        { "name": "calibration_cert_no", "type": "string", "required": false, "nullable": true, "note": "Contoh: 510/PKTN/ML/XI/2024." },
+        { "name": "verifier_id", "type": "int", "required": true, "nullable": false, "note": "Koordinator yang memverifikasi." },
+        { "name": "verified_at", "type": "datetime", "required": true, "nullable": false },
+        { "name": "note", "type": "text", "required": false, "nullable": true }
+    ],
+    "example": {
+        "id": 501,
+        "order_item_id": 101,
+        "gross_weight": 560,
+        "tare": 50,
+        "actual_weight": 497,
+        "deviation": -3,
+        "device_id": "TMB-KRG-02",
+        "calibration_cert_no": "510/PKTN/ML/XI/2024",
+        "verifier_id": 8,
+        "verified_at": "2026-10-24T05:26:00+07:00",
+        "note": "Susut alami sesuai toleransi 1.0%"
+    }
+}

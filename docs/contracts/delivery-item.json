@@ -1,0 +1,29 @@
+{
+    "object": "DeliveryItem",
+    "version": "1.0",
+    "table": "delivery_items",
+    "description": "Baris barang yang dikirim pada satu delivery. received_weight diisi setelah barang diterima dan dapat berbeda karena retur (§13).",
+    "fields": [
+        { "name": "id", "type": "int", "required": true, "nullable": false },
+        { "name": "delivery_id", "type": "int", "required": true, "nullable": false },
+        { "name": "order_item_id", "type": "int", "required": true, "nullable": false },
+        { "name": "product_id", "type": "int", "required": true, "nullable": false },
+        { "name": "shipped_weight", "type": "decimal", "required": true, "nullable": false, "note": "Berat aktual yang dimuat, mengikuti Actual Weight." },
+        { "name": "received_weight", "type": "decimal", "required": false, "nullable": true, "note": "Berat yang diterima. Wajib terisi sebelum delivery selesai." },
+        { "name": "containers", "type": "int", "required": false, "nullable": true, "note": "Jumlah wadah, contoh: 25." }
+    ],
+    "relations": {
+        "delivery": "Delivery",
+        "order_item": "OrderItem",
+        "product": "Product"
+    },
+    "example": {
+        "id": 30011,
+        "delivery_id": 3001,
+        "order_item_id": 101,
+        "product_id": 1,
+        "shipped_weight": 497,
+        "received_weight": null,
+        "containers": 25
+    }
+}

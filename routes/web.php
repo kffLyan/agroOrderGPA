@@ -135,7 +135,7 @@ Route::middleware(['auth', 'role:KOORDINATOR'])->prefix('koordinator')->name('ko
     // 4. Manajemen Stok Panen & Alokasi Buffer Stock Gudang
     Route::get('/stok', [KoordinatorStockController::class, 'index'])->name('stock');
     Route::post('/stok', [KoordinatorStockController::class, 'storeBatch'])->name('stock.store');
-    Route::get('/stock', [KoordinatorStockController::class, 'index'])->name('stock.alias');
+
 
     // 5. Surat Jalan & Dispatch Armada Logistik
     Route::get('/surat-jalan', [KoordinatorDispatchController::class, 'index'])->name('dispatch');
@@ -144,17 +144,7 @@ Route::middleware(['auth', 'role:KOORDINATOR'])->prefix('koordinator')->name('ko
     Route::get('/monitoring', [KoordinatorMonitoringController::class, 'index'])->name('monitoring');
 });
 
-// Alias coordinator.* untuk kompatibilitas frontend route names
-Route::middleware(['auth', 'role:KOORDINATOR'])->prefix('konsol-koordinator')->name('coordinator.')->group(function () {
-    Route::get('/', [KoordinatorDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/rencana-panen', [KoordinatorHarvestPlanController::class, 'index'])->name('harvest');
-    Route::get('/penimbangan', [KoordinatorWeighingController::class, 'index'])->name('weighing');
-    Route::post('/penimbangan/{order_id}', [KoordinatorWeighingController::class, 'storeWeighing'])->name('weighing.store');
-    Route::get('/stok', [KoordinatorStockController::class, 'index'])->name('stock');
-    Route::post('/stok', [KoordinatorStockController::class, 'storeBatch'])->name('stock.store');
-    Route::get('/surat-jalan', [KoordinatorDispatchController::class, 'index'])->name('dispatch');
-    Route::get('/monitoring', [KoordinatorMonitoringController::class, 'index'])->name('monitoring');
-});
+
 
 // 4. ARMADA LOGISTIK / SUPIR
 Route::middleware(['auth', 'role:ARMADA'])->prefix('armada')->name('armada.')->group(function () {

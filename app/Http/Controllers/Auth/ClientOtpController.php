@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Support\PhoneNumber;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -46,7 +45,7 @@ class ClientOtpController extends Controller
             'code.digits' => 'Kode OTP terdiri dari 6 digit angka.',
         ]);
 
-        $phone = PhoneNumber::normalize($data['phone']);
+        $phone = $this->normalizePhone($data['phone']);
         $otp = $request->session()->get(self::SESSION_KEY);
 
         if ($phone === null || ! is_array($otp) || ($otp['phone'] ?? null) !== $phone) {
@@ -78,6 +77,23 @@ class ClientOtpController extends Controller
         ]);
     }
 
+    private function normalizePhone(?string $raw): ?string
+    {
+        if ($raw === null) {
+            return null;
+        }
+
+        $digits = preg_replace('/\D+/', '', $raw);
+
+        if (str_starts_with($digits, '0')) {
+            $digits = '62' . substr($digits, 1);
+        } elseif (str_starts_with($digits, '8')) {
+            $digits = '62' . $digits;
+        }
+
+        return strlen($digits) >= 10 ? '+' . $digits : null;
+    }
+
     private function validatedPhone(Request $request): string
     {
         $request->validate([
@@ -86,7 +102,7 @@ class ClientOtpController extends Controller
             'phone.required' => 'Nomor WhatsApp wajib diisi.',
         ]);
 
-        $phone = PhoneNumber::normalize($request->input('phone'));
+        $phone = $this->normalizePhone($request->input('phone'));
 
         if ($phone === null) {
             throw ValidationException::withMessages([

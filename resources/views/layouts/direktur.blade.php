@@ -1,161 +1,200 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>{{ $title ?? 'Portal Direktur' }} - AgroOrder GPA</title>
+    <meta name="description" content="Dashboard Eksekutif Monitoring Bisnis &amp; Otorisasi Direktur AgroOrder GPA.">
 
-    <!-- Tailwind CSS (Vite / Standar) -->
+    <title>@yield('title', 'Dashboard Eksekutif Direktur').' &middot; '.config('app.name', 'AgroOrder GPA')</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-gray-100 font-sans antialiased text-gray-800">
-    <div class="min-h-screen flex">
 
-        <!-- ============================================================= -->
-        <!-- SIDEBAR KIRI (PORTAL DIREKTUR / EKSEKUTIF GPA)                -->
-        <!-- ============================================================= -->
-        <aside class="w-64 bg-[#153a01] text-white flex flex-col justify-between shrink-0 shadow-xl min-h-screen">
-            <div>
-                <!-- Header Brand Sidebar -->
-                <div class="p-5 border-b border-[#255808]">
-                    <div class="flex items-center space-x-3">
-                        <div class="w-9 h-9 bg-white text-[#153a01] rounded-lg font-black text-base flex items-center justify-center shadow">
-                            GPA
-                        </div>
-                        <div>
-                            <h1 class="font-bold text-sm tracking-wide leading-tight">AgroOrder GPA</h1>
-                            <p class="text-[10px] text-emerald-300 font-mono">PANEL DIREKTUR / OWNER</p>
-                        </div>
-                    </div>
+<body class="min-h-screen bg-canvas font-sans text-ink antialiased">
+    @php
+        $operatorRole = $operator['role'] ?? 'Direktur';
+        $operatorName = $operator['name'] ?? config('app.name');
+        $operatorCode = $operator['code'] ?? '-';
+        $operatorInitials = $operator['initials'] ?? 'AT';
+
+        $navigation = [
+            ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('direktur.dashboard'), 'active' => request()->routeIs('direktur.dashboard')],
+            ['label' => 'Penjualan', 'icon' => 'banknote', 'href' => route('direktur.sales.index'), 'active' => request()->routeIs('direktur.sales.*')],
+            ['label' => 'Volume Komoditas', 'icon' => 'package', 'href' => route('direktur.commodities.index'), 'active' => request()->routeIs('direktur.commodities.*')],
+            ['label' => 'Piutang & Tagihan', 'icon' => 'invoice', 'href' => route('direktur.receivables.index'), 'active' => request()->routeIs('direktur.receivables.*')],
+            ['label' => 'Persetujuan Kontrak', 'icon' => 'badge-check', 'href' => route('direktur.contracts.approval'), 'active' => request()->routeIs('direktur.contracts.*')],
+            ['label' => 'Laporan', 'icon' => 'shield', 'href' => route('direktur.reports.index'), 'active' => request()->routeIs('direktur.reports.*')],
+            ['label' => 'Pengaturan Tata Kelola', 'icon' => 'settings', 'href' => route('direktur.governance.index'), 'active' => request()->routeIs('direktur.governance.*')],
+            ['label' => 'Kelola Akun Pengguna & RBAC', 'icon' => 'users', 'href' => route('direktur.users.index'), 'active' => request()->routeIs('direktur.users.*')],
+        ];
+    @endphp
+
+    <div x-data="directorDashboard(@js($operator))">
+        <a href="#main-content"
+            class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2 focus:text-xs focus:font-semibold focus:shadow-card">
+            Lewati ke konten utama
+        </a>
+
+        <header class="sticky top-0 z-40 border-b border-ink bg-brand text-white">
+            <div class="mx-auto flex h-[68px] w-full max-w-shell items-center justify-between gap-4 px-4 sm:px-6">
+                <div class="flex min-w-0 items-center gap-3">
+                    <button type="button" @click="sidebarOpen = true" aria-label="Buka menu navigasi"
+                        class="-ml-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-white/80 transition-colors hover:bg-white/10 hover:text-white lg:hidden">
+                        <x-gpa.icon name="grid" class="h-5 w-5" />
+                    </button>
+
+                    <a href="{{ route('direktur.dashboard') }}" class="flex min-w-0 items-center gap-3">
+                        <img src="{{ asset('gpaleaves.png') }}" alt="" class="h-7 w-7 shrink-0 object-contain">
+                        <span class="flex min-w-0 flex-col">
+                            <span class="truncate font-inter text-lg font-extrabold uppercase leading-6 text-white">
+                                AgroOrder GPA
+                            </span>
+                            <span class="truncate text-[10px] font-medium capitalize leading-3 text-white/80 gpa-meta">
+                                {{ $operatorRole }}
+                            </span>
+                        </span>
+                    </a>
                 </div>
 
-                <!-- Navigasi Menu Utama Sesuai UI/UX Design System -->
-                <nav class="p-3 space-y-1 text-xs">
-                    <!-- 1. Dashboard -->
-                    <a href="{{ route('direktur.dashboard') }}" 
-                       class="flex items-center gap-3 px-3 py-2.5 rounded-md font-semibold transition {{ request()->routeIs('direktur.dashboard') ? 'bg-[#255808] text-white shadow-sm' : 'text-emerald-100/90 hover:bg-[#1f4e04] hover:text-white' }}">
-                        <span>Dashboard</span>
-                    </a>
+                <div class="ml-auto flex shrink-0 items-center gap-3">
+                    <button type="button" @click="exportExcel()"
+                        class="inline-flex h-8 items-center gap-1.5 rounded-lg bg-accent px-4 shadow-sub transition-colors hover:bg-accent-deep">
+                        <x-gpa.icon name="download" class="h-3 w-3 text-ink" />
+                        <span class="hidden text-[11px] font-bold tracking-[0.28px] text-ink gpa-meta sm:inline">Export
+                            Excel</span>
+                    </button>
 
-                    <!-- 2. Penjualan -->
-                    <a href="{{ route('direktur.sales.index') }}" 
-                       class="flex items-center gap-3 px-3 py-2.5 rounded-md font-semibold transition {{ request()->routeIs('direktur.sales.*') ? 'bg-[#255808] text-white shadow-sm' : 'text-emerald-100/90 hover:bg-[#1f4e04] hover:text-white' }}">
-                        <span>Penjualan</span>
-                    </a>
+                    <button type="button" @click="printPdf()"
+                        class="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#FF4438] px-4 shadow-sub transition-colors hover:bg-danger">
+                        <x-gpa.icon name="file-text" class="h-3 w-3 text-brand" />
+                        <span class="hidden text-[11px] font-bold tracking-[0.28px] text-ink gpa-meta sm:inline">Cetak
+                            PDF</span>
+                    </button>
 
-                    <!-- 3. Volume Komoditas -->
-                    <a href="{{ route('direktur.commodities.index') }}" 
-                       class="flex items-center gap-3 px-3 py-2.5 rounded-md font-semibold transition {{ request()->routeIs('direktur.commodities.*') ? 'bg-[#255808] text-white shadow-sm' : 'text-emerald-100/90 hover:bg-[#1f4e04] hover:text-white' }}">
-                        <span>Volume Komoditas</span>
-                    </a>
+                    <span class="hidden h-6 w-px bg-success lg:block" aria-hidden="true"></span>
 
-                    <!-- 4. Piutang & Tagihan -->
-                    <a href="{{ route('direktur.receivables.index') }}" 
-                       class="flex items-center gap-3 px-3 py-2.5 rounded-md font-semibold transition {{ request()->routeIs('direktur.receivables.*') ? 'bg-[#255808] text-white shadow-sm' : 'text-emerald-100/90 hover:bg-[#1f4e04] hover:text-white' }}">
-                        <span>Piutang & Tagihan</span>
-                    </a>
-
-                    <!-- 5. Approval Kontrak -->
-                    <a href="{{ route('direktur.contracts.approval') }}" 
-                       class="flex items-center gap-3 px-3 py-2.5 rounded-md font-semibold transition {{ request()->routeIs('direktur.contracts.approval') || request()->routeIs('direktur.contracts.*') ? 'bg-[#255808] text-white shadow-sm' : 'text-emerald-100/90 hover:bg-[#1f4e04] hover:text-white' }}">
-                        <span>Approval Kontrak</span>
-                    </a>
-
-                    <!-- 6. Laporan -->
-                    <a href="{{ route('direktur.reports.index') }}" 
-                       class="flex items-center gap-3 px-3 py-2.5 rounded-md font-semibold transition {{ request()->routeIs('direktur.reports.*') ? 'bg-[#255808] text-white shadow-sm' : 'text-emerald-100/90 hover:bg-[#1f4e04] hover:text-white' }}">
-                        <span>Laporan</span>
-                    </a>
-
-                    <!-- 7. Pengaturan Tata Kelola -->
-                    <a href="{{ route('direktur.governance.index') }}" 
-                       class="flex items-center gap-3 px-3 py-2.5 rounded-md font-semibold transition {{ request()->routeIs('direktur.governance.*') ? 'bg-[#255808] text-white shadow-sm' : 'text-emerald-100/90 hover:bg-[#1f4e04] hover:text-white' }}">
-                        <span>Pengaturan Tata Kelola</span>
-                    </a>
-
-                    <!-- 8. Kelola Akun & RBAC -->
-                    <a href="{{ route('direktur.users.index') }}" 
-                       class="flex items-center gap-3 px-3 py-2.5 rounded-md font-semibold transition {{ request()->routeIs('direktur.users.*') ? 'bg-[#255808] text-white shadow-sm' : 'text-emerald-100/90 hover:bg-[#1f4e04] hover:text-white' }}">
-                        <span>Kelola Akun & RBAC</span>
-                    </a>
-                </nav>
-            </div>
-
-            <!-- Bagian Bawah Sidebar: Profil Akun & Aksi Logout -->
-            <div class="p-4 border-t border-[#255808] bg-[#0f2a01]/60">
-                <div class="flex items-center justify-between mb-3 text-xs">
-                    <div>
-                        <div class="font-bold text-white text-xs truncate">{{ auth()->user()->name }}</div>
-                        <div class="text-[10px] text-emerald-300 font-mono truncate">ID: 001 // Direktur</div>
-                    </div>
-                    <span class="px-1.5 py-0.5 rounded bg-emerald-800 text-emerald-200 text-[9px] font-bold">AKTIF</span>
-                </div>
-                <div class="flex gap-2">
-                    <a href="{{ route('profile.edit') }}" class="w-1/2 text-center py-1.5 bg-[#1f4e04] hover:bg-[#286306] rounded text-[11px] font-semibold text-emerald-100 transition">
-                        Profil
-                    </a>
-                    <form method="POST" action="{{ route('logout') }}" class="w-1/2">
-                        @csrf
-                        <button type="submit" class="w-full text-center py-1.5 bg-red-900/70 hover:bg-red-800 rounded text-[11px] font-semibold text-red-100 transition">
-                            Keluar
+                    <div class="flex items-center gap-2">
+                        <button type="button" @click="run('Notifikasi', '3 pengajuan kontrak tier-1 menunggu tanda tangan Anda.')"
+                            class="relative hidden h-8 w-8 items-center justify-center rounded-lg text-surface-disabled transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"
+                            aria-label="Notifikasi">
+                            <x-gpa.icon name="bell" class="h-4 w-4" />
+                            <span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent" aria-hidden="true"></span>
                         </button>
-                    </form>
+                        <button type="button" @click="run('Pesan Direksi', 'Tidak ada pesan baru dari sekretaris dan tim operasional.')"
+                            class="hidden h-8 w-8 items-center justify-center rounded-lg text-surface-disabled transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"
+                            aria-label="Pesan">
+                            <x-gpa.icon name="mail" class="h-4 w-4" />
+                        </button>
+                        <span
+                            class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-disabled text-[16px] font-bold text-ink ring-1 ring-inset ring-ink-body">
+                            {{ $operatorInitials }}
+                        </span>
+                        <span class="hidden min-w-0 flex-col sm:flex">
+                            <span class="truncate text-[11px] font-semibold tracking-[0.88px] text-canvas gpa-meta">
+                                {{ $operatorName }}
+                            </span>
+                            <span class="truncate text-[9px] font-semibold tracking-[1.08px] text-accent gpa-meta">
+                                ID : {{ $operatorCode }}
+                            </span>
+                        </span>
+                    </div>
                 </div>
             </div>
-        </aside>
+        </header>
 
-        <!-- ============================================================= -->
-        <!-- AREA KONTEN UTAMA                                             -->
-        <!-- ============================================================= -->
-        <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
+        <div class="mx-auto flex w-full max-w-shell items-start">
+            <div x-cloak x-show="sidebarOpen" @click="sidebarOpen = false" aria-hidden="true"
+                class="fixed inset-0 z-30 bg-ink/40 lg:hidden"></div>
 
-            <!-- Top Header Bar Ringkas Sesuai Desain UI/UX -->
-            <header class="bg-white border-b border-gray-200 px-6 py-3.5 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-                <div>
-                    <h2 class="text-base font-bold text-gray-800 leading-tight">
-                        {{ $header ?? 'Monitoring & Dasbor Direktur' }}
-                    </h2>
-                    <p class="text-[11px] text-gray-500">Kelompok Tani / Koperasi Green Pasundan Agriculture (Ciwidey)</p>
+            <aside
+                class="fixed inset-y-0 left-0 z-40 hidden w-[288px] -translate-x-full flex-col justify-between border-r border-line-hair bg-canvas p-4 transition-transform lg:sticky lg:top-[68px] lg:z-0 lg:flex lg:h-[calc(100vh-68px)] lg:translate-x-0"
+                :class="sidebarOpen ? '!translate-x-0' : ''">
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-center gap-2.5 rounded-xl border border-line-hair bg-surface-shell p-3">
+                        <x-gpa.brand-mark class="h-6 w-6 shrink-0 text-brand" />
+                        <span class="flex min-w-0 flex-col">
+                            <span class="block truncate font-inter text-sm font-bold leading-5 text-ink">{{ $operatorRole }}</span>
+                            <span class="block truncate text-[9px] font-bold uppercase leading-3 tracking-[0.45px] text-success-deep gpa-micro-bold">
+                                {{ $operatorName }}
+                            </span>
+                            <span class="block truncate gpa-note text-success-deep">ID {{ $operatorCode }}</span>
+                        </span>
+                    </div>
+
+                    <button type="button" @click="auditLog()"
+                        class="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-ink shadow-sub transition-colors hover:bg-accent-deep">
+                        <x-gpa.icon name="clipboard" class="h-3.5 w-3.5 shrink-0 text-ink" />
+                        <span class="text-[11px] font-bold tracking-[0.88px] text-ink gpa-meta">Audit Log</span>
+                    </button>
+
+                    <nav class="flex flex-col gap-1 pt-4" aria-label="Navigasi direktur">
+                        @foreach ($navigation as $item)
+                            @php
+                                $active = $item['active'] ?? false;
+                                $linkClass = 'flex items-center gap-3 rounded-lg px-4 py-2.5 gpa-nav transition-colors'
+                                    .($active
+                                        ? ' rounded-r-lg border-l-4 border-accent bg-brand font-semibold capitalize text-accent'
+                                        : ' text-ink-body hover:bg-surface-shell hover:text-ink');
+                            @endphp
+
+                            @if (! empty($item['href']))
+                                <a href="{{ $item['href'] }}" class="{{ $linkClass }}"
+                                    @if ($active) aria-current="page" @endif>
+                                    <x-gpa.icon :name="$item['icon']"
+                                        class="h-4 w-4 shrink-0 {{ $active ? 'text-accent' : 'text-ink-body' }}" />
+                                    <span class="flex-1 truncate">{{ $item['label'] }}</span>
+                                </a>
+                            @else
+                                <span class="{{ $linkClass }} cursor-not-allowed" aria-disabled="true"
+                                    title="Modul sedang disiapkan">
+                                    <x-gpa.icon :name="$item['icon']" class="h-4 w-4 shrink-0 text-ink-body" />
+                                    <span class="flex-1 truncate">{{ $item['label'] }}</span>
+                                </span>
+                            @endif
+                        @endforeach
+                    </nav>
                 </div>
-                <div class="flex items-center gap-3 text-xs">
-                    <a href="{{ route('direktur.governance.index') }}" class="px-2.5 py-1 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium rounded border transition flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        Audit Log
-                    </a>
-                    <span class="px-2.5 py-1 bg-gray-100 text-gray-600 rounded font-mono border">
-                        {{ date('d M Y') }}
-                    </span>
-                    <span class="px-2.5 py-1 bg-green-100 text-green-800 rounded font-bold border border-green-200">
-                        Database: Terhubung
-                    </span>
+
+                <div class="flex flex-col gap-1 border-t border-line-hair pt-4">
+                    <button type="button" @click="run('Pengaturan', 'Modul pengaturan tata kelola sedang disiapkan.')"
+                        class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left gpa-body text-ink-quiet transition-colors hover:bg-surface-shell hover:text-ink">
+                        <x-gpa.icon name="settings" class="h-3.5 w-3.5 shrink-0" />
+                        Pengaturan
+                    </button>
+                    @auth
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit"
+                                class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left gpa-body text-ink-quiet transition-colors hover:bg-surface-shell hover:text-ink">
+                                <x-gpa.icon name="logout" class="h-3.5 w-3.5 shrink-0" />
+                                Keluar Sesi
+                            </button>
+                        </form>
+                    @else
+                        <a href="{{ route('login') }}"
+                            class="flex w-full items-center gap-2 rounded-lg px-3 py-2 gpa-body text-ink-quiet transition-colors hover:bg-surface-shell hover:text-ink">
+                            <x-gpa.icon name="logout" class="h-3.5 w-3.5 shrink-0" />
+                            Keluar Sesi
+                        </a>
+                    @endauth
                 </div>
-            </header>
+            </aside>
 
-            <!-- Notifikasi Global (Flash Session & Error Bag) -->
-            <main class="p-6 space-y-6">
-                @if(session('success'))
-                    <div class="p-3 bg-green-50 border-l-4 border-green-600 text-green-900 text-xs rounded shadow-sm flex justify-between items-center">
-                        <div><strong>Berhasil:</strong> {{ session('success') }}</div>
-                    </div>
-                @endif
-
-                @if(session('error'))
-                    <div class="p-3 bg-red-50 border-l-4 border-red-600 text-red-900 text-xs rounded shadow-sm">
-                        <strong>Gagal:</strong> {{ session('error') }}
-                    </div>
-                @endif
-
-                @if($errors->any())
-                    <div class="p-3 bg-red-50 border-l-4 border-red-600 text-red-900 text-xs rounded shadow-sm">
-                        <strong>Perhatian:</strong> {{ $errors->first() }}
-                    </div>
-                @endif
-
-                {{ $slot }}
+            <main id="main-content" class="min-w-0 flex-1 px-4 py-6 lg:px-6">
+                @yield('content')
             </main>
-
         </div>
+
+        <x-gpa.toast />
     </div>
 </body>
+
 </html>

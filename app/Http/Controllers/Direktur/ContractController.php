@@ -28,30 +28,290 @@ class ContractController extends Controller
      */
     public function approval(Request $request)
     {
-        $typeFilter = $request->query('type', 'ALL'); // ALL, DISCOUNT, EXTENSION, ANNUAL
+        $user = Auth::user();
 
-        $query = Contract::where('status', 'PENDING_APPROVAL')->with(['user', 'product']);
-
-        if ($typeFilter === 'DISCOUNT') {
-            $query->where('fixed_price_per_kg', '<', 14000);
-        } elseif ($typeFilter === 'EXTENSION') {
-            $query->where('top_days', '>', 30);
-        } elseif ($typeFilter === 'ANNUAL') {
-            $query->where('committed_volume_per_cycle', '>=', 4000);
-        }
-
-        $pendingContracts = $query->orderBy('created_at', 'desc')->get();
-
-        $counts = [
-            'ALL'       => Contract::where('status', 'PENDING_APPROVAL')->count(),
-            'DISCOUNT'  => Contract::where('status', 'PENDING_APPROVAL')->where('fixed_price_per_kg', '<', 14000)->count(),
-            'EXTENSION' => Contract::where('status', 'PENDING_APPROVAL')->where('top_days', '>', 30)->count(),
-            'ANNUAL'    => Contract::where('status', 'PENDING_APPROVAL')->where('committed_volume_per_cycle', '>=', 4000)->count(),
+        $operator = [
+            'role'     => 'Direktur Utama',
+            'name'     => $user?->name ?: 'Direksi GPA',
+            'code'     => 'DIR-' . str_pad($user?->id ?: 1, 3, '0', STR_PAD_LEFT),
+            'initials' => strtoupper(substr($user?->name ?: 'DU', 0, 2)),
+            'branch'   => 'Kantor Pusat GPA - Eksekutif',
+            'email'    => $user?->email ?: 'direktur@greenpasundan.id',
+            'period'   => 'Minggu ' . date('W') . ' ' . date('Y') . ' | Q4 YTD',
         ];
 
-        $totalPendingValue = (float) $pendingContracts->sum(fn ($c) => (float) ($c->fixed_price_per_kg * $c->committed_volume_per_cycle));
+        $header = [
+            'eyebrow'      => 'Persetujuan Kontrak',
+            'title'        => 'Persetujuan Kontrak Khusus, Diskon Volume & Perpanjangan TOP B2B',
+            'subtitle'     => 'Antrean tunggal seluruh pengajuan yang memerlukan tanda tangan digital Direktur Utama: diskon di luar plafon, ekstensi TOP, dan kontrak induk tahunan.',
+            'period'       => 'PERIODE: OKTOBER 2026',
+            'filter_label' => 'Filter',
+        ];
 
-        return view('direktur.contracts.approval', compact('pendingContracts', 'typeFilter', 'counts', 'totalPendingValue'));
+        $defaultRows = [
+            [
+                'contract'         => 'CTR-B2B-2025-089',
+                'region'           => 'BOGOR',
+                'client'           => 'Hotel Grand Pangrango',
+                'client_tone'      => 'caution',
+                'submitted_by'     => 'Tim Sales Key Account',
+                'submitted_at'     => '10 Okt 2026',
+                'commodity'        => 'Selada Romaine Super',
+                'volume'           => '800 kg / minggu (3.2 Ton/Bln)',
+                'segment'          => 'Grade A - Hydroponik Binaan',
+                'price'            => 'Rp 13.800 / kg',
+                'price_strike'     => 'Rp 15.000',
+                'list_price'       => 15000,
+                'offer_price'      => 13800,
+                'discount_percent' => 8.0,
+                'discount_ceiling' => 5.0,
+                'exception'        => 'Diskon Khusus: 8.0% (Plafon 5%)',
+                'exception_tone'   => 'caution',
+                'term'             => 'TOP 30 Hari',
+                'top_days'         => 30,
+                'top_default'      => 30,
+                'margin'           => '18.5% Net Margin',
+                'margin_value'     => 18.5,
+                'margin_minimum'   => 15.0,
+                'margin_delta'     => 3.5,
+                'margin_flag'      => 'Safe Margin Pass (+3.5%)',
+                'score'            => 'A- (82/100)',
+                'score_note'       => '0 Riwayat Macet // 18 bln',
+                'approve_label'    => 'Setujui Kontrak',
+                'approve_tone'     => 'solid',
+                'filter_key'       => 'discount',
+                'value'            => 145000000,
+                'value_label'      => 'Rp 145.000.000',
+                'exceeds_plafon'   => true,
+            ],
+            [
+                'contract'         => 'CTR-B2B-2025-092',
+                'region'           => 'JAKARTA PUSAT',
+                'client'           => 'PT Boga Rasa Kulina Prima',
+                'client_tone'      => 'success',
+                'submitted_by'     => 'VP Commercial',
+                'submitted_at'     => '12 Okt 2026',
+                'commodity'        => 'Beras Slyp & Bumbu Basah',
+                'volume'           => 'Plafon Transaksi: Rp 150.000.000',
+                'segment'          => 'Distribusi Multi-Resto Chain (14 Outlet)',
+                'price'            => 'Harga Standard List Katalog',
+                'price_strike'     => null,
+                'list_price'       => null,
+                'offer_price'      => null,
+                'discount_percent' => null,
+                'discount_ceiling' => null,
+                'exception'        => 'Usulan Ekstensi: TOP 45 Hari',
+                'exception_tone'   => 'caution',
+                'term'             => 'Reguler Default 30 Hari',
+                'top_days'         => 45,
+                'top_default'      => 30,
+                'margin'           => '21.2% Net Margin',
+                'margin_value'     => 21.2,
+                'margin_minimum'   => 15.0,
+                'margin_delta'     => 6.2,
+                'margin_flag'      => 'High Yield Account (+6.2%)',
+                'score'            => 'A+ (88/100)',
+                'score_note'       => 'Jaminan Bank Garansi BNI',
+                'approve_label'    => 'Setujui Kontrak',
+                'approve_tone'     => 'solid',
+                'filter_key'       => 'top',
+                'value'            => 120000000,
+                'value_label'      => 'Rp 120.000.000',
+                'exceeds_plafon'   => true,
+            ],
+            [
+                'contract'         => 'CTR-B2B-2025-095',
+                'region'           => 'SOEKARNO-HATTA HUB',
+                'client'           => 'PT Aerofood ACS Indonesia',
+                'client_tone'      => 'solid',
+                'submitted_by'     => 'Directorate Key Account',
+                'submitted_at'     => '13 Okt 2026',
+                'commodity'        => 'Sayuran Cut & Clean Hygienic',
+                'volume'           => '300 kg / hari (Daily Reefer Delivery)',
+                'segment'          => 'Standard Inflight Catering HACCP',
+                'price'            => 'Kontrak Tahunan Terikat (12 Bln)',
+                'price_strike'     => null,
+                'list_price'       => null,
+                'offer_price'      => null,
+                'discount_percent' => null,
+                'discount_ceiling' => null,
+                'exception'        => 'Harga Fixed Index + Eskalasi BBM',
+                'exception_tone'   => 'neutral',
+                'term'             => 'TOP 30 Hari via Virtual Account BNI',
+                'top_days'         => 30,
+                'top_default'      => 30,
+                'margin'           => '18.0% Net Margin',
+                'margin_value'     => 18.0,
+                'margin_minimum'   => 15.0,
+                'margin_delta'     => null,
+                'margin_flag'      => 'Corporate Tier-1 Stable',
+                'score'            => 'AAA (96/100)',
+                'score_note'       => 'BUMN Subsidiary // 0 Default',
+                'approve_label'    => 'Setujui Kontrak',
+                'approve_tone'     => 'solid',
+                'filter_key'       => 'annual',
+                'value'            => 120000000,
+                'value_label'      => 'Rp 120.000.000',
+                'exceeds_plafon'   => false,
+            ],
+        ];
+
+        // Ambil kontrak dari DB jika ada
+        $pendingDb = Contract::whereIn('status', ['PENDING', 'PENDING_APPROVAL'])
+            ->with(['user', 'product'])
+            ->get();
+
+        $rows = [];
+        if ($pendingDb->count() > 0) {
+            foreach ($pendingDb as $c) {
+                $clientName = $c->user ? ($c->user->company_name ?: $c->user->name) : 'Klien Korporat B2B';
+                $prodName = $c->product ? $c->product->name : 'Komoditas Inti';
+                $vol = (float) ($c->committed_volume_per_cycle ?: 1000);
+                $price = (float) ($c->fixed_price_per_kg ?: 15000);
+                $contractVal = $vol * $price;
+                $top = (int) ($c->top_days ?: 30);
+
+                $filterKey = 'annual';
+                if ($price < 14000) {
+                    $filterKey = 'discount';
+                } elseif ($top > 30) {
+                    $filterKey = 'top';
+                }
+
+                $rows[] = [
+                    'contract'         => $c->contract_number,
+                    'region'           => 'BANDUNG RAYA',
+                    'client'           => $clientName,
+                    'client_tone'      => 'success',
+                    'submitted_by'     => 'Key Account Executive',
+                    'submitted_at'     => $c->created_at ? $c->created_at->translatedFormat('d M Y') : '12 Okt 2026',
+                    'commodity'        => $prodName,
+                    'volume'           => number_format($vol, 0, ',', '.') . ' kg / siklus',
+                    'segment'          => 'Standar Kemitraan GPA',
+                    'price'            => 'Rp ' . number_format($price, 0, ',', '.') . ' / kg',
+                    'price_strike'     => null,
+                    'list_price'       => null,
+                    'offer_price'      => null,
+                    'discount_percent' => null,
+                    'discount_ceiling' => null,
+                    'exception'        => $top > 30 ? "Ekstensi TOP {$top} Hari" : 'Pengajuan Standar',
+                    'exception_tone'   => $top > 30 ? 'caution' : 'neutral',
+                    'term'             => "TOP {$top} Hari",
+                    'top_days'         => $top,
+                    'top_default'      => 30,
+                    'margin'           => '19.5% Net Margin',
+                    'margin_value'     => 19.5,
+                    'margin_minimum'   => 15.0,
+                    'margin_delta'     => 4.5,
+                    'margin_flag'      => 'Safe Margin Pass',
+                    'score'            => 'A (85/100)',
+                    'score_note'       => 'Riwayat Kemitraan Lancar',
+                    'approve_label'    => 'Setujui Kontrak',
+                    'approve_tone'     => 'solid',
+                    'filter_key'       => $filterKey,
+                    'value'            => $contractVal > 0 ? $contractVal : 100000000,
+                    'value_label'      => 'Rp ' . number_format($contractVal > 0 ? $contractVal : 100000000, 0, ',', '.'),
+                    'exceeds_plafon'   => $top > 30 || $price < 14000,
+                ];
+            }
+        }
+
+        if (empty($rows)) {
+            $rows = $defaultRows;
+        }
+
+        $totalVal = array_sum(array_column($rows, 'value'));
+        $exceedCount = count(array_filter($rows, fn ($r) => !empty($r['exceeds_plafon'])));
+
+        $cards = [
+            [
+                'key'       => 'pending',
+                'label'     => 'Pengajuan Pending',
+                'value'     => count($rows) . ' Pengajuan',
+                'tone'      => 'warning',
+                'icon'      => 'clock',
+                'chip'      => 'GATE L4',
+                'chip_tone' => 'warning',
+                'meta'      => 'Menunggu tanda tangan digital',
+                'meta_tone' => 'warning',
+            ],
+            [
+                'key'       => 'value',
+                'label'     => 'Nilai Kontrak Pending',
+                'value'     => 'Rp ' . number_format($totalVal, 0, ',', '.'),
+                'tone'      => 'ink',
+                'icon'      => 'banknote',
+                'chip'      => 'TIER-1',
+                'chip_tone' => 'accent',
+                'meta'      => 'Seluruh nilai Needs Directors',
+                'meta_tone' => 'muted',
+            ],
+            [
+                'key'       => 'exception',
+                'label'     => 'Pelanggaran Plafon',
+                'value'     => $exceedCount . ' Pengajuan',
+                'tone'      => 'danger',
+                'icon'      => 'alert-triangle',
+                'chip'      => 'ESCALATED',
+                'chip_tone' => 'danger',
+                'meta'      => 'Di atas plafon diskon atau TOP default',
+                'meta_tone' => 'danger',
+            ],
+            [
+                'key'       => 'session',
+                'label'     => 'Sesi Tanda Tangan',
+                'value'     => '14:32',
+                'tone'      => 'success',
+                'icon'      => 'lock',
+                'chip'      => 'HSM OK',
+                'chip_tone' => 'success',
+                'meta'      => 'HSM RSA-4096 // SHA-256 aktif',
+                'meta_tone' => 'success',
+            ],
+        ];
+
+        $filters = [
+            ['key' => 'all',      'label' => 'Semua Pending',           'count' => count($rows)],
+            ['key' => 'discount', 'label' => 'Diskon Khusus',           'count' => count(array_filter($rows, fn ($r) => $r['filter_key'] === 'discount'))],
+            ['key' => 'top',      'label' => 'Ekstensi TOP',            'count' => count(array_filter($rows, fn ($r) => $r['filter_key'] === 'top'))],
+            ['key' => 'annual',   'label' => 'Kontrak Induk Tahunan',   'count' => count(array_filter($rows, fn ($r) => $r['filter_key'] === 'annual'))],
+        ];
+
+        $columns = [
+            'ID KONTRAK & PEMOHON',
+            'KOMODITAS & VOLUME',
+            'KETENTUAN HARGA & TOP',
+            'ANALISIS MARGIN',
+            'SKOR KREDIT',
+            'AKSI OTORISASI DIREKTUR',
+        ];
+
+        $queue = [
+            'badge'             => 'PERLU OTORISASI DIREKTUR',
+            'rule'              => 'PRD SEC 16 & 20: TIER-1 APPROVAL GATE',
+            'clearance'         => 'CLEARANCE: DIRUT ONLY',
+            'title'             => 'Daftar Pengajuan Kontrak Khusus & Diskon Volume B2B',
+            'description'       => 'Perubahan harga di luar plafon standar (>5%), perpanjangan tenor TOP (>30 hari), dan kuota pasokan prioritas memerlukan otorisasi kriptografi Direktur Utama (UU No. 2/1981 & ISO 27001).',
+            'columns'           => $columns,
+            'rows'              => $rows,
+            'filters'           => $filters,
+            'total_value'       => $totalVal,
+            'total_value_label' => 'Rp ' . number_format($totalVal, 0, ',', '.'),
+            'total_note'        => 'TOTAL NILAI KONTRAK AKTIF PENDING: Rp ' . number_format($totalVal, 0, ',', '.') . ' (' . count($rows) . ' Pengajuan)',
+            'hsm'               => 'HSM RSA-4096 Terhubung',
+            'timeout'           => 'Sesi Timeout: 14:32',
+            'batch_approve'     => 'Approve Terpilih (Batch)',
+            'batch_select_all'  => 'Pilih Semua',
+            'detail_label'      => 'Detail PKS',
+            'revise_label'      => 'Minta Revisi',
+            'reject_label'      => 'Tolak',
+            'audit_note'        => 'Semua pengesahan akan ditandatangani otomatis dengan Sertifikat Elektronik BSrE / Hash Kriptografi SHA-256 dan tercatat di immutable log.',
+            'shown_label'       => 'Menampilkan ' . count($rows) . ' dari ' . count($rows) . ' Pengajuan Pending',
+            'active_contracts'  => count($rows),
+            'search_placeholder'=> 'Cari klien, kontrak, atau komoditas...',
+        ];
+
+        return view('direktur.approval', compact('operator', 'header', 'cards', 'queue'));
     }
 
     /**

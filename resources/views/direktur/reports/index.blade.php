@@ -1,379 +1,387 @@
-<x-dynamic-component :component="'layouts.direktur'">
-    <x-slot name="header">
-        Laporan Penjualan Eksekutif Direktur - Status Terkunci
-    </x-slot>
+@extends('layouts.director')
 
-    <!-- BANNER STATUS PENGUNCIAN AUDIT // IMMUTABLE ARCHIVE -->
-    <div class="rounded-lg shadow-sm border {{ ($periodLock['is_locked'] ?? false) ? 'bg-emerald-900 text-white border-emerald-950' : 'bg-amber-50 border-amber-300 text-amber-950' }} p-5 space-y-3">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-            <div>
-                <span class="px-2 py-0.5 rounded text-[10px] font-black tracking-wider uppercase {{ ($periodLock['is_locked'] ?? false) ? 'bg-emerald-800 text-emerald-200 border border-emerald-700' : 'bg-amber-200 text-amber-900 border border-amber-300' }}">
-                    {{ ($periodLock['is_locked'] ?? false) ? '[STATUS: LAPORAN TELAH DIKUNCI & DISAHKAN // IMMUTABLE ARCHIVE]' : '[STATUS: DRAF LAPORAN TERBUKA // BELUM DIKUNCI]' }}
+@section('title', 'Laporan Penjualan Eksekutif // Arsip Kuartal IV 2026')
+
+@section('content')
+    @php
+        // Palet nada mengikuti design "Laporan Penjualan Eksekutif" yang memakai
+        // token hijau brand dan aksen lime yang sama dengan modul lain.
+        $metaTone = [
+            'body' => 'text-ink-body',
+            'success' => 'text-success-deep',
+            'warning' => 'text-warning',
+        ];
+
+        $cardValueTone = [
+            'ink' => 'text-ink',
+            'success' => 'text-success-deep',
+        ];
+
+        $cardChipTone = [
+            'accent' => 'bg-accent text-ink',
+            'warning' => 'bg-warning text-canvas',
+        ];
+
+        $footerTone = [
+            'ink' => 'text-ink',
+            'success' => 'text-success-deep',
+            'warning' => 'text-warning',
+            'quiet' => 'text-ink-quiet',
+        ];
+
+        $filterChipTone = [
+            'warning' => 'bg-warning-cream text-warning-deep outline outline-1 -outline-offset-1 outline-warning-border',
+            'neutral' => 'bg-surface-track text-ink-body outline outline-1 -outline-offset-1 outline-line',
+        ];
+
+        $statusTone = [
+            'lancar' => 'bg-warning-cream text-warning-deep outline outline-1 -outline-offset-1 outline-warning-border',
+            'lunas' => 'bg-accent/50 text-success-deep outline outline-1 -outline-offset-1 outline-accent-deep',
+        ];
+
+        $ledgerFont = 'font-mono tracking-[0.2px]';
+    @endphp
+
+    <div class="flex flex-col gap-5"
+        x-data="directorReport(@js($commodities['rows']), @js($clients['rows']), @js($audit['entries']), @js($seal))">
+
+        {{-- ---------- Banner arsip terkunci ---------- --}}
+        <section class="relative overflow-hidden rounded-xl bg-brand p-6 text-white shadow-card">
+
+            <div class="relative flex flex-col gap-4">
+                <div class="flex flex-wrap items-center gap-3">
+                    <span
+                        class="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1 text-[10px] font-bold tracking-[0.88px] text-ink gpa-meta">
+                        <x-gpa.icon name="lock" class="h-3 w-3" />
+                        {{ $lock['badge'] }}
+                    </span>
+                    <span
+                        class="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[10px] font-semibold tracking-[0.88px] text-white/80 gpa-meta">
+                        <x-gpa.icon name="shield" class="h-3 w-3" />
+                        {{ $lock['certificate_chip'] }}
+                    </span>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <h1 class="font-inter text-2xl font-extrabold uppercase tracking-[0.6px] text-white sm:text-[28px]">
+                        Laporan Penjualan Eksekutif
+                    </h1>
+                    <p class="max-w-3xl text-[13px] leading-6 text-white/70">
+                        Periode <span class="font-semibold text-white">{{ $lock['period'] }}</span> telah
+                        dikunci permanen pada
+                        <span class="font-semibold text-accent">{{ $lock['locked_at'] }}</span>
+                        oleh <span class="font-semibold text-accent">{{ $lock['signatory'] }}</span>,
+                        {{ $lock['signatory_role'] }}. Seluruh transaksi, Surat Jalan, Timbangan Aktual, dan
+                        Faktur Tempo berstatus <span class="font-semibold text-white">read-only</span> dan
+                        dilindungi hash kriptografi:
+                    </p>
+                    <p class="{{ $ledgerFont }} max-w-4xl break-all rounded-lg bg-brand-deep px-3 py-2 text-[11px] text-accent">
+                        {{ $lock['hash_label'] }} {{ $lock['hash'] }}
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3 pt-1">
+                    <button type="button" @click="revealAudit()"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-[11px] font-bold tracking-[0.88px] text-ink shadow-sub transition-colors hover:bg-accent-deep gpa-meta">
+                        <x-gpa.icon name="clipboard" class="h-3.5 w-3.5" />
+                        {{ $lock['audit_button'] }}
+                    </button>
+                    <button type="button" @click="verifyIntegrity()"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-[11px] font-bold tracking-[0.88px] text-white transition-colors hover:bg-white/20 gpa-meta">
+                        <x-gpa.icon name="badge-check" class="h-3.5 w-3.5" />
+                        VERIFY SHA-256
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        {{-- ---------- Filter beku ---------- --}}
+        <section class="rounded-xl border border-line-hair bg-surface p-4 shadow-sub">
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="text-ink-subtle">
+                    <x-gpa.icon name="filter" class="h-4 w-4" />
                 </span>
-                <h1 class="text-base font-black mt-2">
-                    Laporan Penjualan Konsolidasi {{ $periodName }}
-                </h1>
-                <p class="text-xs {{ ($periodLock['is_locked'] ?? false) ? 'text-emerald-200' : 'text-amber-800' }} mt-1 max-w-4xl leading-relaxed">
-                    @if($periodLock['is_locked'] ?? false)
-                        Periode {{ $periodName }} telah dikunci permanen pada {{ $periodLock['locked_at'] }} oleh <strong>{{ $periodLock['locked_by'] }}</strong>. Seluruh transaksi, Surat Jalan, Timbangan Aktual, dan Faktur Tempo berstatus <strong>Read-Only</strong> dan dilindungi hash kriptografi SHA-256.
-                    @else
-                        Periode {{ $periodName }} saat ini masih dalam mode aktif. Anda dapat melakukan penguncian statutori (Immutable Seal) untuk membekukan pembukuan dan menerbitkan sertifikat audit forensik.
-                    @endif
-                </p>
-                @if($periodLock['is_locked'] ?? false)
-                    <div class="font-mono text-[11px] bg-black/30 px-3 py-1.5 rounded mt-2 select-all inline-block border border-white/10">
-                        SHA-256: {{ $periodLock['sha256_hash'] ?? '0x8F9C4A217B1E90D4CC67F814E32A0B7D18C992E5F67104B8A293CD0891DE33' }}
+                <span class="text-[10px] font-bold uppercase tracking-[1.08px] text-ink-subtle gpa-micro-bold">
+                    {{ $filters['label'] }}
+                </span>
+
+                @foreach ($filters['items'] as $item)
+                    <div
+                        class="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-line-faint bg-surface-base px-3 py-2">
+                        <span class="text-[10px] font-bold uppercase tracking-[0.88px] text-ink-subtle gpa-micro-bold">
+                            {{ $item['label'] }}
+                        </span>
+                        <span class="text-[12px] font-semibold text-ink">{{ $item['value'] }}</span>
+                        <span
+                            class="rounded-full px-2 py-0.5 text-[9px] font-bold tracking-[0.88px] {{ $filterChipTone[$item['chip_tone']] ?? $filterChipTone['neutral'] }}">
+                            {{ $item['chip'] }}
+                        </span>
                     </div>
-                @endif
+                @endforeach
             </div>
+        </section>
 
-            <!-- Tombol Aksi Penguncian -->
-            <div class="flex flex-col sm:flex-row gap-2">
-                @if($periodLock['is_locked'] ?? false)
-                    <a href="{{ route('direktur.governance.index') }}" class="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 rounded text-xs font-bold text-center transition">
-                        Lihat Log Audit Forensik
-                    </a>
-                    <form method="POST" action="{{ route('direktur.reports.unlock') }}">
-                        @csrf
-                        <input type="hidden" name="period" value="{{ $periodName }}">
-                        <button type="submit" onclick="return confirm('Buka kunci audit sementara untuk koreksi data?')" class="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-bold transition">
-                            Buka Kunci (Direktur)
-                        </button>
-                    </form>
-                @else
-                    <form method="POST" action="{{ route('direktur.reports.lock') }}">
-                        @csrf
-                        <input type="hidden" name="period" value="{{ $periodName }}">
-                        <button type="submit" onclick="return confirm('Kunci permanen dan sahkan pembukuan periode {{ $periodName }} dengan SHA-256?')" class="px-4 py-2 bg-[#153a01] hover:bg-[#255808] text-white rounded text-xs font-black shadow transition">
-                            🔒 Kunci & Sahkan Laporan (SHA-256)
-                        </button>
-                    </form>
-                @endif
-            </div>
-        </div>
-    </div>
+        {{-- ---------- Empat kartu KPI ---------- --}}
+        <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="KPI eksekutif">
+            @foreach ($cards as $card)
+                <article class="flex flex-col gap-3 rounded-xl border border-line-hair bg-surface p-4 shadow-sub">
+                    <div class="flex items-start justify-between gap-2">
+                        <h2 class="text-[10px] font-bold uppercase leading-4 tracking-[0.88px] text-ink-subtle gpa-micro-bold">
+                            {{ $card['label'] }}
+                        </h2>
+                        <span
+                            class="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold tracking-[0.88px] {{ $cardChipTone[$card['chip_tone']] ?? $cardChipTone['accent'] }}">
+                            {{ $card['chip'] }}
+                        </span>
+                    </div>
 
-    <!-- 1. KARTU METRIK EKSEKUTIF LAPORAN -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <!-- Card 1: OMZET DISAHKAN -->
-        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-[#153a01]">
-            <div class="flex justify-between items-start">
-                <div class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">OMZET DISAHKAN (NETTO RIIL)</div>
-                <span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[9px]">FINAL</span>
-            </div>
-            <div class="text-xl font-black text-gray-900 mt-1">Rp {{ number_format($totalRevenue, 0, ',', '.') }}</div>
-            <div class="mt-2 text-[10px] text-gray-500 space-y-0.5">
-                <div class="flex justify-between">
-                    <span>Target Q4 (Rp 600M):</span>
-                    <strong class="text-emerald-700">80.4% Tercapai</strong>
-                </div>
-                <div class="flex justify-between text-gray-400">
-                    <span>Diskon Kontrak Sah:</span>
-                    <span>-Rp 14.800.000</span>
-                </div>
-            </div>
-        </div>
+                    <p class="font-inter text-[22px] font-extrabold leading-7 {{ $cardValueTone[$card['value_tone']] ?? $cardValueTone['ink'] }}">
+                        {{ $card['value'] }}
+                    </p>
 
-        <!-- Card 2: TOTAL VOLUME TERA SAH -->
-        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-emerald-600">
-            <div class="flex justify-between items-start">
-                <div class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">TOTAL VOLUME TERA SAH</div>
-                <span class="px-1.5 py-0.5 rounded bg-green-100 text-green-800 font-bold text-[9px]">UU 2/1981</span>
-            </div>
-            <div class="text-xl font-black text-emerald-800 mt-1">{{ number_format($totalTonnageKg, 0, ',', '.') }} kg</div>
-            <div class="mt-2 text-[10px] text-gray-500 space-y-0.5">
-                <div class="flex justify-between">
-                    <span>Ekuivalen:</span>
-                    <strong class="text-gray-800">{{ number_format($totalTonnageKg / 1000, 2) }} Tonase Realisasi</strong>
-                </div>
-                <div class="flex justify-between text-emerald-700">
-                    <span>Rasio Pasokan:</span>
-                    <span>68% Binaan | 32% Buffer</span>
-                </div>
-            </div>
-        </div>
+                    <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] leading-5">
+                        @foreach ($card['meta'] as $line)
+                            <span class="{{ $metaTone[$line['tone']] ?? $metaTone['body'] }}">{{ $line['text'] }}</span>
+                        @endforeach
+                    </div>
 
-        <!-- Card 3: CASH INFLOW REALISASI -->
-        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-600">
-            <div class="flex justify-between items-start">
-                <div class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">CASH INFLOW REALISASI</div>
-                <span class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 font-bold text-[9px]">84.6% SETTLED</span>
-            </div>
-            <div class="text-xl font-black text-blue-900 mt-1">Rp {{ number_format($cashInflow, 0, ',', '.') }}</div>
-            <div class="mt-2 text-[10px] text-gray-500 space-y-0.5">
-                <div class="flex justify-between">
-                    <span>Piutang Berjalan Tempo:</span>
-                    <strong class="text-blue-700">Rp {{ number_format($openReceivables, 0, ',', '.') }}</strong>
-                </div>
-                <div class="flex justify-between text-gray-500">
-                    <span>Kolektibilitas / NPL:</span>
-                    <span class="font-bold text-emerald-700">0.0% (LANCAR)</span>
-                </div>
-            </div>
-        </div>
+                    <div
+                        class="mt-auto flex flex-wrap items-center justify-between gap-x-3 border-t border-line-faint pt-3 text-[10px] leading-4">
+                        <span class="font-semibold uppercase tracking-[0.88px] text-ink-subtle gpa-micro-bold">
+                            {{ $card['footer_label'] }}
+                        </span>
+                        <span class="text-right font-semibold {{ $footerTone[$card['footer_tone']] ?? $footerTone['ink'] }}">
+                            {{ $card['footer_value'] }}
+                        </span>
+                    </div>
+                </article>
+            @endforeach
+        </section>
 
-        <!-- Card 4: DEVIASI SUSUT & RETUR -->
-        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-amber-600">
-            <div class="flex justify-between items-start">
-                <div class="text-[10px] text-gray-500 font-bold uppercase tracking-wider">DEVIASI SUSUT & RETUR</div>
-                <span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold text-[9px]">KLAIM TUNTAS</span>
-            </div>
-            <div class="text-xl font-black text-amber-900 mt-1">Rp {{ number_format($lossValue, 0, ',', '.') }}</div>
-            <div class="mt-2 text-[10px] text-gray-500 space-y-0.5">
-                <div class="flex justify-between">
-                    <span>Deviasi Rata-rata:</span>
-                    <strong class="text-emerald-700 font-bold">{{ $lossPercent }}% (&lt; 2.0% Toleransi)</strong>
+        {{-- ---------- Tabel 1: Komoditas ---------- --}}
+        <section class="overflow-hidden rounded-xl border border-line-hair bg-surface shadow-sub">
+            <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-hair px-4 py-3">
+                <div class="flex min-w-0 items-center gap-2.5">
+                    <h2 class="text-[13px] font-bold leading-5 text-ink">{{ $commodities['title'] }}</h2>
                 </div>
-                <div class="flex justify-between text-gray-400">
-                    <span>Susut: Rp 3.25M</span>
-                    <span>Retur Fisik: Rp 4.15M</span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span
+                        class="rounded-full bg-warning-cream px-2.5 py-1 text-[9px] font-bold tracking-[0.88px] text-warning-deep outline outline-1 -outline-offset-1 outline-warning-border">
+                        {{ $commodities['locked_chip'] }}
+                    </span>
                 </div>
-            </div>
-        </div>
-    </div>
+            </header>
 
-    <!-- 2. TABEL 1: BREAKDOWN ANALITIK 5 KOMODITAS INTI -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div class="p-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 bg-gray-50">
-            <div>
-                <h3 class="font-bold text-xs text-gray-900 uppercase tracking-wide">Breakdown Analitik 5 Komoditas Inti (Estimasi PO vs Tera Sah Gudang)</h3>
-                <p class="text-[11px] text-gray-500">Audit Method: Direct Digital Scale Weight Sensor Terkoneksi Kalibrasi Metrologi Legal.</p>
-            </div>
-            <span class="px-2 py-1 bg-gray-200 text-gray-800 font-mono text-[10px] font-bold rounded">
-                AUDIT METHOD: DIRECT DIGITAL SCALE WEIGHT [TERKUNCI]
-            </span>
-        </div>
-
-        <div class="overflow-x-auto text-xs">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-100 text-gray-600 font-bold uppercase text-[10px] border-b">
-                    <tr>
-                        <th class="p-3">Komoditas Agribisnis</th>
-                        <th class="p-3 text-right">Volume PO (kg)</th>
-                        <th class="p-3 text-right">Tera Sah (kg)</th>
-                        <th class="p-3 text-right">Deviasi Susut</th>
-                        <th class="p-3 text-right">Harga Rata-rata / kg</th>
-                        <th class="p-3 text-right">Omzet Realisasi</th>
-                        <th class="p-3 text-center">Gross Margin</th>
-                        <th class="p-3 text-center">Kontribusi</th>
-                        <th class="p-3 text-center">Status Audit</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @foreach($commodityAnalytics as $ca)
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="p-3 font-bold text-gray-900">{{ $ca['name'] }}</td>
-                            <td class="p-3 text-right text-gray-600">{{ number_format($ca['po_kg'], 0, ',', '.') }}</td>
-                            <td class="p-3 text-right font-black text-gray-900">{{ number_format($ca['actual_kg'], 0, ',', '.') }}</td>
-                            <td class="p-3 text-right font-semibold text-emerald-700">
-                                {{ $ca['diff_kg'] }} kg ({{ $ca['diff_pct'] }}%)
-                            </td>
-                            <td class="p-3 text-right text-gray-700">
-                                Rp {{ number_format($ca['avg_price'], 0, ',', '.') }}
-                            </td>
-                            <td class="p-3 text-right font-bold text-gray-900">
-                                Rp {{ number_format($ca['omzet'], 0, ',', '.') }}
-                            </td>
-                            <td class="p-3 text-center font-bold text-emerald-800">
-                                {{ $ca['gross_margin'] }}%
-                            </td>
-                            <td class="p-3 text-center font-semibold text-gray-600">
-                                {{ $ca['contrib'] }}%
-                            </td>
-                            <td class="p-3 text-center">
-                                <span class="px-2 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                    LOCKED
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[1040px] border-collapse text-left">
+                    <thead>
+                        <tr class="border-b border-line-hair bg-surface-base">
+                            @foreach ($commodities['columns'] as $index => $column)
+                                <th scope="col"
+                                    class="px-4 py-3 text-[10px] font-bold uppercase leading-4 tracking-[0.88px] text-ink-subtle gpa-micro-bold {{ $index === 0 ? 'sticky left-0 z-10 bg-surface-base' : 'text-right' }}">
+                                    {{ $column }}
+                                </th>
+                            @endforeach
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($commodities['rows'] as $row)
+                            <tr class="border-b border-line-faint transition-colors hover:bg-surface-base">
+                                <th scope="row"
+                                    class="sticky left-0 z-10 bg-surface px-4 py-3 text-[12px] font-semibold text-ink">
+                                    {{ $row['name'] }}
+                                </th>
+                                <td class="px-4 py-3 text-right text-[12px] text-ink-body {{ $ledgerFont }}">{{ $row['po_label'] }}</td>
+                                <td class="px-4 py-3 text-right text-[12px] font-semibold text-ink {{ $ledgerFont }}">{{ $row['tera_label'] }}</td>
+                                <td class="px-4 py-3 text-right text-[12px] text-warning {{ $ledgerFont }}">{{ $row['deviation_label'] }}</td>
+                                <td class="px-4 py-3 text-right text-[12px] text-ink-body">{{ $row['price_label'] }}</td>
+                                <td class="px-4 py-3 text-right text-[12px] font-semibold text-ink">{{ $row['revenue_label'] }}</td>
+                                <td class="px-4 py-3 text-right">
+                                    <span class="flex items-center justify-end gap-2">
+                                        <span class="hidden h-1.5 w-12 overflow-hidden rounded-full bg-surface-track sm:block"
+                                            aria-hidden="true">
+                                            <span class="block h-full rounded-full bg-brand-line"
+                                                :style="`width: ${contributionWidth(commodities[{{ $loop->index }}])}`"></span>
+                                        </span>
+                                        <span class="text-[12px] text-ink-body {{ $ledgerFont }}">{{ $row['contribution_label'] }}</span>
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-right text-[12px] text-success-deep">{{ $row['margin_label'] }}</td>
+                                <td class="px-4 py-3 text-right">
+                                    <span
+                                        class="rounded-full bg-accent/50 px-2 py-0.5 text-[9px] font-bold tracking-[0.88px] text-success-deep outline outline-1 -outline-offset-1 outline-accent-deep">
+                                        {{ $commodities['audited_chip'] }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="bg-surface-shell">
+                        <tr class="border-t-2 border-brand-line">
+                            <th scope="row" class="sticky left-0 z-10 bg-surface-shell px-4 py-3 text-[12px] font-bold text-ink">
+                                {{ $commodities['total_label'] }}
+                            </th>
+                            <td class="px-4 py-3 text-right text-[12px] font-bold text-ink {{ $ledgerFont }}">{{ $commodities['total_po_label'] }}</td>
+                            <td class="px-4 py-3 text-right text-[12px] font-bold text-ink {{ $ledgerFont }}">{{ $commodities['total_tera_label'] }}</td>
+                            <td class="px-4 py-3 text-right text-[12px] font-bold text-warning {{ $ledgerFont }}">{{ $commodities['total_deviation_label'] }}</td>
+                            <td class="px-4 py-3 text-right text-[12px] font-bold text-ink">{{ $commodities['total_price_label'] }}</td>
+                            <td class="px-4 py-3 text-right text-[13px] font-extrabold text-ink">{{ $commodities['total_revenue_label'] }}</td>
+                            <td class="px-4 py-3 text-right text-[12px] font-bold text-ink {{ $ledgerFont }}">{{ $commodities['total_contribution_label'] }}</td>
+                            <td class="px-4 py-3 text-right text-[12px] font-bold text-success-deep">{{ $commodities['total_margin_label'] }}</td>
+                            <td class="px-4 py-3 text-right">
+                                <span
+                                    class="rounded-full bg-accent px-2 py-0.5 text-[9px] font-bold tracking-[0.88px] text-ink">
+                                    FINAL
                                 </span>
                             </td>
                         </tr>
-                    @endforeach
-                    <!-- Konsolidasi Row -->
-                    <tr class="bg-gray-100 font-bold border-t-2 border-gray-300 text-xs">
-                        <td class="p-3 uppercase">Total Konsolidasi (5 Komoditas)</td>
-                        <td class="p-3 text-right">38.860 kg</td>
-                        <td class="p-3 text-right text-gray-900">38.450 kg</td>
-                        <td class="p-3 text-right text-emerald-800">-410 kg (-1.05%)</td>
-                        <td class="p-3 text-right">Rp 12.553 (Avg)</td>
-                        <td class="p-3 text-right text-gray-900">Rp 482.650.000</td>
-                        <td class="p-3 text-center text-emerald-800">25.2% (Avg)</td>
-                        <td class="p-3 text-center">100.0%</td>
-                        <td class="p-3 text-center">
-                            <span class="px-2 py-0.5 rounded text-[9px] font-black bg-[#153a01] text-white">100% AUDITED</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- 3. TABEL 2: REKAPITULASI PENJUALAN KLIEN B2B & STATUS PEMBAYARAN TEMPO (TOP) -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div class="p-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 bg-gray-50">
-            <div>
-                <h3 class="font-bold text-xs text-gray-900 uppercase tracking-wide">Tabel 2: Rekapitulasi Penjualan Klien B2B & Status Pembayaran Tempo (TOP)</h3>
-                <p class="text-[11px] text-gray-500">84 Total PO // 0 Sengketa AR-Audit Completed.</p>
+                    </tfoot>
+                </table>
             </div>
-            <span class="px-2 py-0.5 bg-blue-100 text-blue-900 font-bold text-[10px] rounded">
-                84 TOTAL PO // AR-AUDIT COMPLETED
-            </span>
-        </div>
+        </section>
 
-        <div class="overflow-x-auto text-xs">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-100 text-gray-600 font-bold uppercase text-[10px] border-b">
-                    <tr>
-                        <th class="p-3">Entitas Klien / Mitra B2B</th>
-                        <th class="p-3 text-center">Frek. PO</th>
-                        <th class="p-3 text-right">Volume Tera Sah (kg)</th>
-                        <th class="p-3 text-right">Total Tagihan Bruto</th>
-                        <th class="p-3 text-right">Settled (Inflow Sah)</th>
-                        <th class="p-3 text-right">Sisa Piutang Berjalan</th>
-                        <th class="p-3">Ketentuan Tempo</th>
-                        <th class="p-3 text-center">Status Piutang</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @foreach($clientRecap as $cr)
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="p-3">
-                                <div class="font-bold text-gray-900">{{ $cr['client_name'] }}</div>
-                                <div class="text-[10px] text-gray-400 font-mono">{{ $cr['contract_no'] }}</div>
-                            </td>
-                            <td class="p-3 text-center font-bold text-gray-700">{{ $cr['po_count'] }} PO</td>
-                            <td class="p-3 text-right font-medium text-gray-800">{{ number_format($cr['volume_kg'], 0, ',', '.') }} kg</td>
-                            <td class="p-3 text-right font-bold text-gray-900">Rp {{ number_format($cr['gross_amount'], 0, ',', '.') }}</td>
-                            <td class="p-3 text-right font-bold text-emerald-700">Rp {{ number_format($cr['settled_amount'], 0, ',', '.') }}</td>
-                            <td class="p-3 text-right font-bold text-blue-700">Rp {{ number_format($cr['outstanding_amount'], 0, ',', '.') }}</td>
-                            <td class="p-3 font-semibold text-gray-600">{{ $cr['top_terms'] }}</td>
-                            <td class="p-3 text-center">
-                                @if(str_contains($cr['status'], 'LUNAS'))
-                                    <span class="px-2 py-0.5 rounded text-[9px] font-black bg-blue-100 text-blue-800 border border-blue-200">
-                                        {{ $cr['status'] }}
-                                    </span>
-                                @else
-                                    <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-green-100 text-green-800 border border-green-200">
-                                        {{ $cr['status'] }}
-                                    </span>
-                                @endif
-                            </td>
+        {{-- ---------- Tabel 2: Klien B2B ---------- --}}
+        <section class="overflow-hidden rounded-xl border border-line-hair bg-surface shadow-sub">
+            <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-hair px-4 py-3">
+                <div class="flex min-w-0 items-center gap-2.5">
+                    <h2 class="text-[13px] font-bold leading-5 text-ink">{{ $clients['title'] }}</h2>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <span
+                        class="rounded-full bg-accent px-2.5 py-1 text-[9px] font-bold tracking-[0.88px] text-ink">
+                        {{ $clients['audit_chip'] }}
+                    </span>
+                </div>
+            </header>
+
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[1160px] border-collapse text-left">
+                    <thead>
+                        <tr class="border-b border-line-hair bg-surface-base">
+                            @foreach ($clients['columns'] as $index => $column)
+                                <th scope="col"
+                                    class="px-4 py-3 text-[10px] font-bold uppercase leading-4 tracking-[0.88px] text-ink-subtle gpa-micro-bold {{ $index === 0 ? 'sticky left-0 z-10 bg-surface-base' : 'text-right' }}">
+                                    {{ $column }}
+                                </th>
+                            @endforeach
                         </tr>
-                    @endforeach
-                    <!-- Konsolidasi Row -->
-                    <tr class="bg-gray-100 font-bold border-t-2 border-gray-300 text-xs">
-                        <td class="p-3 uppercase">Total Rekapitulasi B2B (Q4 2026)</td>
-                        <td class="p-3 text-center">84 PO</td>
-                        <td class="p-3 text-right text-gray-900">38.450 kg</td>
-                        <td class="p-3 text-right text-gray-900">Rp 482.650.000</td>
-                        <td class="p-3 text-right text-emerald-800">Rp 408.330.000</td>
-                        <td class="p-3 text-right text-blue-900">Rp 74.320.000</td>
-                        <td class="p-3 text-gray-600">Rata-rata: 26 Hari</td>
-                        <td class="p-3 text-center">
-                            <span class="px-2 py-0.5 rounded text-[9px] font-black bg-emerald-800 text-white">AUDITED & VERIFIED</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- 4. LAPORAN REKAPITULASI PENJUALAN PESANAN KONSOLIDASI -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-            <div>
-                <h3 class="font-bold text-xs text-gray-900 uppercase tracking-wide">Laporan Rekapitulasi Penjualan (Rincian Pesanan)</h3>
-                <p class="text-[11px] text-gray-500">Daftar transaksi pesanan riil pada periode pembukuan aktif.</p>
-            </div>
-        </div>
-
-        <div class="overflow-x-auto text-xs">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-100 text-gray-600 font-bold uppercase text-[10px] border-b">
-                    <tr>
-                        <th class="p-3">No. Pesanan</th>
-                        <th class="p-3">Mitra Pembeli</th>
-                        <th class="p-3">Tanggal</th>
-                        <th class="p-3 text-right">Nilai Transaksi</th>
-                        <th class="p-3 text-center">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @forelse($orders ?? [] as $order)
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="p-3 font-mono font-bold">{{ $order->order_number }}</td>
-                            <td class="p-3 font-medium">{{ $order->user->company_name ?? $order->user->name }}</td>
-                            <td class="p-3 text-gray-500">{{ $order->created_at->format('d/m/Y') }}</td>
-                            <td class="p-3 text-right font-bold text-gray-900">Rp {{ number_format($order->grand_total ?? $order->estimated_total, 0, ',', '.') }}</td>
-                            <td class="p-3 text-center">
-                                <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-green-100 text-green-800 border border-green-200">
-                                    {{ $order->status }}
+                    </thead>
+                    <tbody>
+                        @foreach ($clients['rows'] as $row)
+                            <tr class="border-b border-line-faint transition-colors hover:bg-surface-base">
+                                <th scope="row" class="sticky left-0 z-10 bg-surface px-4 py-3">
+                                    <span class="block text-[12px] font-semibold leading-5 text-ink">{{ $row['name'] }}</span>
+                                    <span class="block text-[10px] leading-4 text-ink-quiet {{ $ledgerFont }}">{{ $row['code'] }}</span>
+                                </th>
+                                <td class="px-4 py-3 text-right text-[12px] text-ink-body {{ $ledgerFont }}">{{ $row['po_label'] }}</td>
+                                <td class="px-4 py-3 text-right text-[12px] text-ink-body {{ $ledgerFont }}">{{ $row['volume_label'] }}</td>
+                                <td class="px-4 py-3 text-right text-[12px] text-ink">{{ $row['gross_label'] }}</td>
+                                <td class="px-4 py-3 text-right text-[12px] font-semibold text-success-deep">{{ $row['settled_label'] }}</td>
+                                <td class="px-4 py-3 text-right text-[12px] font-semibold text-warning">{{ $row['receivable_label'] }}</td>
+                                <td class="px-4 py-3 text-right text-[12px] text-ink-body">{{ $row['term_label'] }}</td>
+                                <td class="px-4 py-3 text-right">
+                                    <span
+                                        class="rounded-full px-2 py-0.5 text-[9px] font-bold tracking-[0.88px] {{ $statusTone[$row['status_tone']] ?? $statusTone['lancar'] }}">
+                                        {{ $row['status_label'] }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot class="bg-surface-shell">
+                        <tr class="border-t-2 border-brand-line">
+                            <th scope="row" class="sticky left-0 z-10 bg-surface-shell px-4 py-3 text-[12px] font-bold text-ink">
+                                {{ $clients['total_label'] }}
+                            </th>
+                            <td class="px-4 py-3 text-right text-[12px] font-bold text-ink {{ $ledgerFont }}">{{ $clients['total_po_label'] }}</td>
+                            <td class="px-4 py-3 text-right text-[12px] font-bold text-ink {{ $ledgerFont }}">{{ $clients['total_volume_label'] }}</td>
+                            <td class="px-4 py-3 text-right text-[12px] font-bold text-ink">{{ $clients['total_gross_label'] }}</td>
+                            <td class="px-4 py-3 text-right text-[12px] font-bold text-success-deep">{{ $clients['total_settled_label'] }}</td>
+                            <td class="px-4 py-3 text-right text-[12px] font-bold text-warning">{{ $clients['total_receivable_label'] }}</td>
+                            <td class="px-4 py-3 text-right text-[12px] font-bold text-ink">{{ $clients['average_term_label'] }}</td>
+                            <td class="px-4 py-3 text-right">
+                                <span
+                                    class="rounded-full bg-accent px-2 py-0.5 text-[9px] font-bold tracking-[0.88px] text-ink">
+                                    {{ $clients['verified_label'] }}
                                 </span>
                             </td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" class="p-4 text-center text-gray-400">Belum ada data pesanan pada periode ini.</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+
+        {{-- ---------- Audit trail & sertifikat ---------- --}}
+        <section class="grid grid-cols-1 gap-4 xl:grid-cols-5">
+            <article class="flex flex-col gap-3 rounded-xl border border-line-hair bg-surface p-4 shadow-sub xl:col-span-2">
+                <div class="flex items-start gap-3">
+                    <span
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-ink-strong ring-1 ring-inset ring-accent-deep">
+                        <x-gpa.icon name="qrcode" class="h-5 w-5" />
+                    </span>
+                    <div class="min-w-0">
+                        <h2 class="text-[13px] font-bold leading-5 text-ink">{{ $seal['title'] }}</h2>
+                        <p class="text-[10px] leading-4 text-success-deep gpa-meta">{{ $seal['certificate'] }}</p>
+                    </div>
+                </div>
+
+                <dl class="flex flex-col gap-2 text-[11px] leading-5">
+                    <div class="flex flex-col gap-0.5">
+                        <dt class="text-[9px] font-bold uppercase tracking-[0.88px] text-ink-subtle gpa-micro-bold">
+                            {{ $seal['authority_label'] }}
+                        </dt>
+                        <dd class="font-semibold text-ink">{{ $seal['signatory'] }}</dd>
+                        <dd class="text-ink-quiet">{{ $seal['signatory_role'] }}</dd>
+                    </div>
+
+                    <div class="flex flex-col gap-0.5">
+                        <dt class="text-[9px] font-bold uppercase tracking-[0.88px] text-ink-subtle gpa-micro-bold">
+                            {{ $seal['lock_time_label'] }}
+                        </dt>
+                        <dd class="text-ink-body {{ $ledgerFont }}">{{ $seal['lock_time'] }}</dd>
+                    </div>
+
+                    <div class="flex flex-col gap-0.5">
+                        <dt class="text-[9px] font-bold uppercase tracking-[0.88px] text-ink-subtle gpa-micro-bold">
+                            {{ $seal['encryption_label'] }}
+                        </dt>
+                        <dd class="text-ink-body">{{ $seal['encryption'] }}</dd>
+                    </div>
+
+                    <div class="flex flex-col gap-0.5">
+                        <dt class="text-[9px] font-bold uppercase tracking-[0.88px] text-ink-subtle gpa-micro-bold">
+                            {{ $seal['hash_label'] }}
+                        </dt>
+                        <dd class="flex items-start gap-2">
+                            <span class="min-w-0 flex-1 break-all rounded-md bg-brand-deep px-2 py-1.5 text-[10px] text-accent {{ $ledgerFont }}">
+                                {{ $seal['hash'] }}
+                            </span>
+                            <button type="button" @click="copyHash()"
+                                class="shrink-0 rounded-md bg-surface-track p-2 text-ink-body transition-colors hover:bg-surface-raised hover:text-ink"
+                                aria-label="Salin hash SHA-256">
+                                <x-gpa.icon name="copy" class="h-3.5 w-3.5" />
+                            </button>
+                        </dd>
+                    </div>
+                </dl>
+
+                <div class="mt-auto flex flex-col gap-2 pt-1">
+                    <button type="button" @click="exportWorkbook()"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-[11px] font-bold tracking-[0.88px] text-ink shadow-sub transition-colors hover:bg-accent-deep gpa-meta">
+                        <x-gpa.icon name="download" class="h-3.5 w-3.5" />
+                        {{ $seal['excel_action'] }}
+                    </button>
+                    <button type="button" @click="printSeal()"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-[11px] font-bold tracking-[0.88px] text-accent shadow-sub transition-colors hover:bg-brand-hover gpa-meta">
+                        <x-gpa.icon name="printer" class="h-3.5 w-3.5" />
+                        {{ $seal['pdf_action'] }}
+                    </button>
+                    <p class="flex items-center justify-center gap-1.5 text-center text-[9px] font-bold tracking-[0.88px] text-success-deep gpa-micro-bold">
+                        <x-gpa.icon name="shield" class="h-3 w-3" />
+                        {{ $seal['locked_status'] }}
+                    </p>
+                </div>
+            </article>
+        </section>
     </div>
-
-    <!-- 5. LEMBAR PENGESAHAN DIGITAL DIREKSI & SERTIFIKAT AUDIT -->
-    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 space-y-4">
-        <div class="flex justify-between items-center border-b pb-3">
-            <div>
-                <h3 class="font-bold text-xs text-gray-900 uppercase tracking-wide">Lembar Pengesahan Digital Direksi & Sertifikat Audit</h3>
-                <p class="text-[11px] text-gray-500">Hash Kriptografis Konsolidasi: {{ $periodLock['sha256_hash'] ?? '0x8F9C4A217B1E90D4CC67F814E32A0B7D18C992E5F67104B8A293CD0891DE33' }}</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <a href="{{ route('direktur.reports.export') }}" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-bold transition shadow-sm">
-                    Download Buku Besar Excel (.CSV)
-                </a>
-                <a href="{{ route('direktur.reports.download') }}" target="_blank" class="px-3 py-1.5 bg-[#153a01] hover:bg-[#255808] text-white rounded text-xs font-bold transition shadow-sm">
-                    Cetak Dokumen Pengesahan (.PDF)
-                </a>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs bg-gray-50 p-4 rounded border border-gray-200">
-            <div>
-                <div class="text-[10px] font-bold text-gray-500 uppercase">STATUS PENGUNCIAN PERIODE</div>
-                <div class="font-black text-gray-900 text-sm mt-1">
-                    {{ ($periodLock['is_locked'] ?? false) ? 'STATUS: PERIODE TELAH DIKUNCI PERMANEN' : 'STATUS: DRAF TERBUKA' }}
-                </div>
-                <div class="text-[10px] text-gray-400 mt-1">
-                    Waktu Penguncian: {{ $periodLock['locked_at'] ?? '24 Okt 2026 23:59:59 WIB' }}
-                </div>
-            </div>
-
-            <div>
-                <div class="text-[10px] font-bold text-gray-500 uppercase">PENANDATANGAN UTAMA (DIRECTORATE AUTHORITY)</div>
-                <div class="font-black text-gray-900 text-sm mt-1">
-                    {{ $periodLock['locked_by'] ?? 'Ahmad Sanusi, S.P.' }}
-                </div>
-                <div class="text-[10px] text-gray-500 mt-1 font-mono">
-                    DIR-01 // Direktur Utama PT Agro Pasti Ada / GPA
-                </div>
-            </div>
-
-            <div>
-                <div class="text-[10px] font-bold text-gray-500 uppercase">SERTIFIKASI ENKRIPSI</div>
-                <div class="font-mono font-bold text-[#153a01] text-xs mt-1">
-                    X.509 v3 / RSA 4096-bit
-                </div>
-                <div class="text-[10px] text-gray-400 font-mono mt-0.5">
-                    GPA-AUDIT-CERT-2026-Q4 (100% VALID)
-                </div>
-            </div>
-        </div>
-
-        <div class="p-3 bg-gray-900 text-gray-200 font-mono text-[10px] rounded space-y-1">
-            <div class="text-emerald-400 font-bold">&gt; AUDIT TRAIL LOG TERMINAL [SYS-V4.9.1]</div>
-            <div>[2026-10-24 23:45:10 WIB] &gt; SYS_VERIFY: 5 komoditas timbangan tera gudang tuntas dicocokkan (38.450 kg).</div>
-            <div>[2026-10-24 23:51:22 WIB] &gt; AR_CLEARING: Piutang berjalan Rp 74.320.000 diverifikasi terhadap 4 kontrak aktif.</div>
-            <div>[2026-10-24 23:58:05 WIB] &gt; DIR_AUTH: Ahmad Sanusi, S.P. memasukkan token kunci otorisasi biometric.</div>
-            <div class="text-emerald-400">[2026-10-24 23:59:59 WIB] &gt; STATUS_LOCK_ENGAGED: Record disahkan. SHA-256 dibuat. Write-access dicabut permanen.</div>
-        </div>
-    </div>
-</x-dynamic-component>
+@endsection

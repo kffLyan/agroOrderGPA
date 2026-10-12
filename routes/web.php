@@ -18,6 +18,13 @@ use App\Http\Controllers\Klien\DocumentController as KlienDocumentController;
 use App\Http\Controllers\Klien\OrderController as KlienOrderController;
 use App\Http\Controllers\Klien\PaymentProofController as KlienPaymentProofController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Public\AboutController as PublicAboutController;
+use App\Http\Controllers\Public\CatalogController as PublicCatalogController;
+use App\Http\Controllers\Public\GalleryController as PublicGalleryController;
+use App\Http\Controllers\Public\HomeController as PublicHomeController;
+use App\Http\Controllers\Public\KontakController as PublicKontakController;
+use App\Http\Controllers\Public\MitraKontrakController as PublicMitraKontrakController;
+use App\Http\Controllers\Public\SupplyChainController as PublicSupplyChainController;
 use App\Http\Controllers\Sekretaris\DashboardController as SekretarisDashboardController;
 use App\Http\Controllers\Sekretaris\DispatchController as SekretarisDispatchController;
 use App\Http\Controllers\Sekretaris\InventoryController as SekretarisInventoryController;
@@ -32,14 +39,37 @@ use App\Http\Controllers\Koordinator\WeighingController as KoordinatorWeighingCo
 use App\Http\Controllers\Koordinator\StockController as KoordinatorStockController;
 use App\Http\Controllers\Koordinator\DispatchController as KoordinatorDispatchController;
 use App\Http\Controllers\Koordinator\MonitoringController as KoordinatorMonitoringController;
+use App\Http\Controllers\Armada\TaskController as ArmadaTaskController;
+use App\Http\Controllers\Armada\DispatchController as ArmadaDispatchController;
+use App\Http\Controllers\Armada\PodController as ArmadaPodController;
+use App\Http\Controllers\Armada\StatusController as ArmadaStatusController;
 use App\Models\Order;
 use Illuminate\Support\Facades\Route;
 
 
 // rute publik dapat  diakses tanpa login
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', PublicHomeController::class)->name('public.home');
+
+Route::get('/beranda', PublicHomeController::class)
+    ->name('public.home.beranda');
+
+Route::get('/tentang-gpa', PublicAboutController::class)
+    ->name('public.about');
+
+Route::get('/mitra-kontrak', PublicMitraKontrakController::class)
+    ->name('public.mitra-kontrak');
+
+Route::get('/rantai-pasok', PublicSupplyChainController::class)
+    ->name('public.supply-chain');
+
+Route::get('/katalog-publik', PublicCatalogController::class)
+    ->name('public.catalog');
+
+Route::get('/galeri', PublicGalleryController::class)
+    ->name('public.gallery');
+
+Route::get('/kontak', PublicKontakController::class)
+    ->name('public.kontak');
 
 // Pengalihan cerdas /dashboard utama ke dasbor masing-masing peran
 Route::middleware(['auth'])->get('/dashboard', function () {
@@ -118,6 +148,7 @@ Route::middleware(['auth', 'role:SEKRETARIS'])->prefix('sekretaris')->name('sekr
 
     // 8. Input Pesanan Manual / Darurat Telepon & WA
     Route::get('/pesanan-manual', [SekretarisManualOrderController::class, 'index'])->name('manual-order');
+    Route::post('/pesanan-manual', [SekretarisManualOrderController::class, 'store'])->name('manual-order.store');
 });
 
 // 3. KOORDINATOR LAPANGAN
@@ -148,9 +179,21 @@ Route::middleware(['auth', 'role:KOORDINATOR'])->prefix('koordinator')->name('ko
 
 // 4. ARMADA LOGISTIK / SUPIR
 Route::middleware(['auth', 'role:ARMADA'])->prefix('armada')->name('armada.')->group(function () {
-    Route::get('/dashboard', function () {
-        return "Halo Armada Logistik: " . auth()->user()->name;
-    })->name('dashboard');
+    // 1. Daftar Tugas Harian & Antrean Titik Pengantaran
+    Route::get('/dashboard', [ArmadaTaskController::class, 'index'])->name('dashboard');
+    Route::get('/tugas', [ArmadaTaskController::class, 'index'])->name('tasks');
+
+    // 2. Surat Jalan Digital & Rincian Muatan
+    Route::get('/surat-jalan', [ArmadaDispatchController::class, 'index'])->name('dispatch');
+    Route::post('/surat-jalan/{order}/mulai', [ArmadaDispatchController::class, 'startRoute'])->name('dispatch.start');
+
+    // 3. Bukti Terima Digital (Proof of Delivery / PoD)
+    Route::get('/scan-pod', [ArmadaPodController::class, 'index'])->name('pod');
+    Route::post('/scan-pod/{order}/selesai', [ArmadaPodController::class, 'store'])->name('pod.store');
+
+    // 4. Status Kendaraan, Telemetri IoT & Kelaikan Shift
+    Route::get('/status', [ArmadaStatusController::class, 'index'])->name('status');
+    Route::post('/status/tutup-shift', [ArmadaStatusController::class, 'closeShift'])->name('status.close-shift');
 });
 
 // 5. DIREKTUR / OWNER
@@ -216,6 +259,18 @@ Route::middleware(['auth', 'role:DIREKTUR'])->prefix('direktur')->name('direktur
 
     // 9. Inspeksi Pengawasan Pesanan Terintegrasi
     Route::get('/orders/{id}', [OrderInspectionController::class, 'show'])->name('orders.show');
+});
+
+// Rute director.* untuk kompatibilitas frontend dan tautan view
+Route::middleware(['auth', 'role:DIREKTUR'])->prefix('director')->name('director.')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/sales', [SalesMonitoringController::class, 'index'])->name('sales');
+    Route::get('/volume', [CommodityVolumeController::class, 'index'])->name('volume');
+    Route::get('/receivables', [ReceivableController::class, 'index'])->name('receivables');
+    Route::get('/approval', [ContractController::class, 'approval'])->name('approval');
+    Route::get('/report', [ReportController::class, 'index'])->name('report');
+    Route::get('/governance', [GovernanceController::class, 'index'])->name('governance');
+    Route::get('/access', [UserController::class, 'index'])->name('access');
 });
 
 Route::middleware('auth')->group(function () {

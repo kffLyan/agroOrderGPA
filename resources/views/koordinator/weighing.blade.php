@@ -1,4 +1,4 @@
-﻿@extends('layouts.coordinator')
+@extends('layouts.coordinator')
 
 @section('title', 'Penimbangan Aktual & Validasi Sortir')
 
@@ -193,70 +193,135 @@
                         <p class="text-2xs font-semibold tracking-[1.08px] text-accent">{{ $terminal['calibration'] }}</p>
                     </div>
 
-                    <div class="flex items-start justify-center gap-4">
-                        @foreach ($terminal['readings'] as $reading)
-                            <div @class([
-                                'flex flex-1 flex-col items-center gap-1 px-1 pb-1.5 pt-1',
-                                'rounded-lg border-l border-ink-quiet/20 bg-brand/60' => $reading['tone'] === 'highlight',
-                            ])>
-                                <p @class([
-                                    'text-center text-2xs font-semibold uppercase leading-3 tracking-[1.08px]',
-                                    'font-bold text-accent' => $reading['tone'] === 'highlight',
-                                    'text-surface-pill' => $reading['tone'] !== 'highlight',
-                                ])>{{ $reading['label'] }}</p>
+                    <div class="flex items-start justify-center gap-3 sm:gap-4">
+                        {{-- Box 1: Gross --}}
+                        <div class="flex flex-1 flex-col items-center gap-1 px-1 pb-1.5 pt-1">
+                            <p class="text-center text-2xs font-semibold uppercase leading-3 tracking-[1.08px] text-surface-pill">
+                                Berat Kotor (Bruto)
+                            </p>
+                            <p class="text-center text-2xl sm:text-[28px] font-bold text-white leading-tight">
+                                <span x-text="kg(gross)">{{ number_format($terminal['readings'][0]['value'], 2, '.', '') }}</span>
+                            </p>
+                            <p class="text-center text-2xs font-semibold leading-3 tracking-[1.08px] text-accent">
+                                KG BESERTA WADAH
+                            </p>
+                        </div>
 
-                                <p @class([
-                                    'text-center text-[28px] leading-5',
-                                    'font-bold text-accent' => $reading['tone'] === 'highlight',
-                                    'font-bold text-surface-pill' => $reading['key'] === 'tare',
-                                    'font-bold text-white' => $reading['key'] === 'gross',
-                                ])>
-                                    <span x-text="readingValue(@js($reading['key']))">{{ number_format($reading['value'], 2, '.', '') }}</span>
-                                </p>
+                        {{-- Box 2: Tare --}}
+                        <div class="flex flex-1 flex-col items-center gap-1 px-1 pb-1.5 pt-1 border-x border-ink-quiet/30">
+                            <p class="text-center text-2xs font-semibold uppercase leading-3 tracking-[1.08px] text-surface-pill">
+                                Berat Wadah (Tara)
+                            </p>
+                            <p class="text-center text-2xl sm:text-[28px] font-bold text-surface-pill leading-tight">
+                                <span x-text="kg(tareTotal())">{{ number_format($terminal['readings'][1]['value'], 2, '.', '') }}</span>
+                            </p>
+                            <p class="text-center text-2xs font-semibold leading-3 tracking-[1.08px] text-ink-quiet">
+                                <span x-text="crates + ' PETI @ ' + kg(tareEach) + ' KG'">{{ $terminal['readings'][1]['unit'] }}</span>
+                            </p>
+                        </div>
 
-                                <p @class([
-                                    'text-center text-2xs font-semibold leading-3 tracking-[1.08px]',
-                                    'font-bold text-white' => $reading['tone'] === 'highlight',
-                                    'text-ink-quiet' => $reading['key'] === 'tare',
-                                    'text-accent' => $reading['key'] === 'gross',
-                                ])>{{ $reading['unit'] }}</p>
-                            </div>
-                        @endforeach
+                        {{-- Box 3: Net --}}
+                        <div class="flex flex-1 flex-col items-center gap-1 px-1 pb-1.5 pt-1 rounded-lg bg-brand/60">
+                            <p class="text-center text-2xs font-semibold uppercase leading-3 tracking-[1.08px] text-accent font-bold">
+                                Berat Bersih (Netto)
+                            </p>
+                            <p class="text-center text-2xl sm:text-[28px] font-bold text-accent leading-tight">
+                                <span x-text="kg(net())">{{ number_format($terminal['readings'][2]['value'], 2, '.', '') }}</span>
+                            </p>
+                            <p class="text-center text-2xs font-bold leading-3 tracking-[1.08px] text-white">
+                                KG BERSIH SIAP KIRIM
+                            </p>
+                        </div>
                     </div>
                 </div>
 
-                {{-- Inputs --}}
-                <div class="flex flex-wrap items-start justify-center gap-4 pt-2">
-                    @foreach ($terminal['inputs'] as $input)
-                        <div class="w-[149px] space-y-1">
-                            <label :for="'weigh-' + @js($input['key'])"
-                                class="block text-2xs font-bold uppercase leading-3 tracking-[1.08px] text-ink-body">
-                                {{ $input['label'] }}
-                            </label>
+                {{-- Form Input Manual Penimbangan --}}
+                <div class="space-y-3 pt-2">
+                    <div class="flex items-center justify-between">
+                        <p class="text-xs font-bold text-ink">
+                            Isi Parameter Penimbangan Manual:
+                        </p>
+                        <span class="rounded bg-accent/60 px-2 py-0.5 text-2xs font-bold text-success-ink">
+                            Bisa Diedit Manual
+                        </span>
+                    </div>
 
-                            <div class="relative">
-                                <input :id="'weigh-' + @js($input['key'])" type="text" inputmode="decimal"
+                    <div class="grid gap-3 sm:grid-cols-3">
+                        {{-- Input 1: Berat Kotor (Bruto) --}}
+                        <div class="space-y-1">
+                            <label for="weigh-gross" class="block text-xs font-bold text-ink">
+                                1. Berat Kotor (Bruto)
+                            </label>
+                            <p class="text-2xs text-ink-quiet">Barang + Keranjang (kg)</p>
+                            <div class="relative mt-1">
+                                <input id="weigh-gross" type="number" step="0.01" min="0"
                                     :disabled="locked"
-                                    @class([
-                                        'h-10 w-full overflow-hidden rounded-lg py-2.5 pl-3 pr-14 outline outline-1 -outline-offset-1 transition-colors',
-                                        'bg-surface text-ink outline-line-board' => $input['tone'] === 'plain',
-                                        'bg-surface-shell text-ink outline-line-board' => $input['tone'] === 'muted',
-                                        'disabled:cursor-not-allowed disabled:opacity-60' => true,
-                                    ])
-                                    x-model.number="@js($input['key'])">
-                                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 gpa-meta font-bold text-ink-quiet">
-                                    {{ $input['unit'] }}
+                                    x-model.number="gross"
+                                    placeholder="Contoh: 51.00"
+                                    class="h-11 w-full rounded-lg bg-surface py-2 pl-3 pr-12 text-sm font-bold text-ink outline outline-1 outline-line-board transition-colors focus:outline-2 focus:outline-success-deep disabled:cursor-not-allowed disabled:bg-surface-shell disabled:opacity-70">
+                                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-quiet">
+                                    KG
                                 </span>
                             </div>
                         </div>
-                    @endforeach
+
+                        {{-- Input 2: Jumlah Keranjang --}}
+                        <div class="space-y-1">
+                            <label for="weigh-crates" class="block text-xs font-bold text-ink">
+                                2. Jumlah Keranjang
+                            </label>
+                            <p class="text-2xs text-ink-quiet">Banyaknya peti/wadah</p>
+                            <div class="relative mt-1">
+                                <input id="weigh-crates" type="number" step="1" min="1"
+                                    :disabled="locked"
+                                    x-model.number="crates"
+                                    placeholder="Contoh: 3"
+                                    class="h-11 w-full rounded-lg bg-surface py-2 pl-3 pr-14 text-sm font-bold text-ink outline outline-1 outline-line-board transition-colors focus:outline-2 focus:outline-success-deep disabled:cursor-not-allowed disabled:bg-surface-shell disabled:opacity-70">
+                                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-quiet">
+                                    PETI
+                                </span>
+                            </div>
+                        </div>
+
+                        {{-- Input 3: Berat Tiap Keranjang --}}
+                        <div class="space-y-1">
+                            <label for="weigh-tare-each" class="block text-xs font-bold text-ink">
+                                3. Berat Tiap Keranjang
+                            </label>
+                            <p class="text-2xs text-ink-quiet">Wadah kosong (default 2 kg)</p>
+                            <div class="relative mt-1">
+                                <input id="weigh-tare-each" type="number" step="0.01" min="0"
+                                    :disabled="locked"
+                                    x-model.number="tareEach"
+                                    placeholder="Contoh: 2.00"
+                                    class="h-11 w-full rounded-lg bg-surface py-2 pl-3 pr-12 text-sm font-bold text-ink outline outline-1 outline-line-board transition-colors focus:outline-2 focus:outline-success-deep disabled:cursor-not-allowed disabled:bg-surface-shell disabled:opacity-70">
+                                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-ink-quiet">
+                                    KG
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Banner Rumus Penjelasan Netto --}}
+                    <div class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-success-deep/30 bg-accent/30 p-2.5 text-xs text-ink">
+                        <div class="flex items-center gap-2">
+                            <x-gpa.icon name="scale" class="h-4 w-4 shrink-0 text-success-deep" />
+                            <span>
+                                Rumus Otomatis: <strong>Berat Bersih (Netto)</strong> = Berat Kotor (<span class="font-bold" x-text="kg(gross) + ' kg'"></span>) &minus; Total Wadah (<span class="font-bold" x-text="kg(tareTotal()) + ' kg'"></span>)
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-ink-body">=</span>
+                            <span class="rounded bg-ink px-2 py-0.5 font-mono text-xs font-bold text-accent" x-text="kg(net()) + ' KG NETTO'"></span>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="flex flex-col gap-2 border-t border-line-board/30 pt-2">
-                    <div class="flex flex-wrap items-center gap-1">
+                    <div class="flex flex-wrap items-center gap-2">
                         @foreach ($terminal['actions'] as $terminalAction)
                             <button type="button" @click="act(@js($terminalAction['key']))" :disabled="locked"
-                                class="rounded-lg px-3 py-1.5 text-center text-[11px] font-semibold uppercase leading-[14px] tracking-[0.88px] text-ink outline outline-1 -outline-offset-1 outline-ink-quiet transition-colors hover:bg-surface-shell disabled:cursor-not-allowed disabled:opacity-50">
+                                class="rounded-lg px-3 py-1.5 text-center text-xs font-semibold text-ink outline outline-1 outline-line-board transition-colors hover:bg-surface-shell disabled:cursor-not-allowed disabled:opacity-50">
                                 {{ $terminalAction['label'] }}
                             </button>
                         @endforeach

@@ -1,321 +1,286 @@
-<x-dynamic-component :component="'layouts.direktur'">
-    <x-slot name="header">
-        Pengaturan Tata Kelola, Kebijakan Bisnis & Audit Trail Sistem
-    </x-slot>
+@extends('layouts.director')
 
-    <!-- Top Action Bar -->
-    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-        <div>
-            <h1 class="text-sm font-bold text-gray-900">Pengaturan Tata Kelola, Kebijakan Bisnis & Audit Trail Sistem</h1>
-            <p class="text-xs text-gray-500 mt-0.5">
-                Konsol Otorisasi Kebijakan Utama Direksi, Kontrol Batas Kredit Korporat, Kalibrasi Batas Toleransi Mutu, & Log Forensik Keamanan Transaksi. Seluruh perubahan diproteksi append-only SHA-256 ledger.
-            </p>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <a href="{{ route('direktur.governance.export-audit') }}" class="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-bold transition shadow-sm">
-                Export Full Audit Log (.CSV)
-            </a>
-            <span class="px-3 py-1.5 bg-gray-100 text-gray-700 font-mono text-xs font-bold rounded border">
-                SHA-256 LEDGER VALID
-            </span>
-        </div>
-    </div>
+@section('title', 'Pengaturan Tata Kelola // Kebijakan & Audit Trail')
 
-    <!-- 1. KARTU 4 METRIK TATA KELOLA -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <!-- Metric 1: Integritas Ledger -->
-        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-[#153a01]">
-            <div class="text-[10px] text-gray-400 font-mono">METRIC #01 // INTEGRITAS LEDGER</div>
-            <div class="flex items-center gap-2 mt-1">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="text-lg font-black text-gray-900">ACTIVE GUARD</span>
-            </div>
-            <div class="mt-2 text-[10px] text-emerald-800 font-bold">100% VALID // SHA-256 Verified</div>
-            <div class="text-[10px] text-gray-400 mt-0.5">0 Anomali (Zero Breach)</div>
-        </div>
+@section('content')
+    @php
+        $metricChip = [
+            'success' => 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep',
+            'neutral' => 'bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board',
+            'ink' => 'bg-ink text-accent outline outline-1 -outline-offset-1 outline-ink',
+        ];
 
-        <!-- Metric 2: Kontrol Kredit B2B -->
-        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-600">
-            <div class="text-[10px] text-gray-400 font-mono">METRIC #02 // KONTROL KREDIT B2B</div>
-            <div class="text-lg font-black text-blue-900 mt-1">CEILING LIMIT</div>
-            <div class="mt-1 text-xs font-black text-gray-800">Rp 2.500.000.000</div>
-            <div class="text-[10px] text-emerald-700 font-bold mt-1">Terutilisasi: Rp 1.185M (47.4% Exposure Aman)</div>
-        </div>
+        $statusTone = [
+            'success' => 'text-success-deep',
+            'ink' => 'text-ink',
+            'warning' => 'text-warning-caution',
+            'danger' => 'text-danger',
+        ];
 
-        <!-- Metric 3: Approval Status -->
-        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-amber-600">
-            <div class="text-[10px] text-gray-400 font-mono">METRIC #03 // DIR APPROVAL STATUS</div>
-            <div class="text-lg font-black text-amber-900 mt-1">VERIFIED</div>
-            <div class="mt-1 text-xs font-bold text-gray-800">3 Kontrak Disetujui</div>
-            <div class="text-[10px] text-gray-500 mt-1">Threshold Policy Margin: Min. {{ $settings['min_margin_percent'] ?? 15.0 }}%</div>
-        </div>
+        $factTone = [
+            'ink' => 'text-ink',
+            'success' => 'text-success-deep',
+            'warning' => 'text-warning-caution',
+            'danger' => 'text-danger',
+        ];
 
-        <!-- Metric 4: Hard-Guard Compliance -->
-        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-purple-600">
-            <div class="text-[10px] text-gray-400 font-mono">METRIC #04 // HARD-GUARD COMPLIANCE</div>
-            <div class="text-lg font-black text-purple-900 mt-1">POLICY ENGINE</div>
-            <div class="mt-1 text-xs font-bold text-emerald-700">0 Pelanggaran (Clean)</div>
-            <div class="text-[10px] text-gray-500 mt-1">Hard-Guard Rules 02, 03, 05, 06 Enforced</div>
-        </div>
-    </div>
+        $actionTone = [
+            'success' => 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep',
+            'neutral' => 'bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board',
+            'dark' => 'bg-ink text-accent outline outline-1 -outline-offset-1 outline-ink',
+            'danger' => 'bg-danger-soft/40 text-danger outline outline-1 -outline-offset-1 outline-danger',
+        ];
 
-    <!-- 2. KONFIGURASI PARAMETER BISNIS & RULE ENGINE -->
-    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 space-y-4">
-        <div class="border-b pb-3 flex flex-col md:flex-row justify-between items-start md:items-center gap-2">
-            <div>
-                <h3 class="font-bold text-xs text-gray-900 uppercase tracking-wide">Konfigurasi Parameter Bisnis & Rule Engine</h3>
-                <p class="text-[11px] text-gray-500">5 Parameter Statutori Tata Kelola yang Mengunci Otomatisasi Validasi Sistem ERP & Pergudangan.</p>
-            </div>
-            <span class="px-2 py-0.5 bg-gray-100 text-gray-700 font-mono text-[10px] rounded border">
-                ID: CFG-MASTER-RULE-ENGINE
-            </span>
-        </div>
+        $auditArguments = array_map(
+            static fn (array $row): string => (string) \Illuminate\Support\Js::from($row),
+            $audit['rows'],
+        );
 
-        <form method="POST" action="{{ route('direktur.governance.parameters') }}" class="space-y-4">
-            @csrf
+        $auditActions = array_values(array_unique(array_column($audit['rows'], 'action')));
+    @endphp
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                <!-- Rule 04 & 13: Toleransi Deviasi Susut Gudang -->
-                <div class="p-3.5 bg-gray-50 rounded border border-gray-200 space-y-2">
-                    <div class="flex justify-between items-center">
-                        <strong class="text-gray-900">RULE 04 & 13: SUSUT GUDANG</strong>
-                        <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-green-100 text-green-800">ENFORCED</span>
-                    </div>
-                    <p class="text-[10px] text-gray-500">Ambang batas deviasi timbangan asal versus timbangan terima di fasilitas pergudangan.</p>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-700">Maks Hard Limit (%):</label>
-                        <input type="number" step="0.1" name="warehouse_loss_max_percent" value="{{ $settings['warehouse_loss_max_percent'] ?? 2.0 }}" class="w-full border rounded px-2 py-1 text-xs mt-0.5">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-700">Warning Threshold (%):</label>
-                        <input type="number" step="0.1" name="warehouse_loss_warning_percent" value="{{ $settings['warehouse_loss_warning_percent'] ?? 1.5 }}" class="w-full border rounded px-2 py-1 text-xs mt-0.5">
-                    </div>
-                    <div class="text-[9px] text-gray-400 font-mono">Action: Auto-Hold Invoice if Exceeded</div>
-                </div>
+    <div class="mx-auto flex max-w-[1280px] flex-col gap-6"
+        x-data="directorGovernance(@js($audit['rows']), @js($audit))">
 
-                <!-- Section 15.3: Plafon Kredit Default TOP Klien Baru -->
-                <div class="p-3.5 bg-gray-50 rounded border border-gray-200 space-y-2">
-                    <div class="flex justify-between items-center">
-                        <strong class="text-gray-900">SECTION 15.3: PLAFON TOP B2B</strong>
-                        <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-green-100 text-green-800">ENFORCED</span>
-                    </div>
-                    <p class="text-[10px] text-gray-500">Kebijakan batas kredit awal bagi mitra agribisnis atau buyer yang belum diaudit Direksi.</p>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-700">Default Plafon Kredit (Rp):</label>
-                        <input type="number" name="default_top_credit_ceiling" value="{{ $settings['default_top_credit_ceiling'] ?? 100000000 }}" class="w-full border rounded px-2 py-1 text-xs mt-0.5">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-700">Default Term of Payment (Hari):</label>
-                        <input type="number" name="default_top_days" value="{{ $settings['default_top_days'] ?? 30 }}" class="w-full border rounded px-2 py-1 text-xs mt-0.5">
-                    </div>
-                    <div class="text-[9px] text-gray-400 font-mono">Min Skor Kredit: 75 Poin Sistem</div>
-                </div>
-
-                <!-- Section 16: Batas Margin Minimum Penjualan B2B -->
-                <div class="p-3.5 bg-gray-50 rounded border border-gray-200 space-y-2">
-                    <div class="flex justify-between items-center">
-                        <strong class="text-gray-900">SECTION 16: FLOOR MARGIN</strong>
-                        <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-green-100 text-green-800">ENFORCED</span>
-                    </div>
-                    <p class="text-[10px] text-gray-500">Floor margin proteksi profitabilitas bruto komoditas pangan segar terhadap fluktuasi lelang.</p>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-700">Margin Minimum Statutori (%):</label>
-                        <input type="number" step="0.5" name="min_margin_percent" value="{{ $settings['min_margin_percent'] ?? 15.0 }}" class="w-full border rounded px-2 py-1 text-xs mt-0.5">
-                    </div>
-                    <div class="p-2 bg-amber-50 rounded text-[10px] text-amber-800">
-                        Order &lt; {{ $settings['min_margin_percent'] ?? 15.0 }}% wajib auto-eskalasi otorisasi Direktur Utama. Sales bypass dilarang keras.
-                    </div>
-                </div>
+        {{-- Page header --}}
+        <section class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
+            <div class="min-w-0 space-y-1">
+                <h1 class="font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
+                    {{ $header['title'] }}
+                </h1>
             </div>
 
-            <div class="flex justify-end pt-2">
-                <button type="submit" class="px-4 py-2 bg-[#153a01] hover:bg-[#255808] text-white rounded text-xs font-bold transition shadow-sm">
-                    Simpan Perubahan Parameter Kebijakan
+            <div class="flex shrink-0 flex-wrap items-center gap-2">
+                <a href="{{ route('director.access') }}"
+                    class="inline-flex items-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                    <x-gpa.icon name="users" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
+                    {{ $header['access_label'] }}
+                </a>
+                <button type="button" @click="exportAudit()"
+                    class="inline-flex items-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                    <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
+                    {{ $header['export_label'] }}
+                </button>
+                <button type="button" @click="verifyIntegrity()"
+                    class="inline-flex items-center gap-1.5 rounded bg-accent px-3 py-2 gpa-meta font-bold text-ink shadow-sub outline outline-1 -outline-offset-1 outline-success-deep transition-opacity hover:opacity-90">
+                    <x-gpa.icon name="shield" class="h-3.5 w-3.5 shrink-0" />
+                    {{ $header['integrity_label'] }}
+                </button>
+                <button type="button" @click="lockPeriod()"
+                    class="inline-flex items-center gap-1.5 rounded bg-ink px-3 py-2 gpa-meta font-bold text-accent shadow-sub transition-opacity hover:opacity-90">
+                    <x-gpa.icon name="lock" class="h-3.5 w-3.5 shrink-0" />
+                    {{ $header['lock_label'] }}
                 </button>
             </div>
-        </form>
-    </div>
+        </section>
 
-    <!-- 3. TABEL AUDIT TRAIL FORENSIK SHA-256 -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden space-y-0">
-        <div class="p-4 border-b border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-gray-50">
-            <div>
-                <h3 class="font-bold text-xs text-gray-900 uppercase tracking-wide">Tabel Audit Trail Forensik & Riwayat Aksi Direksi / Admin</h3>
-                <p class="text-[11px] text-gray-500 mt-0.5">Append-Only Cryptographic Ledger berantai SHA-256. Setiap modifikasi kebijakan dan otorisasi tersimpan permanen.</p>
-            </div>
-            <form method="GET" action="{{ route('direktur.governance.index') }}" class="flex items-center gap-2">
-                <input type="text" name="q" value="{{ $search }}" placeholder="Cari Dokumen / Hash..." class="border border-gray-300 rounded px-2.5 py-1 text-xs focus:ring-1 focus:ring-emerald-600 focus:outline-none w-48">
-                <select name="category" class="border border-gray-300 rounded px-2 py-1 text-xs">
-                    <option value="ALL">Semua Kategori</option>
-                    <option value="APPROVAL KONTRAK" {{ $categoryFilter === 'APPROVAL KONTRAK' ? 'selected' : '' }}>Approval Kontrak</option>
-                    <option value="REKONSILIASI KAS" {{ $categoryFilter === 'REKONSILIASI KAS' ? 'selected' : '' }}>Rekonsiliasi Kas</option>
-                    <option value="SYSTEM GOVERNANCE" {{ $categoryFilter === 'SYSTEM GOVERNANCE' ? 'selected' : '' }}>System Governance</option>
-                    <option value="BUFFER OVERRIDE" {{ $categoryFilter === 'BUFFER OVERRIDE' ? 'selected' : '' }}>Buffer Override</option>
-                    <option value="SECURITY BLOCK" {{ $categoryFilter === 'SECURITY BLOCK' ? 'selected' : '' }}>Security Block</option>
-                </select>
-                <button type="submit" class="px-2.5 py-1 bg-[#153a01] hover:bg-[#255808] text-white rounded text-xs font-bold">
-                    Filter
+        {{-- Metric row --}}
+        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            @foreach ($metrics as $metric)
+                <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
+                    <div class="flex flex-col gap-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <h2 class="gpa-micro-bold text-ink-body">{{ $metric['eyebrow'] }}</h2>
+                            <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta {{ $metricChip[$metric['chip_tone']] }}">
+                                {{ $metric['chip'] }}
+                            </span>
+                        </div>
+
+                        <p class="gpa-figure text-[22px] leading-7 text-ink">{{ $metric['value'] }}</p>
+                        <p class="text-[11px] leading-4 text-ink-body">{{ $metric['note'] }}</p>
+
+                        @if (isset($metric['bar_width']))
+                            <div class="flex flex-col gap-1">
+                                <div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
+                                    <div class="h-full rounded-full bg-success-deep" style="width: {{ $metric['bar_width'] }}%"></div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
+                        <span class="gpa-note text-ink-body">{{ $metric['foot_label'] }}</span>
+                        <span class="gpa-note font-bold {{ $statusTone[$metric['foot_tone']] }}">
+                            {{ $metric['foot_value'] }}
+                        </span>
+                    </div>
+
+                    @if (! empty($metric['foot_note']))
+                        <p class="gpa-note font-semibold text-success-deep">{{ $metric['foot_note'] }}</p>
+                    @endif
+                </article>
+            @endforeach
+        </section>
+
+        {{-- Rule engine parameters --}}
+        <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
+            <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
+                <div class="min-w-0">
+                    <h2 class="gpa-section-title text-ink">{{ $parameters['title'] }}</h2>
+                </div>
+
+                <button type="button" @click="editParameters()"
+                    class="inline-flex shrink-0 items-center gap-1.5 rounded bg-ink px-3.5 py-2 gpa-meta font-bold text-accent transition-opacity hover:opacity-90">
+                    <x-gpa.icon name="lock" class="h-3.5 w-3.5 shrink-0" />
+                    {{ $parameters['action'] }}
                 </button>
-            </form>
-        </div>
+            </header>
 
-        <div class="overflow-x-auto text-xs">
-            <table class="w-full text-left border-collapse">
-                <thead class="bg-gray-100 text-gray-600 font-bold uppercase text-[10px] border-b">
-                    <tr>
-                        <th class="p-3">Block ID</th>
-                        <th class="p-3">Timestamp / WIB</th>
-                        <th class="p-3">Aktor & User ID</th>
-                        <th class="p-3">Kategori Aksi</th>
-                        <th class="p-3">Dokumen Terkait</th>
-                        <th class="p-3">Rincian Perubahan / Keputusan</th>
-                        <th class="p-3 text-center">Status</th>
-                        <th class="p-3 font-mono">Hash SHA-256</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @forelse($auditLogs as $log)
-                        <tr class="hover:bg-gray-50 transition">
-                            <td class="p-3 font-mono font-bold text-gray-700">{{ $log['block_id'] ?? '-' }}</td>
-                            <td class="p-3 font-mono text-[10px] text-gray-600">{{ $log['timestamp'] ?? '-' }}</td>
-                            <td class="p-3">
-                                <div class="font-bold text-gray-900">{{ $log['actor'] ?? '-' }}</div>
-                                <div class="text-[10px] text-gray-400 font-mono">{{ $log['actor_uid'] ?? '' }}</div>
-                            </td>
-                            <td class="p-3">
-                                <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-blue-50 text-blue-900 border border-blue-200">
-                                    {{ $log['action_category'] ?? '-' }}
-                                </span>
-                            </td>
-                            <td class="p-3 font-mono font-bold text-[#153a01]">{{ $log['document_ref'] ?? '-' }}</td>
-                            <td class="p-3 text-gray-700 max-w-xs">{{ $log['details'] ?? '-' }}</td>
-                            <td class="p-3 text-center">
-                                @if(($log['status'] ?? '') === 'SEALED' || ($log['status'] ?? '') === 'LOCKED')
-                                    <span class="px-2 py-0.5 rounded text-[9px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300">
-                                        {{ $log['status'] }}
-                                    </span>
-                                @elseif(($log['status'] ?? '') === 'INTERCEPTED')
-                                    <span class="px-2 py-0.5 rounded text-[9px] font-black bg-red-100 text-red-800 border border-red-300">
-                                        INTERCEPTED
-                                    </span>
-                                @else
-                                    <span class="px-2 py-0.5 rounded text-[9px] font-bold bg-gray-100 text-gray-800">
-                                        {{ $log['status'] }}
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="p-3 font-mono text-[10px] text-gray-500">
-                                {{ substr($log['hash'] ?? '', 0, 12) }}...{{ substr($log['hash'] ?? '', -6) }}
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="8" class="p-6 text-center text-gray-400">
-                                Tidak ada catatan audit log yang cocok dengan filter pencarian.
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                @foreach ($parameters['cards'] as $parameter)
+                    <article class="flex h-full flex-col gap-3 rounded-xl bg-surface-shell/60 p-4 outline outline-1 -outline-offset-1 outline-line-board">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="rounded px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta {{ $actionTone[$parameter['status_tone']] }}">
+                                {{ $parameter['status'] }}
+                            </span>
+                        </div>
 
-        <div class="p-3 bg-gray-50 border-t border-gray-200 text-[10px] text-gray-500 flex justify-between">
-            <span>LEDGER STATUS: CONTINUOUS APPEND // PREVIOUS BLOCK HASH MATCHED 100%</span>
-            <span>Menampilkan {{ count($auditLogs) }} Aksi Terverifikasi</span>
-        </div>
-    </div>
+                        <h3 class="text-[13px] font-bold leading-5 text-ink">{{ $parameter['title'] }}</h3>
+                        <p class="text-[11px] leading-4 text-ink-body">{{ $parameter['description'] }}</p>
 
-    <!-- 4. PROTOKOL KESELAMATAN KRITIS: MASTER FREEZE & DELEGASI PLT -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
-        <!-- Critical Safety Protocol #01: Master Freeze Switch -->
-        <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 space-y-3 {{ ($settings['master_freeze_active'] ?? false) ? 'border-red-400 bg-red-50/20' : '' }}">
-            <div class="flex justify-between items-center border-b pb-2">
-                <div>
-                    <h3 class="font-bold text-gray-900 uppercase">Critical Safety Protocol #01</h3>
-                    <p class="text-[11px] text-gray-500">Master Freeze Switch (Stock Opname & Audit Khusus)</p>
-                </div>
-                <span class="px-2 py-0.5 rounded font-black text-[9px] {{ ($settings['master_freeze_active'] ?? false) ? 'bg-red-600 text-white animate-pulse' : 'bg-green-100 text-green-800' }}">
-                    STATUS: {{ ($settings['master_freeze_active'] ?? false) ? 'FREEZE AKTIF (TERKUNCI)' : 'STANDBY READY' }}
-                </span>
+                        <dl class="flex flex-col gap-1.5 border-t border-line-hair pt-3">
+                            @foreach ($parameter['facts'] as $fact)
+                                <div class="flex items-start justify-between gap-3">
+                                    <dt class="gpa-note text-ink-body">{{ $fact['label'] }}</dt>
+                                    <dd class="gpa-meta text-right font-bold {{ $factTone[$fact['tone'] ?? 'ink'] }}">
+                                        {{ $fact['value'] }}
+                                    </dd>
+                                </div>
+                            @endforeach
+                        </dl>
+
+                        <footer class="mt-auto flex items-center justify-between gap-2 border-t border-line-hair pt-3">
+                            <span class="inline-flex items-center gap-1 gpa-note font-semibold text-ink-body">
+                                <x-gpa.icon name="bolt" class="h-3 w-3 shrink-0 text-success-deep" />
+                                {{ $parameter['foot_note'] }}
+                            </span>
+                            <span class="gpa-micro-bold text-ink-body">{{ $parameter['config_id'] }}</span>
+                        </footer>
+                    </article>
+                @endforeach
             </div>
 
-            <p class="text-gray-600 text-[11px]">
-                Menghentikan seluruh transaksi input PO, penerbitan surat jalan, rekonsiliasi kas, dan mutasi komoditas secara instan di seluruh node gudang saat stock opname tahunan atau investigasi fraud berlangsung.
+            <p class="flex items-start gap-2 border-t border-line-board/60 pt-3">
+                <x-gpa.icon name="info" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-body" />
+                <span class="gpa-note text-ink-body">{{ $parameters['action_note'] }}</span>
             </p>
+        </section>
 
-            <form method="POST" action="{{ route('direktur.governance.freeze') }}" class="space-y-3 pt-2">
-                @csrf
-                <input type="hidden" name="freeze_action" value="{{ ($settings['master_freeze_active'] ?? false) ? '0' : '1' }}">
-
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-700">Alasan Prosedur Freeze / Buka Kunci:</label>
-                    <input type="text" name="freeze_reason" placeholder="Contoh: Stock Opname Kuartal IV 2026..." class="w-full border rounded px-2.5 py-1 text-xs mt-0.5" required>
+        {{-- Audit trail --}}
+        <section class="flex flex-col gap-3 rounded-2xl bg-surface p-6 shadow-card">
+            <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
+                <div class="min-w-0">
+                    <h2 class="gpa-section-title text-ink">{{ $audit['title'] }}</h2>
                 </div>
 
-                <div class="flex items-center justify-between pt-1">
-                    <span class="text-[10px] text-gray-400">Otorisasi: Dual Digital Signature Direktur Utama</span>
-                    @if($settings['master_freeze_active'] ?? false)
-                        <button type="submit" onclick="return confirm('Cabut Master Freeze dan pulihkan seluruh transaksi normal?')" class="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded text-xs font-bold transition">
-                            Buka Kunci Master Freeze
+                <div class="flex flex-wrap items-center gap-2">
+                    <label class="relative flex items-center" for="audit-search">
+                        <span class="sr-only">{{ $audit['search_placeholder'] }}</span>
+                        <x-gpa.icon name="search"
+                            class="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-ink-body" />
+                        <input id="audit-search" type="search" x-model="search"
+                            placeholder="{{ $audit['search_placeholder'] }}"
+                            class="w-56 rounded bg-surface-shell py-1.5 pl-8 pr-2.5 text-[11px] leading-4 text-ink outline outline-1 -outline-offset-1 outline-line-board placeholder:text-ink-body/70 focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">
+                    </label>
+
+                    <button type="button" @click="setAction('all')"
+                        :class="filterClass('all')"
+                        class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
+                        {{ $audit['filter_label'] }}
+                    </button>
+                    @foreach ($auditActions as $auditAction)
+                        <button type="button" @click="setAction({{ \Illuminate\Support\Js::from($auditAction) }})"
+                            :class="filterClass({{ \Illuminate\Support\Js::from($auditAction) }})"
+                            class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
+                            {{ $auditAction }}
                         </button>
-                    @else
-                        <button type="submit" onclick="return confirm('PERINGATAN: Mengaktifkan Master Freeze akan menghentikan seluruh transaksi input PO dan Surat Jalan di seluruh cabang gudang. Lanjutkan?')" class="px-3.5 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded text-xs font-bold transition">
-                            ⚠️ Aktifkan Master Freeze
-                        </button>
-                    @endif
+                    @endforeach
                 </div>
-            </form>
-        </div>
+            </header>
 
-        <!-- Governance Succession #02: Delegasi Wewenang Sementara (Plt) -->
-        <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 space-y-3">
-            <div class="flex justify-between items-center border-b pb-2">
-                <div>
-                    <h3 class="font-bold text-gray-900 uppercase">Governance Succession #02</h3>
-                    <p class="text-[11px] text-gray-500">Delegasi Wewenang Sementara (Plt Direksi)</p>
-                </div>
-                <span class="px-2 py-0.5 rounded font-black text-[9px] {{ ($settings['plt_active'] ?? false) ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-600' }}">
-                    MODE: {{ ($settings['plt_active'] ?? false) ? 'MANDAT DINAS LUAR AKTIF' : 'DIREKSI PENUH' }}
-                </span>
+            <div class="gpa-scroll-x overflow-x-auto">
+                <table class="w-full min-w-[72rem] border-collapse">
+                    <caption class="sr-only">{{ $audit['title'] }}</caption>
+                    <thead>
+                        <tr class="border-b border-line-board">
+                            <th scope="col"
+                                class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
+                                {{ $audit['columns'][0] }}
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
+                                {{ $audit['columns'][1] }}
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
+                                {{ $audit['columns'][2] }}
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
+                                {{ $audit['columns'][3] }}
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
+                                {{ $audit['columns'][4] }}
+                            </th>
+                            <th scope="col"
+                                class="px-3 py-3 text-right text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
+                                {{ $audit['columns'][5] }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-line-hair">
+                        @foreach ($audit['rows'] as $index => $row)
+                            <tr @class([
+                                'align-top transition-colors hover:bg-surface-shell/50',
+                                'bg-danger-soft/25' => $row['blocked'],
+                            ]) x-show="matches({{ $auditArguments[$index] }})">
+                                <td class="px-3 py-4 align-top">
+                                    <p class="gpa-meta font-bold text-ink">{{ $row['date'] }}</p>
+                                    <p class="mt-0.5 gpa-note text-ink-body">{{ $row['time'] }}</p>
+                                </td>
+                                <th scope="row" class="px-3 py-4 text-left align-top font-normal">
+                                    <p class="text-[13px] font-semibold leading-5 text-ink">{{ $row['actor'] }}</p>
+                                    <p class="mt-0.5 text-[11px] leading-4 text-ink-body">{{ $row['actor_meta'] }}</p>
+                                </th>
+                                <td class="px-3 py-4 align-top">
+                                    <span class="inline-block rounded px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta {{ $actionTone[$row['action_tone']] }}">
+                                        {{ $row['action'] }}
+                                    </span>
+                                </td>
+                                <td class="px-3 py-4 align-top">
+                                    <p class="gpa-meta font-semibold text-ink">{{ $row['document'] }}</p>
+                                </td>
+                                <td class="px-3 py-4 align-top">
+                                    <p class="max-w-md text-[12px] leading-5 text-ink-body">{{ $row['detail'] }}</p>
+                                </td>
+                                <td class="px-3 py-4 text-right align-top">
+                                    <p class="gpa-meta font-semibold text-success-deep">{{ $row['hash'] }}</p>
+                                    <p class="mt-0.5 gpa-note font-bold {{ $row['blocked'] ? 'text-danger' : 'text-ink-body' }}">
+                                        {{ $row['block'] }}
+                                    </p>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
 
-            <p class="text-gray-600 text-[11px]">
-                Konfigurasi mandat otorisasi otomatis kepada Pejabat Pelaksana Tugas (Plt) ketika Direksi bertugas ke sentra pertanian luar pulau. Akses dibatasi ketat dengan plafon limit transaksi spesifik.
+            <p class="gpa-note font-semibold text-danger" x-show="visibleCount() === 0" x-cloak>
+                Tidak ada entri audit yang cocok dengan pencarian atau filter kategori.
             </p>
 
-            <form method="POST" action="{{ route('direktur.governance.plt') }}" class="space-y-3 pt-2">
-                @csrf
-                <input type="hidden" name="plt_active" value="{{ ($settings['plt_active'] ?? false) ? '0' : '1' }}">
-
-                <div>
-                    <label class="block text-[10px] font-bold text-gray-700">Penerima Mandat Plt:</label>
-                    <input type="text" name="plt_delegate_name" value="{{ $settings['plt_delegate_name'] ?? 'Nurhayati, S.Ak (VP Finance & Controller)' }}" class="w-full border rounded px-2.5 py-1 text-xs mt-0.5" required>
+            <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-line-board/60 pt-3">
+                <p class="flex items-start gap-2">
+                    <span class="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
+                    <span class="gpa-note font-bold text-success-deep">{{ $audit['ledger_status'] }}</span>
+                </p>
+                <div class="flex flex-col items-end gap-1">
+                    <p class="gpa-note text-ink-body">{{ $audit['page_label'] }}</p>
+                    <p class="gpa-note font-bold text-ink">{{ $audit['shown_label'] }}</p>
                 </div>
+            </footer>
+        </section>
 
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-700">Masa Berlaku (Jam):</label>
-                        <input type="number" name="plt_duration_hours" value="{{ $settings['plt_duration_hours'] ?? 72 }}" class="w-full border rounded px-2.5 py-1 text-xs mt-0.5" required>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-700">Plafon Maks / Kontrak (Rp):</label>
-                        <input type="number" name="plt_ceiling_amount" value="{{ $settings['plt_ceiling_amount'] ?? 350000000 }}" class="w-full border rounded px-2.5 py-1 text-xs mt-0.5" required>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-between pt-1">
-                    <span class="text-[10px] text-gray-400">Protokol Tata Kelola PRD SEC 21</span>
-                    @if($settings['plt_active'] ?? false)
-                        <button type="submit" class="px-3.5 py-1.5 bg-gray-700 hover:bg-gray-800 text-white rounded text-xs font-bold transition">
-                            Cabut Mandat Plt
-                        </button>
-                    @else
-                        <button type="submit" class="px-3.5 py-1.5 bg-[#153a01] hover:bg-[#255808] text-white rounded text-xs font-bold transition">
-                            Atur & Aktifkan Plt Direksi
-                        </button>
-                    @endif
-                </div>
-            </form>
-        </div>
     </div>
-</x-dynamic-component>
+@endsection

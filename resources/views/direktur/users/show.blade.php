@@ -10,6 +10,7 @@
             </a>
         </div>
         <div class="bg-white p-6 rounded shadow-sm text-xs space-y-4">
+            <h1 class="text-base font-bold text-gray-900 border-b pb-2 mb-2">Rincian Akun: {{ $user->name }}</h1>
             <div class="flex justify-between items-start border-b pb-3">
                 <div>
                     <h3 class="text-base font-bold text-gray-900">{{ $user->name }}</h3>

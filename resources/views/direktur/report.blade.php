@@ -1,4 +1,4 @@
-@extends('layouts.director')
+@extends('layouts.direktur')
 
 @section('title', 'Laporan Penjualan Eksekutif // Arsip Kuartal IV 2026')
 
@@ -64,7 +64,7 @@
 
                 <div class="flex flex-col gap-3">
                     <h1 class="font-inter text-2xl font-extrabold uppercase tracking-[0.6px] text-white sm:text-[28px]">
-                        Laporan Penjualan Eksekutif
+                        Laporan Rekapitulasi Penjualan Eksekutif
                     </h1>
                     <p class="max-w-3xl text-[13px] leading-6 text-white/70">
                         Periode <span class="font-semibold text-white">{{ $lock['period'] }}</span> telah
@@ -310,6 +310,42 @@
                 </table>
             </div>
         </section>
+
+        {{-- ---------- Daftar Transaksi Pesanan Sah ---------- --}}
+        @if(isset($orders) && count($orders) > 0)
+        <section class="flex flex-col gap-3 rounded-xl border border-line-hair bg-surface p-4 shadow-sub">
+            <header class="flex items-center justify-between border-b border-line-board/60 pb-3">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-ink">Daftar Transaksi Pesanan Sah Terkunci</h2>
+                <span class="text-xs text-ink-quiet">{{ count($orders) }} Pesanan Tercatat</span>
+            </header>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead>
+                        <tr class="border-b border-line-board text-ink-subtle">
+                            <th class="py-2 px-3 font-semibold">No. Pesanan</th>
+                            <th class="py-2 px-3 font-semibold">Klien B2B</th>
+                            <th class="py-2 px-3 font-semibold">Tgl Pengiriman</th>
+                            <th class="py-2 px-3 font-semibold text-right">Nilai Transaksi</th>
+                            <th class="py-2 px-3 font-semibold text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-line-board/40">
+                        @foreach($orders as $ord)
+                            <tr class="hover:bg-surface-shell">
+                                <td class="py-2.5 px-3 font-mono font-bold text-ink">{{ $ord->order_number }}</td>
+                                <td class="py-2.5 px-3 text-ink">{{ $ord->user?->company_name ?? $ord->user?->name ?? 'Klien' }}</td>
+                                <td class="py-2.5 px-3 text-ink-body">{{ $ord->target_delivery_date ? date('d M Y', strtotime($ord->target_delivery_date)) : '-' }}</td>
+                                <td class="py-2.5 px-3 text-right font-semibold text-ink">Rp {{ number_format($ord->grand_total ?: $ord->estimated_total, 0, ',', '.') }}</td>
+                                <td class="py-2.5 px-3 text-center">
+                                    <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-accent/40 text-success-deep">{{ $ord->status }}</span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        @endif
 
         {{-- ---------- Audit trail & sertifikat ---------- --}}
         <section class="grid grid-cols-1 gap-4 xl:grid-cols-5">

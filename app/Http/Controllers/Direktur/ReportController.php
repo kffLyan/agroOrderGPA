@@ -407,6 +407,8 @@ class ReportController extends Controller
             'locked_status'   => 'STATUS: PERIODE TELAH DIKUNCI PERMANEN',
         ];
 
+        $orders = Order::with(['user', 'orderItems.product'])->latest()->take(20)->get();
+
         return view('direktur.report', compact(
             'operator',
             'lock',
@@ -415,7 +417,8 @@ class ReportController extends Controller
             'commodities',
             'clients',
             'audit',
-            'seal'
+            'seal',
+            'orders'
         ));
     }
 

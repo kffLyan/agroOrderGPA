@@ -1,4 +1,4 @@
-@extends('layouts.director')
+@extends('layouts.direktur')
 
 @section('title', 'Kelola Akun Pengguna & RBAC // Matriks Otorisasi')
 
@@ -45,32 +45,44 @@
 
     <div class="mx-auto flex max-w-[1280px] flex-col gap-6"
         x-data="directorAccess(@js($directory['rows']))">
+        @if (session('success'))
+            <div class="rounded-xl border border-accent bg-accent/20 px-4 py-3 text-xs font-semibold text-success-deep shadow-sm flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <x-gpa.icon name="check-circle" class="h-4 w-4 text-success-deep shrink-0" />
+                    <span>{{ session('success') }}</span>
+                </div>
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-xs font-semibold text-red-800 shadow-sm flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <x-gpa.icon name="alert-circle" class="h-4 w-4 text-red-600 shrink-0" />
+                    <span>{{ session('error') }}</span>
+                </div>
+            </div>
+        @endif
+
         <section class="flex flex-col gap-4">
             <header class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
                 <div class="min-w-0 space-y-1">
+                    <p class="gpa-micro-bold uppercase tracking-wider text-ink-body">{{ $header['eyebrow'] }}</p>
                     <h1 class="font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
                         {{ $header['title'] }}
                     </h1>
+                    <p class="text-xs text-ink-body max-w-2xl">{{ $header['subtitle'] }}</p>
                 </div>
 
                 <div class="flex shrink-0 flex-wrap items-center gap-2">
-                    @foreach ($header['actions'] as $action)
-                        <button type="button"
-                            @click="{{ match ($action['key']) {
-                                'export' => 'exportMatrix()',
-                                'token' => 'regenerateToken()',
-                                default => 'createUser()',
-                            } }}"
-                            @class([
-                                'inline-flex items-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90',
-                                'bg-ink text-accent shadow-sub' => $action['tone'] === 'ink',
-                                'bg-accent text-ink shadow-sub outline outline-1 -outline-offset-1 outline-success-deep' => $action['tone'] === 'success',
-                                'bg-surface-shell text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-muted' => $action['tone'] === 'neutral',
-                            ])>
-                            <x-gpa.icon :name="$action['icon']" class="h-3.5 w-3.5 shrink-0" />
-                            {{ $action['label'] }}
-                        </button>
-                    @endforeach
+                    <a href="{{ route('direktur.users.rbac.export') }}"
+                        class="inline-flex items-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-surface-shell text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-muted">
+                        <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0" />
+                        Unduh Matriks Akses (.CSV)
+                    </a>
+                    <a href="{{ route('direktur.users.create') }}"
+                        class="inline-flex items-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-ink text-accent shadow-sub">
+                        <x-gpa.icon name="plus" class="h-3.5 w-3.5 shrink-0" />
+                        + Tambah Pengguna Baru
+                    </a>
                 </div>
             </header>
 
@@ -253,15 +265,42 @@
                                     <p class="mt-0.5 gpa-note text-ink-body">{{ $row['login_meta'] }}</p>
                                 </td>
                                 <td class="px-3 py-4 text-right align-top">
-                                    <div class="flex flex-wrap justify-end gap-1.5">
-                                        @foreach ($row['actions'] as $directoryAction)
-                                            <button type="button"
-                                                @click="runUserAction({{ \Illuminate\Support\Js::from($directoryAction['label']) }})"
-                                                class="inline-flex items-center gap-1 rounded bg-surface-track px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-shell">
-                                                <x-gpa.icon :name="$directoryAction['icon']" class="h-3 w-3 shrink-0" />
-                                                {{ $directoryAction['label'] }}
+                                    <div class="flex flex-wrap items-center justify-end gap-1.5">
+                                        <a href="{{ $row['show_url'] }}"
+                                            title="Lihat Detail Akun"
+                                            class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                                            <x-gpa.icon name="eye" class="h-3 w-3 shrink-0" />
+                                            Detail
+                                        </a>
+                                        <a href="{{ $row['edit_url'] }}"
+                                            title="Ubah Data & Hak Akses"
+                                            class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                                            <x-gpa.icon name="settings" class="h-3 w-3 shrink-0" />
+                                            Edit
+                                        </a>
+                                        <form action="{{ $row['reset_pwd_url'] }}" method="POST" class="inline"
+                                            onsubmit="return confirm('Reset kata sandi pengguna ini?')">
+                                            @csrf
+                                            <button type="submit"
+                                                title="Reset Sandi ke password123"
+                                                class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                                                <x-gpa.icon name="key" class="h-3 w-3 shrink-0" />
+                                                Reset
                                             </button>
-                                        @endforeach
+                                        </form>
+                                        @if ($row['id'] !== auth()->id())
+                                            <form action="{{ $row['delete_url'] }}" method="POST" class="inline"
+                                                onsubmit="return confirm('Hapus akun pengguna {{ addslashes($row['name']) }}?')">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                    title="Hapus Pengguna"
+                                                    class="inline-flex items-center gap-1 rounded bg-red-50 text-red-700 px-2 py-1 gpa-note font-semibold outline outline-1 -outline-offset-1 outline-red-200 transition-colors hover:bg-red-100">
+                                                    <x-gpa.icon name="trash" class="h-3 w-3 shrink-0 text-red-600" />
+                                                    Hapus
+                                                </button>
+                                            </form>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>

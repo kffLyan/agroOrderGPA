@@ -21,6 +21,7 @@
         @endif
 
         <div class="bg-white p-6 rounded shadow-sm text-xs">
+            <h1 class="text-base font-bold text-gray-900 border-b pb-2 mb-4">Tambah Akun Pengguna Baru</h1>
             <form action="{{ route('direktur.users.store') }}" method="POST" class="space-y-3.5">
                 @csrf
 

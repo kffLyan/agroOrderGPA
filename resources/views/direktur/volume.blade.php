@@ -1,4 +1,4 @@
-@extends('layouts.director')
+@extends('layouts.direktur')
 
 @section('title', 'Volume Komoditas // Stok Panen & Kapasitas Pasokan')
 

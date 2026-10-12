@@ -1,4 +1,4 @@
-@extends('layouts.director')
+@extends('layouts.direktur')
 
 @section('title', 'Penjualan // Analisis Revenue Eksekutif')
 
@@ -64,6 +64,9 @@
         {{-- Page header + scope pita KPI --}}
         <section class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0 space-y-1">
+                <p class="gpa-meta text-xs font-bold uppercase tracking-wider text-accent-deep">
+                    {{ $salesHeader['eyebrow'] }}
+                </p>
                 <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $salesHeader['title'] }}
                 </h1>

@@ -382,14 +382,19 @@ class DashboardController extends Controller
             'dispensation_action' => 'Ajukan pengecualian',
         ];
 
+        $recentOrders = Order::with('user')->latest()->take(5)->get();
+        $recentContracts = Contract::with(['user', 'product'])->latest()->take(5)->get();
+
         return view('direktur.dashboard', [
-            'operator'    => $operator,
-            'header'      => $header,
-            'kpis'        => $kpis,
-            'weekly'      => $weekly,
-            'commodities' => $commodities,
-            'channels'    => $channels,
-            'receivables' => $receivables,
+            'operator'        => $operator,
+            'header'          => $header,
+            'kpis'            => $kpis,
+            'weekly'          => $weekly,
+            'commodities'     => $commodities,
+            'channels'        => $channels,
+            'receivables'     => $receivables,
+            'recentOrders'    => $recentOrders,
+            'recentContracts' => $recentContracts,
         ]);
     }
 }

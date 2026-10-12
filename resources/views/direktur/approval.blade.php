@@ -1,4 +1,4 @@
-@extends('layouts.director')
+@extends('layouts.direktur')
 
 @section('title', 'Persetujuan Kontrak // Otorisasi Tier-1')
 

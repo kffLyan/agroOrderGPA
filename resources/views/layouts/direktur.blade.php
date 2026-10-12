@@ -20,6 +20,15 @@
 
 <body class="min-h-screen bg-canvas font-sans text-ink antialiased">
     @php
+        $operator = $operator ?? [
+            'role'     => 'Direktur Utama',
+            'name'     => auth()->user()?->name ?: 'Direksi GPA',
+            'code'     => 'DIR-' . str_pad(auth()->id() ?: 1, 3, '0', STR_PAD_LEFT),
+            'initials' => strtoupper(substr(auth()->user()?->name ?: 'DU', 0, 2)),
+            'branch'   => 'Kantor Pusat GPA - Eksekutif',
+            'email'    => auth()->user()?->email ?: 'direktur@greenpasundan.id',
+            'period'   => 'Minggu ' . date('W') . ' ' . date('Y') . ' | Q4 YTD',
+        ];
         $operatorRole = $operator['role'] ?? 'Direktur';
         $operatorName = $operator['name'] ?? config('app.name');
         $operatorCode = $operator['code'] ?? '-';
@@ -29,6 +38,7 @@
             ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('direktur.dashboard'), 'active' => request()->routeIs('direktur.dashboard')],
             ['label' => 'Penjualan', 'icon' => 'banknote', 'href' => route('direktur.sales.index'), 'active' => request()->routeIs('direktur.sales.*')],
             ['label' => 'Volume Komoditas', 'icon' => 'package', 'href' => route('direktur.commodities.index'), 'active' => request()->routeIs('direktur.commodities.*')],
+            ['label' => 'Katalog Komoditas', 'icon' => 'grid', 'href' => route('direktur.products.index'), 'active' => request()->routeIs('direktur.products.*')],
             ['label' => 'Piutang & Tagihan', 'icon' => 'invoice', 'href' => route('direktur.receivables.index'), 'active' => request()->routeIs('direktur.receivables.*')],
             ['label' => 'Persetujuan Kontrak', 'icon' => 'badge-check', 'href' => route('direktur.contracts.approval'), 'active' => request()->routeIs('direktur.contracts.*')],
             ['label' => 'Laporan', 'icon' => 'shield', 'href' => route('direktur.reports.index'), 'active' => request()->routeIs('direktur.reports.*')],
@@ -189,7 +199,15 @@
             </aside>
 
             <main id="main-content" class="min-w-0 flex-1 px-4 py-6 lg:px-6">
+                @if (isset($header) && (is_string($header) || $header instanceof \Illuminate\View\ComponentSlot || $header instanceof \Illuminate\Contracts\Support\Htmlable))
+                    <div class="mb-6">
+                        <h1 class="text-2xl font-bold tracking-tight text-ink">
+                            {{ $header }}
+                        </h1>
+                    </div>
+                @endif
                 @yield('content')
+                {{ $slot ?? '' }}
             </main>
         </div>
 

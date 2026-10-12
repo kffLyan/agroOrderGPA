@@ -1,4 +1,4 @@
-@extends('layouts.director')
+@extends('layouts.direktur')
 
 @section('title', 'Dashboard Direktur')
 
@@ -35,6 +35,7 @@
         {{-- Page header --}}
         <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0 space-y-1">
+                <p class="gpa-meta text-xs font-bold uppercase tracking-wider text-accent-deep">Dasbor Eksekutif Direktur</p>
                 <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                     {{ $header['title'] }}
                 </h1>
@@ -286,6 +287,55 @@
                         class="rounded bg-ink px-2.5 py-1 text-center text-[12px] font-bold leading-4 text-white gpa-meta transition-opacity hover:opacity-90">
                         {{ $receivables['dispensation_action'] }}
                     </button>
+                </div>
+            </div>
+        </section>
+
+        {{-- Ringkasan Pesanan & Kontrak Terbaru --}}
+        <section class="grid gap-6 lg:grid-cols-2">
+            <div class="rounded-2xl bg-surface p-6 shadow-card space-y-4">
+                <div class="flex items-center justify-between border-b border-line-board/60 pb-3">
+                    <h2 class="gpa-section-title text-ink">Pesanan B2B Terkini</h2>
+                    <span class="text-xs text-ink-quiet">Pengawasan Transaksi</span>
+                </div>
+                <div class="divide-y divide-line-board/40">
+                    @forelse($recentOrders ?? [] as $order)
+                        <div class="py-2.5 flex items-center justify-between text-xs">
+                            <div>
+                                <span class="font-mono font-bold text-ink">{{ $order->order_number }}</span>
+                                <span class="text-ink-quiet block text-[11px]">{{ $order->user?->company_name ?? $order->user?->name ?? 'Klien' }}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-semibold text-ink">Rp {{ number_format($order->grand_total ?: $order->estimated_total, 0, ',', '.') }}</span>
+                                <span class="block text-[10px] text-accent-deep font-bold">{{ $order->status }}</span>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="py-4 text-center text-xs text-ink-quiet">Belum ada pesanan terbaru.</p>
+                    @endforelse
+                </div>
+            </div>
+
+            <div class="rounded-2xl bg-surface p-6 shadow-card space-y-4">
+                <div class="flex items-center justify-between border-b border-line-board/60 pb-3">
+                    <h2 class="gpa-section-title text-ink">Kontrak Kemitraan Terkini</h2>
+                    <span class="text-xs text-ink-quiet">Perjanjian PKS B2B</span>
+                </div>
+                <div class="divide-y divide-line-board/40">
+                    @forelse($recentContracts ?? [] as $contract)
+                        <div class="py-2.5 flex items-center justify-between text-xs">
+                            <div>
+                                <span class="font-mono font-bold text-ink">{{ $contract->contract_number }}</span>
+                                <span class="text-ink-quiet block text-[11px]">{{ $contract->user?->company_name ?? $contract->user?->name ?? 'Klien' }} &bull; {{ $contract->product?->name }}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-semibold text-ink">Rp {{ number_format($contract->fixed_price_per_kg, 0, ',', '.') }}/kg</span>
+                                <span class="block text-[10px] font-bold {{ $contract->status === 'ACTIVE' ? 'text-success-deep' : 'text-warning-caution' }}">{{ $contract->status }}</span>
+                            </div>
+                        </div>
+                    @empty
+                        <p class="py-4 text-center text-xs text-ink-quiet">Belum ada kontrak tercatat.</p>
+                    @endforelse
                 </div>
             </div>
         </section>

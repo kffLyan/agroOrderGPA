@@ -1,4 +1,4 @@
-@extends('layouts.director')
+@extends('layouts.direktur')
 
 @section('title', 'Piutang & Tagihan // Faktur Tempo & Risiko Kredit B2B')
 

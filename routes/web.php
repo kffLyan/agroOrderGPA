@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Direktur\CommodityVolumeController;
 use App\Http\Controllers\Direktur\ContractController;
 use App\Http\Controllers\Direktur\DashboardController;
 use App\Http\Controllers\Direktur\GovernanceController;
 use App\Http\Controllers\Direktur\OrderInspectionController;
+use App\Http\Controllers\Direktur\ProductController;
 use App\Http\Controllers\Direktur\ReceivableController;
 use App\Http\Controllers\Direktur\ReportController;
 use App\Http\Controllers\Direktur\SalesMonitoringController;
@@ -208,6 +208,11 @@ Route::middleware(['auth', 'role:DIREKTUR'])->prefix('direktur')->name('direktur
     // 3. Monitoring Volume Komoditas, Stok Panen & Pasokan
     Route::get('/commodities', [CommodityVolumeController::class, 'index'])->name('commodities.index');
     Route::get('/commodities/export', [CommodityVolumeController::class, 'exportCsv'])->name('commodities.export');
+
+    // 3b. CRUD Katalog Komoditas & Manajemen Produk
+    Route::post('/products/{product}/toggle-status', [ProductController::class, 'toggleStatus'])->name('products.toggle-status');
+    Route::resource('products', ProductController::class);
+    Route::get('/catalog', [ProductController::class, 'index'])->name('catalog');
 
     // 4. Monitoring Piutang, Tagihan Tempo & Risiko Kredit Klien B2B
     Route::get('/receivables', [ReceivableController::class, 'index'])->name('receivables.index');

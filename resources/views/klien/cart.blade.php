@@ -29,13 +29,6 @@
         {{-- Breadcrumb + status telemetry --}}
         {{-- ---------------------------------------------------------------- --}}
         <div class="flex flex-wrap items-center justify-between gap-2">
-            <nav class="flex flex-wrap items-center gap-2 gpa-meta text-ink-quiet" aria-label="Breadcrumb">
-                @foreach ($draft['breadcrumb'] as $crumb)
-                    <span>{{ $crumb }}</span>
-                    <span aria-hidden="true">/</span>
-                @endforeach
-                <span class="gpa-meta-lg font-bold text-ink">{{ $draft['title'] }}</span>
-            </nav>
 
             <div class="flex items-center gap-2">
                 <span

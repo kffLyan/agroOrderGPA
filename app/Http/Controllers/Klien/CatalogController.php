@@ -49,6 +49,8 @@ class CatalogController extends Controller
                 'sku'                => $product->sku ?? ('SKU-' . $product->id),
                 'code'               => $product->sku ?? ('SKU-' . $product->id),
                 'name'               => $product->name,
+                'image_path'         => $product->image_path,
+                'image_url'          => asset($product->image_path),
                 'subtitle'           => $product->description ?: "Komoditas hortikultura unggulan Pasundan Grade {$product->grade}",
                 'category'           => 'sayur-daun',
                 'category_label'     => 'Komoditas Pertanian GPA',

@@ -388,8 +388,11 @@ class GovernanceController extends Controller
     {
         $reason = $request->input('reason', 'Audit Kepatuhan & Stock Opname Berkala Direksi');
         $directorName = Auth::user()?->name ?: 'Direktur Utama';
+        $settings = $this->governanceService->getSettings();
+        $currentlyFrozen = $settings['master_freeze_active'] ?? false;
+        $freeze = $request->has('freeze') ? $request->boolean('freeze') : !$currentlyFrozen;
 
-        $isActive = $this->governanceService->toggleMasterFreeze($directorName, $reason);
+        $isActive = $this->governanceService->toggleMasterFreeze($freeze, $reason, $directorName);
 
         $msg = $isActive
             ? "MASTER FREEZE TELAH DIAKTIFKAN. Seluruh mutasi stok dan transaksi input PO dihentikan."
@@ -404,16 +407,33 @@ class GovernanceController extends Controller
     public function configurePlt(Request $request)
     {
         $validated = $request->validate([
-            'plt_active'         => 'required|boolean',
-            'plt_delegate_name'  => 'required_if:plt_active,1|string|max:255',
-            'plt_ceiling_amount' => 'required_if:plt_active,1|numeric|min:10000000',
-            'plt_duration_hours' => 'required_if:plt_active,1|integer|min:1|max:720',
+            'plt_active'         => 'sometimes|boolean',
+            'plt_delegate_name'  => 'nullable|string|max:255',
+            'plt_ceiling_amount' => 'nullable|numeric|min:10000000',
+            'plt_duration_hours' => 'nullable|integer|min:1|max:720',
+            'mandate_number'     => 'nullable|string|max:255',
+            'delegate_id'        => 'nullable|integer',
+            'scope'              => 'nullable|string',
+            'valid_until'        => 'nullable|date',
+            'rationale_notes'    => 'nullable|string',
         ]);
 
-        $this->governanceService->configurePlt($validated);
+        $pltActive = $request->has('plt_active')
+            ? $request->boolean('plt_active')
+            : ($request->filled('delegate_id') || $request->filled('plt_delegate_name'));
 
+        $delegateName = $validated['plt_delegate_name'] ?? null;
+        if (! $delegateName && ! empty($validated['delegate_id'])) {
+            $delegateUser = \App\Models\User::find($validated['delegate_id']);
+            $delegateName = $delegateUser ? "{$delegateUser->name} ({$delegateUser->role})" : null;
+        }
+
+        $ceiling = isset($validated['plt_ceiling_amount']) ? (float) $validated['plt_ceiling_amount'] : null;
+        $durationHours = isset($validated['plt_duration_hours']) ? (int) $validated['plt_duration_hours'] : null;
         $directorName = Auth::user()?->name ?: 'Direktur Utama';
-        $statusStr = $validated['plt_active'] ? 'DIAKTIFKAN' : 'DINONAKTIFKAN';
+
+        $this->governanceService->configurePlt($pltActive, $delegateName, $ceiling, $durationHours, $directorName);
+        $statusStr = $pltActive ? 'DIAKTIFKAN' : 'DINONAKTIFKAN';
         $this->governanceService->addAuditLog(
             'PLT_SUCCESSION_CONFIG',
             'SEC-PLT-MANDATE',

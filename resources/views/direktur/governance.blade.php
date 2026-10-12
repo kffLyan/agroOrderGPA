@@ -1,4 +1,4 @@
-@extends('layouts.director')
+@extends('layouts.direktur')
 
 @section('title', 'Pengaturan Tata Kelola // Kebijakan & Audit Trail')
 

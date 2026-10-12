@@ -42,7 +42,7 @@ class UserController extends Controller
 
         $header = [
             'eyebrow'  => 'Kelola Akun Pengguna & RBAC',
-            'title'    => 'Manajemen Hak Akses, Akun Pengguna & Matriks RBAC',
+            'title'    => 'Kelola Akun dan Hak Akses Pengguna',
             'subtitle' => 'Pusat Kontrol Otorisasi Pengguna Berjenjang, Pembagian Peran, Token Sesi Kriptografis, & Audit Akses Keamanan.',
             'period'   => 'OKTOBER 2026',
             'actions'  => [
@@ -52,8 +52,21 @@ class UserController extends Controller
             ],
         ];
 
-        $allUsers = User::orderBy('id', 'asc')->get();
-        $totalUsers = $allUsers->count();
+        $totalUsers = User::count();
+
+        $userQuery = User::orderBy('id', 'asc');
+        if ($request->filled('role')) {
+            $userQuery->where('role', strtoupper($request->query('role')));
+        }
+        if ($request->filled('search')) {
+            $s = $request->query('search');
+            $userQuery->where(function ($q) use ($s) {
+                $q->where('name', 'like', "%{$s}%")
+                  ->orWhere('email', 'like', "%{$s}%")
+                  ->orWhere('phone', 'like', "%{$s}%");
+            });
+        }
+        $allUsers = $userQuery->get();
 
         $metrics = [
             [
@@ -231,6 +244,7 @@ class UserController extends Controller
             };
 
             $directoryRows[] = [
+                'id'         => $u->id,
                 'role_key'   => $roleKey,
                 'badge'      => $badge,
                 'badge_tone' => $roleKey === 'director' ? 'ink' : 'track',
@@ -240,14 +254,21 @@ class UserController extends Controller
                 'division'   => $division,
                 'nik'        => '3201-' . str_pad($u->id, 4, '0', STR_PAD_LEFT) . '-0001',
                 'hub'        => $hub,
+                'phone'      => $u->phone,
+                'is_active'  => (bool) $u->is_active,
                 'mfa'        => '2FA Aktif',
                 'mfa_tone'   => $roleKey === 'director' ? 'accent' : 'track',
                 'online'     => $u->id === $currentUser?->id,
                 'login'      => $u->id === $currentUser?->id ? 'Online Now' : 'Hari ini',
                 'login_meta' => $u->email,
+                'show_url'   => route('direktur.users.show', $u->id),
+                'edit_url'   => route('direktur.users.edit', $u->id),
+                'delete_url' => route('direktur.users.destroy', $u->id),
+                'reset_pwd_url' => route('direktur.users.reset-password', $u->id),
                 'actions'    => [
-                    ['label' => 'Edit',        'tone' => 'track', 'icon' => 'settings'],
-                    ['label' => 'Reset Sandi', 'tone' => 'track', 'icon' => 'key'],
+                    ['label' => 'Detail',      'tone' => 'track', 'icon' => 'eye',      'url' => route('direktur.users.show', $u->id)],
+                    ['label' => 'Edit',        'tone' => 'track', 'icon' => 'settings', 'url' => route('direktur.users.edit', $u->id)],
+                    ['label' => 'Reset Sandi', 'tone' => 'track', 'icon' => 'key',      'url' => route('direktur.users.reset-password', $u->id)],
                 ],
             ];
         }
@@ -287,7 +308,7 @@ class UserController extends Controller
             'description' => 'Sesuai UU Perlindungan Data Pribadi (UU PDP No. 27/2022) dan ISO 27001.',
         ];
 
-        return view('direktur.access', compact(
+        return view('direktur.users.index', compact(
             'operator',
             'header',
             'metrics',

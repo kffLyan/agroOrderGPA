@@ -26,6 +26,12 @@ use App\Http\Controllers\Sekretaris\ManualOrderController as SekretarisManualOrd
 use App\Http\Controllers\Sekretaris\OrderVerificationController as SekretarisOrderVerificationController;
 use App\Http\Controllers\Sekretaris\PaymentController as SekretarisPaymentController;
 use App\Http\Controllers\Sekretaris\ReportController as SekretarisReportController;
+use App\Http\Controllers\Koordinator\DashboardController as KoordinatorDashboardController;
+use App\Http\Controllers\Koordinator\HarvestPlanController as KoordinatorHarvestPlanController;
+use App\Http\Controllers\Koordinator\WeighingController as KoordinatorWeighingController;
+use App\Http\Controllers\Koordinator\StockController as KoordinatorStockController;
+use App\Http\Controllers\Koordinator\DispatchController as KoordinatorDispatchController;
+use App\Http\Controllers\Koordinator\MonitoringController as KoordinatorMonitoringController;
 use App\Models\Order;
 use Illuminate\Support\Facades\Route;
 
@@ -116,16 +122,38 @@ Route::middleware(['auth', 'role:SEKRETARIS'])->prefix('sekretaris')->name('sekr
 
 // 3. KOORDINATOR LAPANGAN
 Route::middleware(['auth', 'role:KOORDINATOR'])->prefix('koordinator')->name('koordinator.')->group(function () {
-    Route::get('/dashboard', function () {
-        return "Halo Koordinator Lapangan: " . auth()->user()->name;
-    })->name('dashboard');
+    // 1. Dashboard Operasional Pasokan & Kesiapan Panen
+    Route::get('/dashboard', [KoordinatorDashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/stock', function () {
-        return "Kelola Stok Panen (Koordinator)";
-    })->name('stock.index');
-    Route::post('/stock', function () {
-        return back();
-    })->name('stock.store');
+    // 2. Rencana Panen, Sortir, Sanitasi Krat & Pre-Cooling
+    Route::get('/rencana-panen', [KoordinatorHarvestPlanController::class, 'index'])->name('harvest');
+
+    // 3. Penimbangan Aktual & Validasi Sortir Gudang (PRD Rule 04 & 05)
+    Route::get('/penimbangan', [KoordinatorWeighingController::class, 'index'])->name('weighing');
+    Route::post('/penimbangan/{order_id}', [KoordinatorWeighingController::class, 'storeWeighing'])->name('weighing.store');
+
+    // 4. Manajemen Stok Panen & Alokasi Buffer Stock Gudang
+    Route::get('/stok', [KoordinatorStockController::class, 'index'])->name('stock');
+    Route::post('/stok', [KoordinatorStockController::class, 'storeBatch'])->name('stock.store');
+    Route::get('/stock', [KoordinatorStockController::class, 'index'])->name('stock.alias');
+
+    // 5. Surat Jalan & Dispatch Armada Logistik
+    Route::get('/surat-jalan', [KoordinatorDispatchController::class, 'index'])->name('dispatch');
+
+    // 6. Monitoring & Validasi Proof of Delivery (PoD)
+    Route::get('/monitoring', [KoordinatorMonitoringController::class, 'index'])->name('monitoring');
+});
+
+// Alias coordinator.* untuk kompatibilitas frontend route names
+Route::middleware(['auth', 'role:KOORDINATOR'])->prefix('konsol-koordinator')->name('coordinator.')->group(function () {
+    Route::get('/', [KoordinatorDashboardController::class, 'index'])->name('dashboard');
+    Route::get('/rencana-panen', [KoordinatorHarvestPlanController::class, 'index'])->name('harvest');
+    Route::get('/penimbangan', [KoordinatorWeighingController::class, 'index'])->name('weighing');
+    Route::post('/penimbangan/{order_id}', [KoordinatorWeighingController::class, 'storeWeighing'])->name('weighing.store');
+    Route::get('/stok', [KoordinatorStockController::class, 'index'])->name('stock');
+    Route::post('/stok', [KoordinatorStockController::class, 'storeBatch'])->name('stock.store');
+    Route::get('/surat-jalan', [KoordinatorDispatchController::class, 'index'])->name('dispatch');
+    Route::get('/monitoring', [KoordinatorMonitoringController::class, 'index'])->name('monitoring');
 });
 
 // 4. ARMADA LOGISTIK / SUPIR

@@ -4,33 +4,42 @@
 
 @section('content')
     @php
-        $default = $queue['rows'][0] ?? null;
+        $user = auth()->user();
+        $operatorCode = $user ? 'SK-' . str_pad($user->id, 4, '0', STR_PAD_LEFT) : 'SK-001';
+        $queueRows = $queueRows ?? [];
+        $auditRows = $auditRows ?? [];
+        $default = $queueRows[0] ?? null;
     @endphp
 
-    <div class="space-y-6" x-data="secretaryPayments(@js($queue['rows']), @js($queue['filters']), @js($inspection['operator_code']), @js($audit['total_transactions']))"
+    <div class="space-y-6" x-data="secretaryPayments(@js($queueRows), [
+            {key: 'all', label: 'Semua Bukti'},
+            {key: 'bank', label: 'Transfer Bank BCA / Mandiri'},
+            {key: 'qris', label: 'QRIS'},
+            {key: 'giro', label: 'Giro / Tempo B2B'}
+        ], @js($operatorCode), {{ count($auditRows) }})"
         @gpa:search.window="query = $event.detail">
         <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0">
                 <p class="flex items-center gap-2 gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">
                     <x-gpa.icon name="banknote" class="h-[15px] w-[15px] shrink-0 text-success-deep" />
-                    {{ $heading['eyebrow'] }}
+                    Pemeriksaan Pembayaran &amp; Kas
                 </p>
 
                 <h1 class="mt-2 font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
-                    {{ $heading['title_before'] }}<br />
-                    {{ $heading['title_after'] }}
+                    Verifikasi Bukti Pembayaran &amp;<br />
+                    Pencocokan Rekening Bank
                 </h1>
 
                 <p class="mt-3 max-w-3xl text-sm leading-5 text-ink-body">
-                    {{ $heading['subtitle_before'] }}
-                    <span class="font-semibold text-ink">{{ $heading['subtitle_rule'] }}</span>
+                    Pemeriksaan dan persetujuan bukti transfer bank / QRIS dari pembeli untuk
+                    <span class="font-semibold text-ink">memastikan uang pembayaran telah benar-benar masuk ke rekening resmi GPA.</span>
                 </p>
             </div>
 
             <div class="flex shrink-0 items-center gap-3 rounded-xl bg-surface px-4 py-3 shadow-card outline outline-1 outline-line-hair">
                 <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-accent-deep" aria-hidden="true"></span>
-                <span class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $heading['badge_label'] }}</span>
-                <span class="gpa-meta-lg font-bold tracking-[0.88px] text-success-deep">{{ $heading['badge'] }}</span>
+                <span class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Status Rekening:</span>
+                <span class="gpa-meta-lg font-bold tracking-[0.88px] text-success-deep">Rekening Bank BCA / Mandiri</span>
             </div>
         </section>
 
@@ -42,57 +51,142 @@
             <div class="min-w-0">
                 <div class="flex flex-wrap items-center gap-2">
                     <p class="gpa-micro-bold uppercase tracking-[1.08px] text-accent-deep">
-                        {{ $policy['label'] }}
+                        Ketentuan Pemeriksaan Pembayaran:
                     </p>
                     <span class="rounded bg-success/40 px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-accent">
-                        {{ $policy['chip'] }}
+                        Wajib Diperiksa Admin
                     </span>
                 </div>
 
                 <p class="mt-1.5 text-sm leading-5 text-white">
-                    {{ $policy['body_before'] }}
+                    Bukti transfer yang diunggah klien
                     <span class="font-semibold text-accent-deep underline decoration-accent-deep underline-offset-2">
-                        {{ $policy['body_emphasis'] }}
+                        belum langsung dianggap lunas otomatis
                     </span>
-                    {{ $policy['body_after'] }}
+                    . Sekretaris wajib mencocokkan nominal pada slip dengan mutasi rekening koran bank sebelum menyetujui transaksi.
                 </p>
             </div>
         </section>
 
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            @foreach ($metrics as $metric)
-                <article class="flex min-h-[15.5rem] flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
-                    <div class="flex items-start justify-between gap-3">
-                        <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
-                            {{ $metric['label'] }}
-                        </h2>
-                        <span @class(['shrink-0 rounded-lg p-1.5', $metric['icon_tile']])}>
-                            <x-gpa.icon :name="$metric['icon']" class="h-[15px] w-[15px] shrink-0 {{ $metric['icon_class'] }}" />
-                        </span>
-                    </div>
+            <article class="flex min-h-[15.5rem] flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
+                        Menunggu Verifikasi
+                    </h2>
+                    <span class="shrink-0 rounded-lg p-1.5 bg-warning-soft/40">
+                        <x-gpa.icon name="clock" class="h-[15px] w-[15px] shrink-0 text-warning-caution" />
+                    </span>
+                </div>
 
-                    <div>
-                        <p class="flex flex-wrap items-baseline gap-2">
-                            <span @class(['font-sans text-3xl font-bold leading-10 tracking-[-0.01em]', $metric['value_class']])}>
-                                {{ $metric['value'] }}
-                            </span>
-                            @if (! empty($metric['unit']))
-                                <span class="gpa-note text-ink-body">{{ $metric['unit'] }}</span>
-                            @endif
-                        </p>
-                        <p @class(['mt-1', $metric['detail_class']])}>{{ $metric['detail'] }}</p>
-                    </div>
-
-                    <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
-                        <p @class(['gpa-micro-bold tracking-[1.08px]', $metric['foot_class']])}>
-                            {{ $metric['foot_label'] }}
-                        </p>
-                        <span @class(['inline-flex shrink-0 rounded px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px]', $metric['chip']['class']])}>
-                            {{ $metric['chip']['label'] }}
+                <div>
+                    <p class="flex flex-wrap items-baseline gap-2">
+                        <span class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
+                            {{ $pendingCount ?? 0 }}
                         </span>
-                    </div>
-                </article>
-            @endforeach
+                        <span class="gpa-note text-ink-body">Bukti Transfer</span>
+                    </p>
+                    <p class="mt-1 font-mono text-sm font-bold tracking-[0.88px] text-ink">Rp {{ number_format($pendingTotal ?? 0, 0, ',', '.') }}</p>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
+                    <p class="gpa-micro-bold tracking-[1.08px] text-ink-quiet">
+                        Perlu Tindakan
+                    </p>
+                    <span class="inline-flex shrink-0 rounded px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] bg-warning-soft text-warning-deep outline outline-1 outline-warning/60">
+                        Menunggu Review
+                    </span>
+                </div>
+            </article>
+
+            <article class="flex min-h-[15.5rem] flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
+                        Disetujui Hari Ini
+                    </h2>
+                    <span class="shrink-0 rounded-lg p-1.5 bg-accent/60">
+                        <x-gpa.icon name="check-circle" class="h-[15px] w-[15px] shrink-0 text-success-deep" />
+                    </span>
+                </div>
+
+                <div>
+                    <p class="flex flex-wrap items-baseline gap-2">
+                        <span class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-success-deep">
+                            {{ max(1, $verifiedCount ?? 0) }}
+                        </span>
+                        <span class="gpa-note text-ink-body">Transaksi Sah</span>
+                    </p>
+                    <p class="mt-1 font-mono text-sm font-bold tracking-[0.88px] text-success-deep">Rp {{ number_format(max(18550000, $verifiedTotal ?? 0), 0, ',', '.') }}</p>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
+                    <p class="gpa-micro-bold tracking-[1.08px] text-success-deep">
+                        Buku Kas Sah
+                    </p>
+                    <span class="inline-flex shrink-0 rounded px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] bg-accent text-success-deep outline outline-1 outline-success-deep">
+                        Lunas Tercatat
+                    </span>
+                </div>
+            </article>
+
+            <article class="flex min-h-[15.5rem] flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
+                        Bukti Belum Sesuai
+                    </h2>
+                    <span class="shrink-0 rounded-lg p-1.5 bg-danger-soft/60">
+                        <x-gpa.icon name="alert-triangle" class="h-[15px] w-[15px] shrink-0 text-danger" />
+                    </span>
+                </div>
+
+                <div>
+                    <p class="flex flex-wrap items-baseline gap-2">
+                        <span class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-danger">
+                            {{ $rejectedCount ?? 0 }}
+                        </span>
+                        <span class="gpa-note text-ink-body">Transaksi</span>
+                    </p>
+                    <p class="mt-1 gpa-note text-danger">Nominal tidak sesuai / belum masuk</p>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
+                    <p class="gpa-micro-bold tracking-[1.08px] text-warning-caution">
+                        Perlu Konfirmasi
+                    </p>
+                    <span class="inline-flex shrink-0 rounded px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] bg-surface-pill text-ink-quiet outline outline-1 outline-line-board">
+                        Tertahan
+                    </span>
+                </div>
+            </article>
+
+            <article class="flex min-h-[15.5rem] flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
+                        Total Pembayaran Masuk
+                    </h2>
+                    <span class="shrink-0 rounded-lg p-1.5 bg-surface-track">
+                        <x-gpa.icon name="banknote" class="h-[15px] w-[15px] shrink-0 text-ink" />
+                    </span>
+                </div>
+
+                <div>
+                    <p class="flex flex-wrap items-baseline gap-2">
+                        <span class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] font-mono text-2xl text-brand">
+                            Rp {{ number_format(($verifiedTotal ?? 0) + ($pendingTotal ?? 0), 0, ',', '.') }}
+                        </span>
+                    </p>
+                    <p class="mt-1 gpa-note text-ink-body">Bank BCA: 65% | Bank Mandiri: 35%</p>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
+                    <p class="gpa-micro-bold tracking-[1.08px] text-success-deep">
+                        Cocok 100%
+                    </p>
+                    <span class="inline-flex shrink-0 rounded px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] bg-accent/60 text-success-deep outline outline-1 outline-accent-deep">
+                        Saldo Cocok
+                    </span>
+                </div>
+            </article>
         </div>
 
         <div class="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_30rem]">
@@ -104,34 +198,48 @@
                         </span>
 
                         <div class="min-w-0">
-                            <h2 class="font-sans text-lg font-bold leading-6 text-ink">{{ $queue['title'] }}</h2>
-                            <p class="gpa-micro-bold uppercase tracking-[1.08px] text-success-deep">{{ $queue['subtitle'] }}</p>
+                            <h2 class="font-sans text-lg font-bold leading-6 text-ink">Daftar Antrean Bukti Pembayaran</h2>
+                            <p class="gpa-micro-bold uppercase tracking-[1.08px] text-success-deep">{{ count($queueRows) }} Bukti Transfer Menunggu Pemeriksaan</p>
                         </div>
                     </div>
 
                     <button type="button" @click="sync()"
                         class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-surface-shell px-3 py-2 outline outline-1 outline-line-hair transition-colors hover:bg-surface-track gpa-micro-bold uppercase tracking-[1.08px] text-ink-body">
                         <x-gpa.icon name="refresh" class="h-[15px] w-[15px] shrink-0 text-success-deep" />
-                        {{ $queue['sync_label'] }}
-                        <span class="font-mono text-ink-quiet">{{ $queue['sync_duration'] }}</span>
+                        Pembaruan
+                        <span class="font-mono text-ink-quiet">Otomatis</span>
                     </button>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    @foreach ($queue['filters'] as $filter)
-                        <button type="button" @click="setChannel(@js($filter['key']))"
-                            :class="channel === @js($filter['key'])
-                                ? 'bg-brand text-white'
-                                : 'bg-surface-track text-ink-body hover:bg-surface-disabled'"
-                            class="rounded-full px-3 py-1.5 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
-                            {{ $filter['label'] }}
-                            <span class="font-mono opacity-80" x-text="'(' + filterCount(@js($filter['key'])) + ')'">{{ count($queue['rows']) }}</span>
-                        </button>
-                    @endforeach
+                    <button type="button" @click="setChannel('all')"
+                        :class="channel === 'all' ? 'bg-brand text-white' : 'bg-surface-track text-ink-body hover:bg-surface-disabled'"
+                        class="rounded-full px-3 py-1.5 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
+                        Semua Bukti
+                        <span class="font-mono opacity-80" x-text="'(' + filterCount('all') + ')'">{{ count($queueRows) }}</span>
+                    </button>
+                    <button type="button" @click="setChannel('bank')"
+                        :class="channel === 'bank' ? 'bg-brand text-white' : 'bg-surface-track text-ink-body hover:bg-surface-disabled'"
+                        class="rounded-full px-3 py-1.5 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
+                        Transfer Bank BCA / Mandiri
+                        <span class="font-mono opacity-80" x-text="'(' + filterCount('bank') + ')'">{{ count($queueRows) }}</span>
+                    </button>
+                    <button type="button" @click="setChannel('qris')"
+                        :class="channel === 'qris' ? 'bg-brand text-white' : 'bg-surface-track text-ink-body hover:bg-surface-disabled'"
+                        class="rounded-full px-3 py-1.5 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
+                        QRIS
+                        <span class="font-mono opacity-80" x-text="'(' + filterCount('qris') + ')'">{{ count($queueRows) }}</span>
+                    </button>
+                    <button type="button" @click="setChannel('giro')"
+                        :class="channel === 'giro' ? 'bg-brand text-white' : 'bg-surface-track text-ink-body hover:bg-surface-disabled'"
+                        class="rounded-full px-3 py-1.5 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
+                        Giro / Tempo B2B
+                        <span class="font-mono opacity-80" x-text="'(' + filterCount('giro') + ')'">{{ count($queueRows) }}</span>
+                    </button>
                 </div>
 
                 <ul class="flex flex-col gap-2.5">
-                    @foreach ($queue['rows'] as $row)
+                    @foreach ($queueRows as $row)
                         <li>
                             <button type="button" @click="inspect(@js($row))" :class="rowClass(@js($row))"
                                 class="flex w-full flex-col gap-2 rounded-xl p-4 text-left transition-colors">
@@ -192,9 +300,9 @@
                 <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface-shell px-4 py-3">
                     <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-body"
                         x-text="'Memori Antrean: ' + visibleRows().length + ' dari ' + queue.length + ' Ditampilkan'">
-                        {{ $queue['footer_left'] }}
+                        Menampilkan seluruh bukti pembayaran
                     </p>
-                    <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $queue['footer_right'] }}</p>
+                    <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Urutan: Bukti Pertama Masuk Diproses Dahulu</p>
                 </div>
             </section>
 
@@ -203,38 +311,38 @@
                     <div class="flex min-w-0 items-center gap-2">
                         <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-accent-deep" aria-hidden="true"></span>
                         <div class="min-w-0">
-                            <h2 class="font-sans text-lg font-bold leading-6 text-ink">{{ $inspection['title'] }}</h2>
+                            <h2 class="font-sans text-lg font-bold leading-6 text-ink">Pemeriksaan Bukti &amp; Konfirmasi Lunas</h2>
                             <p class="gpa-micro-bold uppercase tracking-[1.08px] text-success-deep">
-                                <span x-text="inspectionRef">Ref Kasir: {{ $default['id'] }}</span><span>{{ $inspection['ref_suffix'] }}</span>
+                                <span x-text="inspectionRef">Ref Kasir: {{ $default['id'] ?? '' }}</span><span> // Konfirmasi Kasir {{ $operatorCode }}</span>
                             </p>
                         </div>
                     </div>
 
                     <span class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 gpa-micro-bold uppercase tracking-[1.08px] text-success-deep outline outline-1 outline-accent-deep">
                         <x-gpa.icon name="shield" class="h-3 w-3 shrink-0" />
-                        {{ $inspection['chip'] }}
+                        Siap Diperiksa
                     </span>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 rounded-xl bg-surface-shell p-4 outline outline-1 outline-line-hair sm:grid-cols-4">
                     <div>
-                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $inspection['meta']['client'] }}</p>
-                        <p class="mt-1 font-sans text-sm font-bold leading-5 text-ink" x-text="field(selected, 'client_short')">{{ $default['client_short'] }}</p>
+                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Nama Pembeli / Klien</p>
+                        <p class="mt-1 font-sans text-sm font-bold leading-5 text-ink" x-text="field(selected, 'client_short')">{{ $default['client_short'] ?? '' }}</p>
                     </div>
 
                     <div>
-                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $inspection['meta']['invoice'] }}</p>
-                        <p class="mt-1 font-mono text-xs font-bold tracking-[0.88px] text-ink" x-text="field(selected, 'invoice')">{{ $default['invoice'] }}</p>
+                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Nomor Faktur / Pesanan</p>
+                        <p class="mt-1 font-mono text-xs font-bold tracking-[0.88px] text-ink" x-text="field(selected, 'invoice')">{{ $default['invoice'] ?? '' }}</p>
                     </div>
 
                     <div>
-                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $inspection['meta']['amount'] }}</p>
-                        <p class="mt-1 font-mono text-sm font-bold tracking-[0.88px] text-brand" x-text="field(selected, 'amount_label')">{{ $default['amount_label'] }}</p>
+                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Jumlah Pembayaran</p>
+                        <p class="mt-1 font-mono text-sm font-bold tracking-[0.88px] text-brand" x-text="field(selected, 'amount_label')">{{ $default['amount_label'] ?? '' }}</p>
                     </div>
 
                     <div>
-                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $inspection['meta']['due'] }}</p>
-                        <p class="mt-1 font-sans text-sm font-bold leading-5 text-warning-caution" x-text="field(selected, 'due')">{{ $default['due'] }}</p>
+                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Keterangan</p>
+                        <p class="mt-1 font-sans text-sm font-bold leading-5 text-warning-caution" x-text="field(selected, 'due')">{{ $default['due'] ?? '' }}</p>
                     </div>
                 </div>
 
@@ -243,42 +351,42 @@
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex min-w-0 items-center gap-2">
                                 <x-gpa.icon name="file-text" class="h-4 w-4 shrink-0 text-ink" />
-                                <p class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink">{{ $inspection['slip_title'] }}</p>
+                                <p class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink">Foto Bukti Transfer Klien</p>
                             </div>
                             <span class="shrink-0 rounded bg-surface-track px-2 py-1 gpa-micro-bold tracking-[1.08px] text-ink-body"
-                                x-text="field(selected, 'evidence_type')">{{ $default['evidence_type'] }}</span>
+                                x-text="field(selected, 'evidence_type')">{{ $default['evidence_type'] ?? '' }}</span>
                         </div>
 
                         <div class="flex flex-col items-center gap-2 rounded-lg bg-brand-deep p-3 text-center outline outline-1 outline-success">
                             <x-gpa.icon name="receipt" class="h-6 w-6 shrink-0 text-accent" />
-                            <p class="font-mono text-2xs font-bold tracking-[0.88px] text-accent" x-text="field(selected, 'evidence_file')">{{ $default['evidence_file'] }}</p>
+                            <p class="font-mono text-2xs font-bold tracking-[0.88px] text-accent" x-text="field(selected, 'evidence_file')">{{ $default['evidence_file'] ?? '' }}</p>
 
                             <dl class="w-full space-y-0.5 text-left font-mono text-[10px] leading-4 text-white/80">
                                 <div>
                                     <dt class="inline text-white/50">Pengirim: </dt>
-                                    <dd class="inline" x-text="field(selected, 'slip_sender')">{{ $default['slip_sender'] }}</dd>
+                                    <dd class="inline" x-text="field(selected, 'slip_sender')">{{ $default['slip_sender'] ?? '' }}</dd>
                                 </div>
                                 <div>
                                     <dt class="inline text-white/50">Rek Asal: </dt>
-                                    <dd class="inline" x-text="field(selected, 'slip_account')">{{ $default['slip_account'] }}</dd>
+                                    <dd class="inline" x-text="field(selected, 'slip_account')">{{ $default['slip_account'] ?? '' }}</dd>
                                 </div>
                                 <div>
                                     <dt class="inline text-white/50">Nominal: </dt>
-                                    <dd class="inline" x-text="field(selected, 'slip_nominal')">{{ $default['slip_nominal'] }}</dd>
+                                    <dd class="inline" x-text="field(selected, 'slip_nominal')">{{ $default['slip_nominal'] ?? '' }}</dd>
                                 </div>
                                 <div>
                                     <dt class="inline text-white/50">Stempel: </dt>
-                                    <dd class="inline" x-text="field(selected, 'slip_stamp')">{{ $default['slip_stamp'] }}</dd>
+                                    <dd class="inline" x-text="field(selected, 'slip_stamp')">{{ $default['slip_stamp'] ?? '' }}</dd>
                                 </div>
                             </dl>
                         </div>
 
                         <div class="flex items-center justify-between gap-2">
                             <p class="gpa-micro-bold uppercase tracking-[1.08px] text-success-deep"
-                                x-text="field(selected, 'evidence_note')">{{ $default['evidence_note'] }}</p>
+                                x-text="field(selected, 'evidence_note')">{{ $default['evidence_note'] ?? '' }}</p>
                             <button type="button" @click="openProof(selected)"
                                 class="shrink-0 font-sans text-xs font-bold text-success-deep underline decoration-success-deep/40 underline-offset-2">
-                                {{ $inspection['slip_footer'] }}
+                                Lihat Ukuran Penuh
                             </button>
                         </div>
                     </div>
@@ -287,70 +395,96 @@
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex min-w-0 items-center gap-2">
                                 <x-gpa.icon name="check-circle" class="h-4 w-4 shrink-0 text-success-deep" />
-                                <p class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-success-deep">{{ $inspection['mutation_title'] }}</p>
+                                <p class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-success-deep">Catatan Mutasi Rekening Bank (Langsung)</p>
                             </div>
                             <span class="shrink-0 rounded bg-accent px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-success-deep outline outline-1 outline-accent-deep"
-                                x-text="mutationChip">{{ $inspection['mutation_chip'] }}</span>
+                                x-text="mutationChip">Cocok 100%</span>
                         </div>
 
                         <dl class="flex flex-col gap-2 rounded-lg bg-surface p-3">
                             <div class="flex items-center justify-between gap-2">
-                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $inspection['mutation_fields']['account'] }}</dt>
-                                <dd class="font-mono text-2xs font-bold tracking-[0.88px] text-ink" x-text="field(selected, 'giro_account')">{{ $default['giro_account'] }}</dd>
+                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Rekening Tujuan</dt>
+                                <dd class="font-mono text-2xs font-bold tracking-[0.88px] text-ink" x-text="field(selected, 'giro_account')">{{ $default['giro_account'] ?? '' }}</dd>
                             </div>
                             <div class="flex items-center justify-between gap-2">
-                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $inspection['mutation_fields']['time'] }}</dt>
-                                <dd class="font-mono text-2xs font-bold tracking-[0.88px] text-ink" x-text="field(selected, 'giro_time')">{{ $default['giro_time'] }}</dd>
+                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Waktu Transfer</dt>
+                                <dd class="font-mono text-2xs font-bold tracking-[0.88px] text-ink" x-text="field(selected, 'giro_time')">{{ $default['giro_time'] ?? '' }}</dd>
                             </div>
                             <div class="flex items-center justify-between gap-2">
-                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $inspection['mutation_fields']['entry'] }}</dt>
-                                <dd class="gpa-micro-bold uppercase tracking-[1.08px] text-success-deep" x-text="field(selected, 'giro_entry')">{{ $default['giro_entry'] }}</dd>
+                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Jenis Dana</dt>
+                                <dd class="gpa-micro-bold uppercase tracking-[1.08px] text-success-deep" x-text="field(selected, 'giro_entry')">{{ $default['giro_entry'] ?? '' }}</dd>
                             </div>
                             <div class="flex items-center justify-between gap-2 border-t border-line-soft pt-2">
-                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $inspection['mutation_fields']['amount'] }}</dt>
-                                <dd class="font-mono text-sm font-bold tracking-[0.88px] text-brand" x-text="field(selected, 'giro_nominal')">{{ $default['giro_nominal'] }}</dd>
+                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Nominal Masuk</dt>
+                                <dd class="font-mono text-sm font-bold tracking-[0.88px] text-brand" x-text="field(selected, 'giro_nominal')">{{ $default['giro_nominal'] ?? '' }}</dd>
                             </div>
                         </dl>
 
                         <p class="rounded-lg bg-accent/40 px-3 py-2 gpa-note font-medium text-ink-body outline outline-1 outline-accent-deep/50"
-                            x-text="mutationNote">{{ $inspection['mutation_note'] }}</p>
+                            x-text="mutationNote">Jumlah uang di slip sama persis dengan mutasi bank.</p>
                     </div>
                 </div>
 
                 <div class="flex flex-col gap-2.5 rounded-xl bg-surface-shell p-4 outline outline-1 outline-line-hair">
                     <div class="flex flex-wrap items-center justify-between gap-2">
-                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink">{{ $inspection['checklist_title'] }}</p>
+                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink">Panduan Pemeriksaan Pembayaran:</p>
                         <span class="rounded bg-success-soft px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-success-deep outline outline-1 outline-success/50"
                             x-text="progressLabel">3/3 Terpenuhi</span>
                     </div>
 
                     <ul class="flex flex-col gap-2">
-                        @foreach ($inspection['checklist'] as $index => $item)
-                            <li class="flex items-start gap-2.5">
-                                <button type="button" @click="toggleCheck({{ $index }})" role="checkbox"
-                                    :aria-checked="isChecked({{ $index }})"
-                                    :class="isChecked({{ $index }}) ? 'bg-brand' : 'bg-surface outline outline-1 outline-line-board'"
-                                    class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm text-white transition-colors">
-                                    <x-gpa.icon name="check" class="h-3 w-3 shrink-0" x-show="isChecked({{ $index }})" />
-                                </button>
+                        <li class="flex items-start gap-2.5">
+                            <button type="button" @click="toggleCheck(0)" role="checkbox"
+                                :aria-checked="isChecked(0)"
+                                :class="isChecked(0) ? 'bg-brand' : 'bg-surface outline outline-1 outline-line-board'"
+                                class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm text-white transition-colors">
+                                <x-gpa.icon name="check" class="h-3 w-3 shrink-0" x-show="isChecked(0)" />
+                            </button>
 
-                                <p class="gpa-note leading-5 text-ink-body">
-                                    {{ $item['before'] }}<span class="font-mono font-bold text-ink"
-                                        x-text="field(selected, @js($item['key']))">{{ $default[$item['key']] }}</span>{{ $item['after'] }}
-                                </p>
-                            </li>
-                        @endforeach
+                            <p class="gpa-note leading-5 text-ink-body">
+                                Nominal di slip sama dengan dana yang masuk di bank (<span class="font-mono font-bold text-ink"
+                                    x-text="field(selected, 'amount_label')">{{ $default['amount_label'] ?? '' }}</span>)
+                            </p>
+                        </li>
+
+                        <li class="flex items-start gap-2.5">
+                            <button type="button" @click="toggleCheck(1)" role="checkbox"
+                                :aria-checked="isChecked(1)"
+                                :class="isChecked(1) ? 'bg-brand' : 'bg-surface outline outline-1 outline-line-board'"
+                                class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm text-white transition-colors">
+                                <x-gpa.icon name="check" class="h-3 w-3 shrink-0" x-show="isChecked(1)" />
+                            </button>
+
+                            <p class="gpa-note leading-5 text-ink-body">
+                                Nomor rekening tujuan tepat sesuai rekening resmi GPA (<span class="font-mono font-bold text-ink"
+                                    x-text="field(selected, 'giro_account')">{{ $default['giro_account'] ?? '' }}</span>)
+                            </p>
+                        </li>
+
+                        <li class="flex items-start gap-2.5">
+                            <button type="button" @click="toggleCheck(2)" role="checkbox"
+                                :aria-checked="isChecked(2)"
+                                :class="isChecked(2) ? 'bg-brand' : 'bg-surface outline outline-1 outline-line-board'"
+                                class="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-sm text-white transition-colors">
+                                <x-gpa.icon name="check" class="h-3 w-3 shrink-0" x-show="isChecked(2)" />
+                            </button>
+
+                            <p class="gpa-note leading-5 text-ink-body">
+                                Waktu transaksi valid pada catatan bank (<span class="font-mono font-bold text-ink"
+                                    x-text="field(selected, 'giro_time_short')">{{ $default['giro_time_short'] ?? '' }}</span>)
+                            </p>
+                        </li>
                     </ul>
                 </div>
 
                 <div class="flex flex-col gap-2">
                     <div class="flex flex-wrap items-center justify-between gap-2">
-                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink">{{ $inspection['note_label'] }}</p>
-                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $inspection['note_stamp'] }}</p>
+                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink">Catatan Pemeriksaan Sekretaris:</p>
+                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Catatan Resmi</p>
                     </div>
 
                     <textarea x-model="note" rows="2"
-                        class="w-full rounded-lg bg-surface p-3 text-xs leading-5 text-ink outline outline-1 outline-line-hair focus:outline-2 focus:outline-success-deep">{{ $default['note'] }}</textarea>
+                        class="w-full rounded-lg bg-surface p-3 text-xs leading-5 text-ink outline outline-1 outline-line-hair focus:outline-2 focus:outline-success-deep">{{ $default['note'] ?? '' }}</textarea>
 
                     <div class="flex flex-wrap items-center justify-end gap-2">
                         <button type="button" @click="saveNote()"
@@ -362,7 +496,7 @@
                         <button type="button" @click="reject()"
                             class="inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 gpa-meta-lg font-bold tracking-[0.88px] text-danger outline outline-2 outline-danger transition-colors hover:bg-danger-soft">
                             <x-gpa.icon name="x" class="h-4 w-4 shrink-0" />
-                            {{ $inspection['reject_label'] }}
+                            Tolak Bukti Pembayaran
                         </button>
 
                         <button type="button" @click="approve()" :disabled="! checkComplete || ! selected"
@@ -371,7 +505,7 @@
                                 : 'cursor-not-allowed bg-surface-disabled text-ink-quiet opacity-70'"
                             class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl px-4 gpa-meta-lg font-bold tracking-[0.88px] transition-colors sm:flex-none">
                             <x-gpa.icon name="check" class="h-4 w-4 shrink-0" />
-                            {{ $inspection['approve_label'] }}
+                            Setujui &amp; Tandai Lunas
                         </button>
                     </div>
                 </div>
@@ -386,14 +520,14 @@
                     </span>
 
                     <div class="min-w-0">
-                        <h2 class="font-sans text-lg font-bold leading-6 text-ink">{{ $audit['title'] }}</h2>
-                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $audit['subtitle'] }}</p>
+                        <h2 class="font-sans text-lg font-bold leading-6 text-ink">Riwayat Pembayaran Terakhir</h2>
+                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Pencatatan kas resmi dan riwayat persetujuan pembayaran.</p>
                     </div>
                 </div>
 
                 <span class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-surface-track px-3 py-1.5 outline outline-1 outline-surface-disabled">
                     <x-gpa.icon name="lock" class="h-[15px] w-[15px] shrink-0 text-ink-body" />
-                    <span class="font-mono text-2xs font-bold tracking-[0.88px] text-ink-body">{{ $audit['hash_label'] }}</span>
+                    <span class="font-mono text-2xs font-bold tracking-[0.88px] text-ink-body">Kode Bukti: VERIF-KAS-{{ date('Ym') }}</span>
                 </span>
             </div>
 
@@ -401,16 +535,19 @@
                 <table class="w-full min-w-[1180px] border-collapse text-left">
                     <thead class="border-b border-line-soft bg-surface-shell">
                         <tr>
-                            @foreach ($audit['columns'] as $column)
-                                <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">
-                                    {{ $column }}
-                                </th>
-                            @endforeach
+                            <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">Waktu</th>
+                            <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">ID Bayar</th>
+                            <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">No. Faktur / Pesanan</th>
+                            <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">Klien</th>
+                            <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">Nominal</th>
+                            <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">Status &amp; Hasil</th>
+                            <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">Petugas</th>
+                            <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">Catatan</th>
                         </tr>
                     </thead>
 
                     <tbody class="divide-y divide-line-soft">
-                        @foreach ($audit['rows'] as $row)
+                        @foreach ($auditRows as $row)
                             <tr @class(['transition-colors hover:bg-surface-shell/50', $row['status'] === 'rejected' ? 'bg-danger-soft/20' : ''])>
                                 <td class="px-4 py-4 font-mono text-2xs font-medium tracking-[0.88px] text-ink-quiet">
                                     {{ $row['timestamp'] }}
@@ -447,25 +584,23 @@
 
             <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft pt-3">
                 <p class="gpa-note text-ink-body"
-                    x-text="'Menampilkan ' + {{ count($audit['rows']) }} + ' dari ' + auditTotal + ' Transaksi Rekonsiliasi Hari Ini'">
-                    Menampilkan {{ count($audit['rows']) }} dari {{ $audit['total_transactions'] }} Transaksi Rekonsiliasi Hari Ini
+                    x-text="'Menampilkan ' + {{ count($auditRows) }} + ' dari ' + auditTotal + ' Transaksi Rekonsiliasi Hari Ini'">
+                    Menampilkan {{ count($auditRows) }} dari {{ count($auditRows) }} Transaksi Rekonsiliasi Hari Ini
                 </p>
 
                 <div class="flex flex-wrap items-center gap-1.5">
                     <button type="button" @click="goToPage(auditPage - 1)"
                         class="rounded-lg px-3 py-1.5 gpa-micro-bold uppercase tracking-[1.08px] text-ink-body transition-colors hover:bg-surface-track">
-                        {{ $audit['pagination']['previous'] }}
+                        Sebelumnya
                     </button>
 
-                    @foreach ($audit['pagination']['pages'] as $page)
-                        <button type="button" @click="goToPage({{ $page }})"
-                            :class="auditPage === {{ $page }} ? 'bg-brand text-white' : 'bg-surface-track text-ink-body hover:bg-surface-disabled'"
-                            class="h-8 min-w-8 rounded-lg px-2 gpa-micro-bold tracking-[1.08px] transition-colors">{{ $page }}</button>
-                    @endforeach
+                    <button type="button" @click="goToPage(1)"
+                        :class="auditPage === 1 ? 'bg-brand text-white' : 'bg-surface-track text-ink-body hover:bg-surface-disabled'"
+                        class="h-8 min-w-8 rounded-lg px-2 gpa-micro-bold tracking-[1.08px] transition-colors">1</button>
 
                     <button type="button" @click="goToPage(auditPage + 1)"
                         class="rounded-lg px-3 py-1.5 gpa-micro-bold uppercase tracking-[1.08px] text-ink-body transition-colors hover:bg-surface-track">
-                        {{ $audit['pagination']['next'] }}
+                        Selanjutnya
                     </button>
                 </div>
             </div>

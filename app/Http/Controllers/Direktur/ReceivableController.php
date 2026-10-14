@@ -26,26 +26,6 @@ class ReceivableController extends Controller
      */
     public function index(Request $request): View
     {
-        $user = Auth::user();
-
-        $operator = [
-            'role'     => 'Direktur Utama',
-            'name'     => $user?->name ?: 'Direksi GPA',
-            'code'     => 'DIR-' . str_pad($user?->id ?: 1, 3, '0', STR_PAD_LEFT),
-            'initials' => strtoupper(substr($user?->name ?: 'DU', 0, 2)),
-            'branch'   => 'Kantor Pusat GPA - Eksekutif',
-            'email'    => $user?->email ?: 'direktur@greenpasundan.id',
-            'period'   => 'Minggu ' . date('W') . ' ' . date('Y') . ' | Q4 YTD',
-        ];
-
-        $header = [
-            'eyebrow'      => 'Piutang & Tagihan',
-            'title'        => 'Monitoring Piutang, Tagihan Tempo & Manajemen Risiko Kredit Klien B2B',
-            'subtitle'     => 'Pengawasan buku besar faktur konsolidasi (TOP 14/30/45 Hari), utilisasi plafon kredit klien korporat, evaluasi umur piutang (Aging AR), dan mitigasi risiko gagal bayar.',
-            'period'       => 'PERIODE: OKTOBER 2026',
-            'filter_label' => 'Filter',
-        ];
-
         // 1. Ambil faktur B2B terbuka (UNPAID / OVERDUE)
         $openInvoices = Invoice::whereIn('status', ['UNPAID', 'OVERDUE'])
             ->with(['user', 'orders'])
@@ -90,98 +70,6 @@ class ReceivableController extends Controller
             $stage4Val = 18000000;
             $totalReceivable = 248500000;
         }
-
-        $stagesDef = [
-            ['stage' => 'STAGE 01 (0-15 HARI)',      'status' => 'SANGAT AMAN', 'value' => $stage1Val, 'tone' => 'brand'],
-            ['stage' => 'STAGE 02 (16-30 HARI)',     'status' => 'IN-SCHEDULE', 'value' => $stage2Val, 'tone' => 'success'],
-            ['stage' => 'STAGE 03 (1-14 HARI LEWAT)', 'status' => 'WARNING',     'value' => $stage3Val, 'tone' => 'warning'],
-            ['stage' => 'STAGE 04 (> 15 HARI OVERDUE)', 'status' => 'KRITIS',   'value' => $stage4Val, 'tone' => 'danger'],
-        ];
-
-        $agingTotal = array_sum(array_column($stagesDef, 'value'));
-        $collectible = $agingTotal - $stagesDef[3]['value'];
-        $stages = [];
-
-        foreach ($stagesDef as $idx => $def) {
-            $share = $agingTotal > 0 ? round(($def['value'] / $agingTotal) * 100, 1) : 25;
-            $stages[] = [
-                'stage'       => $def['stage'],
-                'status'      => $def['status'],
-                'value'       => $def['value'],
-                'value_label' => 'Rp ' . number_format($def['value'], 0, ',', '.'),
-                'share'       => $share,
-                'share_label' => $share . '%',
-                'tone'        => $def['tone'],
-                'note'        => match ($idx) {
-                    0 => $share . '% Total AR • In-Schedule',
-                    1 => $share . '% Total AR • Menuju Tempo',
-                    2 => $share . '% Total AR • Follow-up Sekre',
-                    default => $share . '% Total AR • LOCKDOWN PO',
-                },
-            ];
-        }
-
-        $aging = [
-            'title'               => 'Matriks Analisis Umur Piutang (Aging AR Schedule Breakdown)',
-            'subtitle'            => 'Distribusi komposit siklus penagihan berdasarkan Termin Pembayaran (TOP) dan keterlambatan real-time.',
-            'collectibility_label'=> 'Kolektibilitas Portofolio: ' . round(($collectible / $agingTotal) * 100, 1) . '%',
-            'total'               => $agingTotal,
-            'total_label'         => 'Rp ' . number_format($agingTotal, 0, ',', '.'),
-            'collectible'         => $collectible,
-            'stages'              => $stages,
-        ];
-
-        // 4 Kartu KPI Risiko Kredit
-        $lancar = $stage1Val + $stage2Val;
-        $warning = $stage3Val;
-        $kritis = $stage4Val;
-
-        $cards = [
-            [
-                'key'       => 'total',
-                'label'     => 'TOTAL PIUTANG B2B',
-                'value'     => 'Rp ' . number_format($totalReceivable, 0, ',', '.'),
-                'tone'      => 'ink',
-                'icon'      => 'invoice',
-                'chip'      => '100% TERMONITOR',
-                'chip_tone' => 'accent',
-                'meta'      => '18 Klien Kontrak Aktif',
-                'meta_tone' => 'muted',
-            ],
-            [
-                'key'       => 'lancar',
-                'label'     => 'PIUTANG LANCAR (< 15 HARI)',
-                'value'     => 'Rp ' . number_format($lancar, 0, ',', '.'),
-                'tone'      => 'success',
-                'icon'      => 'check-circle',
-                'chip'      => 'NORMAL / AMAN',
-                'chip_tone' => 'neutral',
-                'meta'      => round(($lancar / $totalReceivable) * 100, 1) . '% DARI TOTAL AR',
-                'meta_tone' => 'success',
-            ],
-            [
-                'key'       => 'warning',
-                'label'     => 'WARNING TEMPO (< 7 HARI)',
-                'value'     => 'Rp ' . number_format($warning, 0, ',', '.'),
-                'tone'      => 'warning',
-                'icon'      => 'clock',
-                'chip'      => 'FOLLOW-UP SEKRE',
-                'chip_tone' => 'warning',
-                'meta'      => round(($warning / $totalReceivable) * 100, 1) . '% • Faktur Jatuh Tempo',
-                'meta_tone' => 'warning',
-            ],
-            [
-                'key'       => 'kritis',
-                'label'     => 'OVERDUE KRITIS (> 30 HARI)',
-                'value'     => 'Rp ' . number_format($kritis, 0, ',', '.'),
-                'tone'      => 'danger',
-                'icon'      => 'alert-triangle',
-                'chip'      => 'AUTO-FREEZE AKTIF',
-                'chip_tone' => 'danger',
-                'meta'      => round(($kritis / $totalReceivable) * 100, 1) . '% • Klien Terkunci',
-                'meta_tone' => 'danger',
-            ],
-        ];
 
         // 2. Buku Besar Faktur Konsolidasi per Klien B2B
         $frozenClients = session('frozen_clients', [11 => true]);
@@ -393,79 +281,16 @@ class ReceivableController extends Controller
             }
         }
 
-        $ledger = [
-            'title'              => 'Buku Besar Faktur Tempo Konsolidasi & Evaluasi Plafon Kredit Klien',
-            'subtitle'           => 'Audit rincian surat jalan (SJ), sisa hari jatuh tempo TOP, dan monitoring pembekuan PO otomatis sesuai batas plafon kredit.',
-            'search_placeholder' => 'Cari Klien / No. SJ...',
-            'filter_label'       => 'Filter TOP',
-            'columns'            => [
-                'Klien Korporat B2B',
-                'Surat Jalan (SJ) Terlampir',
-                'Nilai Tagihan Tertutang',
-                'Termin (TOP) & Jatuh Tempo',
-                'Status AR',
-                'Utilisasi Plafon Kredit',
-                'Tindakan Direksi',
-            ],
-            'rows'               => $ledgerRows,
-            'total'              => $ledgerTotal,
-            'total_label'        => 'Rp ' . number_format($ledgerTotal, 0, ',', '.'),
-            'active_contracts'   => 18,
-            'visible_rows'       => count($ledgerRows),
-            'shown_label'        => 'Menampilkan ' . count($ledgerRows) . ' dari 18 Klien Kontrak Aktif B2B',
-            'page_label'         => 'Halaman 1 / 1',
-            'frozen_label'       => 'FILTER FROZEN — AUDIT ARCHIVE',
-            'frozen_chip'        => '[TERKUNCI / LOCKED]',
-        ];
-
-        // Kebijakan Pembekuan & Otomasi Sistem
-        $policy = [
-            'title'        => 'Kebijakan Pembekuan & Otomasi Sistem (PRD Rule 15.3 & 15.6)',
-            'chip'         => 'SISTEM AKTIF',
-            'rules'        => [
-                [
-                    'rule'            => 'RULE 15.3: PEMBEKUAN PO OTOMATIS',
-                    'icon'            => 'lock',
-                    'tone'            => 'danger',
-                    'threshold_label' => 'OVERDUE THRESHOLD: 7 HARI',
-                    'status_label'    => 'STATUS: ENFORCED',
-                    'body'            => 'Setiap pemesanan (PO) baru akan langsung diblokir otomatis oleh sistem terminal jika terdapat faktur tempo yang menunggak lebih dari 7 hari melewati batas TOP yang disepakati dalam kontrak legal.',
-                ],
-                [
-                    'rule'            => 'RULE 15.6: CEILING PLAFON KREDIT',
-                    'icon'            => 'gauge',
-                    'tone'            => 'warning',
-                    'threshold_label' => 'LIMIT CAP: 100.0% PLAFON',
-                    'status_label'    => 'STATUS: ENFORCED',
-                    'body'            => 'Penerbitan Surat Jalan baru akan ditolak otomatis jika saldo tagihan berjalan ditambah nilai PO baru menghasilkan utilisasi plafon melebihi 100% dari limit yang disetujui Direktur.',
-                ],
-            ],
-            'bypass_note'  => 'Semua tindakan bypass pembekuan membutuhkan otorisasi biometrik atau PIN Direktur Operasional.',
-            'bypass_action'=> 'Log Otorisasi Bypass',
-        ];
-
-        // Protokol Verifikasi Dua Arah
-        $verification = [
-            'title'          => 'Protokol Verifikasi (Rule 11)',
-            'icon'           => 'shield',
-            'body'           => 'Pembayaran transfer bilyet giro dan RTGS dari klien korporat wajib melalui proses pencocokan dua arah (Two-Way Reconciliation) oleh Sekretaris & Finance sebelum status piutang dinyatakan lunas.',
-            'queue_label'    => 'Antrean Verifikasi Masuk:',
-            'queue_value'    => '3 Faktur',
-            'clearing_label' => 'Total Nilai Kliring Pending:',
-            'clearing_value' => 'Rp 78.400.000',
-            'action'         => 'Buka Antrean Verifikasi Sekre',
-            'sla'            => 'SLO VERIFIKASI MAKSIMAL: 1x24 JAM DARI TANGGAL MUTASI',
-        ];
-
-        return view('direktur.receivables', compact(
-            'operator',
-            'header',
-            'cards',
-            'aging',
-            'ledger',
-            'policy',
-            'verification'
-        ));
+        return view('direktur.receivables', [
+            'totalReceivable' => $totalReceivable,
+            'stage1Val'       => $stage1Val,
+            'stage2Val'       => $stage2Val,
+            'stage3Val'       => $stage3Val,
+            'stage4Val'       => $stage4Val,
+            'ledgerRows'      => $ledgerRows,
+            'ledgerTotal'     => $ledgerTotal,
+            'activeContracts' => 18,
+        ]);
     }
 
     /**

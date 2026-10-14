@@ -34,114 +34,9 @@ class DashboardController extends Controller
         // 2. Pembayaran menunggu verifikasi
         $pendingPaymentsCount = Payment::where('status', 'PENDING')->count();
 
-        // 3. Toolbar cepat
-        $toolbar = [
-            [
-                'label'   => 'Batch Validasi (' . $pendingOrders->count() . ' PO Masuk)',
-                'icon'    => 'badge-check',
-                'message' => 'Antrean pesanan menunggu pemeriksaan administrasi kuota & limit kredit.',
-            ],
-            [
-                'label'   => 'Antrean Bukti Transfer (' . $pendingPaymentsCount . ' Menunggu)',
-                'icon'    => 'refresh',
-                'message' => 'Pencocokan mutasi bank BCA/Mandiri dengan bukti transfer manual klien.',
-            ],
-            [
-                'label'   => 'Siap Terbit Surat Jalan (' . $readyOrders->count() . ' PO)',
-                'icon'    => 'receipt',
-                'message' => 'Pesanan dengan netto timbang sah yang siap diterbitkan Surat Jalan resmi.',
-            ],
-        ];
-
-        // 4. Kartu Metrik Utama (KPI)
         $totalTodayCount = $allOrders->where('created_at', '>=', $today)->count();
-        $metrics = [
-            [
-                'key'         => 'inbound',
-                'label'       => 'Total Pesanan Masuk',
-                'icon'        => 'gauge',
-                'icon_class'  => 'bg-accent/50 text-success-deep',
-                'value'       => (string) ($allOrders->count() ?: 28),
-                'unit'        => 'Pesanan Terjadwal',
-                'value_class' => 'text-ink',
-                'badge'       => null,
-                'note'        => [
-                    ['text' => 'Hari ini: ', 'class' => 'font-bold text-ink'],
-                    ['text' => ($totalTodayCount ?: 4) . ' PO baru masuk via web portal', 'class' => 'text-ink-body'],
-                ],
-                'foot'        => [
-                    'label'       => 'Target Layanan',
-                    'value'       => 'SLA < 2 Jam',
-                    'value_class' => 'text-success-deep',
-                    'chip'        => null,
-                ],
-            ],
-            [
-                'key'         => 'pending',
-                'label'       => 'Menunggu Verifikasi PO',
-                'icon'        => 'clock',
-                'icon_class'  => 'bg-warning-soft text-warning-deep',
-                'value'       => (string) ($pendingOrders->count() ?: 3),
-                'unit'        => 'PO Butuh Tindakan',
-                'value_class' => 'text-warning-deep',
-                'badge'       => [
-                    'label' => 'PRIORITAS',
-                    'class' => 'border-warning/40 bg-warning-wash font-bold text-warning-deep',
-                ],
-                'note'        => [
-                    ['text' => 'Cut-off subuh: ', 'class' => 'font-bold text-ink'],
-                    ['text' => 'Kunci stok sebelum alokasi sortir kebun', 'class' => 'text-ink-body'],
-                ],
-                'foot'        => [
-                    'label'       => 'Antrean Terlama',
-                    'value'       => '24 Menit Lalu',
-                    'value_class' => 'text-warning-deep',
-                    'chip'        => null,
-                ],
-            ],
-            [
-                'key'         => 'dispatch',
-                'label'       => 'Penimbangan & Siap Kirim',
-                'icon'        => 'truck',
-                'icon_class'  => 'bg-accent/50 text-success-deep',
-                'value'       => (string) ($readyOrders->count() + $shippingOrders->count() ?: 5),
-                'unit'        => 'Armada Terjadwal',
-                'value_class' => 'text-ink',
-                'badge'       => null,
-                'note'        => [
-                    ['text' => 'Netto Tera: ', 'class' => 'font-bold text-success-deep'],
-                    ['text' => 'Deviasi < 0.5% batas aman metrologi sah', 'class' => 'text-ink-body'],
-                ],
-                'foot'        => [
-                    'label'       => 'Status Armada',
-                    'value'       => ($shippingOrders->count() ?: 2) . ' Dalam Perjalanan',
-                    'value_class' => 'text-ink',
-                    'chip'        => null,
-                ],
-            ],
-            [
-                'key'         => 'payments',
-                'label'       => 'Verifikasi Pembayaran',
-                'icon'        => 'banknote',
-                'icon_class'  => 'bg-surface-pill text-ink',
-                'value'       => (string) ($pendingPaymentsCount ?: 2),
-                'unit'        => 'Struk / Mutasi Bank',
-                'value_class' => 'text-ink',
-                'badge'       => null,
-                'note'        => [
-                    ['text' => 'Klien Reguler: ', 'class' => 'font-bold text-ink'],
-                    ['text' => 'Pencocokan saldo rekening koran BCA & Mandiri', 'class' => 'text-ink-body'],
-                ],
-                'foot'        => [
-                    'label'       => 'Penyelesaian',
-                    'value'       => '100% Hari Ini',
-                    'value_class' => 'text-success-deep',
-                    'chip'        => null,
-                ],
-            ],
-        ];
 
-        // 5. Antrean Verifikasi Pesanan Masuk (Queue Table)
+        // 3. Antrean Verifikasi Pesanan Masuk (Queue Table)
         $queueRows = [];
         $ordersToDisplay = $pendingOrders->isNotEmpty() ? $pendingOrders->take(6) : $allOrders->take(4);
 
@@ -244,83 +139,7 @@ class DashboardController extends Controller
             ];
         }
 
-        $queue = [
-            'title'        => 'Antrean Verifikasi Pesanan Masuk (PO)',
-            'description'  => 'Prioritas SLA 2 Jam — Validasi kelayakan alokasi stok komoditas & ketentuan kredit',
-            'chip'         => 'Real-time Queue',
-            'columns'      => [
-                'po'     => 'No PO & Klien',
-                'items'  => 'Rincian Komoditas & Termin',
-                'status' => 'Status & SLA',
-                'action' => 'Aksi Cepat',
-            ],
-            'rows'         => $queueRows,
-            'footer_right' => 'Buka Seluruh Antrean PO',
-        ];
-
-        // 6. Pipeline Distribusi & Logistik Armada (5 Siklus)
-        $pipeline = [
-            'title'        => 'Pipeline Distribusi & Logistik Armada',
-            'description'  => 'Pelacakan siklus 5 tahap pemenuhan pesanan dari panen kebun hingga serah terima dock',
-            'chip'         => 'Cold-Chain Pasundan',
-            'stages'       => [
-                [
-                    'node'       => '1',
-                    'node_class' => 'bg-warning-soft text-warning-deep',
-                    'icon'       => 'shield',
-                    'value'      => ($pendingOrders->count() ?: 3) . ' PO',
-                    'label'      => 'Verifikasi PO',
-                    'note'       => 'Sekretariat GPA',
-                    'note_class' => 'text-warning-deep font-semibold',
-                    'active'     => $pendingOrders->count() > 0,
-                ],
-                [
-                    'node'       => '2',
-                    'node_class' => 'bg-surface-pill text-ink',
-                    'icon'       => 'leaf',
-                    'value'      => ($verifiedOrders->count() ?: 4) . ' PO',
-                    'label'      => 'Alokasi Panen',
-                    'note'       => 'Sentra Kebun',
-                    'note_class' => 'text-ink-body',
-                    'active'     => false,
-                ],
-                [
-                    'node'       => '3',
-                    'node_class' => 'bg-surface-pill text-ink',
-                    'icon'       => 'scale',
-                    'value'      => ($readyOrders->count() ?: 3) . ' PO',
-                    'label'      => 'Sortir & Timbang',
-                    'note'       => 'Tera Netto Sah',
-                    'note_class' => 'text-ink-body',
-                    'active'     => false,
-                ],
-                [
-                    'node'       => '4',
-                    'node_class' => 'bg-accent text-success-ink font-bold',
-                    'icon'       => 'truck',
-                    'value'      => ($shippingOrders->count() ?: 2) . ' Truk',
-                    'label'      => 'Armada Chiller',
-                    'note'       => 'Suhu 2 - 6°C',
-                    'note_class' => 'text-success-deep font-semibold',
-                    'active'     => true,
-                ],
-                [
-                    'node'       => '5',
-                    'node_class' => 'bg-surface-pill text-ink',
-                    'icon'       => 'check',
-                    'value'      => ($completedOrders->count() ?: 18) . ' PO',
-                    'label'      => 'Selesai Dock',
-                    'note'       => 'BAST Digital Sah',
-                    'note_class' => 'text-ink-body',
-                    'active'     => false,
-                ],
-            ],
-            'footer_label' => 'Kepatuhan SLA Subuh GPA:',
-            'footer_value' => '99.4% On-Time',
-            'footer_sla'   => 'Window Bongkar: 04.00 - 06.00 WIB',
-        ];
-
-        // 7. Status Kesiapan Buffer Stock Panen
+        // 4. Status Kesiapan Buffer Stock Panen
         $products = Product::where('is_active', true)->take(4)->get();
         $stockRows = [];
 
@@ -382,55 +201,17 @@ class DashboardController extends Controller
             ];
         }
 
-        $stock = [
-            'title'        => 'Status Kesiapan Buffer Stock Panen',
-            'description'  => 'Kapasitas muat dan sisa stok bebas di packing house Lembang & Ciwidey',
-            'icon'         => 'package',
-            'rows'         => $stockRows,
-            'footer_left'  => 'Pembaruan telemetri otomatis pasca timbangan tera.',
-            'footer_right' => 'Lihat Detail Stok Gudang',
-        ];
-
-        // 8. Peringatan & Catatan Operasional
-        $alerts = [
-            'title'        => 'Peringatan & Catatan Operasional Kritis',
-            'items'        => [
-                [
-                    'icon'       => 'alert-triangle',
-                    'icon_class' => 'text-warning-deep',
-                    'card_class' => 'border-warning',
-                    'title'      => 'Mendekati Batas Cut-Off Subuh (16:00 WIB)',
-                    'value'      => 'SLA Alert',
-                    'value_class'=> 'font-bold text-warning-deep',
-                    'body'       => 'Terdapat ' . ($pendingOrders->count() ?: 3) . ' pesanan masuk yang belum diverifikasi. Harap segera kunci stok sebelum jadwal sortasi malam.',
-                ],
-                [
-                    'icon'       => 'banknote',
-                    'icon_class' => 'text-accent-deep',
-                    'card_class' => 'border-accent',
-                    'title'      => 'Pencocokan Bukti Transfer Manual',
-                    'value'      => ($pendingPaymentsCount ?: 2) . ' Pending',
-                    'value_class'=> 'font-bold text-success-deep',
-                    'body'       => 'Unggahan bukti transfer klien reguler memerlukan konfirmasi pencocokan dengan mutasi rekening giro BCA GPA.',
-                ],
-            ],
-            'footer_left'  => 'Sistem pemantauan aktif 24/7',
-            'footer_right' => 'Arsip Notifikasi',
-        ];
-
-        $heading = [
-            'title'    => 'Dashboard Konsol Operasional & Tata Kelola Administrasi (Sekretaris)',
-            'subtitle' => 'Monitoring terpusat status order masuk, rekonsiliasi pasokan harian, antrean verifikasi pembayaran manual, dan penerbitan dokumen logistik.',
-        ];
-
-        return view('sekretaris.dashboard', compact(
-            'heading',
-            'toolbar',
-            'metrics',
-            'queue',
-            'pipeline',
-            'stock',
-            'alerts'
-        ));
+        return view('sekretaris.dashboard', [
+            'queueRows'            => $queueRows,
+            'stockRows'            => $stockRows,
+            'allOrdersCount'       => $allOrders->count(),
+            'pendingOrdersCount'   => $pendingOrders->count(),
+            'verifiedOrdersCount'  => $verifiedOrders->count(),
+            'readyOrdersCount'     => $readyOrders->count(),
+            'shippingOrdersCount'  => $shippingOrders->count(),
+            'completedOrdersCount' => $completedOrders->count(),
+            'totalTodayCount'      => $totalTodayCount,
+            'pendingPaymentsCount' => $pendingPaymentsCount,
+        ]);
     }
 }

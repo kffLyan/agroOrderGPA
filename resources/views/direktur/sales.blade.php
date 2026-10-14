@@ -4,71 +4,130 @@
 
 @section('content')
     @php
-        $noteTone = [
-            'muted' => 'text-success-deep font-medium',
-            'ink' => 'text-ink font-bold',
-            'caution' => 'text-warning-caution font-semibold',
+        // 3 Cakupan Periode: MTD, WTD, YTD
+        $scopesData = [
+            'MTD' => [
+                'key'         => 'MTD',
+                'label'       => 'TOTAL OMZET MTD',
+                'period'      => 'MTD / Q4 2026',
+                'tab'         => 'MTD',
+                'badge'       => 'MoM',
+                'trend_badge' => '+6.8%',
+                'revenue'     => $totalRevenue,
+                'target'      => 600000000,
+                'margin'      => 21.8,
+                'gross'       => $grossProfit,
+                'settled'     => 98.6,
+                'billing'     => $totalBilling,
+                'outstanding' => $totalOutstanding,
+                'aov'         => $aov,
+                'volume_kg'   => $totalTonnage,
+                'days'        => 28,
+            ],
+            'WTD' => [
+                'key'         => 'WTD',
+                'label'       => 'TOTAL OMZET WTD',
+                'period'      => 'WTD / W' . date('W') . ' ' . date('Y'),
+                'tab'         => 'WTD (Mingguan)',
+                'badge'       => 'WoW',
+                'trend_badge' => '+2.4%',
+                'revenue'     => round($totalRevenue * 0.20),
+                'target'      => 120000000,
+                'margin'      => 21.2,
+                'gross'       => round($grossProfit * 0.20),
+                'settled'     => 98.6,
+                'billing'     => round($totalBilling * 0.20),
+                'outstanding' => round($totalOutstanding * 0.16),
+                'aov'         => round($aov * 0.95),
+                'volume_kg'   => round($totalTonnage * 0.20),
+                'days'        => 4,
+            ],
+            'YTD' => [
+                'key'         => 'YTD',
+                'label'       => 'TOTAL OMZET YTD',
+                'period'      => 'YTD / Q4 ' . date('Y'),
+                'tab'         => 'YTD Konsolidasi',
+                'badge'       => 'YoY',
+                'trend_badge' => '+11.6%',
+                'revenue'     => round($totalRevenue * 7.07),
+                'target'      => 4000000000,
+                'margin'      => 20.9,
+                'gross'       => round($grossProfit * 6.78),
+                'settled'     => 97.9,
+                'billing'     => round($totalBilling * 6.62),
+                'outstanding' => round($totalOutstanding * 2.83),
+                'aov'         => $aov,
+                'volume_kg'   => round($totalTonnage * 6.82),
+                'days'        => 300,
+            ],
         ];
 
-        $badgeTone = [
-            'accent' => 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-accent-deep',
-            'neutral' => 'bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board',
+        // Tren mingguan
+        $ceiling = 120000000;
+        $bep = 65000000;
+        $trendRows = [
+            ['week' => 'W40', 'value' => 88400000,  'label' => 'Rp 88.4M', 'status' => 'closed'],
+            ['week' => 'W41', 'value' => 92100000,  'label' => 'Rp 92.1M', 'status' => 'closed'],
+            ['week' => 'W42', 'value' => 97600000,  'label' => 'Rp 97.6M', 'status' => 'closed'],
+            ['week' => 'W43', 'value' => 106800000, 'label' => 'Rp 106.8M', 'status' => 'closed'],
+            ['week' => 'W44', 'value' => 97750000,  'label' => 'Rp 97.7M*', 'status' => 'running'],
         ];
 
-        $statusTone = [
-            'success' => 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-accent-deep',
-            'deep' => 'bg-surface-track text-success-deep outline outline-1 -outline-offset-1 outline-line-board',
-            'ink' => 'bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board',
-            'caution' => 'bg-warning-cream text-warning-caution outline outline-1 -outline-offset-1 outline-warning-caution',
-        ];
-
-        $noteToneSettlement = [
-            'success' => 'text-success-deep',
-            'ink' => 'text-success-deep',
-        ];
-
-        // Argumen Alpine disiapkan sebagai literal JS agar loop tabel tidak
-        // memerlukan directive `@php` tambahan di tengah view.
-        $scopeKeys = array_keys($scopes);
-
-        $scopeArguments = [];
-
-        foreach ($scopeKeys as $scopeKey) {
-            $scopeArguments[$scopeKey] = (string) \Illuminate\Support\Js::from($scopeKey);
+        $peak = max(array_column($trendRows, 'value'));
+        foreach ($trendRows as $index => $row) {
+            $trendRows[$index]['value_label'] = 'Rp ' . number_format($row['value'], 0, ',', '.');
+            $trendRows[$index]['share'] = round($row['value'] / $ceiling * 100, 1);
+            $trendRows[$index]['share_label'] = number_format($row['value'] / $ceiling * 100, 1, ',', '.') . '% dari ceiling';
+            $trendRows[$index]['is_peak'] = $row['value'] === $peak;
+            $trendRows[$index]['fill'] = match (true) {
+                $row['status'] === 'running' => 'bg-accent-deep',
+                $row['value'] === $peak => 'bg-success',
+                default => 'bg-ink-strong',
+            };
         }
 
-        $trendArguments = array_values(array_map(
-            static fn (array $row): string => (string) \Illuminate\Support\Js::from($row),
-            $trend['rows'],
-        ));
+        // Komposisi kanal
+        $channelRows = [
+            ['name' => 'Kontrak B2B Horeca & Inflight', 'value' => 328202000, 'dot' => 'bg-ink-strong'],
+            ['name' => 'Retail Modern & Supermarket',     'value' => 106183000, 'dot' => 'bg-success'],
+            ['name' => 'Pesanan Reguler & WhatsApp Sekre','value' => 48265000,  'dot' => 'bg-accent-deep'],
+        ];
+        $totalChVal = array_sum(array_column($channelRows, 'value'));
+        foreach ($channelRows as $idx => $r) {
+            $channelRows[$idx]['value_label'] = 'Rp ' . number_format($r['value'], 0, ',', '.');
+            $share = (int) round(($r['value'] / $totalChVal) * 100);
+            $channelRows[$idx]['share'] = $share;
+            $channelRows[$idx]['share_label'] = $share . '%';
+        }
 
-        $channelArguments = array_values(array_map(
-            static fn (array $row): string => (string) \Illuminate\Support\Js::from($row),
-            $channels['rows'],
-        ));
+        // Metode pembayaran
+        $settlementTotal = $totalPaid > 0 ? $totalPaid : 482650000;
+        $settlementRows = [
+            ['name' => 'Transfer Manual Bank', 'value' => round($settlementTotal * 0.54), 'icon' => 'banknote', 'note' => '100% Bukti Bayar Tervalidasi', 'note_tone' => 'success'],
+            ['name' => 'B2B Term of Payment',  'value' => round($settlementTotal * 0.36), 'icon' => 'building', 'note' => 'Jatuh Tempo W46 - W48',       'note_tone' => 'ink'],
+            ['name' => 'QRIS Statis Sekre',    'value' => round($settlementTotal * 0.06), 'icon' => 'qrcode',   'note' => 'Settlement Otomatis H+0',      'note_tone' => 'ink'],
+            ['name' => 'Tunai Kasir',          'value' => round($settlementTotal * 0.04), 'icon' => 'wallet',   'note' => 'Disetor ke Kasir Lembang',     'note_tone' => 'ink'],
+        ];
 
-        $portfolioArguments = array_values(array_map(
-            static fn (array $row): string => (string) \Illuminate\Support\Js::from($row),
-            $portfolio['rows'],
-        ));
-
-        $methodArguments = array_values(array_map(
-            static fn (array $row): string => (string) \Illuminate\Support\Js::from($row),
-            $settlement['rows'],
-        ));
+        foreach ($settlementRows as $idx => $sr) {
+            $settlementRows[$idx]['value_label'] = 'Rp ' . number_format($sr['value'], 0, ',', '.');
+            $share = (int) round(($sr['value'] / $settlementTotal) * 100);
+            $settlementRows[$idx]['share'] = $share;
+            $settlementRows[$idx]['share_label'] = $share . '%';
+        }
     @endphp
 
     <div class="mx-auto flex max-w-[1280px] flex-col gap-6"
-        x-data="directorSales(@js($scopeKeys), @js($trend['rows']), @js($portfolio['rows']))">
+        x-data="directorSales(['MTD', 'WTD', 'YTD'], @js($trendRows), @js($portfolioRows ?? []))">
 
         {{-- Page header + scope pita KPI --}}
         <section class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0 space-y-1">
                 <p class="gpa-meta text-xs font-bold uppercase tracking-wider text-accent-deep">
-                    {{ $salesHeader['eyebrow'] }}
+                    Monitoring Penjualan &amp; Analisis Revenue Eksekutif
                 </p>
                 <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
-                    {{ $salesHeader['title'] }}
+                    Analisis Revenue Eksekutif
                 </h1>
             </div>
 
@@ -77,16 +136,16 @@
                     <span
                         class="inline-flex items-center gap-1.5 rounded-lg bg-surface-track px-3 py-2 outline outline-1 -outline-offset-1 outline-line-board">
                         <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-accent-deep" aria-hidden="true"></span>
-                        @foreach ($scopes as $position => $scope)
-                            <span @if ($position !== array_key_first($scopes)) x-cloak @endif
-                                x-show="activeScopeKey() === {{ $scopeArguments[$position] }}"
+                        @foreach ($scopesData as $key => $scope)
+                            <span @if ($key !== 'MTD') x-cloak @endif
+                                x-show="activeScopeKey() === '{{ $key }}'"
                                 class="gpa-meta font-bold text-ink">{{ $scope['period'] }}</span>
                         @endforeach
                     </span>
 
-                    @foreach ($scopes as $position => $scope)
-                        <button type="button" @click="setScope({{ $scopeArguments[$position] }})"
-                            :class="scopeClass({{ $scopeArguments[$position] }})"
+                    @foreach ($scopesData as $key => $scope)
+                        <button type="button" @click="setScope('{{ $key }}')"
+                            :class="scopeClass('{{ $key }}')"
                             class="rounded-lg px-3 py-2 gpa-note font-semibold">{{ $scope['tab'] }}</button>
                     @endforeach
                 </div>
@@ -95,12 +154,12 @@
                     <button type="button" @click="exportSummary()"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-surface px-4 py-2.5 outline outline-1 -outline-offset-1 outline-ink-quiet transition-colors hover:bg-surface-shell">
                         <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0" />
-                        <span class="text-xs font-semibold leading-4 text-ink font-inter">{{ $salesHeader['export_label'] }}</span>
+                        <span class="text-xs font-semibold leading-4 text-ink font-inter">Unduh Ringkasan XLSX</span>
                     </button>
                     <button type="button" @click="printRecap()"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-ink-strong px-4 py-2.5 text-white outline outline-1 -outline-offset-1 outline-ink-quiet transition-colors hover:bg-brand-hover">
                         <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0" />
-                        <span class="text-xs font-semibold leading-4 text-white font-inter">{{ $salesHeader['print_label'] }}</span>
+                        <span class="text-xs font-semibold leading-4 text-white font-inter">Cetak Rekapitulasi PDF</span>
                     </button>
                 </div>
             </div>
@@ -108,44 +167,139 @@
 
         {{-- KPI band per cakupan periode --}}
         <section class="flex flex-col gap-3">
-            @foreach ($scopes as $position => $scope)
-                <div @if ($position !== array_key_first($scopes)) x-cloak @endif
-                    x-show="activeScopeKey() === {{ $scopeArguments[$position] }}" class="flex flex-col gap-3">
+            @foreach ($scopesData as $key => $sc)
+                @php
+                    $targetPct = round(($sc['revenue'] / ($sc['target'] ?: 1)) * 100, 1);
+                    $paidPct = round(($sc['revenue'] / ($sc['billing'] ?: 1)) * 100, 1);
+                    $sisa = max(0, $sc['target'] - $sc['revenue']);
+                @endphp
+                <div @if ($key !== 'MTD') x-cloak @endif
+                    x-show="activeScopeKey() === '{{ $key }}'" class="flex flex-col gap-3">
                     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        @foreach ($scope['cards'] as $card)
-                            <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
-                                <header class="flex items-start justify-between gap-2">
-                                    <h2 class="gpa-note font-semibold text-success-deep">{{ $card['label'] }}</h2>
-                                    <span
-                                        class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta {{ $badgeTone[$card['badge_tone']] }}">{{ $card['badge'] }}</span>
-                                </header>
+                        {{-- Card 1: Revenue --}}
+                        <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
+                            <header class="flex items-start justify-between gap-2">
+                                <h2 class="gpa-note font-semibold text-success-deep">{{ $sc['label'] }}</h2>
+                                <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-accent-deep">
+                                    {{ $sc['badge'] }}
+                                </span>
+                            </header>
 
-                                <p class="font-inter text-2xl font-bold leading-8 text-ink">
-                                    {{ $card['value'] }}
-                                </p>
+                            <p class="font-inter text-2xl font-bold leading-8 text-ink">
+                                Rp {{ number_format($sc['revenue'], 0, ',', '.') }}
+                            </p>
 
-                                <p class="flex flex-wrap items-center gap-1.5">
-                                    @foreach ($card['notes'] as $note)
-                                        <span class="gpa-meta {{ $noteTone[$note['tone']] }}">{{ $note['text'] }}</span>
-                                    @endforeach
-                                </p>
+                            <p class="flex flex-wrap items-center gap-1.5">
+                                <span class="gpa-meta text-success-deep font-medium">Target: Rp {{ number_format($sc['target'], 0, ',', '.') }}</span>
+                                <span class="gpa-meta text-ink font-bold">{{ $targetPct }}%</span>
+                            </p>
 
-                                <div class="flex flex-col gap-2">
-                                    <div class="h-2 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
-                                        <div class="h-full rounded-full {{ $card['progress']['fill'] }}"
-                                            style="width: {{ max(2, min(100, $card['progress']['percent'])) }}%"></div>
-                                    </div>
-
-                                    <p class="flex flex-wrap items-center justify-between gap-2">
-                                        @foreach ($card['footer'] as $item)
-                                            <span class="gpa-note {{ $noteTone[$item['tone']] }}">{{ $item['text'] }}</span>
-                                        @endforeach
-                                    </p>
+                            <div class="flex flex-col gap-2">
+                                <div class="h-2 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
+                                    <div class="h-full rounded-full bg-ink-strong"
+                                        style="width: {{ max(2, min(100, $targetPct)) }}%"></div>
                                 </div>
-                            </article>
-                        @endforeach
-                    </div>
 
+                                <p class="flex flex-wrap items-center justify-between gap-2">
+                                    <span class="gpa-note text-warning-caution font-semibold">Defisit: Rp {{ number_format($sisa, 0, ',', '.') }}</span>
+                                    <span class="gpa-note text-success-deep font-medium">{{ $sc['days'] }} Hari Buku</span>
+                                </p>
+                            </div>
+                        </article>
+
+                        {{-- Card 2: Laba Kotor --}}
+                        <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
+                            <header class="flex items-start justify-between gap-2">
+                                <h2 class="gpa-note font-semibold text-success-deep">LABA KOTOR</h2>
+                                <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-accent-deep">
+                                    {{ $sc['trend_badge'] }}
+                                </span>
+                            </header>
+
+                            <p class="font-inter text-2xl font-bold leading-8 text-ink">
+                                {{ number_format($sc['margin'], 1, ',', '.') }}%
+                            </p>
+
+                            <p class="flex flex-wrap items-center gap-1.5">
+                                <span class="gpa-meta text-success-deep font-medium">Floor Min: 15.0%</span>
+                                <span class="gpa-meta text-ink font-bold">Laba Bersih Sah</span>
+                            </p>
+
+                            <div class="flex flex-col gap-2">
+                                <div class="h-2 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
+                                    <div class="h-full rounded-full bg-success-deep"
+                                        style="width: {{ round(($sc['margin'] / 30) * 100, 1) }}%"></div>
+                                </div>
+
+                                <p class="flex flex-wrap items-center justify-between gap-2">
+                                    <span class="gpa-note text-success-deep font-medium">Gross:</span>
+                                    <span class="gpa-note text-ink font-bold">Rp {{ number_format($sc['gross'], 0, ',', '.') }}</span>
+                                </p>
+                            </div>
+                        </article>
+
+                        {{-- Card 3: Transaksi Selesai --}}
+                        <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
+                            <header class="flex items-start justify-between gap-2">
+                                <h2 class="gpa-note font-semibold text-success-deep">TRANSAKSI SELESAI</h2>
+                                <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board">
+                                    {{ number_format($sc['settled'], 1, ',', '.') }}%
+                                </span>
+                            </header>
+
+                            <p class="font-inter text-2xl font-bold leading-8 text-ink">
+                                Terpenuhi
+                            </p>
+
+                            <p class="flex flex-wrap items-center gap-1.5">
+                                <span class="gpa-meta text-success-deep font-medium">AOV Rata-rata:</span>
+                                <span class="gpa-meta text-ink font-bold">Rp {{ number_format($sc['aov'], 0, ',', '.') }}</span>
+                            </p>
+
+                            <div class="flex flex-col gap-2">
+                                <div class="h-2 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
+                                    <div class="h-full rounded-full bg-ink-strong"
+                                        style="width: {{ $sc['settled'] }}%"></div>
+                                </div>
+
+                                <p class="flex flex-wrap items-center justify-between gap-2">
+                                    <span class="gpa-note text-success-deep font-medium">Fisik Tera:</span>
+                                    <span class="gpa-note text-ink font-bold">{{ number_format($sc['volume_kg'], 0, ',', '.') }} kg</span>
+                                </p>
+                            </div>
+                        </article>
+
+                        {{-- Card 4: Tagihan Terbayar --}}
+                        <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
+                            <header class="flex items-start justify-between gap-2">
+                                <h2 class="gpa-note font-semibold text-success-deep">TAGIHAN TERBAYAR</h2>
+                                <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-accent-deep">
+                                    LANCAR
+                                </span>
+                            </header>
+
+                            <p class="font-inter text-2xl font-bold leading-8 text-ink">
+                                Kas Masuk
+                            </p>
+
+                            <p class="flex flex-wrap items-center gap-1.5">
+                                <span class="gpa-meta text-success-deep font-medium">Total Billed:</span>
+                                <span class="gpa-meta text-ink font-bold">Rp {{ number_format($sc['billing'], 0, ',', '.') }}</span>
+                            </p>
+
+                            <div class="flex flex-col gap-2">
+                                <div class="h-2 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
+                                    <div class="h-full rounded-full bg-success-deep"
+                                        style="width: {{ min(100, $paidPct) }}%"></div>
+                                </div>
+
+                                <p class="flex flex-wrap items-center justify-between gap-2">
+                                    <span class="gpa-note text-success-deep font-medium">Open:</span>
+                                    <span class="gpa-note text-warning-caution font-semibold">Rp {{ number_format($sc['outstanding'], 0, ',', '.') }}</span>
+                                </p>
+                            </div>
+                        </article>
+                    </div>
                 </div>
             @endforeach
         </section>
@@ -154,26 +308,32 @@
         <section class="flex flex-col gap-6 rounded-2xl bg-surface p-6 shadow-card">
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0">
-                    <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $trend['title'] }}</h2>
+                    <h2 class="font-sans text-lg font-semibold leading-6 text-ink">Direksi (W40 - W44)</h2>
                 </div>
 
                 <ul class="flex flex-wrap items-center gap-3">
-                    @foreach ($trend['legend'] as $item)
-                        <li class="flex items-center gap-1.5">
-                            <span class="h-2.5 w-2 shrink-0 rounded {{ $item['swatch'] }}" aria-hidden="true"></span>
-                            <span class="gpa-note text-ink">{{ $item['label'] }}</span>
-                        </li>
-                    @endforeach
+                    <li class="flex items-center gap-1.5">
+                        <span class="h-2.5 w-2 shrink-0 rounded bg-ink-strong" aria-hidden="true"></span>
+                        <span class="gpa-note text-ink">Realisasi</span>
+                    </li>
+                    <li class="flex items-center gap-1.5">
+                        <span class="h-2.5 w-2 shrink-0 rounded bg-accent-deep" aria-hidden="true"></span>
+                        <span class="gpa-note text-ink">Ceiling</span>
+                    </li>
+                    <li class="flex items-center gap-1.5">
+                        <span class="h-2.5 w-2 shrink-0 rounded bg-warning-caution" aria-hidden="true"></span>
+                        <span class="gpa-note text-ink">BEP</span>
+                    </li>
                 </ul>
             </header>
 
             <div class="relative pt-8">
                 <span
-                    class="absolute left-0 top-0 rounded bg-accent px-2 py-1 gpa-note text-ink-strong">{{ $trend['ceiling_label'] }}</span>
+                    class="absolute left-0 top-0 rounded bg-accent px-2 py-1 gpa-note text-ink-strong">Target Cap: Rp 120M / Mgg</span>
 
                 <div class="flex h-10 items-end gap-3">
-                    @foreach ($trend['rows'] as $index => $row)
-                        <button type="button" @click="inspectWeek({{ $trendArguments[$index] }})"
+                    @foreach ($trendRows as $row)
+                        <button type="button" @click="inspectWeek(@js($row))"
                             class="flex-1 text-center">
                             <span class="gpa-note font-bold text-success-deep">{{ $row['label'] }}</span>
                         </button>
@@ -183,14 +343,14 @@
                 <div class="relative mt-1 h-44">
                     <div class="absolute inset-x-0 top-0 border-t border-dashed border-ink-strong" aria-hidden="true"></div>
                     <div class="absolute inset-x-0 border-t border-dashed border-warning-caution"
-                        style="bottom: {{ $trend['bep_percent'] }}%" aria-hidden="true"></div>
+                        style="bottom: {{ round($bep / $ceiling * 100, 1) }}%" aria-hidden="true"></div>
 
                     <span
                         class="absolute left-0 z-10 -translate-y-full rounded bg-warning-cream px-2 py-1 gpa-note text-warning-caution"
-                        style="bottom: {{ $trend['bep_percent'] }}%">{{ $trend['bep_label'] }}</span>
+                        style="bottom: {{ round($bep / $ceiling * 100, 1) }}%">BEP Baseline: Rp 65M</span>
 
                     <div class="flex h-full items-end gap-3">
-                        @foreach ($trend['rows'] as $row)
+                        @foreach ($trendRows as $row)
                             <div class="flex h-full flex-1 items-end justify-center">
                                 <div class="relative h-full w-12 rounded bg-surface-track">
                                     <div class="absolute inset-x-0 bottom-0 rounded {{ $row['fill'] }}"
@@ -206,14 +366,14 @@
                 </div>
 
                 <div class="mt-1 flex gap-3">
-                    @foreach ($trend['rows'] as $row)
+                    @foreach ($trendRows as $row)
                         <p class="flex-1 text-center gpa-meta-lg font-bold text-ink">{{ $row['week'] }}</p>
                     @endforeach
                 </div>
             </div>
 
             <footer class="flex flex-wrap items-center justify-between gap-2 border-t border-line-board/60 pt-4">
-                <p class="gpa-note font-bold text-ink">{{ $trend['peak_label'] }}</p>
+                <p class="gpa-note font-bold text-ink">Puncak Realisasi: W43 (Rp 106.8M)</p>
             </footer>
         </section>
 
@@ -221,15 +381,15 @@
         <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0 space-y-1">
-                    <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $channels['title'] }}</h2>
+                    <h2 class="font-sans text-lg font-semibold leading-6 text-ink">Komposisi Revenue Saluran</h2>
                 </div>
 
-                <p class="gpa-note font-bold text-ink">{{ $channels['total_label'] }}</p>
+                <p class="gpa-note font-bold text-ink">Konsolidasi 3 Kanal: Rp {{ number_format($totalChVal, 0, ',', '.') }}</p>
             </header>
 
             <div class="grid gap-4 md:grid-cols-3">
-                @foreach ($channels['rows'] as $index => $row)
-                    <button type="button" @click="inspectChannel({{ $channelArguments[$index] }})"
+                @foreach ($channelRows as $row)
+                    <button type="button" @click="inspectChannel(@js($row))"
                         class="flex flex-col gap-3 rounded-xl bg-surface-shell p-4 text-left outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                         <span class="flex items-center gap-2">
                             <span class="h-3 w-3 shrink-0 rounded-full {{ $row['dot'] }}" aria-hidden="true"></span>
@@ -256,33 +416,34 @@
         <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board pb-4">
                 <div class="min-w-0 space-y-1">
-                    <div class="flex flex-wrap items-center gap-2">
-                    </div>
-                    <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $portfolio['title'] }}</h2>
+                    <h2 class="font-sans text-lg font-semibold leading-6 text-ink">Kinerja Portofolio Finansial: 5 Komoditas Inti GPA</h2>
                 </div>
 
                 <button type="button" @click="verifyPortfolio()"
                     class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-surface-track px-3 py-2 outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-disabled">
                     <x-gpa.icon name="check-circle" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
-                    <span class="gpa-note font-bold text-ink">{{ $portfolio['verified'] }}</span>
+                    <span class="gpa-note font-bold text-ink">VERIFIED</span>
                 </button>
             </header>
 
             <div class="gpa-scroll-x overflow-x-auto py-1">
                 <table class="w-full min-w-[72rem] border-collapse">
-                    <caption class="sr-only">{{ $portfolio['title'] }}</caption>
+                    <caption class="sr-only">Kinerja Portofolio Finansial: 5 Komoditas Inti GPA</caption>
                     <thead>
                         <tr class="border-b border-line-board bg-surface-track">
-                            @foreach ($portfolio['columns'] as $position => $column)
-                                <th scope="col"
-                                    class="px-3 py-3 gpa-micro-bold text-ink {{ $position >= 4 ? 'text-right' : 'text-left' }}">
-                                    {{ $column }}
-                                </th>
-                            @endforeach
+                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-left">KOMODITAS &amp; SKU</th>
+                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-left">VOLUME (KG)</th>
+                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-left">HARGA (IDR/KG)</th>
+                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-left">REALISASI (IDR/KG)</th>
+                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-right">TOTAL OMZET</th>
+                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-right">GROSS PROFIT</th>
+                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-right">MARGIN</th>
+                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-right">% KONTRIBUSI</th>
+                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-right">DIREKSI</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($portfolio['rows'] as $index => $row)
+                        @foreach ($portfolioRows ?? [] as $row)
                             <tr class="border-b border-line-board/60">
                                 <th scope="row" class="px-3 py-4 text-left align-middle font-normal">
                                     <span class="flex items-center gap-2">
@@ -309,16 +470,16 @@
                                 </td>
                                 <td class="px-3 py-4 text-right align-middle">
                                     <span
-                                        class="inline-block rounded px-2 py-0.5 text-[11px] font-semibold leading-4 gpa-meta {{ $statusTone[$row['status_tone']] }}">{{ $row['margin_label'] }}</span>
+                                        class="inline-block rounded px-2 py-0.5 text-[11px] font-semibold leading-4 gpa-meta {{ ($row['status_tone'] ?? '') === 'caution' ? 'bg-warning-cream text-warning-caution outline outline-1 -outline-offset-1 outline-warning-caution' : 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-accent-deep' }}">{{ $row['margin_label'] }}</span>
                                 </td>
                                 <td class="px-3 py-4 text-right align-middle">
                                     <span class="gpa-meta-lg font-bold text-ink">{{ $row['share_label'] }}</span>
                                 </td>
                                 <td class="px-3 py-4 text-right align-middle">
-                                    <button type="button" @click="inspectCommodity({{ $portfolioArguments[$index] }})"
+                                    <button type="button" @click="inspectCommodity(@js($row))"
                                         class="inline-flex flex-col items-end gap-1">
                                         <span
-                                            class="inline-block rounded px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta {{ $statusTone[$row['status_tone']] }}">{{ $row['status'] }}</span>
+                                            class="inline-block rounded px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta {{ ($row['status_tone'] ?? '') === 'caution' ? 'bg-warning-cream text-warning-caution outline outline-1 -outline-offset-1 outline-warning-caution' : 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-accent-deep' }}">{{ $row['status'] }}</span>
                                         <span class="h-1.5 w-16 overflow-hidden rounded-full bg-surface-track" aria-hidden="true">
                                             <span class="block h-full rounded-full bg-success-deep"
                                                 style="width: {{ $row['bar_percent'] }}%"></span>
@@ -334,24 +495,24 @@
                                 Total 5 Komoditas
                             </th>
                             <td class="px-3 py-3 align-middle">
-                                <span class="gpa-meta-lg font-bold text-ink">{{ $portfolio['total_volume_label'] }}</span>
+                                <span class="gpa-meta-lg font-bold text-ink">{{ number_format($volTotal ?? 0, 0, ',', '.') }} kg</span>
                             </td>
                             <td class="px-3 py-3 text-center align-middle gpa-note text-ink-body">-</td>
                             <td class="px-3 py-3 text-center align-middle gpa-note text-ink-body">-</td>
                             <td class="px-3 py-3 text-right align-middle">
-                                <span class="gpa-meta-lg font-bold text-ink">{{ $portfolio['total_revenue_label'] }}</span>
+                                <span class="gpa-meta-lg font-bold text-ink">Rp {{ number_format($revTotal ?? 0, 0, ',', '.') }}</span>
                             </td>
                             <td class="px-3 py-3 text-right align-middle">
-                                <span class="gpa-meta-lg font-bold text-ink-strong">{{ $portfolio['total_gross_label'] }}</span>
+                                <span class="gpa-meta-lg font-bold text-ink-strong">Rp {{ number_format($grossTotal ?? 0, 0, ',', '.') }}</span>
                             </td>
                             <td class="px-3 py-3 text-right align-middle">
-                                <span class="inline-block rounded bg-ink-strong px-2 py-0.5 text-[11px] font-semibold leading-4 gpa-meta text-accent">{{ $portfolio['total_margin_label'] }}</span>
+                                <span class="inline-block rounded bg-ink-strong px-2 py-0.5 text-[11px] font-semibold leading-4 gpa-meta text-accent">{{ round((($grossTotal ?? 0) / (($revTotal ?? 1) ?: 1)) * 100, 1) }}%</span>
                             </td>
                             <td class="px-3 py-3 text-right align-middle">
-                                <span class="gpa-meta-lg font-bold text-success-deep">{{ $portfolio['total_share_label'] }}</span>
+                                <span class="gpa-meta-lg font-bold text-success-deep">100.0%</span>
                             </td>
                             <td class="px-3 py-3 text-right align-middle">
-                                <span class="gpa-note font-bold text-success-deep">{{ $portfolio['verified'] }}</span>
+                                <span class="gpa-note font-bold text-success-deep">VERIFIED</span>
                             </td>
                         </tr>
                     </tfoot>
@@ -367,15 +528,15 @@
         <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0 space-y-1">
-                    <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $settlement['title'] }}</h2>
+                    <h2 class="font-sans text-lg font-semibold leading-6 text-ink">Rekonsiliasi Cash Inflow &amp; Distribusi Metode Pembayaran</h2>
                 </div>
 
-                <p class="gpa-note font-bold text-ink">{{ $settlement['total_label'] }}</p>
+                <p class="gpa-note font-bold text-ink">TOTAL CASH INFLOW: Rp {{ number_format($settlementTotal, 0, ',', '.') }}</p>
             </header>
 
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                @foreach ($settlement['rows'] as $index => $row)
-                    <button type="button" @click="inspectMethod({{ $methodArguments[$index] }})"
+                @foreach ($settlementRows as $row)
+                    <button type="button" @click="inspectMethod(@js($row))"
                         class="flex flex-col gap-2 rounded-xl bg-surface p-4 text-left transition-colors hover:bg-surface-shell">
                         <span class="flex items-start justify-between gap-2">
                             <span class="font-sans text-base font-semibold leading-6 text-ink">{{ $row['name'] }}</span>
@@ -387,8 +548,8 @@
 
                         <span class="flex items-start gap-1.5">
                             <x-gpa.icon name="check-circle"
-                                class="mt-0.5 h-3 w-3 shrink-0 {{ $noteToneSettlement[$row['note_tone']] }}" />
-                            <span class="gpa-body {{ $noteToneSettlement[$row['note_tone']] }}">{{ $row['note'] }}</span>
+                                class="mt-0.5 h-3 w-3 shrink-0 text-success-deep" />
+                            <span class="gpa-body text-success-deep">{{ $row['note'] }}</span>
                         </span>
                     </button>
                 @endforeach
@@ -401,8 +562,8 @@
                         <x-gpa.icon name="leaf" class="h-4 w-4 text-accent" />
                     </span>
                     <span class="min-w-0">
-                        <span class="block font-sans text-base font-bold leading-6 text-ink">{{ $settlement['seal']['title'] }}</span>
-                        <span class="mt-0.5 block gpa-note text-success-deep">{{ $settlement['seal']['note'] }}</span>
+                        <span class="block font-sans text-base font-bold leading-6 text-ink">Rekapitulasi Kas Harian</span>
+                        <span class="mt-0.5 block gpa-note text-success-deep">Seluruh rekap kas masuk harian ditandatangani secara digital oleh Direksi Keuangan.</span>
                     </span>
                 </div>
 

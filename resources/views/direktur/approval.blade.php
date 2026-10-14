@@ -4,59 +4,134 @@
 
 @section('content')
     @php
-        $cardTone = [
-            'success' => 'text-success-deep',
-            'warning' => 'text-warning-caution',
-            'danger' => 'text-danger',
-            'ink' => 'text-ink',
+        $defaultRows = [
+            [
+                'contract'         => 'CTR-B2B-2025-089',
+                'region'           => 'BOGOR',
+                'client'           => 'Hotel Grand Pangrango',
+                'client_tone'      => 'caution',
+                'submitted_by'     => 'Tim Sales Key Account',
+                'submitted_at'     => '10 Okt 2026',
+                'commodity'        => 'Selada Romaine Super',
+                'volume'           => '800 kg / minggu (3.2 Ton/Bln)',
+                'segment'          => 'Grade A - Hydroponik Binaan',
+                'price'            => 'Rp 13.800 / kg',
+                'price_strike'     => 'Rp 15.000',
+                'list_price'       => 15000,
+                'offer_price'      => 13800,
+                'discount_percent' => 8.0,
+                'discount_ceiling' => 5.0,
+                'exception'        => 'Diskon Khusus: 8.0% (Plafon 5%)',
+                'exception_tone'   => 'caution',
+                'term'             => 'TOP 30 Hari',
+                'top_days'         => 30,
+                'top_default'      => 30,
+                'margin'           => '18.5% Net Margin',
+                'margin_value'     => 18.5,
+                'margin_minimum'   => 15.0,
+                'margin_delta'     => 3.5,
+                'margin_flag'      => 'Safe Margin Pass (+3.5%)',
+                'score'            => 'A- (82/100)',
+                'score_note'       => '0 Riwayat Macet // 18 bln',
+                'approve_label'    => 'Setujui Kontrak',
+                'approve_tone'     => 'solid',
+                'filter_key'       => 'discount',
+                'value'            => 145000000,
+                'value_label'      => 'Rp 145.000.000',
+                'exceeds_plafon'   => true,
+            ],
+            [
+                'contract'         => 'CTR-B2B-2025-092',
+                'region'           => 'JAKARTA PUSAT',
+                'client'           => 'PT Boga Rasa Kulina Prima',
+                'client_tone'      => 'success',
+                'submitted_by'     => 'VP Commercial',
+                'submitted_at'     => '12 Okt 2026',
+                'commodity'        => 'Beras Slyp & Bumbu Basah',
+                'volume'           => 'Plafon Transaksi: Rp 150.000.000',
+                'segment'          => 'Distribusi Multi-Resto Chain (14 Outlet)',
+                'price'            => 'Harga Standard List Katalog',
+                'price_strike'     => null,
+                'list_price'       => null,
+                'offer_price'      => null,
+                'discount_percent' => null,
+                'discount_ceiling' => null,
+                'exception'        => 'Usulan Ekstensi: TOP 45 Hari',
+                'exception_tone'   => 'caution',
+                'term'             => 'Reguler Default 30 Hari',
+                'top_days'         => 45,
+                'top_default'      => 30,
+                'margin'           => '21.2% Net Margin',
+                'margin_value'     => 21.2,
+                'margin_minimum'   => 15.0,
+                'margin_delta'     => 6.2,
+                'margin_flag'      => 'High Yield Account (+6.2%)',
+                'score'            => 'A+ (88/100)',
+                'score_note'       => 'Jaminan Bank Garansi BNI',
+                'approve_label'    => 'Setujui Kontrak',
+                'approve_tone'     => 'solid',
+                'filter_key'       => 'top',
+                'value'            => 120000000,
+                'value_label'      => 'Rp 120.000.000',
+                'exceeds_plafon'   => true,
+            ],
+            [
+                'contract'         => 'CTR-B2B-2025-095',
+                'region'           => 'SOEKARNO-HATTA HUB',
+                'client'           => 'PT Aerofood ACS Indonesia',
+                'client_tone'      => 'solid',
+                'submitted_by'     => 'Directorate Key Account',
+                'submitted_at'     => '13 Okt 2026',
+                'commodity'        => 'Sayuran Cut & Clean Hygienic',
+                'volume'           => '300 kg / hari (Daily Reefer Delivery)',
+                'segment'          => 'Standard Inflight Catering HACCP',
+                'price'            => 'Kontrak Tahunan Terikat (12 Bln)',
+                'price_strike'     => null,
+                'list_price'       => null,
+                'offer_price'      => null,
+                'discount_percent' => null,
+                'discount_ceiling' => null,
+                'exception'        => 'Harga Fixed Index + Eskalasi BBM',
+                'exception_tone'   => 'neutral',
+                'term'             => 'TOP 30 Hari via Virtual Account BNI',
+                'top_days'         => 30,
+                'top_default'      => 30,
+                'margin'           => '18.0% Net Margin',
+                'margin_value'     => 18.0,
+                'margin_minimum'   => 15.0,
+                'margin_delta'     => null,
+                'margin_flag'      => 'Corporate Tier-1 Stable',
+                'score'            => 'AAA (96/100)',
+                'score_note'       => 'BUMN Subsidiary // 0 Default',
+                'approve_label'    => 'Setujui Kontrak',
+                'approve_tone'     => 'solid',
+                'filter_key'       => 'annual',
+                'value'            => 120000000,
+                'value_label'      => 'Rp 120.000.000',
+                'exceeds_plafon'   => false,
+            ],
         ];
 
-        $cardChip = [
-            'success' => 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep',
-            'accent' => 'bg-accent-deep text-white outline outline-1 -outline-offset-1 outline-accent-deep',
-            'warning' => 'bg-warning-cream text-warning-caution outline outline-1 -outline-offset-1 outline-warning-caution',
-            'danger' => 'bg-danger-soft/40 text-danger outline outline-1 -outline-offset-1 outline-danger',
-        ];
-
-        $clientTone = [
-            'caution' => 'text-warning-caution',
-            'success' => 'text-success-deep',
-            'solid' => 'bg-ink text-accent',
-        ];
-
-        // Argumen Alpine disiapkan sebagai literal JS agar loop tabel tetap
-        // bersih dan tidak membutuhkan directive `@php` tambahan per baris.
-        $contractArguments = array_map(
-            static fn (array $row): string => (string) \Illuminate\Support\Js::from($row['contract']),
-            $queue['rows'],
-        );
-
-        $filterArguments = array_map(
-            static fn (array $row): string => (string) \Illuminate\Support\Js::from($row['filter_key']),
-            $queue['rows'],
-        );
-
-        $filterButtonArguments = array_map(
-            static fn (array $filter): string => (string) \Illuminate\Support\Js::from($filter['key']),
-            $queue['filters'],
-        );
+        $rows = !empty($rows) ? $rows : $defaultRows;
+        $totalVal = array_sum(array_column($rows, 'value'));
+        $exceedCount = count(array_filter($rows, fn ($r) => !empty($r['exceeds_plafon'])));
     @endphp
 
     <div class="mx-auto flex max-w-[1280px] flex-col gap-6"
-        x-data="directorApproval(@js($queue['rows']), @js($queue))">
+        x-data="directorApproval(@js($rows))">
 
         {{-- Page header --}}
         <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0 space-y-1">
                 <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
-                    {{ $header['title'] }}
+                    Persetujuan Kontrak Khusus, Diskon Volume &amp; Perpanjangan TOP B2B
                 </h1>
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-3">
                 <p class="flex flex-col rounded-lg bg-surface px-3 py-2 text-right outline outline-1 -outline-offset-1 outline-line-board">
                     <span class="gpa-note text-ink-body">PERIODE LAPORAN</span>
-                    <span class="gpa-meta-lg font-bold text-ink">{{ $header['period'] }}</span>
+                    <span class="gpa-meta-lg font-bold text-ink">PERIODE: OKTOBER 2026</span>
                 </p>
                 <button type="button" @click="printAuthorization()"
                     class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 shadow-sub outline outline-1 -outline-offset-1 outline-success transition-colors hover:bg-brand-hover">
@@ -68,27 +143,85 @@
 
         {{-- KPI row --}}
         <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            @foreach ($cards as $card)
-                <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
-                    <div class="flex flex-col gap-3">
-                        <div class="flex items-center justify-between gap-2">
-                            <h2 class="gpa-micro-bold {{ $cardTone[$card['tone']] }}">{{ $card['label'] }}</h2>
-                            <x-gpa.icon :name="$card['icon']" class="h-4 w-4 shrink-0 {{ $cardTone[$card['tone']] }}" />
-                        </div>
-
-                        <p class="gpa-figure text-[26px] leading-8 text-ink">{{ $card['value'] }}</p>
+            {{-- Card 1: Pengajuan Pending --}}
+            <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <h2 class="gpa-micro-bold text-warning-caution">Pengajuan Pending</h2>
+                        <x-gpa.icon name="clock" class="h-4 w-4 shrink-0 text-warning-caution" />
                     </div>
+                    <p class="gpa-figure text-[26px] leading-8 text-ink">{{ count($rows) }} Pengajuan</p>
+                </div>
 
-                    <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
-                        <span class="rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta {{ $cardChip[$card['chip_tone']] }}">
-                            {{ $card['chip'] }}
-                        </span>
-                        <span class="gpa-note font-semibold {{ $cardTone[$card['meta_tone']] ?? 'text-ink-body' }}">
-                            {{ $card['meta'] }}
-                        </span>
+                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
+                    <span class="rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-warning-cream text-warning-caution outline outline-1 -outline-offset-1 outline-warning-caution">
+                        GATE L4
+                    </span>
+                    <span class="gpa-note font-semibold text-warning-caution">
+                        Menunggu tanda tangan digital
+                    </span>
+                </div>
+            </article>
+
+            {{-- Card 2: Nilai Kontrak Pending --}}
+            <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <h2 class="gpa-micro-bold text-ink">Nilai Kontrak Pending</h2>
+                        <x-gpa.icon name="banknote" class="h-4 w-4 shrink-0 text-ink" />
                     </div>
-                </article>
-            @endforeach
+                    <p class="gpa-figure text-[26px] leading-8 text-ink">Rp {{ number_format($totalVal, 0, ',', '.') }}</p>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
+                    <span class="rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent-deep text-white outline outline-1 -outline-offset-1 outline-accent-deep">
+                        TIER-1
+                    </span>
+                    <span class="gpa-note font-semibold text-ink-body">
+                        Seluruh nilai Needs Directors
+                    </span>
+                </div>
+            </article>
+
+            {{-- Card 3: Pelanggaran Plafon --}}
+            <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <h2 class="gpa-micro-bold text-danger">Pelanggaran Plafon</h2>
+                        <x-gpa.icon name="alert-triangle" class="h-4 w-4 shrink-0 text-danger" />
+                    </div>
+                    <p class="gpa-figure text-[26px] leading-8 text-ink">{{ $exceedCount }} Pengajuan</p>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
+                    <span class="rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-danger-soft/40 text-danger outline outline-1 -outline-offset-1 outline-danger">
+                        ESCALATED
+                    </span>
+                    <span class="gpa-note font-semibold text-danger">
+                        Di atas plafon diskon atau TOP default
+                    </span>
+                </div>
+            </article>
+
+            {{-- Card 4: Sesi Tanda Tangan --}}
+            <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <h2 class="gpa-micro-bold text-success-deep">Sesi Tanda Tangan</h2>
+                        <x-gpa.icon name="lock" class="h-4 w-4 shrink-0 text-success-deep" />
+                    </div>
+                    <p class="gpa-figure text-[26px] leading-8 text-ink">14:32</p>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
+                    <span class="rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">
+                        HSM OK
+                    </span>
+                    <span class="gpa-note font-semibold text-success-deep">
+                        HSM RSA-4096 // SHA-256 aktif
+                    </span>
+                </div>
+            </article>
         </section>
 
         {{-- Authorization queue --}}
@@ -98,26 +231,26 @@
                     <div class="flex flex-wrap items-center gap-2">
                         <span class="inline-flex items-center gap-1 rounded bg-danger px-2 py-0.5 gpa-note font-bold text-white">
                             <span class="h-1.5 w-1.5 rounded-full bg-white" aria-hidden="true"></span>
-                            {{ $queue['badge'] }}
+                            PERLU OTORISASI DIREKTUR
                         </span>
                     </div>
-                    <h2 class="gpa-section-title text-ink">{{ $queue['title'] }}</h2>
+                    <h2 class="gpa-section-title text-ink">Daftar Pengajuan Kontrak Khusus &amp; Diskon Volume B2B</h2>
                 </div>
 
                 <div class="flex shrink-0 flex-col gap-1">
                     <p class="inline-flex items-center gap-2 rounded bg-surface-shell px-3 py-1.5 outline outline-1 -outline-offset-1 outline-line-board">
                         <span class="gpa-note text-ink-body">SELEKSI BATCH:</span>
-                        <span class="gpa-meta font-bold text-ink" x-text="selectedLabel()">0 / {{ count($queue['rows']) }} Terpilih</span>
+                        <span class="gpa-meta font-bold text-ink" x-text="selectedLabel()">0 / {{ count($rows) }} Terpilih</span>
                         <span class="gpa-meta font-bold text-success-deep" x-text="selectedValueLabel()">Rp 0</span>
                     </p>
                     <div class="flex items-center gap-2">
                         <button type="button" @click="approveSelected()" :disabled="selectedCount === 0"
                             class="inline-flex items-center gap-1.5 rounded bg-accent px-3.5 py-1.5 gpa-meta-lg font-bold text-ink shadow-sub outline outline-1 -outline-offset-1 outline-brand-deep/30 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">
-                            {{ $queue['batch_approve'] }}
+                            Approve Terpilih (Batch)
                         </button>
                         <button type="button" @click="selectAll()"
                             class="inline-flex items-center rounded bg-surface-shell px-3 py-1.5 text-center gpa-meta-lg font-medium text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
-                            {{ $queue['batch_select_all'] }}
+                            Pilih Semua
                         </button>
                     </div>
                 </div>
@@ -125,58 +258,83 @@
 
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line-board/60 py-3">
                 <div class="flex flex-wrap items-center gap-2">
-                    <span class="text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">{{ $header['filter_label'] }}</span>
-                    @foreach ($queue['filters'] as $index => $filter)
-                        <button type="button" @click="setFilter({{ $filterButtonArguments[$index] }})"
-                            :class="filterClass({{ $filterButtonArguments[$index] }})"
-                            class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
-                            {{ $filter['label'] }} ({{ $filter['count'] }})
-                        </button>
-                    @endforeach
+                    <span class="text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Filter</span>
+                    <button type="button" @click="setFilter('all')"
+                        :class="filterClass('all')"
+                        class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
+                        Semua Pending ({{ count($rows) }})
+                    </button>
+                    <button type="button" @click="setFilter('discount')"
+                        :class="filterClass('discount')"
+                        class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
+                        Diskon Khusus ({{ count(array_filter($rows, fn ($r) => ($r['filter_key'] ?? '') === 'discount')) }})
+                    </button>
+                    <button type="button" @click="setFilter('top')"
+                        :class="filterClass('top')"
+                        class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
+                        Ekstensi TOP ({{ count(array_filter($rows, fn ($r) => ($r['filter_key'] ?? '') === 'top')) }})
+                    </button>
+                    <button type="button" @click="setFilter('annual')"
+                        :class="filterClass('annual')"
+                        class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
+                        Kontrak Induk Tahunan ({{ count(array_filter($rows, fn ($r) => ($r['filter_key'] ?? '') === 'annual')) }})
+                    </button>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-3">
                     <label class="relative flex items-center" for="approval-search">
-                        <span class="sr-only">{{ $queue['search_placeholder'] }}</span>
+                        <span class="sr-only">Cari klien, kontrak, atau komoditas...</span>
                         <x-gpa.icon name="search"
                             class="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-ink-body" />
                         <input id="approval-search" type="search" x-model="search"
-                            placeholder="{{ $queue['search_placeholder'] }}"
+                            placeholder="Cari klien, kontrak, atau komoditas..."
                             class="w-56 rounded bg-surface-shell py-1.5 pl-8 pr-2.5 text-[11px] leading-4 text-ink outline outline-1 -outline-offset-1 outline-line-board placeholder:text-ink-body/70 focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">
                     </label>
 
                     <span class="inline-flex items-center gap-1 gpa-note font-semibold text-success-deep">
                         <x-gpa.icon name="lock" class="h-3 w-3 shrink-0" />
-                        {{ $queue['hsm'] }}
+                        HSM RSA-4096 Terhubung
                     </span>
                     <span class="gpa-note text-ink-body" aria-hidden="true">|</span>
                     <span class="inline-flex items-center gap-1 gpa-note font-semibold text-success-deep">
                         <x-gpa.icon name="clock" class="h-3 w-3 shrink-0" />
-                        {{ $queue['timeout'] }}
+                        Sesi Timeout: 14:32
                     </span>
                 </div>
             </div>
 
             <div class="gpa-scroll-x overflow-x-auto">
                 <table class="w-full min-w-[64rem] border-collapse">
-                    <caption class="sr-only">{{ $queue['title'] }}</caption>
+                    <caption class="sr-only">Daftar Pengajuan Kontrak Khusus &amp; Diskon Volume B2B</caption>
                     <thead>
                         <tr class="border-b border-line-board">
                             <th scope="col" class="w-9 py-3 pr-2">
                                 <span class="sr-only">Pilih pengajuan</span>
                             </th>
-                            @foreach ($queue['columns'] as $position => $column)
-                                <th scope="col"
-                                    class="px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body {{ $position === count($queue['columns']) - 1 ? 'text-right' : 'text-left' }}">
-                                    {{ $column }}
-                                </th>
-                            @endforeach
+                            <th scope="col" class="px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body text-left">
+                                ID KONTRAK &amp; PEMOHON
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body text-left">
+                                KOMODITAS &amp; VOLUME
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body text-left">
+                                KETENTUAN HARGA &amp; TOP
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body text-left">
+                                ANALISIS MARGIN
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body text-left">
+                                SKOR KREDIT
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body text-right">
+                                AKSI OTORISASI DIREKTUR
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-line-hair">
-                        @foreach ($queue['rows'] as $index => $row)
+                        @foreach ($rows as $index => $row)
                             <tr class="align-top transition-colors hover:bg-surface-shell/50"
-                                x-show="matches({{ $filterArguments[$index] }}, {{ $index }})">
+                                x-show="matches('{{ $row['filter_key'] ?? '' }}', {{ $index }})">
                                 <td class="py-4 pr-2 align-top">
                                     <input type="checkbox" class="gpa-check m-0" value="{{ $row['contract'] }}"
                                         x-model="selected">
@@ -205,7 +363,7 @@
                                     <p class="mt-1 text-[11px] leading-4 text-ink-body">{{ $row['segment'] }}</p>
                                 </td>
                                 <td class="px-3 py-4 align-top">
-                                    @if ($row['price_strike'])
+                                    @if (!empty($row['price_strike']))
                                         <p class="text-[13px] font-semibold leading-5 text-ink">
                                             {{ $row['price'] }}
                                             <span class="text-[11px] font-normal text-ink-body line-through">
@@ -217,8 +375,8 @@
                                     @endif
                                     <p @class([
                                         'mt-1 text-[11px] leading-4',
-                                        'font-medium text-warning-caution' => $row['exception_tone'] === 'caution',
-                                        'text-ink-body' => $row['exception_tone'] === 'neutral',
+                                        'font-medium text-warning-caution' => ($row['exception_tone'] ?? '') === 'caution',
+                                        'text-ink-body' => ($row['exception_tone'] ?? '') !== 'caution',
                                     ])>{{ $row['exception'] }}</p>
                                     <p class="text-[11px] leading-4 text-ink-body">{{ $row['term'] }}</p>
                                 </td>
@@ -238,27 +396,27 @@
                                 </td>
                                 <td class="px-3 py-4 text-right align-top">
                                     <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5">
-                                        <button type="button" @click="detail({{ $contractArguments[$index] }})"
+                                        <button type="button" @click="detail('{{ $row['contract'] }}')"
                                             class="inline-flex items-center gap-1.5 rounded-md border border-line-board px-2.5 py-1.5 text-[11px] font-medium leading-4 text-ink transition-colors hover:bg-surface-muted">
                                             <x-gpa.icon name="file-text" class="h-3.5 w-3.5 shrink-0" />
-                                            {{ $queue['detail_label'] }}
+                                            Detail PKS
                                         </button>
-                                        <button type="button" @click="approve({{ $contractArguments[$index] }})"
+                                        <button type="button" @click="approve('{{ $row['contract'] }}')"
                                             class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-semibold leading-4 transition-opacity hover:opacity-90"
                                             @class([
-                                                'bg-ink text-white' => $row['approve_tone'] === 'solid',
-                                                'bg-accent text-ink' => $row['approve_tone'] === 'accent',
+                                                'bg-ink text-white' => ($row['approve_tone'] ?? 'solid') === 'solid',
+                                                'bg-accent text-ink' => ($row['approve_tone'] ?? '') === 'accent',
                                             ])>
                                             <x-gpa.icon name="check" class="h-3.5 w-3.5 shrink-0" />
                                             {{ $row['approve_label'] }}
                                         </button>
-                                        <button type="button" @click="revise({{ $contractArguments[$index] }})"
+                                        <button type="button" @click="revise('{{ $row['contract'] }}')"
                                             class="text-[11px] font-medium leading-4 text-ink-body underline-offset-2 transition-colors hover:text-ink hover:underline">
-                                            {{ $queue['revise_label'] }}
+                                            Minta Revisi
                                         </button>
-                                        <button type="button" @click="reject({{ $contractArguments[$index] }})"
+                                        <button type="button" @click="reject('{{ $row['contract'] }}')"
                                             class="text-[11px] font-medium leading-4 text-danger underline-offset-2 transition-colors hover:underline">
-                                            {{ $queue['reject_label'] }}
+                                            Tolak
                                         </button>
                                     </div>
                                 </td>
@@ -276,8 +434,8 @@
                 <p class="flex items-start gap-2">
                 </p>
                 <div class="flex flex-col items-end gap-1">
-                    <p class="gpa-note font-bold text-ink">{{ $queue['total_note'] }}</p>
-                    <p class="gpa-note text-ink-body" x-text="visibleLabel()">{{ $queue['shown_label'] }}</p>
+                    <p class="gpa-note font-bold text-ink">TOTAL NILAI KONTRAK AKTIF PENDING: Rp {{ number_format($totalVal, 0, ',', '.') }} ({{ count($rows) }} Pengajuan)</p>
+                    <p class="gpa-note text-ink-body" x-text="visibleLabel()">Menampilkan {{ count($rows) }} dari {{ count($rows) }} Pengajuan Pending</p>
                 </div>
             </footer>
         </section>

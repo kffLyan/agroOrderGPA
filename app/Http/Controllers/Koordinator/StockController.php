@@ -20,37 +20,6 @@ class StockController extends Controller
      */
     public function index(Request $request): View
     {
-        $user = $request->user();
-
-        $operator = [
-            'name' => $user?->name ?? 'Koordinator Lapangan',
-            'role' => 'Koordinator Lapangan',
-            'code' => '002',
-            'initials' => strtoupper(substr($user?->name ?? 'KL', 0, 2)),
-        ];
-
-        // 1. Header
-        $header = [
-            'eyebrow' => 'Sub-06 // Manajemen Stok',
-            'title_before' => 'Manajemen Stok Panen & Alokasi',
-            'title_after' => 'Buffer Stock Gudang',
-            'subtitle' => 'Monitoring ketersediaan pasokan panen petani binaan dan pasokan penyangga (buffer stock) mitra luar untuk pencegahan overselling (PRD Section 5.1, 7.3, Rule 02 & 03).',
-            'actions' => [
-                ['key' => 'export', 'label' => 'EXPORT LEDGER .CSV', 'icon' => 'download', 'variant' => 'ghost'],
-                ['key' => 'lock-all', 'label' => 'KUNCI ALOKASI PASOKAN', 'icon' => 'lock', 'variant' => 'ink'],
-            ],
-        ];
-
-        // 2. Protokol Mutu
-        $protocol = [
-            'title' => 'PROTOKOL PENJAGA MUTU & INTEGRITAS STOK (PRD SECTION 7.3 & 8.2)',
-            'badge' => 'HARD-LOCK ENABLED',
-            'body' => 'Setiap PO yang diterbitkan otomatis memotong kuota komoditas secara real-time. Komitmen stok binaan terkunci 100%. Apabila alokasi binaan kurang dari permintaan PO, sistem mewajibkan injeksi buffer mitra tervalidasi dengan selisih susut bobot toleransi maks ≤ 2.5%.',
-            'validation_label' => 'VALIDASI INTEGRITAS',
-            'validation_value' => '0 ANOMALI OVERSELL',
-        ];
-
-        // 3. Query Data Komoditas & Batch Riil
         $products = Product::where('is_active', true)->with('harvestBatches')->get();
         $totalBinaan = (float) HarvestBatch::where('source_type', 'PETANI_BINAAN')->sum('available_quantity');
         $totalBuffer = (float) HarvestBatch::where('source_type', 'BUFFER_LUAR')->sum('available_quantity');
@@ -59,86 +28,6 @@ class StockController extends Controller
         $freeStock = max(0, $totalStock - $totalReserved);
         $activePoCount = Order::whereIn('status', ['TERVERIFIKASI', 'SIAP_KIRIM'])->count();
 
-        // 4. Metrik KPIs
-        $kpis = [
-            [
-                'key' => 'available',
-                'label' => 'TOTAL STOK TERSEDIA',
-                'value' => $totalStock,
-                'unit' => 'KG',
-                'tone' => 'ink',
-                'icon' => 'package',
-                'icon_tone' => 'shell',
-                'footnote_left' => 'Binaan: ' . number_format($totalBinaan, 0, ',', '.') . ' KG (' . ($totalStock > 0 ? round(($totalBinaan / $totalStock) * 100, 1) : 0) . '%)',
-                'footnote_right' => 'Buffer: ' . number_format($totalBuffer, 0, ',', '.') . ' KG',
-                'bar_total' => max(1, $totalStock),
-                'segments' => [
-                    ['value' => $totalBinaan, 'class' => 'bg-success-deep'],
-                    ['value' => $totalBuffer, 'class' => 'bg-brand'],
-                ],
-            ],
-            [
-                'key' => 'reserved',
-                'label' => 'STOK TERPESAN / PO',
-                'value' => $totalReserved,
-                'unit' => 'KG',
-                'tone' => 'ink',
-                'icon' => 'file-text',
-                'icon_tone' => 'shell',
-                'footnote_left' => $activePoCount . ' Kontrak PO Aktif',
-                'footnote_right' => '100% TERIKAT',
-                'footnote_chip' => true,
-                'bar_total' => max(1, $totalStock),
-                'segments' => [['value' => $totalReserved, 'class' => 'bg-ink']],
-            ],
-            [
-                'key' => 'free',
-                'label' => 'SISA BEBAS (FREE STOCK)',
-                'value' => $freeStock,
-                'unit' => 'KG',
-                'tone' => 'success',
-                'icon' => 'gauge',
-                'icon_tone' => 'accent',
-                'footnote_left' => 'Ready to Promise (RTP)',
-                'footnote_right' => $freeStock >= 0 ? 'AMAN DARI DEFISIT' : 'PERINGATAN DEFISIT',
-                'bar_total' => max(1, $totalStock),
-                'segments' => [['value' => max(0, $freeStock), 'class' => 'bg-accent-edge']],
-            ],
-            [
-                'key' => 'hubs',
-                'label' => 'HUB PASOKAN AKTIF',
-                'value' => 3,
-                'unit' => 'LOKASI SENTRA',
-                'tone' => 'ink',
-                'icon' => 'truck',
-                'icon_tone' => 'shell',
-                'footnote_left' => 'Cianjur, Lembang, Pangalengan',
-                'footnote_right' => '100% ONLINE',
-                'segments' => [
-                    ['value' => 1, 'class' => 'bg-success-deep'],
-                    ['value' => 1, 'class' => 'bg-success-deep'],
-                    ['value' => 1, 'class' => 'bg-success-deep'],
-                ],
-                'segment_mode' => 'equal',
-            ],
-        ];
-
-        // 5. Filter Opsi
-        $filters = [
-            'label' => 'FILTER KOMODITAS:',
-            'options' => [
-                ['key' => 'all', 'label' => 'Semua (' . $products->count() . ')'],
-                ['key' => 'daun', 'label' => 'Sayuran Daun'],
-                ['key' => 'buah', 'label' => 'Buah & Solanaceae'],
-                ['key' => 'cruciferae', 'label' => 'Cruciferae'],
-            ],
-            'legend' => [
-                ['label' => 'Binaan Terikat', 'class' => 'bg-success-deep'],
-                ['label' => 'Buffer Siaga', 'class' => 'bg-brand'],
-            ],
-        ];
-
-        // 6. Daftar Komoditas Detail
         $commodities = $products->map(function ($product) {
             $slug = $product->slug ?: Str::slug($product->name);
             $lowerName = strtolower($product->name);
@@ -196,68 +85,11 @@ class StockController extends Controller
             ];
         })->values()->all();
 
-        // 7. Intake Ledger Form Fields
         $distinctSuppliers = HarvestBatch::distinct()->pluck('supplier_name')->filter()->values()->all();
         if (empty($distinctSuppliers)) {
             $distinctSuppliers = ['Pak Endang (Gapoktan Pacet Makmur)', 'Bu Yanti (Gapoktan Barokah)', 'Mitra Tani Sejahtera'];
         }
 
-        $intake = [
-            'title' => 'Quick Intake Ledger',
-            'subtitle' => 'PENCATATAN PANEN MASUK LAPANGAN',
-            'badge' => 'POS-01 AUTO-CAPTURE',
-            'fields' => [
-                [
-                    'key' => 'vendor',
-                    'label' => 'PETANI BINAAN / MITRA VENDOR *',
-                    'type' => 'select',
-                    'value' => $distinctSuppliers[0] ?? 'Petani Binaan',
-                    'hint' => 'Kelompok Tani Binaan GPA / Mitra Buffer Resmi',
-                    'options' => collect($distinctSuppliers)->map(fn($s) => ['key' => $s, 'label' => $s])->all(),
-                ],
-                [
-                    'key' => 'commodity',
-                    'label' => 'KOMODITAS INTI *',
-                    'type' => 'select',
-                    'value' => $commodities[0]['key'] ?? 'selada-romaine',
-                    'options' => $products->map(fn($p) => [
-                        'key' => $p->slug ?: Str::slug($p->name),
-                        'label' => $p->name . ' (' . ($p->grade ?: 'Grade A') . ')',
-                    ])->all(),
-                ],
-                [
-                    'key' => 'grade',
-                    'label' => 'GRADE MUTU',
-                    'type' => 'select',
-                    'value' => 'Grade A (Premium)',
-                    'options' => [
-                        ['key' => 'Grade A+ (Super)', 'label' => 'Grade A+ (Super)'],
-                        ['key' => 'Grade A (Premium)', 'label' => 'Grade A (Premium)'],
-                        ['key' => 'Grade AA (Wajib Panas)', 'label' => 'Grade AA (Wajib Panas)'],
-                        ['key' => 'Grade B (Sortir)', 'label' => 'Grade B (Sortir)'],
-                    ],
-                ],
-                [
-                    'key' => 'category',
-                    'label' => 'KATEGORI PASOKAN',
-                    'type' => 'select',
-                    'value' => 'Panen Binaan Inti',
-                    'options' => [
-                        ['key' => 'Panen Binaan Inti', 'label' => 'Panen Binaan Inti'],
-                        ['key' => 'Injeksi Buffer Mitra', 'label' => 'Injeksi Buffer Mitra'],
-                        ['key' => 'Retur Sortir', 'label' => 'Retur Sortir'],
-                    ],
-                ],
-                ['key' => 'quantity', 'label' => 'KUANTITAS (NETTO)', 'type' => 'number', 'value' => 500, 'unit' => 'KG'],
-                ['key' => 'date', 'label' => 'TANGGAL TEBAS/PETIK', 'type' => 'date', 'value' => now()->toDateString()],
-                ['key' => 'notes', 'label' => 'BRIX / MOISTURE / QC NOTES', 'type' => 'text', 'value' => 'Lolos sortir manual, suhu pra-dingin cold room terjaga.'],
-            ],
-            'port_label' => 'Port Timbangan: COM-4 (Netto Stabil)',
-            'port_status' => 'CONNECTED',
-            'submit' => 'SIMPAN DATA PASOKAN',
-        ];
-
-        // 8. Log Riil Inbound & Intake
         $recentBatches = HarvestBatch::with('product', 'inputter')->latest()->take(10)->get();
         $logItems = $recentBatches->map(function ($batch) {
             $isBuffer = $batch->source_type === 'BUFFER_LUAR';
@@ -274,29 +106,19 @@ class StockController extends Controller
             ];
         })->all();
 
-        $logs = [
-            'title' => 'Log Inbound & Realtime',
-            'badge' => 'LIVE FEED',
-            'total' => count($logItems),
-            'items' => $logItems,
-        ];
-
-        $stockData = [
-            'operator' => $operator,
-            'header' => $header,
-            'protocol' => $protocol,
-            'kpis' => $kpis,
-            'filters' => $filters,
-            'commodities' => $commodities,
-            'intake' => $intake,
-            'logs' => $logs,
-        ];
-
         $viewName = view()->exists('koordinator.stock') ? 'koordinator.stock' : 'coordinator.stock';
 
         return view($viewName, [
-            'operator' => $operator,
-            'stockData' => $stockData,
+            'products'          => $products,
+            'totalBinaan'       => $totalBinaan,
+            'totalBuffer'       => $totalBuffer,
+            'totalStock'        => $totalStock,
+            'totalReserved'     => $totalReserved,
+            'freeStock'         => $freeStock,
+            'activePoCount'     => $activePoCount,
+            'commodities'       => $commodities,
+            'distinctSuppliers' => $distinctSuppliers,
+            'logItems'          => $logItems,
         ]);
     }
 

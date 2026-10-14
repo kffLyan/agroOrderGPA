@@ -4,47 +4,67 @@
 
 @section('content')
     @php
-        $chipTone = [
-            'success' => 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep',
-            'neutral' => 'bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board',
-            'accent' => 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep',
-            'ink' => 'bg-ink text-accent',
-        ];
+        $currentUser = auth()->user();
 
-        $statusTone = [
-            'success' => 'text-success-deep',
-            'ink' => 'text-ink',
-        ];
+        $directoryRows = [];
+        foreach ($allUsers as $u) {
+            $roleKey = match (strtoupper($u->role)) {
+                'DIREKTUR'    => 'director',
+                'SEKRETARIS'  => 'admin',
+                'KOORDINATOR' => 'coordinator',
+                'ARMADA'      => 'driver',
+                default       => 'client',
+            };
 
-        $policyChip = [
-            'success' => 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep',
-            'ink' => 'bg-ink text-accent',
-        ];
+            $badge = match ($roleKey) {
+                'director'    => 'DIR',
+                'admin'       => 'ADM',
+                'coordinator' => 'KRD',
+                'driver'      => 'DVR',
+                default       => 'KLN',
+            };
 
-        $cellTone = [
-            'grant' => 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep',
-            'plain' => 'bg-surface-track text-ink',
-            'muted' => 'text-ink-body',
-            'none' => 'text-ink',
-            'dark' => 'bg-ink text-accent',
-            'solo' => 'bg-ink text-accent outline outline-1 -outline-offset-1 outline-accent',
-        ];
+            $division = match ($roleKey) {
+                'director'    => 'Direksi Pusat / Policy',
+                'admin'       => 'Central Office / Keuangan',
+                'coordinator' => 'STA & Timbangan Lapangan',
+                'driver'      => 'Armada & Distribusi Fisik',
+                default       => $u->company_name ?: 'Mitra B2B Buyer',
+            };
 
-        $badgeTone = [
-            'ink' => 'bg-ink text-accent',
-            'track' => 'bg-surface-track text-ink-body',
-        ];
+            $hub = match ($roleKey) {
+                'director'    => 'HQ Jakarta / All Hub',
+                'admin'       => 'Kantor Pusat GPA',
+                'coordinator' => 'STA Cianjur & Lembang',
+                'driver'      => 'Pool Distribusi Bandung',
+                default       => 'Jawa Barat & Jabodetabek',
+            };
 
-        // Argumen Alpine disiapkan sebagai literal JS agar loop tabel tetap
-        // bersih dan tidak membutuhkan directive `@php` tambahan per baris.
-        $directoryArguments = array_map(
-            static fn (array $row): string => (string) \Illuminate\Support\Js::from($row),
-            $directory['rows'],
-        );
+            $directoryRows[] = [
+                'id'            => $u->id,
+                'role_key'      => $roleKey,
+                'badge'         => $badge,
+                'name'          => $u->name,
+                'code'          => strtoupper($badge) . '-' . str_pad($u->id, 3, '0', STR_PAD_LEFT),
+                'role'          => $u->role,
+                'division'      => $division,
+                'nik'           => '3201-' . str_pad($u->id, 4, '0', STR_PAD_LEFT) . '-0001',
+                'hub'           => $hub,
+                'phone'         => $u->phone,
+                'is_active'     => (bool) $u->is_active,
+                'online'        => $u->id === $currentUser?->id,
+                'login'         => $u->id === $currentUser?->id ? 'Online Now' : 'Hari ini',
+                'login_meta'    => $u->email,
+                'show_url'      => route('direktur.users.show', $u->id),
+                'edit_url'      => route('direktur.users.edit', $u->id),
+                'delete_url'    => route('direktur.users.destroy', $u->id),
+                'reset_pwd_url' => route('direktur.users.reset-password', $u->id),
+            ];
+        }
     @endphp
 
     <div class="mx-auto flex max-w-[1280px] flex-col gap-6"
-        x-data="directorAccess(@js($directory['rows']))">
+        x-data="directorAccess(@js($directoryRows))">
         @if (session('success'))
             <div class="rounded-xl border border-accent bg-accent/20 px-4 py-3 text-xs font-semibold text-success-deep shadow-sm flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -62,14 +82,17 @@
             </div>
         @endif
 
+        {{-- Page header + ringkasan metrik --}}
         <section class="flex flex-col gap-4">
             <header class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
                 <div class="min-w-0 space-y-1">
-                    <p class="gpa-micro-bold uppercase tracking-wider text-ink-body">{{ $header['eyebrow'] }}</p>
+                    <p class="gpa-micro-bold uppercase tracking-wider text-ink-body">Kelola Akun Pengguna &amp; RBAC</p>
                     <h1 class="font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
-                        {{ $header['title'] }}
+                        Kelola Akun dan Hak Akses Pengguna
                     </h1>
-                    <p class="text-xs text-ink-body max-w-2xl">{{ $header['subtitle'] }}</p>
+                    <p class="text-xs text-ink-body max-w-2xl">
+                        Pusat Kontrol Otorisasi Pengguna Berjenjang, Pembagian Peran, Token Sesi Kriptografis, &amp; Audit Akses Keamanan.
+                    </p>
                 </div>
 
                 <div class="flex shrink-0 flex-wrap items-center gap-2">
@@ -87,31 +110,81 @@
             </header>
 
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                @foreach ($metrics as $metric)
-                    <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
-                        <div class="flex flex-col gap-3">
-                            <div class="flex items-center justify-between gap-2">
-                                <h3 class="gpa-micro-bold text-ink-body">{{ $metric['eyebrow'] }}</h3>
-                                <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta {{ $chipTone[$metric['chip_tone']] }}">
-                                    {{ $metric['chip'] }}
-                                </span>
-                            </div>
-
-                            <p class="gpa-figure text-[22px] leading-7 text-ink">{{ $metric['value'] }}</p>
-                            <p class="text-[11px] leading-4 text-ink-body">{{ $metric['note'] }}</p>
+                {{-- Metric 1: Total Akun --}}
+                <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
+                    <div class="flex flex-col gap-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <h3 class="gpa-micro-bold text-ink-body">TOTAL AKUN TERDAFTAR</h3>
+                            <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board">
+                                5 Role Terisolasi
+                            </span>
                         </div>
+                        <p class="gpa-figure text-[22px] leading-7 text-ink">{{ $totalUsers }}</p>
+                        <p class="text-[11px] leading-4 text-ink-body">PENGGUNA AKTIF</p>
+                    </div>
 
-                        <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
-                            @foreach ($metric['facts'] as $fact)
-                                <span @class([
-                                    'gpa-note',
-                                    'font-bold text-success-deep' => $fact['tone'] === 'accent',
-                                    'text-ink-body' => $fact['tone'] !== 'accent',
-                                ])>{{ $fact['text'] }}</span>
-                            @endforeach
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
+                        <span class="gpa-note text-ink-body">5 Role Terisolasi</span>
+                        <span class="gpa-note font-bold text-success-deep">0 DITANGGUHKAN</span>
+                    </div>
+                </article>
+
+                {{-- Metric 2: Sesi Aktif --}}
+                <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
+                    <div class="flex flex-col gap-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <h3 class="gpa-micro-bold text-ink-body">SESI AKTIF REALTIME</h3>
+                            <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">
+                                LIVE PING
+                            </span>
                         </div>
-                    </article>
-                @endforeach
+                        <p class="gpa-figure text-[22px] leading-7 text-ink">14 NODE LOGIN</p>
+                        <p class="text-[11px] leading-4 text-ink-body">DISTRIBUSI PERAN AKTIF</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
+                        <span class="gpa-note text-ink-body">2 Dir | 4 Adm</span>
+                        <span class="gpa-note font-bold text-success-deep">3 Koord | 5 Supir</span>
+                    </div>
+                </article>
+
+                {{-- Metric 3: Otentikasi 2FA --}}
+                <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
+                    <div class="flex flex-col gap-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <h3 class="gpa-micro-bold text-ink-body">OTENTIKASI 2FA &amp; TOKEN</h3>
+                            <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">
+                                TERPROTEKSI
+                            </span>
+                        </div>
+                        <p class="gpa-figure text-[22px] leading-7 text-ink">100%</p>
+                        <p class="text-[11px] leading-4 text-ink-body">CAKUPAN AKUN WAJIB 2FA</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
+                        <span class="gpa-note text-ink-body">Enkripsi RSA-4096</span>
+                        <span class="gpa-note font-bold text-success-deep">Biometrik Aktif</span>
+                    </div>
+                </article>
+
+                {{-- Metric 4: Log Pelanggaran --}}
+                <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
+                    <div class="flex flex-col gap-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <h3 class="gpa-micro-bold text-ink-body">LOG PELANGGARAN HAK AKSES</h3>
+                            <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-ink text-accent">
+                                RULE 08 ENFORCED
+                            </span>
+                        </div>
+                        <p class="gpa-figure text-[22px] leading-7 text-ink">0 INSIDEN</p>
+                        <p class="text-[11px] leading-4 text-ink-body">STATUS BULANAN (0%)</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
+                        <span class="gpa-note text-ink-body">Rule 08 Enforcement</span>
+                        <span class="gpa-note font-bold text-success-deep">TAMPER-PROOF</span>
+                    </div>
+                </article>
             </div>
         </section>
 
@@ -119,120 +192,274 @@
         <section class="flex flex-col gap-3 rounded-2xl bg-surface p-6 shadow-card">
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0">
-                    <h2 class="gpa-section-title text-ink">{{ $matrix['title'] }}</h2>
+                    <h2 class="gpa-section-title text-ink">Hak Akses &amp; Wewenang 5 Role</h2>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
                     <button type="button" @click="syncRbacPolicy()"
                         class="inline-flex shrink-0 items-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                         <x-gpa.icon name="refresh" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
-                        {{ $matrix['action'] }}
+                        Sync RBAC Policy
                     </button>
                 </div>
             </header>
 
             <div class="gpa-scroll-x overflow-x-auto">
                 <table class="w-full min-w-[68rem] border-collapse">
-                    <caption class="sr-only">{{ $matrix['title'] }}</caption>
+                    <caption class="sr-only">Hak Akses &amp; Wewenang 5 Role</caption>
                     <thead>
                         <tr class="border-b border-line-board">
-                            @foreach ($matrix['columns'] as $index => $column)
-                                <th scope="col"
-                                    @class([
-                                        'px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em]',
-                                        'text-left text-ink-body' => $index === 0,
-                                        'text-center text-ink-body' => $index !== 0,
-                                    ])>
-                                    {{ $column['label'] }}
-                                </th>
-                            @endforeach
+                            <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
+                                MODUL &amp; FITUR OPERASIONAL
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
+                                KLIEN / BUYER
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
+                                SEKRE / ADMIN
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
+                                KOORDINATOR LAPANGAN
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
+                                ARMADA / SUPIR
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
+                                DIREKTUR / OWNER
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-line-hair">
-                        @foreach ($matrix['rows'] as $row)
-                            <tr @class([
-                                'transition-colors hover:bg-surface-shell/50',
-                                'bg-accent/25' => $row['highlight'],
-                            ])>
-                                <th scope="row" class="px-3 py-4 text-left align-top font-normal">
-                                    <p @class([
-                                        'text-[12px] leading-5 text-ink',
-                                        'font-bold' => $row['highlight'],
-                                        'font-semibold' => ! $row['highlight'],
-                                    ])>{{ $row['module'] }}</p>
-                                    <p class="mt-0.5 text-[10px] leading-4 text-ink-body">{{ $row['detail'] }}</p>
-                                </th>
-                                @foreach ($row['cells'] as $cell)
-                                    <td class="px-3 py-4 text-center align-top">
-                                        <span @class([
-                                            'inline-block rounded px-2 py-1 text-[11px] leading-4',
-                                            'font-bold' => in_array($cell['kind'], ['none', 'dark', 'solo'], true),
-                                            'font-semibold' => ! in_array($cell['kind'], ['none', 'dark', 'solo'], true),
-                                            $cellTone[$cell['kind']],
-                                        ])>{{ $cell['label'] }}</span>
-                                    </td>
-                                @endforeach
-                            </tr>
-                        @endforeach
+                        {{-- Row 1: Order B2B --}}
+                        <tr class="transition-colors hover:bg-surface-shell/50">
+                            <th scope="row" class="px-3 py-4 text-left align-top font-normal">
+                                <p class="text-[12px] leading-5 text-ink font-semibold">Katalog &amp; Buat Order B2B</p>
+                                <p class="mt-0.5 text-[10px] leading-4 text-ink-body">Order PO-distribusi klien korporat dan price list kontrak</p>
+                            </th>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">Read / Create</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Form WA / Manual (Create)</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold text-ink-body">No Access</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold text-ink-body">No Access</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold bg-ink text-accent">Full Monitoring (Read)</span>
+                            </td>
+                        </tr>
+
+                        {{-- Row 2: Timbangan Aktual --}}
+                        <tr class="transition-colors hover:bg-surface-shell/50">
+                            <th scope="row" class="px-3 py-4 text-left align-top font-normal">
+                                <p class="text-[12px] leading-5 text-ink font-semibold">Timbangan Aktual &amp; Netto Panen</p>
+                                <p class="mt-0.5 text-[10px] leading-4 text-ink-body">Certifikasi bobot bersih timbangan elektronik</p>
+                            </th>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Read-Only</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Read Riil</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">Lock &amp; Certify</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold text-ink-body">No Access</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold bg-ink text-accent">Audit Calibration (Read)</span>
+                            </td>
+                        </tr>
+
+                        {{-- Row 3: Surat Jalan --}}
+                        <tr class="transition-colors hover:bg-surface-shell/50">
+                            <th scope="row" class="px-3 py-4 text-left align-top font-normal">
+                                <p class="text-[12px] leading-5 text-ink font-semibold">Terbitkan Surat Jalan (Rule 05)</p>
+                                <p class="mt-0.5 text-[10px] leading-4 text-ink-body">Dokumen Predicate legalitas pengiriman kargo</p>
+                            </th>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold text-ink-body">No Access</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">Create &amp; Sign</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Read (Manifest)</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Read Digital</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold bg-ink text-accent">Read &amp; Invalidation</span>
+                            </td>
+                        </tr>
+
+                        {{-- Row 4: Faktur, Bayar & Rekonsiliasi --}}
+                        <tr class="transition-colors hover:bg-surface-shell/50">
+                            <th scope="row" class="px-3 py-4 text-left align-top font-normal">
+                                <p class="text-[12px] leading-5 text-ink font-semibold">Faktur, Bayar &amp; Rekonsiliasi Kas</p>
+                                <p class="mt-0.5 text-[10px] leading-4 text-ink-body">Settlement termin dan kliring rekening korporat</p>
+                            </th>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Read / Upload Bukti</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">Approve &amp; Reconcile</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold text-ink-body">No Access</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold text-ink-body">No Access</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold bg-ink text-accent">Executive Ledger Read</span>
+                            </td>
+                        </tr>
+
+                        {{-- Row 5: PoD Digital --}}
+                        <tr class="transition-colors hover:bg-surface-shell/50">
+                            <th scope="row" class="px-3 py-4 text-left align-top font-normal">
+                                <p class="text-[12px] leading-5 text-ink font-semibold">PoD Digital, Foto &amp; Catat Retur</p>
+                                <p class="mt-0.5 text-[10px] leading-4 text-ink-body">Bukti penerimaan barang dan catatan sengketa</p>
+                            </th>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">Digital Sign PoD</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Verify Dispute</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">Verify &amp; Stock Sync</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Upload &amp; Submit</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold bg-ink text-accent">Dispute Final Arbiter</span>
+                            </td>
+                        </tr>
+
+                        {{-- Row 6: Approval Kontrak & Kunci Audit --}}
+                        <tr class="transition-colors hover:bg-surface-shell/50 bg-accent/25">
+                            <th scope="row" class="px-3 py-4 text-left align-top font-normal">
+                                <p class="text-[12px] leading-5 text-ink font-bold">Approval Kontrak &amp; Kunci Audit</p>
+                                <p class="mt-0.5 text-[10px] leading-4 text-ink-body">Otorisasi monograf final dan sealing ledger</p>
+                            </th>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold text-ink">NONE (BLOCKED)</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Draft / Review</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold text-ink">NONE (BLOCKED)</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold text-ink">NONE (BLOCKED)</span>
+                            </td>
+                            <td class="px-3 py-4 text-center align-top">
+                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold bg-ink text-accent outline outline-1 -outline-offset-1 outline-accent">SOLE APPROVER / LOCK</span>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-
         {{-- User directory --}}
         <section class="flex flex-col gap-3 rounded-2xl bg-surface p-6 shadow-card">
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0">
-                    <h2 class="gpa-section-title text-ink">{{ $directory['title'] }}</h2>
+                    <h2 class="gpa-section-title text-ink">Direktori Pengguna &amp; Status Kredensial</h2>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
                     <label class="relative flex items-center" for="directory-search">
-                        <span class="sr-only">{{ $directory['search_placeholder'] }}</span>
+                        <span class="sr-only">Cari NIK, Nama, atau ID...</span>
                         <x-gpa.icon name="search"
                             class="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-ink-body" />
                         <input id="directory-search" type="search" x-model="userSearch"
-                            placeholder="{{ $directory['search_placeholder'] }}"
+                            placeholder="Cari NIK, Nama, atau ID..."
                             class="w-56 rounded bg-surface-shell py-1.5 pl-8 pr-2.5 text-[11px] leading-4 text-ink outline outline-1 -outline-offset-1 outline-line-board placeholder:text-ink-body/70 focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">
                     </label>
 
-                    @foreach ($directory['roles'] as $role)
-                        <button type="button" @click="setRole({{ \Illuminate\Support\Js::from($role['key']) }})"
-                            :class="roleClass({{ \Illuminate\Support\Js::from($role['key']) }})"
-                            class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
-                            {{ $role['label'] }}
-                        </button>
-                    @endforeach
+                    <button type="button" @click="setRole('all')"
+                        :class="roleClass('all')"
+                        class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
+                        Semua Role ({{ $totalUsers }})
+                    </button>
+                    <button type="button" @click="setRole('director')"
+                        :class="roleClass('director')"
+                        class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
+                        Direktur
+                    </button>
+                    <button type="button" @click="setRole('admin')"
+                        :class="roleClass('admin')"
+                        class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
+                        Sekre/Admin
+                    </button>
+                    <button type="button" @click="setRole('coordinator')"
+                        :class="roleClass('coordinator')"
+                        class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
+                        Koordinator
+                    </button>
+                    <button type="button" @click="setRole('driver')"
+                        :class="roleClass('driver')"
+                        class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
+                        Supir
+                    </button>
+                    <button type="button" @click="setRole('client')"
+                        :class="roleClass('client')"
+                        class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
+                        Klien
+                    </button>
                 </div>
             </header>
 
             <div class="gpa-scroll-x overflow-x-auto">
                 <table class="w-full min-w-[72rem] border-collapse">
-                    <caption class="sr-only">{{ $directory['title'] }}</caption>
+                    <caption class="sr-only">Direktori Pengguna &amp; Status Kredensial</caption>
                     <thead>
                         <tr class="border-b border-line-board">
-                            @foreach ($directory['columns'] as $index => $column)
-                                <th scope="col"
-                                    @class([
-                                        'px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body',
-                                        'text-right' => $index === count($directory['columns']) - 1,
-                                        'text-left' => $index !== count($directory['columns']) - 1,
-                                    ])>
-                                    {{ $column }}
-                                </th>
-                            @endforeach
+                            <th scope="col" class="px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body text-left">
+                                ID &amp; NAMA LENGKAP
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body text-left">
+                                ROLE &amp; DIVISI
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body text-left">
+                                NIK / IDENTITAS RESMI
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body text-left">
+                                WILAYAH / HUB
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body text-left">
+                                STATUS 2FA
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body text-left">
+                                LOGIN TERAKHIR
+                            </th>
+                            <th scope="col" class="px-3 py-3 text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body text-right">
+                                AKSI OTORITAS
+                            </th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-line-hair">
-                        @foreach ($directory['rows'] as $index => $row)
+                        @foreach ($directoryRows as $row)
                             <tr class="align-top transition-colors hover:bg-surface-shell/50"
-                                x-show="matchesUser({{ $directoryArguments[$index] }})">
+                                x-show="matchesUser(@js($row))">
                                 <th scope="row" class="px-3 py-4 text-left align-top font-normal">
                                     <div class="flex items-start gap-2.5">
                                         <span @class([
                                             'mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-micro',
-                                            $badgeTone[$row['badge_tone']],
+                                            'bg-ink text-accent' => $row['role_key'] === 'director',
+                                            'bg-surface-track text-ink-body' => $row['role_key'] !== 'director',
                                         ])>{{ $row['badge'] }}</span>
                                         <div class="min-w-0">
                                             <p class="text-[13px] font-bold leading-5 text-ink">{{ $row['name'] }}</p>
@@ -253,8 +480,9 @@
                                 <td class="px-3 py-4 align-top">
                                     <span @class([
                                         'inline-block rounded px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta',
-                                        $row['mfa_tone'] === 'accent' ? $chipTone['accent'] : 'bg-surface-track text-ink-body',
-                                    ])>{{ $row['mfa'] }}</span>
+                                        'bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep' => $row['role_key'] === 'director',
+                                        'bg-surface-track text-ink-body' => $row['role_key'] !== 'director',
+                                    ])>2FA Aktif</span>
                                 </td>
                                 <td class="px-3 py-4 align-top">
                                     <p @class([
@@ -273,7 +501,7 @@
                                             Detail
                                         </a>
                                         <a href="{{ $row['edit_url'] }}"
-                                            title="Ubah Data & Hak Akses"
+                                            title="Ubah Data &amp; Hak Akses"
                                             class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                                             <x-gpa.icon name="settings" class="h-3 w-3 shrink-0" />
                                             Edit
@@ -316,19 +544,19 @@
             <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-line-board/60 pt-3">
                 <p class="flex items-start gap-2">
                     <span class="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
-                    <span class="gpa-note font-bold text-success-deep">{{ $directory['ledger_note'] }}</span>
+                    <span class="gpa-note font-bold text-success-deep">Seluruh perubahan disimpan dalam ledger tamper-proof SHA-256.</span>
                 </p>
                 <div class="flex items-center gap-2">
-                    <span class="gpa-note text-ink-body">{{ $directory['shown_label'] }}</span>
-                    <span class="gpa-micro-bold text-ink">{{ $directory['page_label'] }}</span>
+                    <span class="gpa-note text-ink-body">Menampilkan {{ count($directoryRows) }} dari {{ $totalUsers }} entri otorisasi terdaftar.</span>
+                    <span class="gpa-micro-bold text-ink">1 / 1</span>
                     <button type="button" @click="pageDirectory(-1)" disabled
                         class="inline-flex items-center gap-1 rounded bg-surface-track px-2 py-1 gpa-note font-semibold text-ink-body outline outline-1 -outline-offset-1 outline-line-board disabled:cursor-not-allowed disabled:opacity-45">
                         <x-gpa.icon name="arrow-left" class="h-3 w-3 shrink-0" />
-                        {{ $directory['prev_label'] }}
+                        Sebelumnya
                     </button>
                     <button type="button" @click="pageDirectory(1)"
                         class="inline-flex items-center gap-1 rounded bg-ink px-2 py-1 gpa-note font-semibold text-accent transition-opacity hover:opacity-90">
-                        {{ $directory['next_label'] }}
+                        Selanjutnya
                         <x-gpa.icon name="arrow-right" class="h-3 w-3 shrink-0" />
                     </button>
                 </div>

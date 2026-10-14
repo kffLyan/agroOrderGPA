@@ -2,67 +2,146 @@
 
 @section('title', 'Surat Jalan')
 
+@php
+    $rows = $rows ?? [];
+@endphp
+
 @section('content')
-    <div class="space-y-6" x-data="secretaryDispatch(@js($queue['rows']))"
+    <div class="space-y-6" x-data="secretaryDispatch(@js($rows))"
         @gpa:search.window="query = $event.detail">
         <section class="flex flex-wrap items-start justify-between gap-4">
             <div class="min-w-0">
                 <p class="flex items-center gap-1 gpa-note text-success-deep">
                     <x-gpa.icon name="file-text" class="h-3 w-3 shrink-0" />
-                    {{ $heading['eyebrow'] }}
+                    Surat Jalan &amp; Pengiriman
                 </p>
 
                 <h1 class="mt-2 font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-brand">
-                    {{ $heading['title_before'] }}<br />
-                    {{ $heading['title_after'] }}
+                    Penerbitan Surat Jalan Resmi &amp;<br />
+                    Penugasan Supir Pengantar
                 </h1>
 
                 <p class="mt-3 max-w-3xl text-sm leading-5 text-ink-body">
-                    {{ $heading['subtitle_before'] }}
-                    <span class="gpa-meta-lg font-bold tracking-[0.88px] text-ink">{{ $heading['subtitle_format'] }}</span>
-                    {{ $heading['subtitle_after'] }}
+                    Pencetakan surat jalan resmi berdasarkan hasil timbangan bersih nyata dari gudang.
                 </p>
             </div>
 
             <span
                 class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent/50 py-1.5 pl-4 pr-4 outline outline-1 outline-success-deep">
                 <span class="h-2 w-2 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
-                <span class="gpa-micro-bold uppercase tracking-[0.45px] text-ink">{{ $heading['badge'] }}</span>
+                <span class="gpa-micro-bold uppercase tracking-[0.45px] text-ink">Timbangan Gudang Terhubung &amp; Siap</span>
             </span>
         </section>
 
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            @foreach ($metrics as $metric)
-                <article class="flex min-h-[16.4rem] flex-col justify-between gap-10 rounded-2xl bg-surface p-4 shadow-card">
-                    <div class="flex items-start justify-between gap-3">
-                        <h2 class="gpa-meta-lg font-semibold uppercase tracking-[0.88px] text-ink-body">
-                            {{ $metric['label'] }}
-                        </h2>
-                        <span @class(['shrink-0 rounded-lg p-1.5', $metric['icon_tile']])>
-                            <x-gpa.icon :name="$metric['icon']" class="h-[15px] w-[15px] shrink-0 {{ $metric['icon_class'] }}" />
-                        </span>
-                    </div>
+            <article class="flex min-h-[16.4rem] flex-col justify-between gap-10 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="gpa-meta-lg font-semibold uppercase tracking-[0.88px] text-ink-body">
+                        Surat Jalan Siap Terbit
+                    </h2>
+                    <span class="shrink-0 rounded-lg p-1.5 bg-accent/30">
+                        <x-gpa.icon name="file-text" class="h-[15px] w-[15px] shrink-0 text-success-deep" />
+                    </span>
+                </div>
 
-                    <div class="py-3">
-                        <p class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
-                            {{ $metric['value'] }}
-                            @if (! empty($metric['value_after']))
-                                <br />{{ $metric['value_after'] }}
-                            @endif
-                        </p>
-                        <p class="mt-1 text-xs leading-4 {{ $metric['key'] === 'pod' ? 'font-inter' : '' }} text-ink-body">
-                            {{ $metric['note'] }}
-                        </p>
-                    </div>
+                <div class="py-3">
+                    <p class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
+                        {{ ($readyOrdersCount ?? 0) }} Dokumen
+                    </p>
+                    <p class="mt-1 text-xs leading-4 text-ink-body">
+                        Berat bersih sayur telah diverifikasi koordinator gudang
+                    </p>
+                </div>
 
-                    <div class="flex items-center justify-between gap-2 border-t border-line-soft pt-2">
-                        <p @class(['gpa-micro-bold tracking-[1.08px]', $metric['foot_class']])>
-                            {{ $metric['foot_label'] }}
-                        </p>
-                        <span @class(['h-2 w-2 shrink-0 rounded-full', $metric['foot_dot']]) aria-hidden="true"></span>
-                    </div>
-                </article>
-            @endforeach
+                <div class="flex items-center justify-between gap-2 border-t border-line-soft pt-2">
+                    <p class="gpa-micro-bold tracking-[1.08px] text-success-deep">
+                        Timbangan Valid
+                    </p>
+                    <span class="h-2 w-2 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
+                </div>
+            </article>
+
+            <article class="flex min-h-[16.4rem] flex-col justify-between gap-10 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="gpa-meta-lg font-semibold uppercase tracking-[0.88px] text-ink-body">
+                        Dalam Perjalanan Supir
+                    </h2>
+                    <span class="shrink-0 rounded-lg p-1.5 bg-surface-track">
+                        <x-gpa.icon name="truck" class="h-[15px] w-[15px] shrink-0 text-ink" />
+                    </span>
+                </div>
+
+                <div class="py-3">
+                    <p class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
+                        {{ ($shippingOrdersCount ?? 0) }} Mobil
+                    </p>
+                    <p class="mt-1 text-xs leading-4 text-ink-body">
+                        Sayur dalam perjalanan menuju lokasi pelanggan
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-between gap-2 border-t border-line-soft pt-2">
+                    <p class="gpa-micro-bold tracking-[1.08px] text-ink-quiet">
+                        Sedang Jalan
+                    </p>
+                    <span class="h-2 w-2 shrink-0 rounded-full bg-ink-quiet" aria-hidden="true"></span>
+                </div>
+            </article>
+
+            <article class="flex min-h-[16.4rem] flex-col justify-between gap-10 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="gpa-meta-lg font-semibold uppercase tracking-[0.88px] text-ink-body">
+                        Menunggu Bukti Terima
+                    </h2>
+                    <span class="shrink-0 rounded-lg p-1.5 bg-warning-soft/30">
+                        <x-gpa.icon name="package" class="h-[15px] w-[15px] shrink-0 text-warning-deep" />
+                    </span>
+                </div>
+
+                <div class="py-3">
+                    <p class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
+                        {{ ($shippingOrdersCount ?? 0) }}
+                        <br />Pengiriman
+                    </p>
+                    <p class="mt-1 text-xs leading-4 font-inter text-ink-body">
+                        Menunggu foto bukti terima dan tanda tangan klien
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-between gap-2 border-t border-line-soft pt-2">
+                    <p class="gpa-micro-bold tracking-[1.08px] text-warning">
+                        Verifikasi Penerimaan
+                    </p>
+                    <span class="h-2 w-2 shrink-0 rounded-full bg-warning" aria-hidden="true"></span>
+                </div>
+            </article>
+
+            <article class="flex min-h-[16.4rem] flex-col justify-between gap-10 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="gpa-meta-lg font-semibold uppercase tracking-[0.88px] text-ink-body">
+                        Selesai Terkirim
+                    </h2>
+                    <span class="shrink-0 rounded-lg p-1.5 bg-surface-pill">
+                        <x-gpa.icon name="check-circle" class="h-[15px] w-[15px] shrink-0 text-ink" />
+                    </span>
+                </div>
+
+                <div class="py-3">
+                    <p class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
+                        {{ ($doneOrdersCount ?? 0) }} Pesanan
+                    </p>
+                    <p class="mt-1 text-xs leading-4 text-ink-body">
+                        Surat jalan selesai dan siap masuk ke tagihan faktur
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-between gap-2 border-t border-line-soft pt-2">
+                    <p class="gpa-micro-bold tracking-[1.08px] text-ink-quiet">
+                        Transaksi Tuntas
+                    </p>
+                    <span class="h-2 w-2 shrink-0 rounded-full bg-ink-quiet" aria-hidden="true"></span>
+                </div>
+            </article>
         </div>
 
         <section class="relative overflow-hidden rounded-2xl bg-surface p-6 shadow-card">
@@ -78,28 +157,28 @@
                     <div class="min-w-0">
                         <div class="flex flex-wrap items-center gap-2">
                             <span class="rounded bg-ink px-2 py-0.5 gpa-micro-bold uppercase tracking-[1px] text-accent">
-                                {{ $rule05['chip'] }}
+                                SOP Rule 05
                             </span>
-                            <h2 class="font-sans text-lg font-bold leading-6 text-ink">{{ $rule05['title'] }}</h2>
+                            <h2 class="font-sans text-lg font-bold leading-6 text-ink">Aturan Wajib Pembuatan Surat Jalan</h2>
                         </div>
 
                         <p class="mt-1.5 max-w-3xl text-sm leading-[1.42rem] text-ink-body">
-                            {{ $rule05['body_before'] }}
+                            Surat jalan fisik dilarang keras dicetak berdasarkan angka estimasi awal pesanan. Surat jalan hanya sah apabila telah ditandatangani oleh petugas timbangan gudang, nomor polisi armada tercatat jelas, serta melalui gerbang verifikasi
                             <span
                                 class="inline-flex items-center rounded bg-accent/40 px-2 py-1 gpa-meta-lg font-bold tracking-[0.88px] text-ink outline outline-1 outline-success-deep/30">
-                                [{{ strtoupper($rule05['gate']) }}]
+                                [HARD GATE: TIMBANGAN SAH]
                             </span>
-                            {{ $rule05['body_after'] }}
+                            sebelum armada diberangkatkan.
                         </p>
                     </div>
                 </div>
 
                 <div class="shrink-0 border-l border-line-soft pl-4 text-right">
                     <p class="gpa-micro font-semibold uppercase tracking-[1.08px] text-ink-quiet">
-                        {{ $rule05['protocol_label'] }}
+                        Protokol Validasi:
                     </p>
-                    <p class="gpa-meta-lg font-bold tracking-[0.88px] text-success-deep">{{ $rule05['protocol_value'] }}</p>
-                    <p class="mt-1 gpa-micro font-semibold tracking-[1.08px] text-ink-body">{{ $rule05['protocol_note'] }}</p>
+                    <p class="gpa-meta-lg font-bold tracking-[0.88px] text-success-deep">ISO/IEC 17025 TERA</p>
+                    <p class="mt-1 gpa-micro font-semibold tracking-[1.08px] text-ink-body">Kalibrasi Aktif 2026</p>
                 </div>
             </div>
         </section>
@@ -109,22 +188,36 @@
                 <div class="min-w-0">
                     <h2 class="flex items-center gap-2 font-sans text-lg font-bold leading-6 text-ink">
                         <x-gpa.icon name="send" class="h-[18px] w-[18px] shrink-0 text-ink" />
-                        {{ $queue['title'] }}
+                        Antrean Surat Jalan Siap Terbit &amp; Penugasan Supir
                     </h2>
-                    <p class="mt-0.5 text-xs leading-4 text-ink-body">{{ $queue['subtitle'] }}</p>
+                    <p class="mt-0.5 text-xs leading-4 text-ink-body">Klik salah satu pesanan untuk melihat pratinjau dokumen surat jalan resmi di bawah.</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-1.5">
-                    @foreach ($queue['warehouses'] as $warehouse)
-                        <button type="button" @click="warehouse = @js($warehouse); handleWarehouse()" :class="
-                            warehouse === @js($warehouse)
-                                ? 'bg-accent text-success-ink outline outline-1 outline-success-deep'
-                                : 'bg-surface-pill text-ink outline outline-1 outline-line-board hover:bg-surface-disabled'
-                        "
-                            class="rounded px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
-                            {{ $warehouse }}
-                        </button>
-                    @endforeach
+                    <button type="button" @click="warehouse = 'Semua Gudang'; handleWarehouse()" :class="
+                        warehouse === 'Semua Gudang'
+                            ? 'bg-accent text-success-ink outline outline-1 outline-success-deep'
+                            : 'bg-surface-pill text-ink outline outline-1 outline-line-board hover:bg-surface-disabled'
+                    "
+                        class="rounded px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
+                        Semua Gudang
+                    </button>
+                    <button type="button" @click="warehouse = 'Gudang Sentra Cibitung'; handleWarehouse()" :class="
+                        warehouse === 'Gudang Sentra Cibitung'
+                            ? 'bg-accent text-success-ink outline outline-1 outline-success-deep'
+                            : 'bg-surface-pill text-ink outline outline-1 outline-line-board hover:bg-surface-disabled'
+                    "
+                        class="rounded px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
+                        Gudang Sentra Cibitung
+                    </button>
+                    <button type="button" @click="warehouse = 'Gudang Lembang'; handleWarehouse()" :class="
+                        warehouse === 'Gudang Lembang'
+                            ? 'bg-accent text-success-ink outline outline-1 outline-success-deep'
+                            : 'bg-surface-pill text-ink outline outline-1 outline-line-board hover:bg-surface-disabled'
+                    "
+                        class="rounded px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
+                        Gudang Lembang
+                    </button>
 
                     <span class="rounded bg-accent px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-success-ink">
                         <span x-text="readyCount() + ' Siap Rilis'"></span>
@@ -139,17 +232,17 @@
                 <table class="w-full min-w-[1080px] border-collapse text-left">
                     <thead class="border-b border-line-soft bg-surface-track">
                         <tr>
-                            @foreach ($queue['columns'] as $key => $column)
-                                <th scope="col" @class([
-                                    'px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body',
-                                    'text-right' => $key === 'action',
-                                ])>{{ $column }}</th>
-                            @endforeach
+                            <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">ID Pesanan &amp; Klien</th>
+                            <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">Estimasi Awal</th>
+                            <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">Realisasi Timbang</th>
+                            <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">Status Tera</th>
+                            <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">Armada &amp; Supir</th>
+                            <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body text-right">Aksi Penerbitan</th>
                         </tr>
                     </thead>
 
                     <tbody class="divide-y divide-line-soft">
-                        @foreach ($queue['rows'] as $row)
+                        @foreach ($rows as $row)
                             <tr x-show="matchesFilter(@js($row))" @click="select(@js($row['id']))"
                                 :class="rowClass(@js($row))" class="cursor-pointer transition-colors">
                                 <td class="px-4 py-4">
@@ -227,7 +320,7 @@
 
             <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft bg-surface-shell px-4 py-3">
                 <p class="gpa-note text-ink-body"
-                    x-text="'Menampilkan ' + visibleCount() + ' dari ' + {{ count($queue['rows']) }} + ' dokumen dalam antrean dispatch'">
+                    x-text="'Menampilkan ' + visibleCount() + ' dari ' + {{ count($rows) }} + ' dokumen dalam antrean dispatch'">
                 </p>
                 <p class="gpa-note text-ink-body">
                     Total Terbit Sesi Ini:
@@ -241,7 +334,7 @@
                 <div class="flex min-w-0 items-center gap-2">
                     <x-gpa.icon name="file-text" class="h-4 w-5 shrink-0 text-success-deep" />
                     <h2 class="font-sans text-lg font-bold leading-6 text-ink">
-                        {{ $security['preview_title'] }}
+                        Pratinjau Surat Jalan Resmi
                         (<span x-text="selected ? selected.sj : '—'"></span>)
                     </h2>
                 </div>
@@ -249,12 +342,12 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <span
                         class="rounded bg-accent px-2 py-1 gpa-micro-bold uppercase tracking-[1px] text-success-ink outline outline-1 outline-success-deep">
-                        {{ $security['standard_chip'] }}
+                        STANDAR FORMULIR RESMI GPA-SJ-REV4
                     </span>
                     <button type="button" @click="printProof()"
                         class="inline-flex items-center gap-1 rounded bg-surface-track px-3 py-1 transition-colors hover:bg-surface-disabled">
                         <x-gpa.icon name="download" class="h-3 w-3 shrink-0 text-ink" />
-                        <span class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">{{ $security['print_label'] }}</span>
+                        <span class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Cetak Dokumen Fisik</span>
                     </button>
                 </div>
             </div>
@@ -264,17 +357,17 @@
                 <div class="flex flex-wrap items-start justify-between gap-4 border-b-2 border-brand/20 pb-6">
                     <div>
                         <p class="font-sans text-[1.375rem] font-extrabold uppercase leading-none text-ink">
-                            {{ $letterhead['company'] }}
+                            PT GEMA PANEN ARTHA
                         </p>
                         <p class="mt-1 text-xs leading-[1.1rem] text-ink-body">
-                            {{ $letterhead['address'] }}<br />
-                            {{ $letterhead['address_line'] }}<br />
-                            {{ $letterhead['contact'] }}
+                            Sentra Logistik &amp; Distribusi Agribisnis Terpadu Cibitung Blok B-14, Jawa Barat<br />
+                            Telepon: (021) 8984-2201 | Email: dispatch@gemapanenartha.co.id<br />
+                            NPWP: 01.345.678.9-412.000 | Izin Operasional Kementan RI: 2024/SL-AGRO/088
                         </p>
                     </div>
 
                     <div class="text-right">
-                        <p class="gpa-micro-bold uppercase tracking-[0.9px] text-ink-quiet">{{ $letterhead['doc_label'] }}</p>
+                        <p class="gpa-micro-bold uppercase tracking-[0.9px] text-ink-quiet">SURAT JALAN RESMI (DELIVERY ORDER)</p>
                         <p class="gpa-meta-lg font-bold tracking-[0.28px] text-ink">No. <span x-text="selected?.sj"></span></p>
                         <p class="font-mono text-xs font-medium tracking-[0.88px] text-ink-body">
                             <span class="text-ink-body">Ref PO:</span>
@@ -320,18 +413,18 @@
                 </div>
 
                 <div class="py-4">
-                    <p class="gpa-micro-bold uppercase tracking-[0.45px] text-ink-quiet">{{ $letterhead['lines_label'] }}</p>
+                    <p class="gpa-micro-bold uppercase tracking-[0.45px] text-ink-quiet">Rincian Komoditas &amp; Hasil Penimbangan Bersih (Netto)</p>
 
                     <div class="mt-2 overflow-hidden rounded">
                         <table class="w-full min-w-[720px] border-collapse text-left">
                             <thead class="border-y-2 border-brand/20 bg-surface-track">
                                 <tr>
-                                    @foreach ($letterhead['columns'] as $key => $column)
-                                        <th scope="col" @class([
-                                            'px-3 py-3 gpa-micro-bold uppercase tracking-[1.08px] text-ink',
-                                            'text-right' => in_array($key, ['estimate', 'netto', 'delta'], true),
-                                        ])>{{ $column }}</th>
-                                    @endforeach
+                                    <th scope="col" class="px-3 py-3 gpa-micro-bold uppercase tracking-[1.08px] text-ink">No</th>
+                                    <th scope="col" class="px-3 py-3 gpa-micro-bold uppercase tracking-[1.08px] text-ink">Komoditas &amp; Spesifikasi</th>
+                                    <th scope="col" class="px-3 py-3 gpa-micro-bold uppercase tracking-[1.08px] text-ink">Batch Lot</th>
+                                    <th scope="col" class="px-3 py-3 gpa-micro-bold uppercase tracking-[1.08px] text-ink text-right">Estimasi (Kg)</th>
+                                    <th scope="col" class="px-3 py-3 gpa-micro-bold uppercase tracking-[1.08px] text-ink text-right">Netto Sah (Kg)</th>
+                                    <th scope="col" class="px-3 py-3 gpa-micro-bold uppercase tracking-[1.08px] text-ink text-right">Selisih (+/-)</th>
                                 </tr>
                             </thead>
 
@@ -361,7 +454,7 @@
                             <tfoot class="border-t-2 border-brand/20 bg-surface-track">
                                 <tr>
                                     <td colspan="3" class="px-3 py-2 text-right font-mono text-xs font-medium uppercase tracking-[0.88px] text-ink">
-                                        {{ $letterhead['total_label'] }}
+                                        TOTAL MUATAN ARMADA:
                                     </td>
                                     <td class="px-3 py-2 text-right font-mono text-xs font-medium tracking-[0.88px] text-ink-quiet"
                                         x-text="selected?.document.estimate"></td>
@@ -377,7 +470,7 @@
                 </div>
 
                 <div class="rounded bg-surface-track p-3 outline outline-1 outline-line-soft">
-                    <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink">{{ $letterhead['legal_label'] }}</p>
+                    <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink">Klausul Hukum &amp; Ketentuan Penerimaan Fisik:</p>
                     <p class="mt-1 text-xs leading-[1.2rem] text-ink-body">
                         Penerimaan barang wajib dihitung berdasarkan timbangan sah tercantum di atas
                         (<span class="font-semibold text-ink" x-text="selected?.document.netto ?? 'Timbang Berlangsung'"></span>).
@@ -387,37 +480,55 @@
                 </div>
 
                 <div class="grid gap-4 border-t border-line-soft pt-10 sm:grid-cols-3">
-                    @foreach ($signatures as $index => $signature)
-                        <div class="flex min-h-[9rem] flex-col justify-between gap-1 rounded-lg bg-surface p-3 outline outline-1 outline-line-soft">
-                            <div class="pt-[3px] text-center">
-                                <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">{{ $signature['label'] }}:</p>
-                                <p class="mt-0.5 text-xs font-semibold leading-4 text-ink">{{ $signature['role'] }}</p>
-                            </div>
-
-                            @if ($index === 0)
-                                <p
-                                    class="rounded bg-accent/30 py-1 text-center gpa-micro-bold uppercase tracking-[1px] text-success-deep outline outline-1 outline-accent">
-                                    {{ $signature['stamp'] }}
-                                </p>
-                            @else
-                                <p class="text-center font-mono italic text-2xs font-semibold tracking-[1.08px] text-ink-quiet">
-                                    {{ $signature['stamp'] }}
-                                </p>
-                            @endif
-
-                            <div class="pt-1 text-center">
-                                @if ($index === 0)
-                                    <p class="gpa-meta-lg font-bold tracking-[0.88px] text-ink"
-                                        x-text="selected?.document.officer ?? '—'"></p>
-                                    <p class="mt-0.5 text-xs leading-4 text-ink-quiet"
-                                        x-text="selected?.document.officer_note ?? '—'"></p>
-                                @else
-                                    <p class="gpa-meta-lg font-bold tracking-[0.88px] text-ink">{{ $signature['name'] }}</p>
-                                    <p class="mt-0.5 text-xs leading-4 text-ink-quiet">{{ $signature['note'] }}</p>
-                                @endif
-                            </div>
+                    <div class="flex min-h-[9rem] flex-col justify-between gap-1 rounded-lg bg-surface p-3 outline outline-1 outline-line-soft">
+                        <div class="pt-[3px] text-center">
+                            <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Petugas Timbangan:</p>
+                            <p class="mt-0.5 text-xs font-semibold leading-4 text-ink">Staf Gudang &amp; Penimbangan</p>
                         </div>
-                    @endforeach
+
+                        <p class="rounded bg-accent/30 py-1 text-center gpa-micro-bold uppercase tracking-[1px] text-success-deep outline outline-1 outline-accent">
+                            TERA VALID - AUTOMATED
+                        </p>
+
+                        <div class="pt-1 text-center">
+                            <p class="gpa-meta-lg font-bold tracking-[0.88px] text-ink"
+                                x-text="selected?.document.officer ?? '—'"></p>
+                            <p class="mt-0.5 text-xs leading-4 text-ink-quiet"
+                                x-text="selected?.document.officer_note ?? '—'"></p>
+                        </div>
+                    </div>
+
+                    <div class="flex min-h-[9rem] flex-col justify-between gap-1 rounded-lg bg-surface p-3 outline outline-1 outline-line-soft">
+                        <div class="pt-[3px] text-center">
+                            <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Supir Pengantar:</p>
+                            <p class="mt-0.5 text-xs font-semibold leading-4 text-ink">Armada Logistik GPA</p>
+                        </div>
+
+                        <p class="text-center font-mono italic text-2xs font-semibold tracking-[1.08px] text-ink-quiet">
+                            (Tanda Tangan &amp; Nama Jelas)
+                        </p>
+
+                        <div class="pt-1 text-center">
+                            <p class="gpa-meta-lg font-bold tracking-[0.88px] text-ink" x-text="selected?.document.driver ?? 'Joko Prasetyo'"></p>
+                            <p class="mt-0.5 text-xs leading-4 text-ink-quiet">Membawa fisik &amp; cek segel cold chain</p>
+                        </div>
+                    </div>
+
+                    <div class="flex min-h-[9rem] flex-col justify-between gap-1 rounded-lg bg-surface p-3 outline outline-1 outline-line-soft">
+                        <div class="pt-[3px] text-center">
+                            <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Penerima Barang:</p>
+                            <p class="mt-0.5 text-xs font-semibold leading-4 text-ink">Perwakilan Drop Point / Klien</p>
+                        </div>
+
+                        <p class="text-center font-mono italic text-2xs font-semibold tracking-[1.08px] text-ink-quiet">
+                            (Cap Stempel &amp; Tanda Tangan)
+                        </p>
+
+                        <div class="pt-1 text-center">
+                            <p class="gpa-meta-lg font-bold tracking-[0.88px] text-ink" x-text="selected?.document.pic ?? '(Nama Jelas Penerima)'"></p>
+                            <p class="mt-0.5 text-xs leading-4 text-ink-quiet">Wajib periksa fisik &amp; kesesuaian timbang</p>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line-soft pt-6">
@@ -426,23 +537,23 @@
                         <div>
                             <p class="gpa-meta-lg font-bold tracking-[1.1px] text-ink" x-text="'*' + (selected?.sj ?? '—') + '-SECURE*'"></p>
                             <p class="gpa-micro font-semibold tracking-[1.08px] text-ink-quiet">
-                                {{ $security['auth_prefix'] }}
+                                Kunci Otorisasi Digital:
                                 <span x-text="selected?.auth_key"></span>
                             </p>
                         </div>
                     </div>
 
                     <div class="text-right">
-                        <p class="gpa-micro font-semibold tracking-[1.08px] text-ink-quiet">{{ $security['page'] }}</p>
-                        <p class="gpa-micro font-semibold tracking-[1.08px] text-line-board">{{ $security['copies'] }}</p>
+                        <p class="gpa-micro font-semibold tracking-[1.08px] text-ink-quiet">Dokumen Sah Halaman 1 dari 1</p>
+                        <p class="gpa-micro font-semibold tracking-[1.08px] text-line-board">Lembar 1: Asli Klien | Lembar 2: Supir | Lembar 3: Arsip Gudang</p>
                     </div>
                 </div>
 
                 <div
                     class="absolute right-8 top-28 -rotate-12 rounded-xl bg-accent/20 px-4 py-2 text-center outline outline-4 outline-success-deep/70">
-                    <p class="gpa-micro-bold uppercase tracking-[1px] text-success-deep">{{ $letterhead['stamp_top'] }}</p>
-                    <p class="gpa-meta-lg font-bold tracking-[0.28px] text-ink">{{ $letterhead['stamp_mid'] }}</p>
-                    <p class="gpa-micro-bold tracking-[1.08px] text-success-ink">{{ $letterhead['stamp_low'] }}</p>
+                    <p class="gpa-micro-bold uppercase tracking-[1px] text-success-deep">SAH &amp; TERVERIFIKASI</p>
+                    <p class="gpa-meta-lg font-bold tracking-[0.28px] text-ink">GUDANG SENTRA GPA</p>
+                    <p class="gpa-micro-bold tracking-[1.08px] text-success-ink">TERA PASAL 14</p>
                 </div>
             </div>
         </section>
@@ -455,11 +566,11 @@
                 </span>
 
                 <div>
-                    <h2 class="font-sans text-lg font-bold leading-[1.4rem] text-accent">{{ $release['title'] }}</h2>
+                    <h2 class="font-sans text-lg font-bold leading-[1.4rem] text-accent">Pusat Kendali Otorisasi &amp; Pelepasan Armada</h2>
                     <p class="text-xs leading-4 text-surface-disabled">
-                        {{ $release['body_before'] }}
+                        Penerbitan surat jalan akan mengunci data timbangan bersih
                         <span class="font-mono font-bold text-white" x-text="selected?.netto ?? 'Timbang Berlangsung'"></span>
-                        {{ $release['body_after'] }}
+                        secara permanen, mencatat log keberangkatan armada, dan mengirimkan notifikasi siap terima ke pihak klien.
                     </p>
                     <p x-cloak x-show="selected && selected.state !== 'ready'"
                         class="mt-1 inline-flex rounded bg-danger px-2 py-0.5 gpa-micro-bold uppercase tracking-[1.08px] text-white">
@@ -471,7 +582,7 @@
             <div class="flex flex-wrap items-center justify-end gap-2">
                 <button type="button" @click="saveDraft()"
                     class="rounded-lg bg-white/10 px-5 py-2.5 text-center font-mono text-xs font-semibold tracking-[0.88px] text-canvas outline outline-1 outline-line-board/40 transition-colors hover:bg-white/15">
-                    {{ $release['draft_label'] }}
+                    Simpan Draf Saja
                 </button>
 
                 <button type="button" @click="confirmRelease()" :disabled="! selected || selected.state !== 'ready'"
@@ -482,7 +593,7 @@
                     "
                     class="inline-flex items-center gap-2 rounded-lg px-6 py-2.5 font-mono text-xs font-bold tracking-[0.88px] shadow-sub transition-colors">
                     <x-gpa.icon name="check" class="h-3.5 w-3.5 shrink-0" />
-                    <span>{{ $release['issue_label'] }}</span>
+                    <span>Kunci Data &amp; Terbitkan Surat Jalan Resmi</span>
                 </button>
             </div>
         </section>

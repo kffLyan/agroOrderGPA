@@ -20,18 +20,6 @@ class CommodityVolumeController extends Controller
      */
     public function index(Request $request): View
     {
-        $user = Auth::user();
-
-        $operator = [
-            'role'     => 'Direktur Utama',
-            'name'     => $user?->name ?: 'Direksi GPA',
-            'code'     => 'DIR-' . str_pad($user?->id ?: 1, 3, '0', STR_PAD_LEFT),
-            'initials' => strtoupper(substr($user?->name ?: 'DU', 0, 2)),
-            'branch'   => 'Kantor Pusat GPA - Eksekutif',
-            'email'    => $user?->email ?: 'direktur@greenpasundan.id',
-            'period'   => 'Minggu ' . date('W') . ' ' . date('Y') . ' | Q4 YTD',
-        ];
-
         // 1. Perhitungan data stok & panen riil
         $binaanKg = (float) HarvestBatch::where('source_type', 'PETANI_BINAAN')->sum('initial_quantity');
         $bufferKg = (float) HarvestBatch::where('source_type', 'BUFFER_LUAR')->sum('initial_quantity');
@@ -59,106 +47,6 @@ class CommodityVolumeController extends Controller
         // Safety stock buffer siap pakai
         $availBufferKg = (float) HarvestBatch::where('source_type', 'BUFFER_LUAR')->sum('available_quantity');
         $safetyStockBufferTon = $availBufferKg > 0 ? round($availBufferKg / 1000, 2) : 11.20;
-
-        $volumeHeader = [
-            'eyebrow'      => 'Monitoring Volume Komoditas',
-            'eyebrow_meta' => 'Stok Panen & Kapasitas Pasokan',
-            'title'        => 'Monitoring Volume Komoditas, Stok Panen & Kapasitas Pasokan',
-            'subtitle'     => 'Pengawasan alokasi tonase riil, komposisi pasokan dan buffer stock, mitigasi risiko overselling, dan neraca komoditas 5 produk inti.',
-            'range_label'  => 'RANGE:',
-            'range_value'  => 'W' . (date('W') - 4) . ' - W' . date('W') . ' MTD',
-            'action_label' => 'REKONSILIASI NERACA',
-            'refresh_label'=> 'METRIK REFRESH: REALTIME LIVE SYNC',
-        ];
-
-        // 4 Kartu KPI Neraca Volume
-        $cards = [
-            [
-                'key'         => 'volume',
-                'label'       => 'TOTAL VOLUME TERJUAL (MTD)',
-                'icon'        => 'scale',
-                'icon_tone'   => 'neutral',
-                'value_parts' => [
-                    ['text' => number_format($totalSoldTon, 2, '.', ''), 'emphasis' => true],
-                    ['text' => 'Ton', 'emphasis' => false],
-                ],
-                'value'       => number_format($totalSoldTon, 2, '.', ''),
-                'unit'        => 'Ton',
-                'notes'       => [
-                    ['text' => '+14.2% MoM', 'tone' => 'muted', 'dot' => true],
-                    ['text' => 'vs kuartal 420 T', 'tone' => 'ink'],
-                ],
-                'footer'      => [
-                    'label'     => 'TARGET ACHIEVED',
-                    'chip'      => round(($totalSoldTon / 420.0) * 100, 1) . '%',
-                    'chip_tone' => 'accent',
-                ],
-            ],
-            [
-                'key'         => 'sourcing',
-                'label'       => 'SUMBER PASOKAN (RULE 02)',
-                'icon'        => 'leaf',
-                'icon_tone'   => 'accent',
-                'value_parts' => [
-                    ['text' => $binaanPercent . '%', 'emphasis' => true],
-                    ['text' => 'Binaan', 'emphasis' => false],
-                    ['text' => ' : ' . $bufferPercent . '%', 'emphasis' => true],
-                    ['text' => 'Buffer', 'emphasis' => false],
-                ],
-                'value'       => $binaanPercent . '% : ' . $bufferPercent . '%',
-                'unit'        => 'Binaan : Buffer',
-                'notes'       => [
-                    ['text' => 'Binaan: ' . number_format($binaanTon, 2, '.', '') . ' T', 'tone' => 'ink'],
-                    ['text' => 'Buffer: ' . number_format($bufferTon, 2, '.', '') . ' T', 'tone' => 'ink'],
-                ],
-                'footer'      => [
-                    'label'     => 'ALOKASI MANDATORI',
-                    'chip'      => 'RATIO OPTIMAL',
-                    'chip_tone' => 'outlined',
-                ],
-            ],
-            [
-                'key'         => 'shrinkage',
-                'label'       => 'SUSUT GUDANG & SORTIR',
-                'icon'        => 'gauge',
-                'icon_tone'   => 'neutral',
-                'value_parts' => [
-                    ['text' => number_format($shrinkagePercent, 1, '.', '') . '%', 'emphasis' => true],
-                    ['text' => 'Deviasi Rata-rata', 'emphasis' => false],
-                ],
-                'value'       => number_format($shrinkagePercent, 1, '.', '') . '%',
-                'unit'        => 'Deviasi Rata-rata',
-                'notes'       => [
-                    ['text' => 'Plafon Toleransi Maksimal:', 'tone' => 'ink'],
-                    ['text' => 'Maks 2.0%', 'tone' => 'ink'],
-                ],
-                'footer'      => [
-                    'label'     => 'STATUS PENYIMPANAN',
-                    'chip'      => $shrinkagePercent <= 1.0 ? 'SANGAT AMAN' : 'PERHATIAN',
-                    'chip_tone' => 'accent',
-                ],
-            ],
-            [
-                'key'         => 'safety',
-                'label'       => 'SAFETY STOCK BUFFER (RULE 03)',
-                'icon'        => 'shield',
-                'icon_tone'   => 'accent',
-                'value_parts' => [
-                    ['text' => number_format($safetyStockBufferTon, 2, '.', ''), 'emphasis' => true],
-                    ['text' => 'Ton Siap Pakai', 'emphasis' => false],
-                ],
-                'value'       => number_format($safetyStockBufferTon, 2, '.', ''),
-                'unit'        => 'Ton Siap Pakai',
-                'notes'       => [
-                    ['text' => 'Zero-Deficit Flag Verified', 'tone' => 'muted', 'dot' => true],
-                ],
-                'footer'      => [
-                    'label'     => 'ANTI-OVERSELLING GUARD',
-                    'chip'      => '100% AKTIF',
-                    'chip_tone' => 'outlined',
-                ],
-            ],
-        ];
 
         // 2. Neraca Volume Lima Komoditas Inti
         $products = Product::orderBy('id')->get();
@@ -223,91 +111,17 @@ class CommodityVolumeController extends Controller
             }
         }
 
-        $commodities = [
-            'title'       => 'Neraca Volume & Komposisi 5 Komoditas Inti',
-            'subtitle'    => 'Realisasi alokasi kebun binaan vs buffer mitra luar serta sisa kuota order B2B terbuka.',
-            'rows'        => $commodityRows,
-            'total'       => round(array_sum(array_column($commodityRows, 'value')), 2),
-            'total_label' => number_format(array_sum(array_column($commodityRows, 'value')), 2, '.', '') . ' Ton',
-            'farmer_total'=> round(array_sum(array_column($commodityRows, 'farmer')), 2),
-            'buffer_total'=> round(array_sum(array_column($commodityRows, 'buffer')), 2),
-        ];
-
-        // 3. Grafik Mingguan Tren Volume vs Kapasitas Panen (W40 - W47)
-        $currentWeekNum = (int) date('W');
-        $weeklyRows = [
-            ['week' => 'W40', 'total' => 108.0, 'demand' => 70, 'yield' => 20, 'reserve' => 10, 'status' => 'closed'],
-            ['week' => 'W41', 'total' => 120.0, 'demand' => 68, 'yield' => 22, 'reserve' => 10, 'status' => 'closed'],
-            ['week' => 'W42', 'total' => 125.0, 'demand' => 72, 'yield' => 18, 'reserve' => 10, 'status' => 'closed'],
-            ['week' => 'W43', 'total' => 130.0, 'demand' => 70, 'yield' => 20, 'reserve' => 10, 'status' => 'closed'],
-            ['week' => 'W44', 'total' => 135.0, 'demand' => 74, 'yield' => 18, 'reserve' => 8,  'status' => 'running'],
-            ['week' => 'W45', 'total' => 124.0, 'demand' => 70, 'yield' => 20, 'reserve' => 10, 'status' => 'forecast'],
-            ['week' => 'W46', 'total' => 127.0, 'demand' => 72, 'yield' => 18, 'reserve' => 10, 'status' => 'forecast'],
-            ['week' => 'W47', 'total' => 130.0, 'demand' => 70, 'yield' => 20, 'reserve' => 10, 'status' => 'forecast'],
-        ];
-
-        $maxWeekly = max(array_column($weeklyRows, 'total'));
-        $peakWeek = $weeklyRows[array_search($maxWeekly, array_column($weeklyRows, 'total'))];
-
-        foreach ($weeklyRows as $index => $row) {
-            $yieldTons = round($row['total'] * $row['yield'] / 100, 2);
-            $reserveTons = round($row['total'] * $row['reserve'] / 100, 2);
-            $demandTons = round($row['total'] - $yieldTons - $reserveTons, 2);
-
-            $weeklyRows[$index]['total_label'] = ($row['status'] === 'forecast' ? '~' : '') . number_format($row['total'], 0, '.', '') . ' T';
-            $weeklyRows[$index]['segments'] = [
-                ['key' => 'reserve', 'tons' => $reserveTons, 'label' => number_format($reserveTons, 2, '.', '') . ' T'],
-                ['key' => 'yield',   'tons' => $yieldTons,   'label' => number_format($yieldTons, 2, '.', '') . ' T'],
-                ['key' => 'demand',  'tons' => $demandTons,  'label' => number_format($demandTons, 2, '.', '') . ' T'],
-            ];
-            $weeklyRows[$index]['bar_percent'] = round(($row['total'] / $maxWeekly) * 100, 1);
-            $weeklyRows[$index]['label'] = $row['week'] . ($row['status'] === 'running' ? ' [AKTIF]' : ($row['status'] === 'forecast' ? ' (EST)' : ''));
-        }
-
-        $trend = [
-            'badge'           => 'PRD 8.2',
-            'title'           => 'Tren Mingguan Volume vs Kapasitas Panen (W40 - W47)',
-            'subtitle'        => 'Komparasi demand kontrak vs yield riil petani vs safety buffer reserve.',
-            'legend'          => [
-                ['label' => 'Demand',       'swatch' => 'bg-ink-strong'],
-                ['label' => 'Yield Binaan', 'swatch' => 'bg-accent-deep'],
-                ['label' => 'Reserve',      'swatch' => 'bg-accent'],
-            ],
-            'rows'            => $weeklyRows,
-            'peak_label'      => 'Puncak Demand: ' . $peakWeek['week'] . ' (' . number_format($peakWeek['total'], 0, '.', '') . ' T)',
-            'confidence_label'=> 'KONFIDENSI MODEL: 97.4%',
-        ];
-
-        // 4. Matriks Alokasi Kontrak B2B (Mitra Tier-1)
-        $allocationsList = [
-            ['name' => 'PT Aerofood ACS',            'sentra' => 'CIANJUR (AGR-01)',     'commitment' => 28.50, 'priority' => 'PRIORITAS UTAMA'],
-            ['name' => 'Royal Ambarrukmo',           'sentra' => 'CIWIDEY (AGR-04)',     'commitment' => 12.20, 'priority' => 'KONTRAK BULANAN'],
-            ['name' => 'PT Segar Makmur Ritelindo',  'sentra' => 'LEMBANG (AGR-02)',     'commitment' => 18.40, 'priority' => 'DISTRIBUSI NASIONAL'],
-            ['name' => 'PT Boga Rasa Kulina Prima',  'sentra' => 'PANGALENGAN (AGR-03)', 'commitment' => 14.60, 'priority' => 'FOOD SERVICE QSR'],
-        ];
-
-        $totalCommitment = round(array_sum(array_column($allocationsList, 'commitment')), 2);
-        foreach ($allocationsList as $index => $row) {
-            $allocationsList[$index]['commitment_label'] = number_format($row['commitment'], 2, '.', '');
-        }
-
-        $allocations = [
-            'title'             => 'Matriks Alokasi Kontrak B2B',
-            'subtitle'          => 'Komitmen mingguan 4 mitra tier-1 vs kuota kebun.',
-            'rows'              => $allocationsList,
-            'total_label'       => 'TOTAL KOMITMEN 4 MITRA:',
-            'total_value_label' => number_format($totalCommitment, 2, '.', '') . ' Ton / Minggu',
-            'serap_label'       => round(($totalCommitment / 80.80) * 100, 1) . '% SERAP',
-        ];
-
-        return view('direktur.volume', compact(
-            'operator',
-            'volumeHeader',
-            'cards',
-            'commodities',
-            'trend',
-            'allocations'
-        ));
+        return view('direktur.volume', [
+            'totalSoldTon'         => $totalSoldTon,
+            'binaanTon'            => $binaanTon,
+            'bufferTon'            => $bufferTon,
+            'totalTon'             => $totalTon,
+            'binaanPercent'        => $binaanPercent,
+            'bufferPercent'        => $bufferPercent,
+            'shrinkagePercent'     => $shrinkagePercent,
+            'safetyStockBufferTon' => $safetyStockBufferTon,
+            'commodityRows'        => $commodityRows,
+        ]);
     }
 
     /**

@@ -23,7 +23,7 @@
         $operatorRole = $operator['role'] ?? 'Supir Pengiriman';
         $operatorName = $operator['name'] ?? (auth()->user()?->name ?? 'Supir Armada');
         $operatorInitials = $operator['initials'] ?? (auth()->user() ? strtoupper(substr(auth()->user()->name, 0, 2)) : 'SA');
-        $armadaPlate = $header['plate'] ?? '-';
+        $armadaPlate = $activePlate ?? ($plate ?? ($header['plate'] ?? '-'));
         $brand = $header['brand'] ?? 'AGROORDER GPA';
         $armadaRole = $header['role'] ?? 'Armada Logistik';
         $headerTone = $header['tone'] ?? 'light';

@@ -3,6 +3,16 @@
 @section('title', 'Tambah Komoditas Baru // Direktur AgroOrder GPA')
 
 @section('content')
+@php
+    $presets = [
+        ['path' => 'lettuce.jpg', 'label' => 'Selada Romaine / Daun Hidroponik'],
+        ['path' => 'broccoli.jpg', 'label' => 'Brokoli Super Lembang'],
+        ['path' => 'tomato.jpg', 'label' => 'Tomat Beef Greenhouse Garut'],
+        ['path' => 'strawberry.jpg', 'label' => 'Stroberi Sweet Ciwidey'],
+        ['path' => 'cabbage.jpg', 'label' => 'Kol Putih Pangalengan'],
+        ['path' => 'gpaleaves.png', 'label' => 'Logo Daun Resmi GPA'],
+    ];
+@endphp
 <div class="mx-auto max-w-4xl space-y-5">
     {{-- Breadcrumb / Tombol Kembali --}}
     <div class="flex items-center justify-between">

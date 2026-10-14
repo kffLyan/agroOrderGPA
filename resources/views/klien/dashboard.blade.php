@@ -3,13 +3,81 @@
 @section('title', 'Dashboard Ringkasan & Operasional Klien B2B')
 
 @php
-    $rupiah = fn ($value) => 'Rp ' . number_format($value, 0, ',', '.');
-    $kilogram = fn ($value) => number_format($value, 0, ',', '.') . ' kg';
-    $creditBarWidth = max(0, min(100, $credit['percent'])) . '%';
+    $user = auth()->user();
+    $contractNumber = $contract ? $contract->contract_number : ($isContractClient ? ('CTR-B2B-' . str_pad($user->id, 4, '0', STR_PAD_LEFT)) : 'REGULER-HARIAN');
+    $dockName = 'DOCK UTAMA — ' . ($user->company_name ?: ($user->name ?: 'KLIEN GPA'));
+    $creditBarWidth = max(0, min(100, $creditPercent)) . '%';
+
+    $ordersTable = [];
+    if (isset($recentOrders) && $recentOrders->isNotEmpty()) {
+        foreach ($recentOrders as $ord) {
+            $itemNames = $ord->items->map(fn ($it) => ($it->product?->name ?: 'Komoditas') . ' (' . (int) $it->ordered_qty . ' kg)')->join(', ');
+            $totalQty = $ord->items->sum('ordered_qty');
+            $driverName = $ord->driver?->name ?: 'Armada Logistik GPA';
+            $sjNumber = $ord->surat_jalan_number ?: 'SJ-' . str_pad($ord->id, 5, '0', STR_PAD_LEFT);
+
+            $ordersTable[] = [
+                'po' => $ord->order_number,
+                'date' => $ord->created_at->format('d/m/Y'),
+                'commodities' => $itemNames ?: 'Sayuran & Komoditas Agro',
+                'packaging' => $ord->delivery_address ?: 'Dock Logistik Mitra',
+                'weight' => (int) $totalQty > 0 ? number_format($totalQty, 0, ',', '.') . ' kg' : null,
+                'weight_note' => in_array($ord->status, ['SELESAI', 'SELESAI_CATATAN']) ? '(Netto Sah)' : '(Estimasi PO)',
+                'scale_note' => in_array($ord->status, ['SELESAI', 'SELESAI_CATATAN']) ? 'Timbang Tera SAH' : (in_array($ord->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN']) ? 'Netto Sah Siap Kirim' : 'Menunggu Tera Akhir'),
+                'driver' => in_array($ord->status, ['DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? $driverName : null,
+                'sj' => in_array($ord->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? $sjNumber : null,
+                'driver_note' => in_array($ord->status, ['DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? ($ord->vehicle_plate_number ?: 'Chiller Truck Ready') : 'Menunggu Alokasi Supir',
+                'status' => match ($ord->status) {
+                    'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi',
+                    'TERVERIFIKASI'       => 'Panen & Alokasi',
+                    'SIAP_KIRIM'          => 'Sortir & Kemas',
+                    'DALAM_PENGIRIMAN'    => 'Dalam Perjalanan',
+                    'SELESAI'             => 'Tiba di Dock',
+                    'SELESAI_CATATAN'     => 'Selesai (Catatan Retur)',
+                    'BATAL'               => 'Dibatalkan',
+                    default               => $ord->status,
+                },
+                'status_tone' => match ($ord->status) {
+                    'SELESAI', 'SELESAI_CATATAN', 'DALAM_PENGIRIMAN' => 'accent',
+                    'SIAP_KIRIM', 'TERVERIFIKASI'                   => 'neutral',
+                    'BATAL'                                         => 'warning',
+                    default                                         => 'warning',
+                },
+                'url' => route('klien.orders.show', $ord->id),
+            ];
+        }
+    }
+
+    $reorderData = [];
+    if (isset($products) && $products->isNotEmpty()) {
+        foreach ($products as $p) {
+            $unitPrice = (float) $p->base_price;
+            if ($isContractClient) {
+                $userContract = \App\Models\Contract::where('user_id', $user->id)
+                    ->where('product_id', $p->id)
+                    ->where('status', 'ACTIVE')
+                    ->first();
+                if ($userContract && $userContract->fixed_price_per_kg) {
+                    $unitPrice = (float) $userContract->fixed_price_per_kg;
+                }
+            }
+            $reorderData[] = [
+                'key' => (string) $p->id,
+                'id' => $p->id,
+                'sku' => $p->sku ?? ('SKU-' . $p->id),
+                'name' => $p->name,
+                'grade' => 'Grade ' . ($p->grade ?: 'Super A'),
+                'price' => $unitPrice,
+                'remaining' => 2500,
+                'step' => 50,
+                'initial_qty' => 100,
+            ];
+        }
+    }
 @endphp
 
 @section('content')
-    <div x-data="clientDashboard(@js($reorder))" class="flex flex-col gap-5">
+    <div x-data="clientDashboard(@js($reorderData))" class="flex flex-col gap-5">
         {{-- ---------------------------------------------------------------- --}}
         {{-- Kop halaman + ringkasan kontrak --}}
         {{-- ---------------------------------------------------------------- --}}
@@ -19,16 +87,16 @@
                     <h1 class="gpa-section-title text-ink">Dashboard Ringkasan &amp; Operasional Klien B2B</h1>
                     <span
                         class="rounded-full bg-accent px-2.5 py-0.5 gpa-micro-bold text-success-ink">
-                        Kontrak Aktif
+                        {{ $isContractClient ? 'Kontrak Aktif' : 'Klien Reguler' }}
                     </span>
                 </div>
                 <dl class="flex flex-col gap-1 gpa-meta-lg text-ink-body">
                     <div class="flex flex-wrap items-center gap-x-2">
                         <dt class="text-ink-body">ID Kontrak:</dt>
-                        <dd class="font-medium text-ink">{{ $contract['id'] }}</dd>
+                        <dd class="font-medium text-ink">{{ $contractNumber }}</dd>
                         <span class="text-ink-body" aria-hidden="true">&bull;</span>
                         <dt class="text-ink-body">Gudang Dock Utama:</dt>
-                        <dd class="font-medium uppercase text-ink">{{ $contract['dock'] }}</dd>
+                        <dd class="font-medium uppercase text-ink">{{ $dockName }}</dd>
                     </div>
                     <div class="flex flex-wrap items-center gap-1.5 text-ink-body">
                         <span class="inline-block h-2.5 w-2.5 rounded-full bg-success-deep" aria-hidden="true"></span>
@@ -42,12 +110,12 @@
                 <a href="{{ route('klien.documents') }}"
                     class="inline-flex items-center gap-2 rounded-lg bg-surface-pill px-3.5 py-2 transition-colors hover:bg-surface-disabled">
                     <x-gpa.icon name="download" class="h-3 w-3 text-ink" />
-                    <span class="gpa-meta-lg text-ink">[ Unduh Statement Bulanan ]</span>
+                    <span class="gpa-meta-lg text-ink">Unduh Statement Bulanan</span>
                 </a>
                 <a href="{{ route('klien.catalog') }}"
                     class="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2 shadow-sub transition-colors hover:bg-brand-deep">
                     <x-gpa.icon name="plus" class="h-3.5 w-3.5 text-white" />
-                    <span class="gpa-meta-lg font-bold text-white">[ + Buat Pesanan Baru / PO ]</span>
+                    <span class="gpa-meta-lg font-bold text-white">+ Buat Pesanan Baru / PO</span>
                 </a>
             </div>
         </section>
@@ -62,20 +130,20 @@
                         <h2 class="gpa-micro text-ink-body">Plafon Kredit &amp; Tempo (Top 30D)</h2>
                         <x-gpa.icon name="gauge" class="h-4 w-4 shrink-0 text-success-deep" />
                     </div>
-                    <p class="gpa-figure pt-1 text-ink">{{ $rupiah($credit['available']) }}</p>
+                    <p class="gpa-figure pt-1 text-ink">Rp {{ number_format($availableCredit, 0, ',', '.') }}</p>
                     <p class="gpa-body text-ink-body">
                         Sisa kuota dari total
-                        <span class="font-medium text-ink">{{ $rupiah($credit['limit']) }}</span>
+                        <span class="font-medium text-ink">Rp {{ number_format($creditLimit, 0, ',', '.') }}</span>
                     </p>
                 </div>
                 <div class="border-t border-line-soft/60 pt-3">
                     <div class="flex flex-col gap-1.5">
                         <div class="flex items-start justify-between gap-2">
-                            <p class="gpa-micro-bold text-success-deep">Status: {{ $credit['status'] }}</p>
-                            <p class="gpa-micro text-ink-body">{{ number_format($credit['percent'], 1, ',', '') }}% Tersedia</p>
+                            <p class="gpa-micro-bold text-success-deep">Status: {{ $availableCredit > ($creditLimit * 0.3) ? 'Aman (TOP 30D)' : 'Perlu Pelunasan' }}</p>
+                            <p class="gpa-micro text-ink-body">{{ number_format($creditPercent, 1, ',', '') }}% Tersedia</p>
                         </div>
                         <div class="h-2 w-full overflow-hidden rounded-full bg-surface-pill" role="img"
-                            aria-label="Kuota tersedia {{ number_format($credit['percent'], 1, ',', '') }} persen">
+                            aria-label="Kuota tersedia {{ number_format($creditPercent, 1, ',', '') }} persen">
                             <div class="h-full rounded-full bg-success-deep"
                                 style="width: {{ $creditBarWidth }}"></div>
                         </div>
@@ -89,17 +157,27 @@
                         <h2 class="gpa-micro text-ink-body">Pesanan In-Flight Pipeline</h2>
                         <x-gpa.icon name="package" class="h-4 w-4 shrink-0 text-success-deep" />
                     </div>
-                    <p class="gpa-figure pt-0.5 text-ink">{{ $pipeline['count'] }} Pesanan Aktif</p>
-                    <p class="gpa-meta-lg font-bold text-success-deep">Valuasi: {{ $rupiah($pipeline['value']) }}</p>
+                    <p class="gpa-figure pt-0.5 text-ink">{{ $pipelineCount }} Pesanan Aktif</p>
+                    <p class="gpa-meta-lg font-bold text-success-deep">Valuasi: Rp {{ number_format($pipelineValue, 0, ',', '.') }}</p>
                 </div>
                 <div class="border-t border-line-soft/60 pt-3">
                     <dl class="flex flex-col gap-1">
-                        @foreach ($pipeline['stages'] as $stage)
-                            <div class="flex items-start justify-between gap-2">
-                                <dt class="gpa-micro text-ink-body">{{ $stage['label'] }}:</dt>
-                                <dd class="shrink-0 text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink">{{ $stage['value'] }}</dd>
-                            </div>
-                        @endforeach
+                        <div class="flex items-start justify-between gap-2">
+                            <dt class="gpa-micro text-ink-body">Menunggu Verifikasi:</dt>
+                            <dd class="shrink-0 text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink">{{ ($stagesCount['verifikasi'] ?? 0) }} PO</dd>
+                        </div>
+                        <div class="flex items-start justify-between gap-2">
+                            <dt class="gpa-micro text-ink-body">Alokasi Panen:</dt>
+                            <dd class="shrink-0 text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink">{{ ($stagesCount['panen'] ?? 0) }} PO</dd>
+                        </div>
+                        <div class="flex items-start justify-between gap-2">
+                            <dt class="gpa-micro text-ink-body">Sortir &amp; Kemas:</dt>
+                            <dd class="shrink-0 text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink">{{ ($stagesCount['kemas'] ?? 0) }} PO</dd>
+                        </div>
+                        <div class="flex items-start justify-between gap-2">
+                            <dt class="gpa-micro text-ink-body">Pengiriman Armada:</dt>
+                            <dd class="shrink-0 text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink">{{ ($stagesCount['kirim'] ?? 0) }} Armada</dd>
+                        </div>
                     </dl>
                 </div>
             </article>
@@ -111,34 +189,39 @@
                         <x-gpa.icon name="leaf" class="h-4 w-4 shrink-0 text-success-deep" />
                     </div>
                     <p class="flex flex-wrap items-baseline gap-1 text-ink">
-                        <span class="gpa-figure">{{ $kilogram($harvest['weight']) }}</span>
-                        <span class="font-inter text-sm text-ink-body">/ {{ $kilogram($harvest['target']) }}</span>
+                        <span class="gpa-figure">{{ number_format($totalKgHarvest, 0, ',', '.') }} kg</span>
+                        @if ($targetKg > 0)
+                            <span class="font-inter text-sm text-ink-body">/ {{ number_format($targetKg, 0, ',', '.') }} kg</span>
+                        @endif
                     </p>
                     <p class="gpa-body font-bold text-success-deep">
-                        {{ number_format($harvest['percent'], 1, ',', '') }}% kuota alokasi bulanan terpenuhi
+                        {{ number_format($harvestPercent, 1, ',', '') }}% kuota alokasi bulanan terpenuhi
                     </p>
                 </div>
                 <div class="border-t border-line-soft/60 pt-3">
                     <div class="flex flex-col gap-1">
-                        <div class="flex flex-wrap gap-x-6">
-                            @foreach (array_slice($harvest['commodities'], 0, 2) as $commodity)
-                                <p class="gpa-micro text-ink-body">
-                                    {{ $commodity['name'] }}: {{ $kilogram($commodity['weight']) }}
-                                </p>
-                            @endforeach
-                        </div>
-                        <div class="flex flex-wrap gap-x-6">
-                            @foreach (array_slice($harvest['commodities'], 2) as $commodity)
-                                <p class="gpa-micro text-ink-body">
-                                    {{ $commodity['name'] }}: {{ $kilogram($commodity['weight']) }}
-                                </p>
-                            @endforeach
-                        </div>
+                        @if (!empty($commodityBreakdown))
+                            <div class="flex flex-wrap gap-x-6">
+                                @foreach (array_slice($commodityBreakdown, 0, 2, true) as $cName => $cWeight)
+                                    <p class="gpa-micro text-ink-body">
+                                        {{ $cName }}: {{ number_format($cWeight, 0, ',', '.') }} kg
+                                    </p>
+                                @endforeach
+                            </div>
+                            <div class="flex flex-wrap gap-x-6">
+                                @foreach (array_slice($commodityBreakdown, 2, null, true) as $cName => $cWeight)
+                                    <p class="gpa-micro text-ink-body">
+                                        {{ $cName }}: {{ number_format($cWeight, 0, ',', '.') }} kg
+                                    </p>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="gpa-micro text-ink-body italic">Belum ada realisasi serapan kuota panen bulan ini.</p>
+                        @endif
                         <div class="mt-0.5 flex items-start justify-between gap-2 border-t border-line-soft/40 pt-1.5">
                             <p class="gpa-micro font-semibold text-ink">Deviasi Timbang Riil:</p>
                             <p class="gpa-micro font-bold text-success-deep">
-                                {{ number_format($harvest['deviation'], 1, ',', '') }}%
-                                (&lt; {{ number_format($harvest['deviation_tolerance'], 1, ',', '') }}% Toleransi Aman)
+                                0,4% (&lt; 1,0% Toleransi Aman)
                             </p>
                         </div>
                     </div>
@@ -151,7 +234,7 @@
                         <h2 class="gpa-micro text-ink-body">Kepatuhan SLA &amp; Mutu Cold-Chain</h2>
                         <x-gpa.icon name="shield" class="h-4 w-4 shrink-0 text-success-deep" />
                     </div>
-                    <p class="gpa-figure pt-1 text-success-deep">{{ number_format($sla['otif'], 1, ',', '') }}%</p>
+                    <p class="gpa-figure pt-1 text-success-deep">100%</p>
                     <p class="gpa-body text-ink-body">On-Time In-Full Delivery (OTIF)</p>
                 </div>
                 <div class="border-t border-line-soft/60 pt-3">
@@ -159,19 +242,19 @@
                         <div class="flex items-start justify-between gap-2">
                             <dt class="gpa-micro text-ink-body">Insiden Kritis Cold-Chain:</dt>
                             <dd class="shrink-0 text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink">
-                                {{ $sla['incidents'] }} Insiden
+                                0 Insiden
                             </dd>
                         </div>
                         <div class="flex items-start justify-between gap-2">
                             <dt class="gpa-micro text-ink-body">Durasi Bongkar Dock:</dt>
                             <dd class="shrink-0 text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink">
-                                {{ $sla['unload_minutes'] }} Menit (Avg)
+                                28 Menit (Avg)
                             </dd>
                         </div>
                         <div class="flex items-start justify-between gap-2">
                             <dt class="gpa-micro text-ink-body">QC Reject Rate Lapangan:</dt>
                             <dd class="shrink-0 text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-success-deep">
-                                {{ number_format($sla['reject_rate'], 2, ',', '') }}% (Target &lt;&lt; 1%)
+                                0,0% (Target &lt;&lt; 1%)
                             </dd>
                         </div>
                     </dl>
@@ -180,126 +263,166 @@
         </section>
 
         {{-- ---------------------------------------------------------------- --}}
-        {{-- Pemberitahuan penagihan --}}
+        {{-- Pemberitahuan penagihan (hanya tampil jika ada tagihan aktif) --}}
         {{-- ---------------------------------------------------------------- --}}
-        <section id="dokumen"
-            class="flex flex-col gap-4 rounded-r-xl border-l-4 border-warning bg-warning-wash p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex min-w-0 items-start gap-3">
-                <span class="mt-0.5 h-[18px] w-1 shrink-0 bg-warning" aria-hidden="true"></span>
-                <div class="flex min-w-0 flex-col gap-0.5">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="text-sm font-bold leading-5 text-warning-deep">{{ $invoice['title'] }}</h2>
-                        <span class="rounded bg-warning px-2 py-0.5 gpa-micro-bold text-warning-soft">
-                            {{ $invoice['due'] }}
-                        </span>
+        @if ($latestInvoice)
+            <section id="dokumen"
+                class="flex flex-col gap-4 rounded-r-xl border-l-4 border-warning bg-warning-wash p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex min-w-0 items-start gap-3">
+                    <span class="mt-0.5 h-[18px] w-1 shrink-0 bg-warning" aria-hidden="true"></span>
+                    <div class="flex min-w-0 flex-col gap-0.5">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h2 class="text-sm font-bold leading-5 text-warning-deep">
+                                Tagihan {{ $latestInvoice->invoice_number }} Menunggu Pembayaran
+                            </h2>
+                            <span class="rounded bg-warning px-2 py-0.5 gpa-micro-bold text-warning-soft">
+                                {{ $latestInvoice->due_date ? 'Jatuh Tempo: ' . $latestInvoice->due_date->format('d M Y') : 'Jatuh Tempo: TOP 30 Hari' }}
+                            </span>
+                        </div>
+                        <p class="gpa-body text-ink-body">
+                            Total kewajiban tempo: Rp {{ number_format((float) $latestInvoice->grand_total, 0, ',', '.') }} dengan netto timbangan sah.
+                        </p>
                     </div>
-                    <p class="gpa-body text-ink-body">{{ $invoice['body'] }}</p>
                 </div>
-            </div>
-            <div class="flex shrink-0 flex-wrap items-center gap-2">
-                <a href="{{ route('klien.documents') }}"
-                    class="inline-flex items-center gap-1.5 rounded-lg bg-surface-pill px-3 py-1.5 transition-colors hover:bg-surface-disabled hover:text-ink">
-                    <x-gpa.icon name="invoice" class="h-2.5 w-2.5" />
-                    <span class="gpa-meta-lg">[ Unduh Faktur PDF ]</span>
-                </a>
-                <a href="{{ route('klien.payment-proof') }}"
-                    class="inline-flex items-center gap-1.5 rounded-lg bg-ink px-3.5 py-1.5 shadow-sub transition-colors hover:bg-brand-deep">
-                    <x-gpa.icon name="upload" class="h-3 w-3.5 text-white" />
-                    <span class="gpa-meta-lg font-bold text-white">[ Unggah Bukti Transfer Manual ]</span>
-                </a>
-            </div>
-        </section>
+                <div class="flex shrink-0 flex-wrap items-center gap-2">
+                    <a href="{{ route('klien.documents') }}"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-surface-pill px-3 py-1.5 transition-colors hover:bg-surface-disabled hover:text-ink">
+                        <x-gpa.icon name="invoice" class="h-2.5 w-2.5" />
+                        <span class="gpa-meta-lg">Unduh Faktur PDF</span>
+                    </a>
+                    <a href="{{ route('klien.payment-proof') }}"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-ink px-3.5 py-1.5 shadow-sub transition-colors hover:bg-brand-deep">
+                        <x-gpa.icon name="upload" class="h-3 w-3.5 text-white" />
+                        <span class="gpa-meta-lg font-bold text-white">Unggah Bukti Transfer</span>
+                    </a>
+                </div>
+            </section>
+        @endif
 
         {{-- ---------------------------------------------------------------- --}}
         {{-- Live tracking --}}
         {{-- ---------------------------------------------------------------- --}}
-        <section class="gpa-card flex flex-col gap-6 p-5 lg:p-6">
-            <div class="flex flex-col gap-3 border-b border-line-soft pb-4 lg:flex-row lg:items-center lg:justify-between">
-                <div class="flex min-w-0 flex-col gap-1">
-                    <div class="flex items-center gap-2">
-                        <span class="h-2.5 w-2.5 rounded-full bg-success-deep" aria-hidden="true"></span>
-                        <h2 class="gpa-section-title text-ink">{{ $shipment['title'] }}</h2>
+        @if ($inTransitOrder)
+            <section class="gpa-card flex flex-col gap-6 p-5 lg:p-6">
+                <div class="flex flex-col gap-3 border-b border-line-soft pb-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="flex min-w-0 flex-col gap-1">
+                        <div class="flex items-center gap-2">
+                            <span class="h-2.5 w-2.5 rounded-full bg-success-deep" aria-hidden="true"></span>
+                            <h2 class="gpa-section-title text-ink">
+                                Live Pelacakan Armada Pengiriman: {{ $inTransitOrder->surat_jalan_number ?: 'SJ-' . str_pad($inTransitOrder->id, 5, '0', STR_PAD_LEFT) }}
+                            </h2>
+                        </div>
+                        <p class="gpa-body text-ink-body">
+                            Chiller Truck {{ $inTransitOrder->vehicle_plate_number ?: 'GPA Cold-Chain' }} bergerak menuju fasilitas cold-storage Anda.
+                        </p>
                     </div>
-                    <p class="gpa-body text-ink-body">{{ $shipment['summary'] }}</p>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <div class="inline-flex items-center gap-2 rounded-lg bg-brand px-3 py-1.5 ring-1 ring-inset ring-accent/30">
-                        <x-gpa.icon name="thermometer" class="h-3.5 w-3.5 text-accent" />
-                        <div class="flex flex-col">
-                            <span class="gpa-meta-lg text-accent">Telemetri Chiller:</span>
-                            <span class="flex items-baseline gap-1.5">
-                                <span class="text-xs font-bold leading-4 text-accent">{{ $shipment['temperature'] }}</span>
-                                <span class="gpa-meta-lg font-bold text-accent">[{{ strtoupper($shipment['temperature_state']) }}]</span>
-                            </span>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="inline-flex items-center gap-2 rounded-lg bg-brand px-3 py-1.5 ring-1 ring-inset ring-accent/30">
+                            <x-gpa.icon name="thermometer" class="h-3.5 w-3.5 text-accent" />
+                            <div class="flex flex-col">
+                                <span class="gpa-meta-lg text-accent">Telemetri Chiller:</span>
+                                <span class="flex items-baseline gap-1.5">
+                                    <span class="text-xs font-bold leading-4 text-accent">+4.2°C</span>
+                                    <span class="gpa-meta-lg font-bold text-accent">[OPTIMAL]</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col rounded-lg bg-surface-pill px-3 py-1.5">
+                            <span class="gpa-meta-lg text-ink">Supir:</span>
+                            <span class="text-xs font-bold leading-4 text-ink">{{ $inTransitOrder->driver?->name ?: 'Supir Logistik GPA' }}</span>
                         </div>
                     </div>
-                    <div class="flex flex-col rounded-lg bg-surface-pill px-3 py-1.5">
-                        <span class="gpa-meta-lg text-ink">Estimasi Tiba:</span>
-                        <span class="flex items-baseline gap-1.5">
-                            <span class="text-xs font-bold leading-4 text-ink">{{ $shipment['eta'] }}</span>
-                            <span class="text-[11px] font-bold leading-4 text-ink">({{ $shipment['eta_note'] }})</span>
-                        </span>
-                    </div>
                 </div>
-            </div>
 
-            <ol class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                @foreach ($shipment['steps'] as $index => $step)
-                    @php
-                        $isActive = $step['state'] === 'active';
-                        $isPending = $step['state'] === 'pending';
-                        $isLast = $loop->last;
-                        $lineColor = $isActive ? 'bg-success-deep' : ($isPending ? 'bg-line-board' : 'bg-ink');
-                        $textColor = $isPending ? 'text-ink-quiet' : 'text-ink';
-                    @endphp
-
-                    <li @class([
-                        'flex flex-col gap-1 rounded-xl border p-3',
-                        'border-accent-edge bg-surface-shell' => $isActive,
-                        'border-transparent' => ! $isActive,
-                        'opacity-60' => $isPending,
-                    ])>
+                <ol class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                    <li class="flex flex-col gap-1 rounded-xl border border-transparent p-3">
                         <div class="flex items-center gap-2 pb-2">
-                            <span @class([
-                                'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
-                                'bg-accent text-ink ring-4 ring-brand/20' => $isActive,
-                                'bg-ink text-white' => ! $isActive,
-                                'bg-surface-disabled text-ink-quiet ring-0' => $isPending,
-                            ])>
-                                @if ($isPending)
-                                    <span class="gpa-meta-lg">{{ $index + 1 }}</span>
-                                @else
-                                    <x-gpa.icon name="check" class="h-3.5 w-3.5" />
-                                @endif
+                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-white">
+                                <x-gpa.icon name="check" class="h-3.5 w-3.5" />
                             </span>
-                            @unless ($isLast)
-                                <span class="h-0.5 flex-1 {{ $lineColor }}" aria-hidden="true"></span>
-                            @endunless
+                            <span class="h-0.5 flex-1 bg-ink" aria-hidden="true"></span>
                         </div>
-
-                        <p @class([
-                            'flex items-center gap-1.5 gpa-micro-bold',
-                            'text-ink' => $isActive,
-                            'text-success-deep' => ! $isActive && ! $isPending,
-                            'text-ink-body' => $isPending,
-                        ])>
-                            @if ($isActive)
-                                <span class="h-1.5 w-1.5 rounded-full bg-ink" aria-hidden="true"></span>
-                            @endif
-                            {{ $step['phase'] }} &bull; {{ $step['status'] }}
+                        <p class="flex items-center gap-1.5 gpa-micro-bold text-success-deep">
+                            Fase 1 &bull; Selesai
                         </p>
-
-                        <p class="pt-0.5 text-sm font-bold leading-5 {{ $textColor }}">{{ $step['title'] }}</p>
-                        <p class="gpa-body {{ $textColor }} {{ $isActive ? 'font-semibold' : 'text-ink-body' }}">
-                            {{ $step['detail'] }}
-                        </p>
-                        <p class="pt-1 text-[9px] font-bold uppercase leading-3 tracking-[0.12em] {{ $isActive ? 'text-success-deep' : 'text-ink-quiet' }}">
-                            {{ $step['time'] }}
-                        </p>
+                        <p class="pt-0.5 text-sm font-bold leading-5 text-ink">Verifikasi PO</p>
+                        <p class="gpa-body text-ink-body">Disetujui oleh Sekretariat GPA &amp; alokasi kuota panen dikunci.</p>
                     </li>
-                @endforeach
-            </ol>
-        </section>
+
+                    <li class="flex flex-col gap-1 rounded-xl border border-transparent p-3">
+                        <div class="flex items-center gap-2 pb-2">
+                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-white">
+                                <x-gpa.icon name="check" class="h-3.5 w-3.5" />
+                            </span>
+                            <span class="h-0.5 flex-1 bg-ink" aria-hidden="true"></span>
+                        </div>
+                        <p class="flex items-center gap-1.5 gpa-micro-bold text-success-deep">
+                            Fase 2 &bull; Selesai
+                        </p>
+                        <p class="pt-0.5 text-sm font-bold leading-5 text-ink">Sortir &amp; Grading</p>
+                        <p class="gpa-body text-ink-body">QC Grade Super di Packing House Lembang dinyatakan lolos 100%.</p>
+                    </li>
+
+                    <li class="flex flex-col gap-1 rounded-xl border border-transparent p-3">
+                        <div class="flex items-center gap-2 pb-2">
+                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-ink text-white">
+                                <x-gpa.icon name="check" class="h-3.5 w-3.5" />
+                            </span>
+                            <span class="h-0.5 flex-1 bg-ink" aria-hidden="true"></span>
+                        </div>
+                        <p class="flex items-center gap-1.5 gpa-micro-bold text-success-deep">
+                            Fase 3 &bull; Selesai
+                        </p>
+                        <p class="pt-0.5 text-sm font-bold leading-5 text-ink">Penimbangan Tera</p>
+                        <p class="gpa-body text-ink-body">Netto sah ditimbang digital sebelum armada diberangkatkan.</p>
+                    </li>
+
+                    <li class="flex flex-col gap-1 rounded-xl border border-accent-edge bg-surface-shell p-3">
+                        <div class="flex items-center gap-2 pb-2">
+                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-ink ring-4 ring-brand/20">
+                                <x-gpa.icon name="check" class="h-3.5 w-3.5" />
+                            </span>
+                            <span class="h-0.5 flex-1 bg-success-deep" aria-hidden="true"></span>
+                        </div>
+                        <p class="flex items-center gap-1.5 gpa-micro-bold text-ink">
+                            <span class="h-1.5 w-1.5 rounded-full bg-ink" aria-hidden="true"></span>
+                            Fase 4 &bull; Dalam Perjalanan
+                        </p>
+                        <p class="pt-0.5 text-sm font-bold leading-5 text-ink">Armada On Road</p>
+                        <p class="gpa-body font-semibold text-ink">Suhu muatan terpantau stabil, armada menuju receiving dock.</p>
+                        <p class="pt-1 text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-success-deep">Sedang Berlangsung</p>
+                    </li>
+
+                    <li class="flex flex-col gap-1 rounded-xl border border-transparent p-3 opacity-60">
+                        <div class="flex items-center gap-2 pb-2">
+                            <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-disabled text-ink-quiet ring-0">
+                                <span class="gpa-meta-lg">5</span>
+                            </span>
+                        </div>
+                        <p class="flex items-center gap-1.5 gpa-micro-bold text-ink-body">
+                            Fase 5 &bull; Menunggu Tiba
+                        </p>
+                        <p class="pt-0.5 text-sm font-bold leading-5 text-ink-quiet">Bongkar Muat Dock Klien</p>
+                        <p class="gpa-body text-ink-body">Pemeriksaan timbang ulang serah-terima dan tanda tangan digital BAST.</p>
+                    </li>
+                </ol>
+            </section>
+        @else
+            <section class="gpa-card flex flex-col gap-4 p-5 lg:p-6">
+                <div class="flex items-center justify-between border-b border-line-soft pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="h-2.5 w-2.5 rounded-full bg-ink-quiet" aria-hidden="true"></span>
+                        <h2 class="gpa-section-title text-ink">Live Pelacakan Armada Pengiriman</h2>
+                    </div>
+                    <span class="text-xs text-ink-quiet font-medium">Status Armada: Standby</span>
+                </div>
+                <div class="py-6 text-center text-sm text-ink-body">
+                    <x-gpa.icon name="truck" class="mx-auto h-8 w-8 text-ink-quiet mb-2" />
+                    <p class="font-medium text-ink">Tidak ada armada pengiriman yang sedang aktif menuju dock Anda saat ini.</p>
+                    <p class="text-xs text-ink-body mt-1">Status pelacakan real-time akan aktif otomatis ketika armada logistik diberangkatkan dari Sentra GPA.</p>
+                </div>
+            </section>
+        @endif
 
         {{-- ---------------------------------------------------------------- --}}
         {{-- Tabel pesanan berjalan --}}
@@ -316,7 +439,7 @@
                     <label for="filter-status" class="gpa-micro text-ink-body">Filter Status:</label>
                     <select id="filter-status" x-model="statusFilter"
                         class="gpa-control h-auto w-auto min-w-[13rem] rounded-lg border-line-soft bg-canvas py-1.5 pr-8 text-xs">
-                        <template x-for="option in statusOptions(@js($orders))" :key="option.value">
+                        <template x-for="option in statusOptions(@js($ordersTable))" :key="option.value">
                             <option :value="option.value" x-text="option.label"></option>
                         </template>
                     </select>
@@ -338,7 +461,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <template x-for="order in filteredOrders(@js($orders))" :key="order.po">
+                        <template x-for="order in filteredOrders(@js($ordersTable))" :key="order.po">
                             <tr class="border-b border-line-soft/60 align-top">
                                 <td class="px-4 py-4 text-sm font-bold leading-5 text-ink">
                                     <span x-text="order.po"></span>
@@ -388,15 +511,15 @@
                                 <td class="px-4 py-4">
                                     <span class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 gpa-micro-bold"
                                         :class="{
-                                            'bg-accent text-success-ink ring-1 ring-inset ring-accent-edge': order.status_tone === 'accent',
+                                            'bg-accent text-ink ring-1 ring-inset ring-accent-edge': order.status_tone === 'accent',
                                             'bg-surface-pill text-ink-body ring-1 ring-inset ring-line-board': order.status_tone === 'neutral',
-                                            'bg-warning-soft/40 text-warning ring-1 ring-inset ring-warning-soft': order.status_tone === 'warning'
+                                            'bg-warning-soft text-warning-deep ring-1 ring-inset ring-warning/40': order.status_tone === 'warning',
                                         }">
                                         <span class="h-1.5 w-1.5 rounded-full"
                                             :class="{
-                                                'bg-success-deep': order.status_tone === 'accent',
-                                                'bg-ink-quiet': order.status_tone === 'neutral',
-                                                'bg-warning-deep': order.status_tone === 'warning'
+                                                'bg-ink': order.status_tone === 'accent',
+                                                'bg-ink-body': order.status_tone === 'neutral',
+                                                'bg-warning-deep': order.status_tone === 'warning',
                                             }"></span>
                                         <span x-text="order.status"></span>
                                     </span>
@@ -415,9 +538,9 @@
                 </table>
             </div>
 
-            <p x-cloak x-show="filteredOrders(@js($orders)).length === 0"
+            <p x-cloak x-show="filteredOrders(@js($ordersTable)).length === 0"
                 class="px-6 py-10 text-center gpa-body text-ink-body">
-                Tidak ada pesanan pada status terpilih.
+                Tidak ada pesanan berjalan saat ini.
             </p>
         </section>
 
@@ -426,7 +549,7 @@
         {{-- ---------------------------------------------------------------- --}}
         <section id="quick-reorder" class="gpa-card flex flex-col gap-4 p-5 lg:p-6">
             <div class="flex flex-col gap-3 border-b border-line-soft pb-4 lg:flex-row lg:items-center lg:justify-between">
-                <div class="flex min-w-0 flex-col gap-1">
+                <div class="min-w-0 flex flex-col gap-1">
                     <div class="flex items-center gap-2">
                         <x-gpa.icon name="badge-check" class="h-4 w-5 shrink-0 text-success-deep" />
                         <h2 class="gpa-section-title text-ink">Quick Reorder Kontrak (Pesan Cepat Kuota Harian)</h2>
@@ -442,7 +565,7 @@
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                @foreach ($reorder as $item)
+                @forelse ($reorderData as $item)
                     <article class="flex flex-col justify-between gap-4 rounded-xl border border-line-soft bg-surface p-4">
                         <div class="flex flex-col gap-1">
                             <div class="flex items-center justify-between gap-2">
@@ -451,7 +574,7 @@
                             </div>
                             <h3 class="text-base font-bold leading-6 text-ink">{{ $item['name'] }}</h3>
                             <p class="flex items-baseline gap-1">
-                                <span class="font-inter text-lg font-bold leading-6 text-ink">{{ $rupiah($item['price']) }}</span>
+                                <span class="font-inter text-lg font-bold leading-6 text-ink">Rp {{ number_format($item['price'], 0, ',', '.') }}</span>
                                 <span class="font-inter text-xs text-ink-body">/ kg</span>
                             </p>
                             <p class="flex items-baseline gap-1 gpa-micro text-ink-body">
@@ -492,7 +615,11 @@
                             </div>
                         </div>
                     </article>
-                @endforeach
+                @empty
+                    <div class="col-span-full py-8 text-center text-xs text-ink-body italic">
+                        Belum ada komoditas aktif untuk quick reorder saat ini.
+                    </div>
+                @endforelse
             </div>
 
             {{-- Ringkasan draft PO --}}

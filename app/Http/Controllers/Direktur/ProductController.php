@@ -29,18 +29,6 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        $user = Auth::user();
-
-        $operator = [
-            'role'     => 'Direktur Utama',
-            'name'     => $user?->name ?: 'Direksi GPA',
-            'code'     => 'DIR-' . str_pad($user?->id ?: 1, 3, '0', STR_PAD_LEFT),
-            'initials' => strtoupper(substr($user?->name ?: 'DU', 0, 2)),
-            'branch'   => 'Kantor Pusat GPA - Eksekutif',
-            'email'    => $user?->email ?: 'direktur@greenpasundan.id',
-            'period'   => 'Minggu ' . date('W') . ' ' . date('Y') . ' | Q4 YTD',
-        ];
-
         // Query produk dengan filter
         $query = Product::with(['harvestBatches', 'contracts'])->orderBy('id', 'asc');
 
@@ -65,47 +53,14 @@ class ProductController extends Controller
         $totalProducts = Product::count();
         $activeProducts = Product::where('is_active', true)->count();
         $avgPrice = Product::where('is_active', true)->avg('base_price') ?: 0;
-
-        // Hitung total stok fisik seluruh komoditas
         $totalStockKg = (float) HarvestBatch::sum('available_quantity');
 
-        $metrics = [
-            [
-                'label'     => 'Total Komoditas',
-                'value'     => $totalProducts . ' Komoditas',
-                'note'      => $activeProducts . ' Aktif di Katalog B2B',
-                'icon'      => 'grid',
-                'tone'      => 'brand',
-            ],
-            [
-                'label'     => 'Ketersediaan Pasokan',
-                'value'     => number_format($totalStockKg, 0, ',', '.') . ' kg',
-                'note'      => 'Buffer & Petani Binaan Siap Kirim',
-                'icon'      => 'package',
-                'tone'      => 'success',
-            ],
-            [
-                'label'     => 'Rata-rata Harga Dasar',
-                'value'     => 'Rp ' . number_format($avgPrice, 0, ',', '.'),
-                'note'      => 'Harga Franco Gudang Ciwidey/Lembang',
-                'icon'      => 'banknote',
-                'tone'      => 'accent',
-            ],
-            [
-                'label'     => 'Standar Mutu & Metrologi',
-                'value'     => 'Grade A & Super',
-                'note'      => 'Sertifikasi Tera Bebas Residu',
-                'icon'      => 'shield',
-                'tone'      => 'dark',
-            ],
-        ];
-
         return view('direktur.products.index', compact(
-            'operator',
             'products',
-            'metrics',
             'totalProducts',
-            'activeProducts'
+            'activeProducts',
+            'avgPrice',
+            'totalStockKg'
         ));
     }
 
@@ -114,31 +69,11 @@ class ProductController extends Controller
      */
     public function create()
     {
-        $user = Auth::user();
-
-        $operator = [
-            'role'     => 'Direktur Utama',
-            'name'     => $user?->name ?: 'Direksi GPA',
-            'code'     => 'DIR-' . str_pad($user?->id ?: 1, 3, '0', STR_PAD_LEFT),
-            'initials' => strtoupper(substr($user?->name ?: 'DU', 0, 2)),
-            'branch'   => 'Kantor Pusat GPA - Eksekutif',
-            'email'    => $user?->email ?: 'direktur@greenpasundan.id',
-        ];
-
         // Hitung perkiraan SKU berikutnya
         $nextId = (Product::max('id') ?: 0) + 1;
         $suggestedSku = 'GPA-VGT-' . str_pad($nextId, 2, '0', STR_PAD_LEFT);
 
-        $presets = [
-            ['path' => 'lettuce.jpg', 'label' => 'Selada Romaine / Daun Hidroponik'],
-            ['path' => 'broccoli.jpg', 'label' => 'Brokoli Super Lembang'],
-            ['path' => 'tomato.jpg', 'label' => 'Tomat Beef Greenhouse Garut'],
-            ['path' => 'strawberry.jpg', 'label' => 'Stroberi Sweet Ciwidey'],
-            ['path' => 'cabbage.jpg', 'label' => 'Kol Putih Pangalengan'],
-            ['path' => 'gpaleaves.png', 'label' => 'Logo Daun Resmi GPA'],
-        ];
-
-        return view('direktur.products.create', compact('operator', 'suggestedSku', 'presets'));
+        return view('direktur.products.create', compact('suggestedSku'));
     }
 
     /**
@@ -205,22 +140,11 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        $user = Auth::user();
-
-        $operator = [
-            'role'     => 'Direktur Utama',
-            'name'     => $user?->name ?: 'Direksi GPA',
-            'code'     => 'DIR-' . str_pad($user?->id ?: 1, 3, '0', STR_PAD_LEFT),
-            'initials' => strtoupper(substr($user?->name ?: 'DU', 0, 2)),
-            'branch'   => 'Kantor Pusat GPA - Eksekutif',
-            'email'    => $user?->email ?: 'direktur@greenpasundan.id',
-        ];
-
         $product->load(['harvestBatches', 'contracts.user']);
         $availableStock = (float) $product->harvestBatches->sum('available_quantity');
         $totalHarvested = (float) $product->harvestBatches->sum('initial_quantity');
 
-        return view('direktur.products.show', compact('operator', 'product', 'availableStock', 'totalHarvested'));
+        return view('direktur.products.show', compact('product', 'availableStock', 'totalHarvested'));
     }
 
     /**
@@ -228,27 +152,7 @@ class ProductController extends Controller
      */
     public function edit(Product $product)
     {
-        $user = Auth::user();
-
-        $operator = [
-            'role'     => 'Direktur Utama',
-            'name'     => $user?->name ?: 'Direksi GPA',
-            'code'     => 'DIR-' . str_pad($user?->id ?: 1, 3, '0', STR_PAD_LEFT),
-            'initials' => strtoupper(substr($user?->name ?: 'DU', 0, 2)),
-            'branch'   => 'Kantor Pusat GPA - Eksekutif',
-            'email'    => $user?->email ?: 'direktur@greenpasundan.id',
-        ];
-
-        $presets = [
-            ['path' => 'lettuce.jpg', 'label' => 'Selada Romaine / Daun Hidroponik'],
-            ['path' => 'broccoli.jpg', 'label' => 'Brokoli Super Lembang'],
-            ['path' => 'tomato.jpg', 'label' => 'Tomat Beef Greenhouse Garut'],
-            ['path' => 'strawberry.jpg', 'label' => 'Stroberi Sweet Ciwidey'],
-            ['path' => 'cabbage.jpg', 'label' => 'Kol Putih Pangalengan'],
-            ['path' => 'gpaleaves.png', 'label' => 'Logo Daun Resmi GPA'],
-        ];
-
-        return view('direktur.products.edit', compact('operator', 'product', 'presets'));
+        return view('direktur.products.edit', compact('product'));
     }
 
     /**

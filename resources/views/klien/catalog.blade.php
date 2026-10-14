@@ -3,20 +3,73 @@
 @section('title', 'Katalog Komoditas & Kuota Pasokan Terikat B2B')
 
 @php
-    $rupiah = fn ($value) => 'Rp '.number_format($value, 0, ',', '.');
-    $kilogram = fn ($value) => number_format($value, 0, ',', '.').' kg';
-    $quotaBarWidth = max(0, min(100, $quota['percent'])).'%';
+    $user = auth()->user();
+    $activeContractFirst = $activeContracts->first();
+    $quotaPercent = $totalCommittedQuota > 0 ? min(100, ($usedQuota / $totalCommittedQuota) * 100) : 0;
+    $creditAvailable = max(0, $creditLimit - $unpaidTotal);
+    $creditPercent = $creditLimit > 0 ? ($creditAvailable / $creditLimit) * 100 : 0;
+    $quotaBarWidth = max(0, min(100, $quotaPercent)) . '%';
 
-    $chipClass = fn ($tone) => match ($tone) {
-        'safe' => 'bg-accent text-success-ink ring-accent-edge',
-        'caution' => 'bg-warning-cream text-warning-caution ring-warning-caution/30',
-        default => 'bg-surface-pill text-ink-body ring-line-board',
-    };
-    $textTone = fn ($tone) => match ($tone) {
-        'success' => 'text-success-deep',
-        'caution' => 'text-warning-caution',
-        default => 'text-ink',
-    };
+    $commodities = ($rawProducts ?? collect())->map(function ($product) use ($activeContracts, $stockMap) {
+        $availableStock = $stockMap[$product->id] ?? 0;
+        $hasContract = $activeContracts->has($product->id);
+        $contractItem = $activeContracts->get($product->id);
+        $effectivePrice = $hasContract ? (float) $contractItem->fixed_price_per_kg : (float) $product->base_price;
+        $moq = (float) ($product->minimum_order ?? 10);
+
+        return [
+            'key'                => (string) $product->id,
+            'id'                 => $product->id,
+            'sku'                => $product->sku ?? ('SKU-' . $product->id),
+            'code'               => $product->sku ?? ('SKU-' . $product->id),
+            'name'               => $product->name,
+            'image_path'         => $product->image_path,
+            'image_url'          => asset($product->image_path),
+            'subtitle'           => $product->description ?: "Komoditas hortikultura unggulan Pasundan Grade {$product->grade}",
+            'category'           => 'sayur-daun',
+            'category_label'     => 'Komoditas Pertanian GPA',
+            'grade'              => $product->grade ?: 'Grade A',
+            'packaging'          => "Krat Plastik Higienis 10 {$product->unit}",
+            'price'              => $effectivePrice,
+            'base_price'         => (float) $product->base_price,
+            'has_contract'       => $hasContract,
+            'price_note'         => $hasContract ? 'Harga Kontrak Terkunci' : 'Harga Pasar Reguler',
+            'price_note_tone'    => $hasContract ? 'success' : 'default',
+            'stock'              => $availableStock,
+            'stock_label'        => 'Stok Bebas:',
+            'availability'       => $availableStock > 0 ? 'Stok Tersedia' : 'Habis Terpesan',
+            'availability_tone'  => $availableStock > 0 ? 'safe' : 'caution',
+            'moq'                => $moq,
+            'step'               => 1,
+            'crate_kg'           => 10,
+            'pack_label'         => 'Keranjang',
+            'cold_chain'         => '2-6°C Pre-Cooled',
+            'critical'           => $availableStock < 50 && $availableStock > 0,
+            'origin'             => 'Lembang',
+            'specs'              => [
+                [
+                    'label' => 'Satuan',
+                    'value' => strtoupper($product->unit ?? 'KG'),
+                    'tone'  => 'default',
+                ],
+                [
+                    'label' => 'Grade Mutu',
+                    'value' => $product->grade ?: 'Grade A',
+                    'tone'  => 'success',
+                ],
+                [
+                    'label' => 'Stok Riil Panen',
+                    'value' => number_format($availableStock, 0, ',', '.') . ' ' . $product->unit,
+                    'tone'  => $availableStock > 0 ? 'success' : 'caution',
+                ],
+                [
+                    'label' => 'Min Order (MOQ)',
+                    'value' => number_format($moq, 0, ',', '.') . ' ' . $product->unit,
+                    'tone'  => 'default',
+                ],
+            ],
+        ];
+    })->values()->all();
 @endphp
 
 @section('content')
@@ -29,9 +82,9 @@
                 <div class="flex flex-wrap items-center gap-2">
                     <span
                         class="rounded-full bg-accent px-2.5 py-1 ring-1 ring-inset ring-accent-edge gpa-micro-bold text-success-ink">
-                        {{ $contract['binding'] }}
+                        {{ $isB2b ? 'Kontrak B2B Mengikat' : 'Pembelian Reguler Harian' }}
                     </span>
-                    <span class="gpa-meta-lg text-ink-quiet">No: {{ $contract['number'] }}</span>
+                    <span class="gpa-meta-lg text-ink-quiet">No: {{ $activeContractFirst ? $activeContractFirst->contract_number : ($isB2b ? 'CTR-GPA-B2B' : 'REGULER-SPOT') }}</span>
                 </div>
 
                 <h1 class="gpa-section-title text-ink lg:text-[1.375rem] lg:leading-7">
@@ -61,44 +114,44 @@
             <article class="gpa-card flex flex-col justify-between gap-4 p-5">
                 <div class="flex flex-col gap-1">
                     <div class="flex items-start justify-between gap-2">
-                        <h2 class="gpa-micro text-ink-body">{{ $quota['label'] }}</h2>
+                        <h2 class="gpa-micro text-ink-body">Serapan Kuota Kontrak Bulanan</h2>
                         <x-gpa.icon name="gauge" class="h-4 w-4 shrink-0 text-success-deep" />
                     </div>
                     <p class="flex flex-wrap items-baseline gap-1 pt-1 text-ink">
-                        <span class="gpa-figure">{{ number_format($quota['used'], 0, ',', '.') }}</span>
-                        <span class="font-inter text-sm text-ink-body">/ {{ $kilogram($quota['total']) }}</span>
+                        <span class="gpa-figure">{{ number_format($usedQuota, 0, ',', '.') }}</span>
+                        <span class="font-inter text-sm text-ink-body">/ {{ number_format($totalCommittedQuota, 0, ',', '.') }} kg</span>
                     </p>
                     <p class="gpa-body font-bold text-success-deep">
-                        {{ number_format($quota['percent'], 1, ',', '') }}% terserap
+                        {{ number_format($quotaPercent, 1, ',', '') }}% terserap
                     </p>
                 </div>
                 <div class="flex flex-col gap-1.5 border-t border-line-soft/60 pt-3">
                     <div class="h-2 w-full overflow-hidden rounded-full bg-surface-pill" role="img"
-                        aria-label="Kuota terserap {{ number_format($quota['percent'], 1, ',', '') }} persen">
+                        aria-label="Kuota terserap {{ number_format($quotaPercent, 1, ',', '') }} persen">
                         <div class="h-full rounded-full bg-success-deep"
                             style="width: {{ $quotaBarWidth }}"></div>
                     </div>
-                    <p class="gpa-micro text-ink-body">{{ $quota['footnote'] }}</p>
+                    <p class="gpa-micro text-ink-body">Reset otomatis setiap tanggal 1 kalender operasional.</p>
                 </div>
             </article>
 
             <article class="gpa-card flex flex-col justify-between gap-4 p-5">
                 <div class="flex flex-col gap-1">
                     <div class="flex items-start justify-between gap-2">
-                        <h2 class="gpa-micro text-ink-body">{{ $credit['label'] }}</h2>
+                        <h2 class="gpa-micro text-ink-body">Plafon Kredit &amp; Termin Tempo</h2>
                         <x-gpa.icon name="wallet" class="h-4 w-4 shrink-0 text-success-deep" />
                     </div>
-                    <p class="gpa-figure pt-1 text-ink">{{ $rupiah($credit['available']) }}</p>
+                    <p class="gpa-figure pt-1 text-ink">Rp {{ number_format($creditAvailable, 0, ',', '.') }}</p>
                     <p class="gpa-body text-ink-body">
                         Alokasi plafon total:
-                        <span class="font-medium text-ink">{{ $rupiah($credit['limit']) }}</span>
+                        <span class="font-medium text-ink">Rp {{ number_format($creditLimit, 0, ',', '.') }}</span>
                     </p>
                 </div>
                 <div class="flex items-center justify-between gap-2 border-t border-line-soft/60 pt-3">
-                    <p class="gpa-micro-bold text-success-deep">Status: {{ $credit['status'] }}</p>
+                    <p class="gpa-micro-bold text-success-deep">Status: {{ $creditAvailable > 0 ? 'Lancar / Kuota Tersedia' : 'Plafon Penuh / Perlu Pembayaran' }}</p>
                     <span
                         class="rounded bg-surface-pill px-2 py-0.5 gpa-micro-bold text-ink-body">
-                        {{ $credit['chip'] }}
+                        {{ $isB2b ? 'TOP 30 Hari' : 'H+0 Cash/Transfer' }}
                     </span>
                 </div>
             </article>
@@ -106,43 +159,55 @@
             <article class="gpa-card flex flex-col justify-between gap-4 p-5">
                 <div class="flex flex-col gap-1">
                     <div class="flex items-start justify-between gap-2">
-                        <h2 class="gpa-micro text-ink-body">{{ $dispatch['label'] }}</h2>
+                        <h2 class="gpa-micro text-ink-body">Pengiriman Terdekat</h2>
                         <x-gpa.icon name="truck" class="h-4 w-4 shrink-0 text-success-deep" />
                     </div>
                     <div class="flex flex-wrap items-center gap-2 pt-1">
-                        <p class="gpa-figure text-ink">{{ $dispatch['po'] }}</p>
+                        <p class="gpa-figure text-ink">{{ $lastActiveOrder ? $lastActiveOrder->order_number : 'Belum Ada' }}</p>
                         <span
                             class="rounded-md bg-accent px-2 py-0.5 ring-1 ring-inset ring-accent-edge gpa-meta-lg font-bold text-success-ink">
-                            {{ $dispatch['weight'] }}
+                            {{ $lastActiveOrder ? number_format($lastActiveOrder->orderItems()->sum('ordered_qty'), 0, ',', '.') . ' kg' : '0 kg' }}
                         </span>
                     </div>
-                    <p class="gpa-body text-ink-body">Tujuan: {{ $dispatch['destination'] }}</p>
+                    <p class="gpa-body text-ink-body">Tujuan: {{ $user->address ?: 'Gudang Utama Klien' }}</p>
                 </div>
                 <div class="flex items-center justify-between gap-2 border-t border-line-soft/60 pt-3">
-                    <p class="gpa-meta-lg font-bold text-ink">ETA: {{ $dispatch['eta'] }}</p>
-                    <p class="gpa-micro-bold text-success-deep">Reefer {{ $dispatch['temperature'] }}</p>
+                    <p class="gpa-meta-lg font-bold text-ink">ETA: {{ $lastActiveOrder ? ($lastActiveOrder->target_delivery_date ? $lastActiveOrder->target_delivery_date->format('d M Y') . ' 05:30 WIB' : 'Besok 05:30 WIB') : 'Standby' }}</p>
+                    <p class="gpa-micro-bold text-success-deep">Reefer 4°C Stabil</p>
                 </div>
             </article>
 
             <article class="gpa-card flex flex-col justify-between gap-4 bg-brand p-5 ring-1 ring-inset ring-accent/30">
                 <div class="flex flex-col gap-3">
                     <div class="flex items-start justify-between gap-2">
-                        <h2 class="gpa-micro text-accent">{{ $rulebook['label'] }}</h2>
+                        <h2 class="gpa-micro text-accent">SOP Pemesanan &amp; Alokasi Petani</h2>
                         <x-gpa.icon name="shield" class="h-4 w-4 shrink-0 text-accent" />
                     </div>
                     <ul class="flex flex-col gap-1.5">
-                        @foreach ($rulebook['rules'] as $rule)
-                            <li class="flex items-start gap-2">
-                                <x-gpa.icon name="check" class="mt-0.5 h-3 w-3 shrink-0 text-accent" />
-                                <p class="gpa-body text-white/90">
-                                    <span class="gpa-micro-bold text-accent">{{ $rule['code'] }}:</span>
-                                    {{ $rule['text'] }}
-                                </p>
-                            </li>
-                        @endforeach
+                        <li class="flex items-start gap-2">
+                            <x-gpa.icon name="check" class="mt-0.5 h-3 w-3 shrink-0 text-accent" />
+                            <p class="gpa-body text-white/90">
+                                <span class="gpa-micro-bold text-accent">Rule 01:</span>
+                                Order cut-off pukul 16:00 WIB untuk pengiriman H+1 subuh.
+                            </p>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <x-gpa.icon name="check" class="mt-0.5 h-3 w-3 shrink-0 text-accent" />
+                            <p class="gpa-body text-white/90">
+                                <span class="gpa-micro-bold text-accent">Rule 02:</span>
+                                Harga kontrak terkunci mengikat tanpa fluktuasi harian.
+                            </p>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <x-gpa.icon name="check" class="mt-0.5 h-3 w-3 shrink-0 text-accent" />
+                            <p class="gpa-body text-white/90">
+                                <span class="gpa-micro-bold text-accent">Rule 03:</span>
+                                Penimbangan neto sah dilakukan di packing house dengan bukti timbang digital.
+                            </p>
+                        </li>
                     </ul>
                 </div>
-                <p class="gpa-micro border-t border-white/10 pt-3 text-white/60">{{ $rulebook['footer'] }}</p>
+                <p class="gpa-micro border-t border-white/10 pt-3 text-white/60">Ketentuan mengacu pada Perjanjian Kerjasama Pasokan Komoditas GPA.</p>
             </article>
         </section>
 
@@ -151,19 +216,26 @@
         {{-- ---------------------------------------------------------------- --}}
         <section class="gpa-card flex flex-col gap-3 p-4">
             <div class="flex flex-wrap items-center gap-2">
-                @foreach ($categories as $category)
-                    <button type="button" @click="category = @js($category['value'])"
-                        :class="category === @js($category['value'])
-                            ? 'border-ink bg-ink text-white'
-                            : 'border-line-soft bg-surface-pill text-ink-body hover:border-line-soft hover:text-ink'"
-                        class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 gpa-meta-lg transition-colors">
-                        <span>{{ mb_strtoupper($category['label']) }}</span>
-                        <span
-                            class="rounded px-1 text-[10px] leading-3 gpa-micro"
-                            :class="category === @js($category['value']) ? 'bg-accent text-success-ink' : 'bg-surface-disabled text-ink-body'"
-                            x-text="@js($category['count'])"></span>
-                    </button>
-                @endforeach
+                <button type="button" @click="category = 'all'"
+                    :class="category === 'all'
+                        ? 'border-ink bg-ink text-white'
+                        : 'border-line-soft bg-surface-pill text-ink-body hover:border-line-soft hover:text-ink'"
+                    class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 gpa-meta-lg transition-colors">
+                    <span>SEMUA</span>
+                    <span class="rounded px-1 text-[10px] leading-3 gpa-micro"
+                        :class="category === 'all' ? 'bg-accent text-success-ink' : 'bg-surface-disabled text-ink-body'"
+                        x-text="{{ count($commodities) }}"></span>
+                </button>
+                <button type="button" @click="category = 'sayur-daun'"
+                    :class="category === 'sayur-daun'
+                        ? 'border-ink bg-ink text-white'
+                        : 'border-line-soft bg-surface-pill text-ink-body hover:border-line-soft hover:text-ink'"
+                    class="inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 gpa-meta-lg transition-colors">
+                    <span>SAYURAN SEGAR</span>
+                    <span class="rounded px-1 text-[10px] leading-3 gpa-micro"
+                        :class="category === 'sayur-daun' ? 'bg-accent text-success-ink' : 'bg-surface-disabled text-ink-body'"
+                        x-text="{{ count($commodities) }}"></span>
+                </button>
 
                 <button type="button" @click="availableOnly = ! availableOnly" :aria-pressed="availableOnly"
                     class="ml-auto inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 gpa-meta-lg transition-colors"
@@ -178,17 +250,18 @@
             <div class="flex flex-col gap-2 border-t border-line-hair pt-3 lg:flex-row lg:items-center">
                 <label class="sr-only" for="filter-sentra">Sentra panen</label>
                 <select id="filter-sentra" x-model="origin" class="gpa-control lg:max-w-[15rem]">
-                    <option value="all">Semua Sentra Panen ({{ $contract['hub'] }})</option>
-                    @foreach ($origins as $origin)
-                        <option value="{{ $origin['value'] }}">{{ $origin['label'] }}</option>
-                    @endforeach
+                    <option value="all">Semua Sentra Panen (Ciwidey &amp; Lembang Agro-Hub)</option>
+                    <option value="lembang">Sentra Panen Lembang (Ketinggian 1.200 mdpl)</option>
+                    <option value="ciwidey">Sentra Panen Ciwidey (Ketinggian 1.400 mdpl)</option>
+                    <option value="pangalengan">Sentra Pangalengan (Buffer Stock Gudang)</option>
                 </select>
 
                 <label class="sr-only" for="filter-urutkan">Urutkan komoditas</label>
                 <select id="filter-urutkan" x-model="sort" class="gpa-control lg:max-w-[17rem]">
-                    @foreach ($sortOptions as $option)
-                        <option value="{{ $option['value'] }}">{{ $option['label'] }}</option>
-                    @endforeach
+                    <option value="name-asc">Nama Komoditas (A - Z)</option>
+                    <option value="price-asc">Harga Termurah</option>
+                    <option value="price-desc">Harga Tertinggi</option>
+                    <option value="stock-desc">Stok Tersedia Terbanyak</option>
                 </select>
 
                 <div class="relative flex-1">
@@ -336,18 +409,20 @@
                 <div class="flex min-w-0 flex-col gap-2">
                     <span
                         class="w-fit rounded bg-accent px-2.5 py-1 gpa-micro-bold text-success-ink">
-                        {{ $adhoc['chip'] }}
+                        Fasilitas Mitra B2B
                     </span>
-                    <h2 class="font-sans text-lg font-extrabold leading-6 text-white">{{ $adhoc['title'] }}</h2>
-                    <p class="max-w-2xl text-sm leading-5 text-white/80">{{ $adhoc['body'] }}</p>
+                    <h2 class="font-sans text-lg font-extrabold leading-6 text-white">Kebutuhan Pasokan Ad-Hoc &amp; Skala Tonase Khusus</h2>
+                    <p class="max-w-2xl text-sm leading-5 text-white/80">Membutuhkan penambahan alokasi komoditas di luar batas kuota kontrak reguler? Hubungi Account Executive GPA untuk pembukaan buffer panen darurat 24 jam.</p>
 
                     <ul class="mt-1 flex flex-col gap-1.5">
-                        @foreach ($adhoc['highlights'] as $highlight)
-                            <li class="flex items-start gap-2">
-                                <x-gpa.icon name="check-circle" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
-                                <p class="gpa-body text-white/90">{{ $highlight }}</p>
-                            </li>
-                        @endforeach
+                        <li class="flex items-start gap-2">
+                            <x-gpa.icon name="check-circle" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+                            <p class="gpa-body text-white/90">Prioritas alokasi sortasi Grade Super dari green house binaan</p>
+                        </li>
+                        <li class="flex items-start gap-2">
+                            <x-gpa.icon name="check-circle" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
+                            <p class="gpa-body text-white/90">Pengiriman armada chiller berpendingin khusus langsung ke sentra produksi Anda</p>
+                        </li>
                     </ul>
                 </div>
 
@@ -355,7 +430,7 @@
                     <button type="button" @click="$dispatch('gpa:toast', { title: 'Permintaan dikomunikasikan', message: 'Tim Key Account GPA akan menghubungi Anda dalam 1x24 jam.', tone: 'success' })"
                         class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-ink shadow-pop transition-colors hover:bg-accent-deep">
                         <x-gpa.icon name="plus" class="h-4 w-4" />
-                        <span class="gpa-meta-lg font-bold">{{ $adhoc['cta'] }}</span>
+                        <span class="gpa-meta-lg font-bold">Ajukan Pasokan Khusus</span>
                     </button>
                     <p class="gpa-micro text-white/60">Minimum batch 5 Ton · Penawaran 1x24 Jam</p>
                 </div>

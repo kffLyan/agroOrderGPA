@@ -15,38 +15,6 @@ class DispatchController extends Controller
      */
     public function index(Request $request): View
     {
-        $user = $request->user();
-
-        $operator = [
-            'name' => $user?->name ?? 'Koordinator Lapangan',
-            'role' => 'Koordinator Lapangan',
-            'code' => '002',
-            'initials' => strtoupper(substr($user?->name ?? 'KL', 0, 2)),
-        ];
-
-        // 1. Header
-        $header = [
-            'eyebrow' => 'Pengiriman & Logistik',
-            'title_before' => 'Penerbitan Surat Jalan &',
-            'title_after' => 'Pengiriman Sayur ke Klien',
-            'subtitle' => 'Pencetakan surat jalan resmi berdasarkan hasil timbangan bersih dan penugasan supir pengantar.',
-            'actions' => [
-                ['key' => 'log', 'label' => 'Riwayat Surat Jalan', 'icon' => 'file-text', 'variant' => 'ghost'],
-                ['key' => 'thermal', 'label' => 'Cetak Surat Jalan', 'icon' => 'printer', 'variant' => 'ink', 'badge' => 'thermal'],
-            ],
-        ];
-
-        // 2. SOP Mandatori
-        $sop = [
-            'title' => 'ATURAN RESMI PENGIRIMAN',
-            'badge' => 'WAJIB TIMBANG BERSIH',
-            'body' => 'Surat jalan hanya dapat dicetak setelah berat bersih sayur selesai ditimbang dan dikunci di sistem. Ini memastikan jumlah sayur yang dikirim sama dengan data pesanan.',
-            'cert_prefix' => 'STANDAR:',
-            'cert_value' => 'MUTU TERJAMIN',
-            'lockout_code' => '904',
-        ];
-
-        // 3. Query Database
         $drivers = User::where('role', 'ARMADA')->get();
         $orders = Order::with(['orderItems.product', 'user', 'driver'])
             ->whereIn('status', ['TERVERIFIKASI', 'SIAP_KIRIM', 'DIKIRIM'])
@@ -57,7 +25,7 @@ class DispatchController extends Controller
             $orders = Order::with(['orderItems.product', 'user', 'driver'])->latest()->take(5)->get();
         }
 
-        // 4. Antrean Penerbitan (Queue Items)
+        // Antrean Penerbitan (Queue Items)
         $queueItems = $orders->values()->map(function ($order, $index) use ($drivers) {
             $netWeight = (float) $order->orderItems->sum(fn($it) => $it->actual_net_weight ?: $it->ordered_qty);
             $crates = max(1, (int) ceil($netWeight / 20));
@@ -93,7 +61,7 @@ class DispatchController extends Controller
             ];
         })->all();
 
-        // 5. Manifest Rows
+        // Manifest Rows
         $manifestRows = $orders->values()->map(function ($order, $index) use ($drivers) {
             $netWeight = (float) $order->orderItems->sum(fn($it) => $it->actual_net_weight ?: $it->ordered_qty);
             $driver = $order->driver ?: ($drivers[$index % max(1, $drivers->count())] ?? null);
@@ -124,121 +92,16 @@ class DispatchController extends Controller
             ];
         })->all();
 
-        $standbyCount = count(array_filter($manifestRows, fn($r) => $r['dock_state'] === 'standby'));
-        $movingCount = count(array_filter($manifestRows, fn($r) => $r['dock_state'] === 'moving'));
-
-        $manifestFilters = [
-            ['key' => 'all', 'label' => 'SEMUA DOKUMEN (' . count($manifestRows) . ')'],
-            ['key' => 'standby', 'label' => 'STANDBY DOCK (' . $standbyCount . ')'],
-            ['key' => 'moving', 'label' => 'SEDANG BERJALAN (' . $movingCount . ')'],
-        ];
-
-        $manifest = [
-            'title' => 'Daftar Pengiriman Armada Hari Ini',
-            'subtitle' => 'Pemantauan status pengiriman sayur, nomor surat jalan, dan armada supir pengantar.',
-            'filter_label' => 'FILTER STATUS:',
-            'filter_default' => 'SEMUA DOKUMEN (' . count($manifestRows) . ')',
-            'filters' => $manifestFilters,
-            'columns' => [
-                'NO. SURAT JALAN',
-                'SUPIR & ARMADA',
-                'BERAT BERSIH',
-                'JADWAL BERANGKAT',
-                'STATUS BERKAS / QR',
-                'STATUS PARKIR DOCK',
-                'TINDAKAN',
-            ],
-            'rows' => $manifestRows,
-        ];
-
-        // 6. KPIs
         $totalTonase = array_sum(array_column($manifestRows, 'net'));
-        $kpis = [
-            [
-                'key' => 'ready_docs',
-                'label' => 'SURAT JALAN SIAP CETAK',
-                'value' => count($queueItems),
-                'unit' => 'Dokumen',
-                'unit_tone' => 'quiet',
-                'value_tone' => 'ink',
-                'icon' => 'file-text',
-                'icon_chip' => 'accent-soft',
-                'icon_tone' => 'success-deep',
-                'foot_label' => 'Total Berat Bersih:',
-                'foot_value' => number_format($totalTonase, 2, ',', '.') . ' KG',
-                'foot_tone' => 'success',
-            ],
-            [
-                'key' => 'fleet',
-                'label' => 'ARMADA MOBIL SIAP JALAN',
-                'value' => max(1, $drivers->count()),
-                'unit' => 'Mobil Ready',
-                'unit_tone' => 'quiet',
-                'value_tone' => 'ink',
-                'icon' => 'truck',
-                'icon_chip' => 'shell',
-                'icon_tone' => 'ink',
-                'foot_chips' => ['Blind Van Chiller', 'Engkel Box Pendingin'],
-            ],
-            [
-                'key' => 'departure',
-                'label' => 'JADWAL BERANGKAT AWAL',
-                'value' => '04:30',
-                'unit' => 'WIB',
-                'unit_tone' => 'success',
-                'value_tone' => 'ink',
-                'icon' => 'clock',
-                'icon_chip' => 'warning-soft',
-                'icon_tone' => 'warning-deep',
-                'foot_label' => 'Waktu Kirim:',
-                'foot_chip' => 'Pagi Hari (Segar)',
-            ],
-            [
-                'key' => 'scale',
-                'label' => 'STATUS KESIAPAN SURAT JALAN',
-                'value' => '100%',
-                'unit' => 'Siap Cetak',
-                'unit_tone' => 'ink',
-                'value_tone' => 'success',
-                'icon' => 'badge-check',
-                'icon_chip' => 'accent',
-                'icon_tone' => 'success-ink',
-                'foot_label' => 'Status Mesin Cetak:',
-                'foot_chip' => 'TERHUBUNG & SIAP',
-                'foot_dot' => true,
-            ],
-        ];
-
-        // 7. Batch Operations
-        $batch = [
-            'title' => 'Cetak & Ekspor Bersama',
-            'subtitle' => 'Unduh data manifest pengiriman harian atau cetak semua surat jalan sekaligus.',
-            'actions' => [
-                ['key' => 'export', 'label' => 'Unduh Laporan Hari Ini (.csv)', 'icon' => 'download', 'variant' => 'ghost'],
-                ['key' => 'audit-gate', 'label' => 'Cek Gerbang Keluar Gudang', 'icon' => 'lock', 'variant' => 'ink'],
-                ['key' => 'print-all', 'label' => 'Cetak Semua Surat Jalan', 'icon' => 'printer', 'variant' => 'accent', 'wide' => true],
-            ],
-        ];
-
-        $dispatch = [
-            'operator' => $operator,
-            'header' => $header,
-            'sop' => $sop,
-            'kpis' => $kpis,
-            'queue' => [
-                'title' => 'Antrean Penerbitan Surat Jalan',
-                'meta' => count($queueItems) . ' ORDER MENUNGGU DOKUMEN CETAK',
-                'items' => $queueItems,
-            ],
-            'manifest' => $manifest,
-            'batch' => $batch,
-        ];
+        $fleetCount = max(1, $drivers->count());
 
         $viewName = view()->exists('koordinator.dispatch') ? 'koordinator.dispatch' : 'coordinator.dispatch';
 
         return view($viewName, [
-            'operator' => $operator,
-            'dispatchData' => $dispatch,
+            'queueItems'   => $queueItems,
+            'manifestRows' => $manifestRows,
+            'totalTonase'  => $totalTonase,
+            'fleetCount'   => $fleetCount,
         ]);
     }
 }

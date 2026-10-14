@@ -4,27 +4,45 @@
 
 @section('content')
     @php
-        $toneText = [
-            'success' => 'text-success-deep',
-            'muted'   => 'text-ink-body',
-            'quiet'   => 'text-ink-quiet',
-            'strong'  => 'text-ink',
+        $isStarted = $currentOrder && in_array($currentOrder->status, ['DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']);
+
+        $gatePass = [
+            'expiry_minutes'      => 45,
+            'is_started'          => $isStarted,
+            'pic_phone'           => $currentOrder?->user?->phone ?: '0812-3456-7890',
+            'destination_address' => $currentOrder?->delivery_address ?: '',
         ];
 
-        $toneDot = [
-            'success' => 'bg-success-deep',
-            'quiet'   => 'bg-ink-quiet',
-        ];
+        $sjNumber = $currentOrder?->surat_jalan_number
+            ?: ('SJ-' . date('Ymd', strtotime($currentOrder?->created_at ?: now())) . '-' . str_pad($currentOrder?->id ?: 1, 4, '0', STR_PAD_LEFT));
 
-        $toneName = [
-            'strong' => 'font-semibold',
-            'muted'  => 'font-normal',
-        ];
+        $poNumber = $currentOrder?->order_number ?: ('ORD-GPA-' . date('Ym') . '-0001');
 
-        $chainShell = [
-            'muted'  => 'bg-surface-disabled text-ink',
-            'accent' => 'bg-accent text-ink',
-        ];
+        $dispatchDate = $currentOrder?->departure_time ? $currentOrder->departure_time->format('d M Y') : date('d M Y');
+        $dispatchTime = $currentOrder?->departure_time ? $currentOrder->departure_time->format('H:i \W\I\B') : '06:00 WIB';
+
+        $totalEst = 0;
+        $totalNetto = 0;
+        $totalCrates = 0;
+        $totalTare = 0;
+
+        if ($currentOrder && $currentOrder->orderItems->isNotEmpty()) {
+            foreach ($currentOrder->orderItems as $item) {
+                $estKg = (float) $item->quantity;
+                $nettoKg = (float) ($item->net_weight ?? $item->quantity);
+                $crates = (int) ($item->crates ?? ceil($nettoKg / 20));
+                $tare = (float) ($item->tare_weight ?? ($crates * 2.0));
+
+                $totalEst += $estKg;
+                $totalNetto += $nettoKg;
+                $totalCrates += $crates;
+                $totalTare += $tare;
+            }
+        }
+
+        $totalDelta = $totalNetto - $totalEst;
+        $totalDeltaPercent = $totalEst > 0 ? ($totalDelta / $totalEst) * 100 : 0;
+        $totalDeltaSign = $totalDelta >= 0 ? '+' : '';
     @endphp
 
     <div class="mx-auto flex w-full max-w-[512px] flex-col gap-4 px-4 pb-24"
@@ -32,42 +50,61 @@
 
         {{-- Judul halaman --}}
         <section class="flex flex-col gap-1 rounded-2xl bg-surface p-4 shadow-card">
-            <h1 class="text-xl font-bold leading-7 text-ink">{!! $intro['title'] !!}</h1>
-            <p class="text-xs text-ink-body">{{ $intro['subtitle'] }}</p>
+            <h1 class="text-xl font-bold leading-7 text-ink">Surat Jalan Digital & Rincian<br>Muatan Supir</h1>
+            <p class="text-xs text-ink-body">Verifikasi kesesuaian fisik muatan & segel timbangan tera sebelum keberangkatan.</p>
         </section>
 
         {{-- Rute pengantaran --}}
         <section class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
             <header class="flex items-center justify-between gap-2 border-b border-surface-shell pb-2">
-                <p class="font-mono text-[10px] font-bold text-ink-body uppercase tracking-wider">{{ $route['label'] }}</p>
-                <p class="font-mono text-[10px] font-bold text-success-deep uppercase tracking-wider">{{ $route['badge'] }}</p>
+                <p class="font-mono text-[10px] font-bold text-ink-body uppercase tracking-wider">RUTE PENGANTARAN ({{ $activeOrders->count() }} TITIK)</p>
+                <p class="font-mono text-[10px] font-bold text-success-deep uppercase tracking-wider">MULTI-DROP HARIAN</p>
             </header>
 
             <div class="flex w-full items-stretch gap-2 overflow-x-auto pt-1">
-                @foreach ($route['stops'] as $stop)
+                @foreach ($activeOrders as $index => $ord)
+                    @php
+                        $isActive = $currentOrder && $ord->id === $currentOrder->id;
+                        $ordNetWeight = 0;
+                        foreach ($ord->orderItems as $item) {
+                            $ordNetWeight += (float) ($item->net_weight ?? $item->quantity ?? 0);
+                        }
+                        $ordSjNum = $ord->surat_jalan_number ?: ('SJ-' . date('Ymd', strtotime($ord->created_at)) . '-' . str_pad($ord->id, 4, '0', STR_PAD_LEFT));
+                    @endphp
                     <div @class([
                         'relative flex min-w-[200px] flex-1 flex-col items-start gap-1 overflow-hidden p-3 rounded-xl transition-all',
-                        $stop['active']
+                        $isActive
                             ? 'bg-surface shadow-sub outline outline-2 -outline-offset-2 outline-accent'
                             : 'bg-surface-shell opacity-80 outline outline-1 -outline-offset-1 outline-line-board',
                     ])>
                         <div class="flex items-center gap-1.5">
-                            <span @class(['h-2 w-2 shrink-0 rounded-full', $toneDot[$stop['dot']]])></span>
-                            <span class="font-mono text-[10px] font-bold uppercase text-ink-body">{{ $stop['status'] }}</span>
+                            <span @class([
+                                'h-2 w-2 shrink-0 rounded-full',
+                                $ord->status === 'DALAM_PENGIRIMAN' ? 'bg-success-deep' : 'bg-ink-quiet',
+                            ])></span>
+                            <span class="font-mono text-[10px] font-bold uppercase text-ink-body">
+                                @if ($ord->status === 'DALAM_PENGIRIMAN')
+                                    DALAM PENGIRIMAN
+                                @elseif (in_array($ord->status, ['SELESAI', 'SELESAI_CATATAN']))
+                                    SELESAI TERKIRIM
+                                @else
+                                    SIAP KIRIM
+                                @endif
+                            </span>
                         </div>
 
-                        <p class="pt-0.5 font-mono text-xs font-bold text-ink">{{ $stop['number'] }}</p>
-                        <p class="text-xs font-medium text-ink truncate w-full">{{ $stop['client'] }}</p>
+                        <p class="pt-0.5 font-mono text-xs font-bold text-ink">{{ $ordSjNum }}</p>
+                        <p class="text-xs font-medium text-ink truncate w-full">{{ $ord->user?->name ?? 'Klien Penerima' }}</p>
 
                         <div class="mt-auto flex w-full items-baseline justify-between gap-2 border-t border-line-hair pt-1.5">
-                            <span class="font-mono text-[9px] text-ink-quiet">{{ $stop['weight_label'] }}</span>
-                            <span class="font-mono text-xs font-bold text-ink">{{ $stop['weight'] }}</span>
+                            <span class="font-mono text-[9px] text-ink-quiet">Muatan Bersih:</span>
+                            <span class="font-mono text-xs font-bold text-ink">{{ number_format($ordNetWeight, 1, ',', '.') }} kg</span>
                         </div>
 
                         <span @class([
                             'absolute right-0 top-0 rounded-bl-lg px-2 py-0.5 font-mono text-[9px] font-bold',
-                            $stop['badge_tone'] === 'ink' ? 'bg-ink text-accent' : 'bg-surface-disabled text-ink-body',
-                        ])>{{ $stop['badge'] }}</span>
+                            $isActive ? 'bg-ink text-accent' : 'bg-surface-disabled text-ink-body',
+                        ])>STOP #{{ $index + 1 }}</span>
                     </div>
                 @endforeach
             </div>
@@ -78,13 +115,13 @@
             <header class="flex items-start justify-between gap-3 border-b border-surface-shell pb-3">
                 <div class="flex min-w-0 flex-col items-start gap-0.5">
                     <span class="rounded bg-accent px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-ink">
-                        {{ $letter['validated'] }}
+                        TERVALIDASI DISPATCH GUDANG
                     </span>
 
-                    <span class="pt-1 font-mono text-base font-bold text-ink">{{ $letter['number'] }}</span>
+                    <span class="pt-1 font-mono text-base font-bold text-ink">{{ $sjNumber }}</span>
 
                     <span class="font-mono text-xs text-ink-body">
-                        <span>{{ $letter['po_label'] }}</span><span class="font-bold text-ink">{{ $letter['po_number'] }}</span>
+                        <span>Ref PO: </span><span class="font-bold text-ink">#{{ $poNumber }}</span>
                     </span>
 
                     <button type="button" onclick="window.print()"
@@ -95,34 +132,39 @@
                 </div>
 
                 <div class="flex shrink-0 flex-col items-end text-right">
-                    <span class="font-mono text-[9px] font-semibold text-ink-quiet uppercase">{{ $letter['dispatch_label'] }}</span>
-                    <span class="font-mono text-xs font-bold text-ink">{{ $letter['dispatch_date'] }}</span>
-                    <span class="font-mono text-xs font-bold text-success-deep">{{ $letter['dispatch_time'] }}</span>
+                    <span class="font-mono text-[9px] font-semibold text-ink-quiet uppercase">WAKTU DISPATCH</span>
+                    <span class="font-mono text-xs font-bold text-ink">{{ $dispatchDate }}</span>
+                    <span class="font-mono text-xs font-bold text-success-deep">{{ $dispatchTime }}</span>
                 </div>
             </header>
 
             {{-- Alur pengirim & penerima --}}
             <div class="flex flex-col gap-2 pt-1">
-                @foreach ($letter['chain'] as $node)
-                    <div class="flex items-start gap-3">
-                        <span @class([
-                            'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-sm',
-                            $chainShell[$node['shell']],
-                        ])>
-                            <x-gpa.icon :name="$node['icon']" class="h-3.5 w-3.5 shrink-0" />
-                        </span>
+                <div class="flex items-start gap-3">
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-sm bg-surface-disabled text-ink">
+                        <x-gpa.icon name="building" class="h-3.5 w-3.5 shrink-0" />
+                    </span>
 
-                        <div class="flex min-w-0 flex-1 flex-col">
-                            <span class="font-mono text-[9px] font-bold uppercase text-ink-quiet">{{ $node['role_label'] }}</span>
-                            <span class="text-sm font-bold text-ink">{{ $node['name'] }}</span>
-                            <span class="text-xs text-ink-body">{!! $node['address'] !!}</span>
-                        </div>
+                    <div class="flex min-w-0 flex-1 flex-col">
+                        <span class="font-mono text-[9px] font-bold uppercase text-ink-quiet">PENGIRIM LOGISTIK</span>
+                        <span class="text-sm font-bold text-ink">Green Pasundan Agrikultur</span>
+                        <span class="text-xs text-ink-body">Sentral Transhipment Hub - Gudang Dock 03</span>
                     </div>
+                </div>
 
-                    @if (! $loop->last)
-                        <div class="ml-3.5 h-3 border-l-2 border-line-hair"></div>
-                    @endif
-                @endforeach
+                <div class="ml-3.5 h-3 border-l-2 border-line-hair"></div>
+
+                <div class="flex items-start gap-3">
+                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-sm bg-accent text-ink">
+                        <x-gpa.icon name="map-pin" class="h-3.5 w-3.5 shrink-0" />
+                    </span>
+
+                    <div class="flex min-w-0 flex-1 flex-col">
+                        <span class="font-mono text-[9px] font-bold uppercase text-ink-quiet">DOKUMEN PENERIMA</span>
+                        <span class="text-sm font-bold text-ink">{{ $currentOrder?->user?->name ?? 'Klien Penerima Resmi' }}</span>
+                        <span class="text-xs text-ink-body">{{ $currentOrder?->delivery_address ?? 'Alamat Penerimaan Klien' }}</span>
+                    </div>
+                </div>
             </div>
 
             {{-- Kontak PIC penerima --}}
@@ -131,22 +173,22 @@
                     <div class="flex items-center gap-2">
                         <x-gpa.icon name="user" class="h-4 w-4 shrink-0 text-ink-body" />
                         <div class="flex flex-col">
-                            <span class="font-mono text-[9px] text-ink-quiet uppercase">{{ $letter['pic']['label'] }}</span>
-                            <span class="text-xs font-bold text-ink">{{ $letter['pic']['name'] }}</span>
+                            <span class="font-mono text-[9px] text-ink-quiet uppercase">PENANGGUNG JAWAB PENERIMA</span>
+                            <span class="text-xs font-bold text-ink">{{ $currentOrder?->received_by_name ?: ($currentOrder?->user?->name ?: 'Bapak Hendra (Kepala Gudang)') }}</span>
                         </div>
                     </div>
 
-                    <span class="font-mono text-xs font-bold text-success-deep">{{ $letter['pic']['phone'] }}</span>
+                    <span class="font-mono text-xs font-bold text-success-deep">{{ $currentOrder?->user?->phone ?: '0812-3456-7890' }}</span>
                 </div>
 
                 <div class="flex items-center gap-2 pt-1">
-                    <button type="button" @click="callPic('{{ $letter['pic']['phone'] }}')"
+                    <button type="button" @click="callPic('{{ $currentOrder?->user?->phone ?: '0812-3456-7890' }}')"
                         class="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-surface font-mono text-xs font-bold text-ink outline outline-1 -outline-offset-1 outline-line-board shadow-sm hover:bg-surface-disabled">
                         <x-gpa.icon name="phone" class="h-3 w-3 shrink-0" />
                         Hubungi PIC
                     </button>
 
-                    <button type="button" @click="openMap('{{ $letter['chain'][1]['address'] }}')"
+                    <button type="button" @click="openMap('{{ addslashes($currentOrder?->delivery_address ?? '') }}')"
                         class="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-ink font-mono text-xs font-bold text-accent shadow-sm hover:opacity-90">
                         <x-gpa.icon name="navigation" class="h-3 w-3 shrink-0" />
                         Navigasi Peta
@@ -158,79 +200,97 @@
         {{-- Rincian muatan sayur --}}
         <section class="flex flex-col gap-3 rounded-2xl bg-surface p-4 shadow-card">
             <header class="flex items-center justify-between border-b border-surface-shell pb-2">
-                <span class="font-mono text-[10px] font-bold text-ink-body uppercase">{{ $cargo['rule'] }}</span>
+                <span class="font-mono text-[10px] font-bold text-ink-body uppercase">TIMBANGAN BERSIH TERA GUDANG SAH</span>
                 <span class="rounded bg-accent/40 px-2 py-0.5 font-mono text-[9px] font-bold text-ink">SAH TERA</span>
             </header>
 
             <div class="flex flex-col gap-2.5">
-                @foreach ($cargo['items'] as $item)
-                    <div class="flex flex-col gap-2 rounded-xl bg-canvas p-3 outline outline-1 -outline-offset-1 outline-line-board/60">
-                        <div class="flex items-start justify-between gap-2">
-                            <div class="flex flex-col">
-                                <span class="w-fit rounded bg-surface px-1.5 py-0.5 font-mono text-[9px] font-bold text-ink outline outline-1 -outline-offset-1 outline-line-board">
-                                    {{ $item['sku'] }}
+                @if ($currentOrder && $currentOrder->orderItems->isNotEmpty())
+                    @foreach ($currentOrder->orderItems as $item)
+                        @php
+                            $estKg = (float) $item->quantity;
+                            $nettoKg = (float) ($item->net_weight ?? $item->quantity);
+                            $deltaKg = $nettoKg - $estKg;
+                            $deltaPercent = $estKg > 0 ? ($deltaKg / $estKg) * 100 : 0;
+                            $crates = (int) ($item->crates ?? ceil($nettoKg / 20));
+                            $tare = (float) ($item->tare_weight ?? ($crates * 2.0));
+                            $deviationSign = $deltaKg >= 0 ? '+' : '';
+                        @endphp
+                        <div class="flex flex-col gap-2 rounded-xl bg-canvas p-3 outline outline-1 -outline-offset-1 outline-line-board/60">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="flex flex-col">
+                                    <span class="w-fit rounded bg-surface px-1.5 py-0.5 font-mono text-[9px] font-bold text-ink outline outline-1 -outline-offset-1 outline-line-board">
+                                        SKU: {{ $item->product?->code ?: ('PROD-' . $item->id) }}
+                                    </span>
+                                    <span class="pt-1 text-sm font-bold text-ink">{{ $item->product?->name ?? 'Sayur Segar Berkualitas' }}</span>
+                                    <span class="text-[10px] text-ink-body">Standar Mutu Super &bull; {{ $crates }} Krat Steril</span>
+                                </div>
+
+                                <span class="flex items-center gap-1 rounded bg-accent px-2 py-0.5 font-mono text-[9px] font-bold text-ink">
+                                    <span>LOLOS UJI</span>
+                                    <x-gpa.icon name="check" class="h-2.5 w-2.5" />
                                 </span>
-                                <span class="pt-1 text-sm font-bold text-ink">{{ $item['name'] }}</span>
-                                <span class="text-[10px] text-ink-body">{!! $item['spec'] !!}</span>
                             </div>
 
-                            <span class="flex items-center gap-1 rounded bg-accent px-2 py-0.5 font-mono text-[9px] font-bold text-ink">
-                                <span>{{ $item['badge'] }}</span>
-                                <x-gpa.icon name="check" class="h-2.5 w-2.5" />
-                            </span>
-                        </div>
-
-                        <div class="grid grid-cols-3 gap-2 rounded-lg bg-surface p-2 text-center outline outline-1 -outline-offset-1 outline-line-hair">
-                            @foreach ($item['columns'] as $column)
+                            <div class="grid grid-cols-3 gap-2 rounded-lg bg-surface p-2 text-center outline outline-1 -outline-offset-1 outline-line-hair">
                                 <div class="flex flex-col">
-                                    <span class="font-mono text-[9px] text-ink-quiet">{{ $column['label'] }}</span>
-                                    <span @class([
-                                        'font-mono text-xs font-bold',
-                                        $column['value_tone'] === 'success' ? 'text-success-deep' : 'text-ink',
-                                    ])>
-                                        {{ $column['value'] }}
-                                        @if(!empty($column['value_tail']))
-                                            <span class="text-[9px] font-normal block">{{ $column['value_tail'] }}</span>
-                                        @endif
+                                    <span class="font-mono text-[9px] text-ink-quiet">Est PO</span>
+                                    <span class="font-mono text-xs font-bold text-ink">{{ number_format($estKg, 1, ',', '.') }} kg</span>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="font-mono text-[9px] text-ink-quiet">Netto Sah</span>
+                                    <span class="font-mono text-xs font-bold text-success-deep">{{ number_format($nettoKg, 1, ',', '.') }} kg</span>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="font-mono text-[9px] text-ink-quiet">Deviasi</span>
+                                    <span class="font-mono text-xs font-bold text-success-deep">
+                                        {{ $deviationSign }}{{ number_format($deltaKg, 1, ',', '.') }} kg
+                                        <span class="text-[9px] font-normal block">({{ $deviationSign }}{{ number_format($deltaPercent, 2, ',', '.') }}%)</span>
                                     </span>
                                 </div>
-                            @endforeach
-                        </div>
+                            </div>
 
-                        <div class="flex items-center justify-between text-[11px] font-mono text-ink-body px-1">
-                            <span>{{ $item['containers'] }}</span>
-                            <span>{{ $item['tare'] }}</span>
+                            <div class="flex items-center justify-between text-[11px] font-mono text-ink-body px-1">
+                                <span>Wadah: {{ $crates }} Krat</span>
+                                <span>Tara: {{ number_format($tare, 1, ',', '.') }} kg</span>
+                            </div>
                         </div>
-                    </div>
-                @endforeach
+                    @endforeach
+                @else
+                    <p class="text-xs text-ink-body text-center py-4">Belum ada item muatan terdaftar.</p>
+                @endif
             </div>
 
             {{-- Total akumulasi netto --}}
             <div class="flex flex-col gap-2.5 rounded-xl bg-brand p-3.5 text-white">
                 <div class="flex items-center justify-between">
-                    <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-accent">{{ $cargo['total']['label'] }}</span>
+                    <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-accent">TOTAL AKUMULASI TIMBANG SAH</span>
                     <x-gpa.icon name="calculator" class="h-4 w-4 text-accent" />
                 </div>
 
-                <div class="grid grid-cols-3 gap-2 border-b border-white/20 pb-2.5">
-                    @foreach ($cargo['total']['columns'] as $col)
-                        <div class="flex flex-col">
-                            <span class="font-mono text-[9px] text-white/70">{{ $col['label'] }}</span>
-                            @foreach ($col['values'] as $val)
-                                <span @class([
-                                    'font-mono text-sm font-bold',
-                                    $col['value_tone'] === 'accent' ? 'text-accent' : 'text-white',
-                                ])>{{ $val }}</span>
-                            @endforeach
-                        </div>
-                    @endforeach
+                <div class="grid grid-cols-3 gap-2 border-b border-white/20 pb-2.5 text-center">
+                    <div class="flex flex-col">
+                        <span class="font-mono text-[9px] text-white/70">Est Awal</span>
+                        <span class="font-mono text-sm font-bold text-white">{{ number_format($totalEst, 1, ',', '.') }} kg</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="font-mono text-[9px] text-white/70">Total Netto Sah</span>
+                        <span class="font-mono text-sm font-bold text-accent">{{ number_format($totalNetto, 1, ',', '.') }} kg</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="font-mono text-[9px] text-white/70">Deviasi Sah</span>
+                        <span class="font-mono text-sm font-bold text-accent">
+                            {{ $totalDeltaSign }}{{ number_format($totalDelta, 1, ',', '.') }} kg
+                            <span class="text-[9px] font-normal block">({{ $totalDeltaSign }}{{ number_format($totalDeltaPercent, 2, ',', '.') }}%)</span>
+                        </span>
+                    </div>
                 </div>
 
                 <div class="flex items-center justify-between text-xs font-mono text-white/90">
-                    <span>{!! $cargo['total']['containers'] !!}</span>
+                    <span>Wadah: {{ $totalCrates }} Krat ({{ number_format($totalTare, 1, ',', '.') }} kg Tara)</span>
                     <span class="flex items-center gap-1 text-accent">
                         <x-gpa.icon name="thermometer" class="h-3.5 w-3.5" />
-                        <span>{!! $cargo['total']['cold_chain'] !!}</span>
+                        <span>+3.8°C (Suhu Cold Chain Optimal)</span>
                     </span>
                 </div>
             </div>
@@ -241,11 +301,11 @@
             <header class="flex items-center justify-between border-b border-surface-shell pb-2.5">
                 <div class="flex items-center gap-2">
                     <x-gpa.icon name="shield" class="h-4 w-4 text-ink" />
-                    <span class="font-mono text-xs font-bold text-ink">{{ $gatePass['title'] }}</span>
+                    <span class="font-mono text-xs font-bold text-ink">GATE PASS KELUAR GUDANG</span>
                 </div>
 
                 <span class="rounded bg-accent px-2 py-0.5 font-mono text-[10px] font-bold text-ink">
-                    {{ $gatePass['expiry_label'] }} <span x-text="expired() ? 'EXPIRED' : expiryLabel()">{{ $gatePass['expiry_minutes'] }}:00</span>
+                    EXP: <span x-text="expired() ? 'EXPIRED' : expiryLabel()">45:00</span>
                 </span>
             </header>
 
@@ -253,8 +313,8 @@
                 <div class="flex h-20 w-20 items-center justify-center rounded-xl bg-ink text-accent">
                     <x-gpa.icon name="qrcode" class="h-12 w-12" />
                 </div>
-                <p class="pt-2 font-mono text-xs font-bold text-ink">{{ $gatePass['token'] }}</p>
-                <p class="text-[10px] text-ink-body">{!! $gatePass['hint'] !!}</p>
+                <p class="pt-2 font-mono text-xs font-bold text-ink">TOKEN: GPA-{{ $currentOrder?->id ?? '1' }}-SEC</p>
+                <p class="text-[10px] text-ink-body">Tunjukkan ke pos security gerbang sentral hub & dock penerima.</p>
             </div>
 
             <button type="button" @click="verifySeal()"
@@ -262,44 +322,46 @@
                 <div class="flex items-center gap-2.5">
                     <x-gpa.icon name="lock" class="h-4 w-4 text-success-deep" />
                     <div class="flex flex-col text-left">
-                        <span class="font-mono text-[9px] text-ink-quiet uppercase">{{ $gatePass['seal']['label'] }}</span>
-                        <span class="text-xs font-bold text-ink">{{ $gatePass['seal']['value'] }}</span>
+                        <span class="font-mono text-[9px] text-ink-quiet uppercase">STATUS SEGEL BOKS KENDARAAN</span>
+                        <span class="text-xs font-bold text-ink">Segel Digital Aktif (Terkunci Otomatis)</span>
                     </div>
                 </div>
                 <span class="h-2.5 w-2.5 rounded-full bg-success-deep"></span>
             </button>
 
-            @if (!empty($gatePass['order_id']))
-                <form id="start-route-form" method="POST" action="{{ route('armada.dispatch.start', $gatePass['order_id']) }}" class="hidden">
+            @if ($currentOrder)
+                <form id="start-route-form" method="POST" action="{{ route('armada.dispatch.start', $currentOrder->id) }}" class="hidden">
                     @csrf
                 </form>
             @endif
 
             <div class="flex flex-col gap-2 pt-1">
-                @if ($gatePass['is_started'])
+                @if ($isStarted)
                     <div class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent font-mono text-sm font-bold text-ink shadow-sub">
                         <x-gpa.icon name="truck" class="h-4 w-4 text-ink" />
                         PENGIRIMAN SEDANG BERJALAN
                     </div>
-                    <a href="{{ route('armada.pod', ['order_id' => $gatePass['order_id']]) }}"
-                        class="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-ink font-mono text-xs font-bold text-accent shadow-sub hover:opacity-90">
-                        <x-gpa.icon name="qrcode" class="h-4 w-4" />
-                        MENUJU PENYERAHAN & SCAN POD
-                    </a>
+                    @if ($currentOrder)
+                        <a href="{{ route('armada.pod', ['order_id' => $currentOrder->id]) }}"
+                            class="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-ink font-mono text-xs font-bold text-accent shadow-sub hover:opacity-90">
+                            <x-gpa.icon name="qrcode" class="h-4 w-4" />
+                            MENUJU PENYERAHAN & SCAN POD
+                        </a>
+                    @endif
                 @else
                     <button type="button" @click="startRoute()"
                         class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-ink font-mono text-sm font-bold text-accent shadow-pop transition-transform active:scale-[0.98]">
-                        <span>{{ $gatePass['action'] }}</span>
+                        <span>MULAI PENGIRIMAN</span>
                         <x-gpa.icon name="arrow-right" class="h-4 w-4" />
                     </button>
                 @endif
 
-                <p class="text-center font-mono text-[9px] text-ink-body">{!! $gatePass['action_note'] !!}</p>
+                <p class="text-center font-mono text-[9px] text-ink-body">Status GPS Logbook & Pencatat Suhu Reefer Aktif Terkoneksi — Status: Dalam Pengiriman</p>
 
                 <button type="button" @click="reportIssue()"
                     class="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-surface font-mono text-xs font-bold text-warning-deep outline outline-1 -outline-offset-1 outline-warning-border hover:bg-warning-cream/30">
                     <x-gpa.icon name="alert-triangle" class="h-3.5 w-3.5" />
-                    {{ $gatePass['report'] }}
+                    Lapor Kendala / Keterlambatan
                 </button>
             </div>
         </section>

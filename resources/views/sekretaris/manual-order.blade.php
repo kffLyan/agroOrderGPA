@@ -3,30 +3,72 @@
 @section('title', 'Input Order Manual')
 
 @section('content')
+    @php
+        $user = auth()->user();
+        $code = $user ? 'SK-' . str_pad($user->id, 4, '0', STR_PAD_LEFT) : 'SK-001';
+        $clientCode = 'CLI-' . str_pad($clientUser?->id ?? 1, 4, '0', STR_PAD_LEFT);
+        $clientName = $clientUser?->company_name ?: ($clientUser?->name ?: 'Hotel Grand Pangrango');
+        $clientContact = $clientUser?->pic_name ?: ($clientUser?->name ?: 'Bpk. Ridwan (Bagian Dapur)');
+        $clientPhone = $clientUser?->phone ?: '0812-3456-7890';
+        $clientAddress = $clientUser?->address ?: 'Jl. Raya Pajajaran No. 45, Bogor Tengah';
+
+        $sourceData = [
+            'reference' => 'WA-' . date('Ymd') . '-001',
+            'received'  => now()->format('d M Y, H:i') . ' WIB',
+            'active'    => 'whatsapp',
+        ];
+        $clientData = [
+            'name'        => $clientName,
+            'contact'     => $clientContact,
+            'phone'       => $clientPhone,
+            'address'     => $clientAddress,
+            'active_mode' => 'registered',
+            'credit'      => [
+                'limit' => 50000000,
+                'used'  => 15000000,
+            ],
+        ];
+        $logisticsData = [
+            'date'    => now()->addDay()->format('Y-m-d'),
+            'arrival' => 'Pagi Hari (05:00 - 08:00 WIB)',
+            'route'   => 'Rute Koridor Utama Jabodetabek',
+            'fleet'   => 'Mobil Boks Pendingin (Chilled 4°C)',
+            'notes'   => 'Sayur disusun rapi dalam keranjang bersih, PIC dapur siap menerima pagi hari.',
+            'fee'     => 150000,
+        ];
+        $paymentData = [
+            'active'    => 'transfer',
+            'file'      => 'BUKTI_PEMBAYARAN_MANUAL.PNG',
+            'size'      => '520 KB',
+            'hash'      => 'VERIF-' . date('Ymd'),
+            'hash_note' => 'Bukti Terverifikasi',
+        ];
+    @endphp
+
     <div class="space-y-6"
-        x-data="secretaryManualOrder(@js($commodities), @js($catalog), @js($logistics), @js($payment), @js($source), @js($client))">
+        x-data="secretaryManualOrder(@js($commodities), @js($catalog), @js($logisticsData), @js($paymentData), @js($sourceData), @js($clientData))">
 
         {{-- Policy banner: Supply Chain Guardrails --}}
         <section class="gpa-panel overflow-hidden">
             <div class="flex flex-wrap items-start justify-between gap-4 border-b border-line-soft px-6 py-5">
                 <div class="min-w-0">
-                    <p class="gpa-eyebrow">{{ $policy['eyebrow'] }}</p>
+                    <p class="gpa-eyebrow">Input Pesanan Manual</p>
                     <div class="mt-1.5 flex flex-wrap items-center gap-2">
                         <h1 class="gpa-figure text-brand">Input Order Manual</h1>
                         <span
                             class="inline-flex items-center gap-1 rounded-full bg-warning-soft px-2 py-0.5 gpa-micro-bold text-warning-caution">
                             <span class="h-1.5 w-1.5 rounded-full bg-warning-caution" aria-hidden="true"></span>
-                            {{ $policy['status'] }}
+                            Status: Pengisian Formulir
                         </span>
                     </div>
-                    <p class="mt-2 max-w-4xl text-sm leading-[1.4rem] text-ink-body">{{ $policy['body'] }}</p>
+                    <p class="mt-2 max-w-4xl text-sm leading-[1.4rem] text-ink-body">Pencatatan pesanan darurat dari pembeli via telepon atau WhatsApp. Seluruh jumlah pesanan yang dimasukkan akan dicek ketersediaan stoknya sebelum disahkan.</p>
                 </div>
 
                 <span
                     class="shrink-0 rounded-xl bg-surface px-4 py-2 text-right shadow-sub outline outline-1 outline-line-board">
                     <span class="block gpa-micro text-ink-quiet">Supply Chain Guardrails</span>
                     <span class="block gpa-meta-lg font-bold tracking-[0.28px] text-success-deep">
-                        {{ $policy['rules'] }}
+                        Cek Batas Kredit • Cek Stok Sayur • Validasi Netto
                     </span>
                 </span>
             </div>
@@ -39,8 +81,8 @@
                     <span
                         class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand gpa-micro-bold text-accent">01</span>
                     <div class="min-w-0">
-                        <h2 class="gpa-section-title text-ink">{{ $source['label'] }}</h2>
-                        <p class="gpa-note text-ink-quiet">{{ $source['hint'] }}</p>
+                        <h2 class="gpa-section-title text-ink">Sumber Pesanan</h2>
+                        <p class="gpa-note text-ink-quiet">Kanal masuk pemesanan dari pelanggan.</p>
                     </div>
                 </div>
 
@@ -50,6 +92,72 @@
             </div>
 
             <div class="grid gap-5 px-6 py-5">
+                <fieldset>
+                    <legend class="gpa-label">Kanal Penerimaan Order</legend>
+                    <div class="mt-2 grid gap-2 md:grid-cols-3">
+                        <label
+                            class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-line-faint bg-surface px-3 py-3 transition-colors hover:border-brand">
+                            <input type="radio" name="order-channel" value="whatsapp"
+                                x-model="channel" class="gpa-check gpa-check--radio mt-0.5">
+                            <span class="min-w-0">
+                                <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
+                                    WhatsApp Bisnis
+                                </span>
+                                <span class="mt-0.5 block gpa-note text-ink-quiet">Pesan masuk via chat WhatsApp.</span>
+                            </span>
+                        </label>
+                        <label
+                            class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-line-faint bg-surface px-3 py-3 transition-colors hover:border-brand">
+                            <input type="radio" name="order-channel" value="phone"
+                                x-model="channel" class="gpa-check gpa-check--radio mt-0.5">
+                            <span class="min-w-0">
+                                <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
+                                    Telepon Langsung
+                                </span>
+                                <span class="mt-0.5 block gpa-note text-ink-quiet">Pemesanan langsung via panggilan telepon.</span>
+                            </span>
+                        </label>
+                        <label
+                            class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-line-faint bg-surface px-3 py-3 transition-colors hover:border-brand">
+                            <input type="radio" name="order-channel" value="memo"
+                                x-model="channel" class="gpa-check gpa-check--radio mt-0.5">
+                            <span class="min-w-0">
+                                <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
+                                    Formulir Fisik
+                                </span>
+                                <span class="mt-0.5 block gpa-note text-ink-quiet">Formulir tertulis dari pembeli.</span>
+                            </span>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                    <div class="md:col-span-2">
+                        <label class="gpa-label" for="manual-reference">No. Referensi / Chat WhatsApp</label>
+                        <input id="manual-reference" type="text" x-model="source.reference" class="gpa-control mt-1.5"
+                            spellcheck="false">
+                        <span class="gpa-hint mt-1">Contoh: Nomor chat atau catatan pemesanan.</span>
+                    </div>
+
+                    <div>
+                        <label class="gpa-label" for="manual-received">Waktu Pesanan Diterima</label>
+                        <input id="manual-received" type="text" x-model="source.received" class="gpa-control mt-1.5"
+                            spellcheck="false">
+                        <span class="gpa-hint mt-1"> dicatat saat order masuk.</span>
+                    </div>
+
+                    <div>
+                        <span class="gpa-label">Petugas yang Mencatat</span>
+                        <p
+                            class="mt-1.5 flex items-center gap-2 rounded-lg bg-surface-shell px-3 py-2 gpa-meta-lg font-bold tracking-[0.07em] text-brand">
+                            <x-gpa.icon name="badge-check" class="h-4 w-4 shrink-0 text-success-deep" />
+                            {{ ($user?->name ?: 'Sekretaris') . ' (' . $code . ')' }}
+                        </p>
+                        <span class="gpa-hint mt-1">Lokasi Gudang: Gudang Sentra Sentul</span>
+                    </div>
+                </div>
+            </div>
+        </section>
                 <fieldset>
                     <legend class="gpa-label">Kanal Penerimaan Order</legend>
                     <div class="mt-2 grid gap-2 md:grid-cols-3">
@@ -104,47 +212,52 @@
                     <span
                         class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand gpa-micro-bold text-accent">02</span>
                     <div class="min-w-0">
-                        <h2 class="gpa-section-title text-ink">{{ $client['label'] }}</h2>
-                        <p class="gpa-note text-ink-quiet">{{ $client['hint'] }}</p>
+                        <h2 class="gpa-section-title text-ink">Data Pembeli</h2>
+                        <p class="gpa-note text-ink-quiet">Pilih pembeli terdaftar atau masukkan data pembeli baru.</p>
                     </div>
                 </div>
 
                 <span class="shrink-0 rounded-full bg-success-soft px-2.5 py-1 gpa-micro-bold text-success-ink">
-                    {{ $client['code'] }}
+                    {{ $clientCode }}
                 </span>
             </div>
 
             <div class="space-y-5 px-6 py-5">
                 <div class="inline-flex flex-wrap gap-1.5 rounded-lg bg-surface-shell p-1" role="group"
                     aria-label="Mode registrasi klien">
-                    @foreach ($client['modes'] as $mode)
-                        <button type="button" @click="clientMode = @js($mode['key'])"
-                            :class="clientMode === @js($mode['key'])
-                                ? 'bg-brand text-accent shadow-sub'
-                                : 'text-ink-body hover:bg-surface'"
-                            class="rounded px-3 py-1.5 gpa-meta-lg font-semibold tracking-[0.07em] transition-colors">
-                            {{ $mode['label'] }}
-                        </button>
-                    @endforeach
+                    <button type="button" @click="clientMode = 'registered'"
+                        :class="clientMode === 'registered'
+                            ? 'bg-brand text-accent shadow-sub'
+                            : 'text-ink-body hover:bg-surface'"
+                        class="rounded px-3 py-1.5 gpa-meta-lg font-semibold tracking-[0.07em] transition-colors">
+                        Pembeli Terdaftar
+                    </button>
+                    <button type="button" @click="clientMode = 'new'"
+                        :class="clientMode === 'new'
+                            ? 'bg-brand text-accent shadow-sub'
+                            : 'text-ink-body hover:bg-surface'"
+                        class="rounded px-3 py-1.5 gpa-meta-lg font-semibold tracking-[0.07em] transition-colors">
+                        Pembeli Baru
+                    </button>
                 </div>
 
                 <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <div>
                         <label class="gpa-label" for="manual-client-name">Nama Klien / Perusahaan</label>
                         <input id="manual-client-name" type="text" x-model="client.name" class="gpa-control mt-1.5">
-                        <span class="gpa-hint mt-1">Segmen: {{ $client['segment'] }}</span>
+                        <span class="gpa-hint mt-1">Segmen: Hotel, Resto &amp; Katering</span>
                     </div>
 
                     <div>
-                        <label class="gpa-label" for="manual-client-contact">{{ $client['contact_label'] }}</label>
+                        <label class="gpa-label" for="manual-client-contact">Penanggung Jawab / PIC Dapur</label>
                         <input id="manual-client-contact" type="text" x-model="client.contact" class="gpa-control mt-1.5">
                         <span class="gpa-hint mt-1">Telepon: <span x-text="client.phone"></span></span>
                     </div>
 
                     <div class="md:col-span-2">
-                        <label class="gpa-label" for="manual-client-address">{{ $client['address_label'] }}</label>
+                        <label class="gpa-label" for="manual-client-address">Alamat Pengiriman Sayur</label>
                         <input id="manual-client-address" type="text" x-model="client.address" class="gpa-control mt-1.5">
-                        <span class="gpa-hint mt-1">Batas armada: {{ $client['dock'] }}</span>
+                        <span class="gpa-hint mt-1">Batas armada: Akses Armada: Mobil Boks Pendingin</span>
                     </div>
                 </div>
 
@@ -154,29 +267,29 @@
                         <div class="flex items-center gap-2">
                             <x-gpa.icon name="wallet" class="h-4 w-4 shrink-0 text-success-deep" />
                             <span class="gpa-meta-lg font-bold tracking-[0.07em] text-ink">
-                                {{ $client['credit']['label'] }}
+                                Batas Plafon Kredit Pembeli
                             </span>
                         </div>
 
                         <span class="inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 gpa-micro-bold text-success-ink">
                             <x-gpa.icon name="check-circle" class="h-3 w-3 shrink-0" />
-                            {{ $client['credit']['status'] }}
+                            Kredit Aktif &amp; Aman
                         </span>
                     </div>
 
                     <div class="mt-3 grid gap-3 sm:grid-cols-3">
                         <div>
-                            <p class="gpa-micro text-ink-quiet">{{ $client['credit']['used_label'] }}</p>
+                            <p class="gpa-micro text-ink-quiet">Kredit Terpakai</p>
                             <p class="gpa-figure text-[1.25rem] leading-6 text-ink"
                                 x-text="compactRupiah(creditUsed)"></p>
                         </div>
                         <div>
-                            <p class="gpa-micro text-ink-quiet">{{ $client['credit']['remaining_label'] }}</p>
+                            <p class="gpa-micro text-ink-quiet">Sisa Plafon Kredit Tersedia</p>
                             <p class="gpa-figure text-[1.25rem] leading-6 text-success-deep"
                                 x-text="rupiah(creditRemaining)"></p>
                         </div>
                         <div>
-                            <p class="gpa-micro text-ink-quiet">{{ $client['credit']['limit_label'] }}</p>
+                            <p class="gpa-micro text-ink-quiet">Batas Maksimal Kredit</p>
                             <p class="gpa-figure text-[1.25rem] leading-6 text-ink"
                                 x-text="rupiah(creditLimit)"></p>
                         </div>
@@ -281,7 +394,7 @@
                                 <td class="py-3 pr-3">
                                     <span class="inline-flex items-center gap-1 rounded px-1.5 py-0.5 gpa-micro-bold"
                                         :class="stockClass(row)">
-<x-gpa.icon x-show="stockOk(row)" name="check-circle" class="h-3 w-3 shrink-0" />
+                                        <x-gpa.icon x-show="stockOk(row)" name="check-circle" class="h-3 w-3 shrink-0" />
                                         <x-gpa.icon x-cloak x-show="! stockOk(row)" name="alert-triangle"
                                             class="h-3 w-3 shrink-0" />
                                         <span x-text="stockLabel(row)"></span>
@@ -348,57 +461,57 @@
                     <span
                         class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand gpa-micro-bold text-accent">04</span>
                     <div class="min-w-0">
-                        <h2 class="gpa-section-title text-ink">{{ $logistics['label'] }}</h2>
-                        <p class="gpa-note text-ink-quiet">{{ $logistics['hint'] }}</p>
+                        <h2 class="gpa-section-title text-ink">Jadwal &amp; Pengiriman Armada</h2>
+                        <p class="gpa-note text-ink-quiet">Pilih jadwal tiba, jenis kendaraan, dan catatan penyerahan barang.</p>
                     </div>
                 </div>
 
                 <span class="shrink-0 rounded-full bg-accent px-2.5 py-1 gpa-micro-bold text-success-ink">
-                    {{ $logistics['route_note'] }}
+                    Pengiriman Sayuran Segar
                 </span>
             </div>
 
             <div class="grid gap-4 px-6 py-5 md:grid-cols-2 xl:grid-cols-4">
                 <div>
-                    <label class="gpa-label" for="manual-date">{{ $logistics['date_label'] }}</label>
+                    <label class="gpa-label" for="manual-date">Tanggal Rencana Pengiriman</label>
                     <input id="manual-date" type="date" x-model="logistics.date" class="gpa-control mt-1.5">
                 </div>
 
                 <div>
-                    <label class="gpa-label" for="manual-arrival">{{ $logistics['arrival_label'] }}</label>
+                    <label class="gpa-label" for="manual-arrival">Waktu Tiba di Lokasi</label>
                     <select id="manual-arrival" x-model="logistics.arrival" class="gpa-control mt-1.5">
-                        @foreach ($logistics['arrival_options'] as $option)
-                            <option value="{{ $option }}">{{ $option }}</option>
-                        @endforeach
+                        <option value="Pagi Hari (05:00 - 08:00 WIB)">Pagi Hari (05:00 - 08:00 WIB)</option>
+                        <option value="Siang Hari (10:00 - 12:00 WIB)">Siang Hari (10:00 - 12:00 WIB)</option>
+                        <option value="Sore Hari (14:00 - 16:00 WIB)">Sore Hari (14:00 - 16:00 WIB)</option>
                     </select>
                 </div>
 
                 <div>
-                    <label class="gpa-label" for="manual-route">{{ $logistics['route_label'] }}</label>
+                    <label class="gpa-label" for="manual-route">Rute Distribusi</label>
                     <input id="manual-route" type="text" x-model="logistics.route" class="gpa-control mt-1.5"
                         spellcheck="false">
                 </div>
 
                 <div>
-                    <label class="gpa-label" for="manual-fleet">{{ $logistics['fleet_label'] }}</label>
+                    <label class="gpa-label" for="manual-fleet">Jenis Armada Mobil</label>
                     <input id="manual-fleet" type="text" x-model="logistics.fleet" class="gpa-control mt-1.5"
                         spellcheck="false">
-                    <span class="gpa-hint mt-1">{{ $logistics['fleet_note'] }}</span>
+                    <span class="gpa-hint mt-1">Kapasitas muatan aman</span>
                 </div>
 
                 <div class="md:col-span-2 xl:col-span-3">
-                    <label class="gpa-label" for="manual-notes">{{ $logistics['notes_label'] }}</label>
+                    <label class="gpa-label" for="manual-notes">Catatan Khusus Pengiriman</label>
                     <textarea id="manual-notes" rows="2" x-model="logistics.notes"
                         class="gpa-control mt-1.5 font-sans text-xs leading-5"></textarea>
                 </div>
 
                 <div>
-                    <span class="gpa-label">{{ $logistics['fee_label'] }}</span>
+                    <span class="gpa-label">Biaya Kirim (Flat)</span>
                     <p
                         class="mt-1.5 flex items-center gap-2 rounded-lg bg-surface-shell px-3 py-2 gpa-mono-xs font-bold text-brand">
                         <span x-text="rupiah(fee)"></span>
                         <span class="rounded bg-accent px-1.5 py-0.5 gpa-micro-bold text-success-ink">
-                            {{ $logistics['fee_note'] }}
+                            Tarif flat standar pengiriman
                         </span>
                     </p>
                 </div>
@@ -412,8 +525,8 @@
                     <span
                         class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand gpa-micro-bold text-accent">05</span>
                     <div class="min-w-0">
-                        <h2 class="gpa-section-title text-ink">{{ $payment['label'] }}</h2>
-                        <p class="gpa-note text-ink-quiet">{{ $payment['hint'] }}</p>
+                        <h2 class="gpa-section-title text-ink">Cara Pembayaran &amp; Bukti Transfer</h2>
+                        <p class="gpa-note text-ink-quiet">Pilih metode pembayaran yang disepakati dengan pembeli.</p>
                     </div>
                 </div>
 
@@ -426,23 +539,51 @@
                 <fieldset>
                     <legend class="gpa-label">Metode Pembayaran</legend>
                     <div class="mt-2 grid gap-2 sm:grid-cols-2">
-                        @foreach ($payment['methods'] as $method)
-                            <label
-                                class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-line-faint bg-surface px-3 py-3 transition-colors hover:border-brand">
-                                <input type="radio" name="payment-method" value="{{ $method['key'] }}"
-                                    x-model="paymentMethod" class="gpa-check gpa-check--radio mt-0.5">
-                                <span class="min-w-0">
-                                    <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
-                                        {{ $method['label'] }}
-                                    </span>
+                        <label
+                            class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-line-faint bg-surface px-3 py-3 transition-colors hover:border-brand">
+                            <input type="radio" name="payment-method" value="transfer"
+                                x-model="paymentMethod" class="gpa-check gpa-check--radio mt-0.5">
+                            <span class="min-w-0">
+                                <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
+                                    Transfer Bank (BCA / Mandiri)
                                 </span>
-                            </label>
-                        @endforeach
+                            </span>
+                        </label>
+                        <label
+                            class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-line-faint bg-surface px-3 py-3 transition-colors hover:border-brand">
+                            <input type="radio" name="payment-method" value="qris"
+                                x-model="paymentMethod" class="gpa-check gpa-check--radio mt-0.5">
+                            <span class="min-w-0">
+                                <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
+                                    QRIS Resmi GPA
+                                </span>
+                            </span>
+                        </label>
+                        <label
+                            class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-line-faint bg-surface px-3 py-3 transition-colors hover:border-brand">
+                            <input type="radio" name="payment-method" value="cod"
+                                x-model="paymentMethod" class="gpa-check gpa-check--radio mt-0.5">
+                            <span class="min-w-0">
+                                <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
+                                    Bayar di Tempat (COD)
+                                </span>
+                            </span>
+                        </label>
+                        <label
+                            class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-line-faint bg-surface px-3 py-3 transition-colors hover:border-brand">
+                            <input type="radio" name="payment-method" value="top14"
+                                x-model="paymentMethod" class="gpa-check gpa-check--radio mt-0.5">
+                            <span class="min-w-0">
+                                <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
+                                    Tempo 14 Hari (Khusus Mitra Kontrak)
+                                </span>
+                            </span>
+                        </label>
                     </div>
                 </fieldset>
 
                 <div class="rounded-xl border border-line-faint bg-surface-shell p-4">
-                    <p class="gpa-label">{{ $payment['evidence_label'] }}</p>
+                    <p class="gpa-label">Foto Bukti Pembayaran</p>
 
                     <div x-show="evidence.file" class="mt-2 flex items-start gap-2">
                         <x-gpa.icon name="file-text" class="mt-0.5 h-4 w-4 shrink-0 text-success-deep" />
@@ -474,7 +615,7 @@
                         </button>
                     </div>
 
-                    <span class="gpa-hint mt-2">{{ $payment['upload_hint'] }}</span>
+                    <span class="gpa-hint mt-2">Unggah foto bukti transfer atau tangkapan layar chat pemesanan.</span>
                 </div>
             </div>
         </section>

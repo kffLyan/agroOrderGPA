@@ -3,42 +3,46 @@
 @section('title', 'Verifikasi Pesanan')
 
 @section('content')
-    <div class="space-y-6" x-data="secretaryVerification(@js($queue['orders']), {{ count($checklist['items']) }})"
+    <div class="space-y-6" x-data="secretaryVerification(@js($mappedOrders ?? []), 3)"
         @gpa:search.window="query = $event.detail">
         <section class="gpa-panel overflow-hidden">
             <div class="flex flex-wrap items-start justify-between gap-4 border-b border-line-soft px-6 py-6">
                 <div class="min-w-0">
                     <h1 class="font-sans text-3xl font-extrabold leading-10 tracking-[-0.01em] text-brand">
-                        {{ $heading['title'] }}
+                        Verifikasi Pesanan Masuk &amp; Kesiapan Panen
                     </h1>
-                    <p class="mt-2 max-w-4xl text-sm leading-[1.4rem] text-ink-body">{{ $heading['subtitle'] }}</p>
+                    <p class="mt-2 max-w-4xl text-sm leading-[1.4rem] text-ink-body">
+                        Pemeriksaan pesanan klien, kepastian stok panen kebun, dan persetujuan resmi sebelum jadwal panen dimulai.
+                    </p>
                 </div>
 
                 <div class="shrink-0 rounded-xl bg-surface px-4 py-2 text-right shadow-sub outline outline-1 outline-line-board">
-                    <p class="gpa-micro text-ink-quiet">{{ $heading['compliance_label'] }}</p>
+                    <p class="gpa-micro text-ink-quiet">Tingkat Kepatuhan Verifikasi</p>
                     <p class="gpa-meta-lg font-bold tracking-[0.28px] text-success-deep">
-                        {{ $heading['compliance_value'] }}
+                        100% Sesuai Aturan
                     </p>
                 </div>
             </div>
 
             <div class="flex flex-wrap gap-2 px-6 py-4">
-                @foreach ($steps as $step)
-                    <button type="button" @click="handleStep(@js($step))" @class([
-                        'inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-left transition-colors',
-                        'bg-brand shadow-sub text-accent' => $step['active'],
-                        'bg-surface text-ink-body outline outline-1 outline-line-board hover:bg-surface-muted' => ! $step['active'],
-                    ])>
-                        <span class="h-2 w-2 shrink-0 rounded-full {{ $step['active'] ? 'bg-accent' : 'bg-line-board' }}"
-                            aria-hidden="true"></span>
-                        <span class="gpa-meta-lg font-semibold tracking-[0.88px]">
-                            {{ $step['number'] }} {{ $step['label'] }}
-                        </span>
-                        @if ($step['active'])
-                            <span x-text="'(' + pendingCount() + ' ' + @js($step['note']) + ')'"></span>
-                        @endif
-                    </button>
-                @endforeach
+                <button type="button" @click="handleStep({number: '01', label: 'Antrean Verifikasi Pesanan Masuk', active: true, message: 'Pesanan baru yang butuh persetujuan dan penguncian stok sayur.'})"
+                    class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-left transition-colors bg-brand shadow-sub text-accent">
+                    <span class="h-2 w-2 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
+                    <span class="gpa-meta-lg font-semibold tracking-[0.88px]">01 Antrean Verifikasi Pesanan Masuk</span>
+                    <span x-text="'(' + pendingCount() + ' Menunggu)'"></span>
+                </button>
+
+                <button type="button" @click="handleStep({number: '02', label: 'Pencetakan Faktur & Tagihan', active: false, message: 'Penerbitan faktur tagihan untuk pesanan yang sudah selesai dikirim.'})"
+                    class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-left transition-colors bg-surface text-ink-body outline outline-1 outline-line-board hover:bg-surface-muted">
+                    <span class="h-2 w-2 shrink-0 rounded-full bg-line-board" aria-hidden="true"></span>
+                    <span class="gpa-meta-lg font-semibold tracking-[0.88px]">02 Pencetakan Faktur &amp; Tagihan</span>
+                </button>
+
+                <button type="button" @click="handleStep({number: '03', label: 'Pemeriksaan Bukti Transfer', active: false, message: 'Pengecekan bukti pembayaran dari klien reguler.'})"
+                    class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-left transition-colors bg-surface text-ink-body outline outline-1 outline-line-board hover:bg-surface-muted">
+                    <span class="h-2 w-2 shrink-0 rounded-full bg-line-board" aria-hidden="true"></span>
+                    <span class="gpa-meta-lg font-semibold tracking-[0.88px]">03 Pemeriksaan Bukti Transfer</span>
+                </button>
             </div>
         </section>
 
@@ -47,28 +51,36 @@
                 <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-5">
                     <h2 class="flex items-center gap-2 font-sans text-lg font-bold text-ink">
                         <x-gpa.icon name="package" class="h-[18px] w-[18px] shrink-0 text-success-deep" />
-                        {{ $queue['title'] }}
+                        Antrean Pesanan Masuk
                     </h2>
                     <span class="shrink-0 rounded-full bg-accent px-2 py-0.5 gpa-micro-bold text-success-ink">
-                        {{ $queue['chip'] }}
+                        {{ count($mappedOrders ?? []) }} Pesanan
                     </span>
                 </div>
 
                 <div class="px-6 pb-1">
                     <div class="inline-flex flex-wrap gap-1.5 rounded-lg bg-surface-shell p-1" role="group"
                         aria-label="Saring antrean pesanan">
-                        @foreach ($queue['filters'] as $filter)
-                            <button type="button" @click="filter = @js($filter['key'])"
-                                :class="filterClass(@js($filter['key']))"
-                                class="rounded px-2.5 py-1.5 gpa-micro transition-colors">
-                                {{ $filter['label'] }}
-                            </button>
-                        @endforeach
+                        <button type="button" @click="filter = 'all'"
+                            :class="filterClass('all')"
+                            class="rounded px-2.5 py-1.5 gpa-micro transition-colors">
+                            Semua ({{ count($mappedOrders ?? []) }})
+                        </button>
+                        <button type="button" @click="filter = 'b2b'"
+                            :class="filterClass('b2b')"
+                            class="rounded px-2.5 py-1.5 gpa-micro transition-colors">
+                            Website B2B ({{ $b2bCount ?? 0 }})
+                        </button>
+                        <button type="button" @click="filter = 'wa'"
+                            :class="filterClass('wa')"
+                            class="rounded px-2.5 py-1.5 gpa-micro transition-colors">
+                            WhatsApp / Manual ({{ $waCount ?? 0 }})
+                        </button>
                     </div>
                 </div>
 
                 <div class="grid gap-2 p-4 pt-4">
-                    @foreach ($queue['orders'] as $order)
+                    @foreach ($mappedOrders ?? [] as $order)
                         <article x-show="matchesFilter(@js($order))" :class="cardClass(@js($order))"
                             class="group relative rounded-xl p-3 transition-colors">
                             <span x-cloak x-show="isSelected(@js($order['id']))"
@@ -154,18 +166,28 @@
             <section class="gpa-panel bg-surface-shell p-4 outline outline-1 outline-line-board/50">
                 <h2 class="flex items-center gap-2 gpa-meta-lg font-bold tracking-[0.88px] text-ink">
                     <x-gpa.icon name="badge-check" class="h-4 w-4 shrink-0 text-ink" />
-                    {{ $checklist['title'] }}:
+                    Daftar Periksa Wajib Sebelum Menyetujui:
                 </h2>
 
                 <ul class="mt-3 space-y-1.5">
-                    @foreach ($checklist['items'] as $index => $item)
-                        <li class="flex items-start gap-2">
-                            <input type="checkbox" id="hard-gate-{{ $index }}" value="{{ $index }}"
-                                x-model="checked" class="gpa-check">
-                            <label for="hard-gate-{{ $index }}"
-                                class="text-xs leading-5 text-ink-body">{{ $item }}</label>
-                        </li>
-                    @endforeach
+                    <li class="flex items-start gap-2">
+                        <input type="checkbox" id="hard-gate-0" value="0" x-model="checked" class="gpa-check">
+                        <label for="hard-gate-0" class="text-xs leading-5 text-ink-body">
+                            Pastikan ketersediaan sayur di kebun atau mitra tani binaan mencukupi.
+                        </label>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <input type="checkbox" id="hard-gate-1" value="1" x-model="checked" class="gpa-check">
+                        <label for="hard-gate-1" class="text-xs leading-5 text-ink-body">
+                            Pastikan alamat pengiriman dan permintaan armada sudah sesuai.
+                        </label>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <input type="checkbox" id="hard-gate-2" value="2" x-model="checked" class="gpa-check">
+                        <label for="hard-gate-2" class="text-xs leading-5 text-ink-body">
+                            Periksa limit batas kredit dan kesepakatan tempo pembayaran klien.
+                        </label>
+                    </li>
                 </ul>
 
                 <p class="mt-4 flex items-center gap-1.5 border-t border-line-soft pt-3">
@@ -213,7 +235,7 @@
                 <div class="flex flex-wrap items-center justify-between gap-2">
                     <h3 class="flex items-center gap-2 font-sans text-lg font-bold text-ink">
                         <x-gpa.icon name="gauge" class="h-5 w-[18px] shrink-0 text-success-deep" />
-                        {{ $rule03['title'] }}
+                        Kesiapan Pasokan Sayur Kebun
                     </h3>
 
                     <span :class="selected.rule03_status.class"
@@ -297,8 +319,8 @@
                 </div>
 
                 <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
-                    <p class="gpa-note text-ink-quiet">{{ $rule03['foot_left'] }}</p>
-                    <p class="gpa-note text-ink-quiet">{{ $rule03['foot_right'] }}</p>
+                    <p class="gpa-note text-ink-quiet">Alokasi stok disinkronkan langsung dengan jadwal panen Koordinator Lapangan.</p>
+                    <p class="gpa-note text-ink-quiet">Status Pasokan: Tersedia &amp; Aman</p>
                 </div>
             </div>
 
@@ -309,28 +331,30 @@
                     </span>
 
                     <div class="min-w-0">
-                        <span class="rounded bg-accent px-2 py-0.5 gpa-micro-bold text-ink">{{ $rule04['chip'] }}</span>
+                        <span class="rounded bg-accent px-2 py-0.5 gpa-micro-bold text-ink">Aturan Berat Bersih</span>
                         <h4 class="mt-2 font-sans text-[0.9375rem] font-bold leading-5 text-white">
-                            {{ $rule04['title'] }}
+                            Ketentuan Berat Timbangan Nyata (Netto):
                         </h4>
                         <p class="mt-1.5 text-sm leading-6 text-line-soft">
-                            {{ $rule04['body_before'] }}
+                            Jumlah kilogram di pesanan awal
                             <span class="gpa-meta-lg font-bold tracking-[0.28px] text-accent"
                                 x-text="selected.rule04_qty"></span>
-                            {{ $rule04['body_mid'] }}
+                            adalah estimasi pemesanan. Tagihan resmi dan Surat Jalan
                             <span class="font-semibold text-white underline underline-offset-2">
-                                {{ $rule04['highlight'] }}
+                                wajib merujuk pada Berat Bersih (Netto) nyata
                             </span>
-                            {{ $rule04['body_after'] }}
+                            hasil timbangan di gudang setelah daun rusak dipisahkan (disortir).
                         </p>
 
                         <ul class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
-                            @foreach ($rule04['bullets'] as $bullet)
-                                <li class="flex items-center gap-1.5 gpa-note text-accent">
-                                    <span class="h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
-                                    {{ $bullet }}
-                                </li>
-                            @endforeach
+                            <li class="flex items-center gap-1.5 gpa-note text-accent">
+                                <span class="h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
+                                Surat Jalan baru dapat dicetak setelah timbangan dikunci di gudang
+                            </li>
+                            <li class="flex items-center gap-1.5 gpa-note text-accent">
+                                <span class="h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
+                                Batas toleransi susut panen maksimal 2.5%
+                            </li>
                         </ul>
                     </div>
                 </div>
@@ -376,9 +400,9 @@
         <section class="gpa-panel overflow-hidden">
             <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft px-6 py-5">
                 <div class="min-w-0">
-                    <span class="rounded bg-ink px-2 py-0.5 gpa-micro-bold text-accent">{{ $rule14['chip'] }}</span>
+                    <span class="rounded bg-ink px-2 py-0.5 gpa-micro-bold text-accent">Tagihan &amp; Faktur</span>
                     <h2 class="mt-2 font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink">
-                        {{ $rule14['title'] }}
+                        Penerbitan Faktur Tagihan Sesuai Kesepakatan
                     </h2>
                     <p class="mt-1.5 max-w-3xl text-xs leading-5 text-ink-body">
                         Akumulasi Delivery Order (DO) selesai kirim siap cetak faktur tagihan berkala untuk
@@ -391,12 +415,12 @@
                     <button type="button" @click="draftInvoice()"
                         class="inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-ink outline outline-1 outline-line-board transition-colors hover:bg-surface-shell gpa-meta-lg font-semibold tracking-[0.88px]">
                         <x-gpa.icon name="download" class="h-3 w-3 shrink-0" />
-                        {{ $rule14['draft_label'] }}
+                        Lihat Draf Tagihan
                     </button>
                     <button type="button" @click="issueInvoice()"
                         class="inline-flex h-8 items-center gap-1.5 rounded-lg bg-brand px-4 text-accent transition-colors hover:bg-brand-hover gpa-meta-lg font-bold tracking-[0.88px]">
                         <x-gpa.icon name="invoice" class="h-3 w-3 shrink-0 text-accent" />
-                        {{ $rule14['issue_label'] }}
+                        Terbitkan Faktur Tagihan
                     </button>
                 </div>
             </div>

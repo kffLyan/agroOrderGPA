@@ -56,20 +56,61 @@
 
         {{-- Kartu Metrik Ringkasan --}}
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            @foreach ($metrics as $metric)
-                <article class="flex h-full flex-col justify-between gap-3 rounded-2xl bg-surface p-5 shadow-card">
-                    <div class="flex items-center justify-between gap-2">
-                        <h3 class="gpa-micro-bold text-ink-body">{{ $metric['label'] }}</h3>
-                        <span class="rounded p-1 bg-surface-shell text-ink">
-                            <x-gpa.icon :name="$metric['icon']" class="h-3.5 w-3.5" />
-                        </span>
-                    </div>
-                    <div>
-                        <p class="gpa-figure text-[22px] leading-7 text-ink">{{ $metric['value'] }}</p>
-                        <p class="mt-1 text-[11px] leading-4 text-ink-body">{{ $metric['note'] }}</p>
-                    </div>
-                </article>
-            @endforeach
+            {{-- Metrik 1: Total Komoditas --}}
+            <article class="flex h-full flex-col justify-between gap-3 rounded-2xl bg-surface p-5 shadow-card">
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="gpa-micro-bold text-ink-body">Total Komoditas</h3>
+                    <span class="rounded p-1 bg-surface-shell text-ink">
+                        <x-gpa.icon name="grid" class="h-3.5 w-3.5" />
+                    </span>
+                </div>
+                <div>
+                    <p class="gpa-figure text-[22px] leading-7 text-ink">{{ $totalProducts }} Komoditas</p>
+                    <p class="mt-1 text-[11px] leading-4 text-ink-body">{{ $activeProducts }} Aktif di Katalog B2B</p>
+                </div>
+            </article>
+
+            {{-- Metrik 2: Ketersediaan Pasokan --}}
+            <article class="flex h-full flex-col justify-between gap-3 rounded-2xl bg-surface p-5 shadow-card">
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="gpa-micro-bold text-ink-body">Ketersediaan Pasokan</h3>
+                    <span class="rounded p-1 bg-surface-shell text-ink">
+                        <x-gpa.icon name="package" class="h-3.5 w-3.5" />
+                    </span>
+                </div>
+                <div>
+                    <p class="gpa-figure text-[22px] leading-7 text-ink">{{ number_format($totalStockKg, 0, ',', '.') }} kg</p>
+                    <p class="mt-1 text-[11px] leading-4 text-ink-body">Buffer &amp; Petani Binaan Siap Kirim</p>
+                </div>
+            </article>
+
+            {{-- Metrik 3: Rata-rata Harga Dasar --}}
+            <article class="flex h-full flex-col justify-between gap-3 rounded-2xl bg-surface p-5 shadow-card">
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="gpa-micro-bold text-ink-body">Rata-rata Harga Dasar</h3>
+                    <span class="rounded p-1 bg-surface-shell text-ink">
+                        <x-gpa.icon name="banknote" class="h-3.5 w-3.5" />
+                    </span>
+                </div>
+                <div>
+                    <p class="gpa-figure text-[22px] leading-7 text-ink">Rp {{ number_format($avgPrice, 0, ',', '.') }}</p>
+                    <p class="mt-1 text-[11px] leading-4 text-ink-body">Harga Franco Gudang Ciwidey/Lembang</p>
+                </div>
+            </article>
+
+            {{-- Metrik 4: Standar Mutu & Metrologi --}}
+            <article class="flex h-full flex-col justify-between gap-3 rounded-2xl bg-surface p-5 shadow-card">
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="gpa-micro-bold text-ink-body">Standar Mutu &amp; Metrologi</h3>
+                    <span class="rounded p-1 bg-surface-shell text-ink">
+                        <x-gpa.icon name="shield" class="h-3.5 w-3.5" />
+                    </span>
+                </div>
+                <div>
+                    <p class="gpa-figure text-[22px] leading-7 text-ink">Grade A &amp; Super</p>
+                    <p class="mt-1 text-[11px] leading-4 text-ink-body">Sertifikasi Tera Bebas Residu</p>
+                </div>
+            </article>
         </div>
     </section>
 

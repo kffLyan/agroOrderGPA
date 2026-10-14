@@ -25,84 +25,6 @@ class OrderVerificationController extends Controller
      */
     public function index(): View
     {
-        $user = Auth::user();
-
-        $operator = [
-            'role'     => 'Sekretaris Operasional',
-            'name'     => $user?->name ?: 'Sekretariat GPA',
-            'code'     => $user ? 'SK-' . str_pad($user->id, 4, '0', STR_PAD_LEFT) : 'SK-001',
-            'initials' => strtoupper(substr($user?->name ?: 'SK', 0, 2)),
-            'branch'   => 'Kantor Pusat Cibitung',
-            'email'    => $user?->email ?: 'sekretaris@agroorder.co.id',
-            'shift'    => 'Shift Kerja 07.00 - 16.00 WIB',
-        ];
-
-        $heading = [
-            'title'            => 'Verifikasi Pesanan Masuk & Kesiapan Panen',
-            'subtitle'         => 'Pemeriksaan pesanan klien, kepastian stok panen kebun, dan persetujuan resmi sebelum jadwal panen dimulai.',
-            'compliance_label' => 'Tingkat Kepatuhan Verifikasi',
-            'compliance_value' => '100% Sesuai Aturan',
-        ];
-
-        $steps = [
-            [
-                'number'  => '01',
-                'label'   => 'Antrean Verifikasi Pesanan Masuk',
-                'note'    => 'Menunggu',
-                'active'  => true,
-                'message' => 'Pesanan baru yang butuh persetujuan dan penguncian stok sayur.',
-            ],
-            [
-                'number'  => '02',
-                'label'   => 'Pencetakan Faktur & Tagihan',
-                'note'    => null,
-                'active'  => false,
-                'message' => 'Penerbitan faktur tagihan untuk pesanan yang sudah selesai dikirim.',
-            ],
-            [
-                'number'  => '03',
-                'label'   => 'Pemeriksaan Bukti Transfer',
-                'note'    => null,
-                'active'  => false,
-                'message' => 'Pengecekan bukti pembayaran dari klien reguler.',
-            ],
-        ];
-
-        $checklist = [
-            'title' => 'Daftar Periksa Wajib Sebelum Menyetujui',
-            'items' => [
-                'Pastikan ketersediaan sayur di kebun atau mitra tani binaan mencukupi.',
-                'Pastikan alamat pengiriman dan permintaan armada sudah sesuai.',
-                'Periksa limit batas kredit dan kesepakatan tempo pembayaran klien.',
-            ],
-        ];
-
-        $rule03 = [
-            'title'      => 'Kesiapan Pasokan Sayur Kebun',
-            'foot_left'  => 'Alokasi stok disinkronkan langsung dengan jadwal panen Koordinator Lapangan.',
-            'foot_right' => 'Status Pasokan: Tersedia & Aman',
-        ];
-
-        $rule04 = [
-            'chip'        => 'Aturan Berat Bersih',
-            'title'       => 'Ketentuan Berat Timbangan Nyata (Netto):',
-            'body_before' => 'Jumlah kilogram di pesanan awal',
-            'body_mid'    => 'adalah estimasi pemesanan. Tagihan resmi dan Surat Jalan',
-            'highlight'   => 'wajib merujuk pada Berat Bersih (Netto) nyata',
-            'body_after'  => 'hasil timbangan di gudang setelah daun rusak dipisahkan (disortir).',
-            'bullets'     => [
-                'Surat Jalan baru dapat dicetak setelah timbangan dikunci di gudang',
-                'Batas toleransi susut panen maksimal 2.5%',
-            ],
-        ];
-
-        $rule14 = [
-            'chip'        => 'Tagihan & Faktur',
-            'title'       => 'Penerbitan Faktur Tagihan Sesuai Kesepakatan',
-            'draft_label' => 'Lihat Draf Tagihan',
-            'issue_label' => 'Terbitkan Faktur Tagihan',
-        ];
-
         // Ambil pesanan riil dari database
         $realOrders = Order::with(['user', 'orderItems.product', 'payments'])
             ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'TERVERIFIKASI'])
@@ -241,27 +163,10 @@ class OrderVerificationController extends Controller
         $b2bCount = count(array_filter($mappedOrders, fn($o) => $o['channel'] === 'b2b'));
         $waCount = count($mappedOrders) - $b2bCount;
 
-        $queue = [
-            'title'       => 'Antrean Pesanan Masuk',
-            'chip'        => count($mappedOrders) . ' Pesanan',
-            'filters'     => [
-                ['key' => 'all', 'label' => 'Semua (' . count($mappedOrders) . ')'],
-                ['key' => 'b2b', 'label' => 'Website B2B (' . $b2bCount . ')'],
-                ['key' => 'wa', 'label' => 'WhatsApp / Manual (' . $waCount . ')'],
-            ],
-            'orders'      => $mappedOrders,
-            'footer_note' => 'Pastikan ketiga poin pada daftar periksa telah terpenuhi sebelum menyetujui pesanan.',
-        ];
-
         return view('sekretaris.verification', [
-            'operator'  => $operator,
-            'heading'   => $heading,
-            'steps'     => $steps,
-            'queue'     => $queue,
-            'checklist' => $checklist,
-            'rule03'    => $rule03,
-            'rule04'    => $rule04,
-            'rule14'    => $rule14,
+            'mappedOrders' => $mappedOrders,
+            'b2bCount'     => $b2bCount,
+            'waCount'      => $waCount,
         ]);
     }
 

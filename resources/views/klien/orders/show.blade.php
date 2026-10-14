@@ -25,6 +25,20 @@
         'SELESAI_CATATAN'     => 'Selesai (Dengan Catatan)',
         'BATAL'               => 'Pesanan Dibatalkan',
     ];
+
+    $statusOrder = $order->status;
+
+    $stepStates = [
+        1 => 'done',
+        2 => in_array($statusOrder, ['TERVERIFIKASI', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? 'done' : ($statusOrder === 'MENUNGGU_VERIFIKASI' ? 'active' : 'pending'),
+        3 => in_array($statusOrder, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? 'done' : ($statusOrder === 'TERVERIFIKASI' ? 'active' : 'pending'),
+        4 => in_array($statusOrder, ['DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? 'done' : ($statusOrder === 'SIAP_KIRIM' ? 'active' : 'pending'),
+        5 => in_array($statusOrder, ['SELESAI', 'SELESAI_CATATAN']) ? 'done' : ($statusOrder === 'DALAM_PENGIRIMAN' ? 'active' : 'pending'),
+    ];
+
+    if ($statusOrder === 'BATAL') {
+        $stepStates = [1 => 'done', 2 => 'cancelled', 3 => 'pending', 4 => 'pending', 5 => 'pending'];
+    }
 @endphp
 
 @section('content')
@@ -76,51 +90,200 @@
             </div>
 
             <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                @foreach ($trackingSteps as $step)
-                    @php
-                        $isDone = $step['state'] === 'done';
-                        $isActive = $step['state'] === 'active';
-                        $isCancelled = $step['state'] === 'cancelled';
-                        $isPending = $step['state'] === 'pending';
-                    @endphp
+                {{-- Tahap 1 --}}
+                @php $s1 = $stepStates[1]; @endphp
+                <li @class([
+                    'flex flex-col gap-1.5 rounded-xl border p-3.5 transition-all',
+                    'border-accent-edge bg-surface-shell ring-2 ring-accent/30' => $s1 === 'active',
+                    'border-line-hair bg-surface' => $s1 === 'done',
+                    'border-danger/30 bg-danger/5' => $s1 === 'cancelled',
+                    'border-transparent bg-surface-pill/50 opacity-60' => $s1 === 'pending',
+                ])>
+                    <div class="flex items-center justify-between">
+                        <span @class([
+                            'flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold',
+                            'bg-accent text-ink ring-2 ring-brand' => $s1 === 'active',
+                            'bg-ink text-white' => $s1 === 'done',
+                            'bg-danger text-white' => $s1 === 'cancelled',
+                            'bg-surface-disabled text-ink-quiet' => $s1 === 'pending',
+                        ])>
+                            @if ($s1 === 'done')
+                                <x-gpa.icon name="check" class="h-3.5 w-3.5" />
+                            @elseif ($s1 === 'cancelled')
+                                <x-gpa.icon name="x" class="h-3.5 w-3.5" />
+                            @else
+                                1
+                            @endif
+                        </span>
 
-                    <li @class([
-                        'flex flex-col gap-1.5 rounded-xl border p-3.5 transition-all',
-                        'border-accent-edge bg-surface-shell ring-2 ring-accent/30' => $isActive,
-                        'border-line-hair bg-surface' => $isDone,
-                        'border-danger/30 bg-danger/5' => $isCancelled,
-                        'border-transparent bg-surface-pill/50 opacity-60' => $isPending,
-                    ])>
-                        <div class="flex items-center justify-between">
-                            <span @class([
-                                'flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold',
-                                'bg-accent text-ink ring-2 ring-brand' => $isActive,
-                                'bg-ink text-white' => $isDone,
-                                'bg-danger text-white' => $isCancelled,
-                                'bg-surface-disabled text-ink-quiet' => $isPending,
-                            ])>
-                                @if ($isDone)
-                                    <x-gpa.icon name="check" class="h-3.5 w-3.5" />
-                                @elseif ($isCancelled)
-                                    <x-gpa.icon name="x" class="h-3.5 w-3.5" />
-                                @else
-                                    {{ $step['step'] }}
-                                @endif
-                            </span>
+                        <span class="text-[9px] font-bold uppercase tracking-wider {{ $s1 === 'active' ? 'text-success-deep' : 'text-ink-quiet' }}">
+                            {{ $order->created_at ? $order->created_at->format('d M Y, H:i') . ' WIB' : '-' }}
+                        </span>
+                    </div>
 
-                            <span class="text-[9px] font-bold uppercase tracking-wider {{ $isActive ? 'text-success-deep' : 'text-ink-quiet' }}">
-                                {{ $step['time'] }}
-                            </span>
-                        </div>
+                    <p class="font-sans text-xs font-bold leading-4 {{ $s1 === 'pending' ? 'text-ink-quiet' : 'text-ink' }}">
+                        PO Diajukan Mandiri
+                    </p>
+                    <p class="text-[11px] leading-4 text-ink-body">
+                        Pesanan tercatat pada sistem portal web GPA.
+                    </p>
+                </li>
 
-                        <p class="font-sans text-xs font-bold leading-4 {{ $isPending ? 'text-ink-quiet' : 'text-ink' }}">
-                            {{ $step['title'] }}
-                        </p>
-                        <p class="text-[11px] leading-4 text-ink-body">
-                            {{ $step['desc'] }}
-                        </p>
-                    </li>
-                @endforeach
+                {{-- Tahap 2 --}}
+                @php $s2 = $stepStates[2]; @endphp
+                <li @class([
+                    'flex flex-col gap-1.5 rounded-xl border p-3.5 transition-all',
+                    'border-accent-edge bg-surface-shell ring-2 ring-accent/30' => $s2 === 'active',
+                    'border-line-hair bg-surface' => $s2 === 'done',
+                    'border-danger/30 bg-danger/5' => $s2 === 'cancelled',
+                    'border-transparent bg-surface-pill/50 opacity-60' => $s2 === 'pending',
+                ])>
+                    <div class="flex items-center justify-between">
+                        <span @class([
+                            'flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold',
+                            'bg-accent text-ink ring-2 ring-brand' => $s2 === 'active',
+                            'bg-ink text-white' => $s2 === 'done',
+                            'bg-danger text-white' => $s2 === 'cancelled',
+                            'bg-surface-disabled text-ink-quiet' => $s2 === 'pending',
+                        ])>
+                            @if ($s2 === 'done')
+                                <x-gpa.icon name="check" class="h-3.5 w-3.5" />
+                            @elseif ($s2 === 'cancelled')
+                                <x-gpa.icon name="x" class="h-3.5 w-3.5" />
+                            @else
+                                2
+                            @endif
+                        </span>
+
+                        <span class="text-[9px] font-bold uppercase tracking-wider {{ $s2 === 'active' ? 'text-success-deep' : 'text-ink-quiet' }}">
+                            {{ $order->verifier ? ($order->updated_at ? $order->updated_at->format('d M Y, H:i') . ' WIB' : '-') : 'SLA < 2 Jam' }}
+                        </span>
+                    </div>
+
+                    <p class="font-sans text-xs font-bold leading-4 {{ $s2 === 'pending' ? 'text-ink-quiet' : 'text-ink' }}">
+                        Verifikasi &amp; Kunci Kuota
+                    </p>
+                    <p class="text-[11px] leading-4 text-ink-body">
+                        {{ $order->verifier ? "Diverifikasi oleh Sekretaris: {$order->verifier->name}" : 'Menunggu review dokumen dan stok bebas.' }}
+                    </p>
+                </li>
+
+                {{-- Tahap 3 --}}
+                @php $s3 = $stepStates[3]; @endphp
+                <li @class([
+                    'flex flex-col gap-1.5 rounded-xl border p-3.5 transition-all',
+                    'border-accent-edge bg-surface-shell ring-2 ring-accent/30' => $s3 === 'active',
+                    'border-line-hair bg-surface' => $s3 === 'done',
+                    'border-danger/30 bg-danger/5' => $s3 === 'cancelled',
+                    'border-transparent bg-surface-pill/50 opacity-60' => $s3 === 'pending',
+                ])>
+                    <div class="flex items-center justify-between">
+                        <span @class([
+                            'flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold',
+                            'bg-accent text-ink ring-2 ring-brand' => $s3 === 'active',
+                            'bg-ink text-white' => $s3 === 'done',
+                            'bg-danger text-white' => $s3 === 'cancelled',
+                            'bg-surface-disabled text-ink-quiet' => $s3 === 'pending',
+                        ])>
+                            @if ($s3 === 'done')
+                                <x-gpa.icon name="check" class="h-3.5 w-3.5" />
+                            @elseif ($s3 === 'cancelled')
+                                <x-gpa.icon name="x" class="h-3.5 w-3.5" />
+                            @else
+                                3
+                            @endif
+                        </span>
+
+                        <span class="text-[9px] font-bold uppercase tracking-wider {{ $s3 === 'active' ? 'text-success-deep' : 'text-ink-quiet' }}">
+                            {{ $order->surat_jalan_number ? 'Netto Sah Tercatat' : 'Estimasi H-1 Sore' }}
+                        </span>
+                    </div>
+
+                    <p class="font-sans text-xs font-bold leading-4 {{ $s3 === 'pending' ? 'text-ink-quiet' : 'text-ink' }}">
+                        Sortasi &amp; Penimbangan Fisik
+                    </p>
+                    <p class="text-[11px] leading-4 text-ink-body">
+                        {{ $order->surat_jalan_number ? "Surat Jalan {$order->surat_jalan_number} diterbitkan dengan bobot sah." : 'Proses penimbangan digital di packing house.' }}
+                    </p>
+                </li>
+
+                {{-- Tahap 4 --}}
+                @php $s4 = $stepStates[4]; @endphp
+                <li @class([
+                    'flex flex-col gap-1.5 rounded-xl border p-3.5 transition-all',
+                    'border-accent-edge bg-surface-shell ring-2 ring-accent/30' => $s4 === 'active',
+                    'border-line-hair bg-surface' => $s4 === 'done',
+                    'border-danger/30 bg-danger/5' => $s4 === 'cancelled',
+                    'border-transparent bg-surface-pill/50 opacity-60' => $s4 === 'pending',
+                ])>
+                    <div class="flex items-center justify-between">
+                        <span @class([
+                            'flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold',
+                            'bg-accent text-ink ring-2 ring-brand' => $s4 === 'active',
+                            'bg-ink text-white' => $s4 === 'done',
+                            'bg-danger text-white' => $s4 === 'cancelled',
+                            'bg-surface-disabled text-ink-quiet' => $s4 === 'pending',
+                        ])>
+                            @if ($s4 === 'done')
+                                <x-gpa.icon name="check" class="h-3.5 w-3.5" />
+                            @elseif ($s4 === 'cancelled')
+                                <x-gpa.icon name="x" class="h-3.5 w-3.5" />
+                            @else
+                                4
+                            @endif
+                        </span>
+
+                        <span class="text-[9px] font-bold uppercase tracking-wider {{ $s4 === 'active' ? 'text-success-deep' : 'text-ink-quiet' }}">
+                            {{ $order->departure_time ? $order->departure_time->format('H:i') . ' WIB' : 'Target Subuh 04:30' }}
+                        </span>
+                    </div>
+
+                    <p class="font-sans text-xs font-bold leading-4 {{ $s4 === 'pending' ? 'text-ink-quiet' : 'text-ink' }}">
+                        Distribusi Armada Berpendingin
+                    </p>
+                    <p class="text-[11px] leading-4 text-ink-body">
+                        {{ $order->driver ? "Supir: {$order->driver->name} (Plat: {$order->vehicle_plate_number})" : 'Penjadwalan supir & armada chiller.' }}
+                    </p>
+                </li>
+
+                {{-- Tahap 5 --}}
+                @php $s5 = $stepStates[5]; @endphp
+                <li @class([
+                    'flex flex-col gap-1.5 rounded-xl border p-3.5 transition-all',
+                    'border-accent-edge bg-surface-shell ring-2 ring-accent/30' => $s5 === 'active',
+                    'border-line-hair bg-surface' => $s5 === 'done',
+                    'border-danger/30 bg-danger/5' => $s5 === 'cancelled',
+                    'border-transparent bg-surface-pill/50 opacity-60' => $s5 === 'pending',
+                ])>
+                    <div class="flex items-center justify-between">
+                        <span @class([
+                            'flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold',
+                            'bg-accent text-ink ring-2 ring-brand' => $s5 === 'active',
+                            'bg-ink text-white' => $s5 === 'done',
+                            'bg-danger text-white' => $s5 === 'cancelled',
+                            'bg-surface-disabled text-ink-quiet' => $s5 === 'pending',
+                        ])>
+                            @if ($s5 === 'done')
+                                <x-gpa.icon name="check" class="h-3.5 w-3.5" />
+                            @elseif ($s5 === 'cancelled')
+                                <x-gpa.icon name="x" class="h-3.5 w-3.5" />
+                            @else
+                                5
+                            @endif
+                        </span>
+
+                        <span class="text-[9px] font-bold uppercase tracking-wider {{ $s5 === 'active' ? 'text-success-deep' : 'text-ink-quiet' }}">
+                            {{ $order->arrival_time ? $order->arrival_time->format('d M Y, H:i') . ' WIB' : 'Standby Dock' }}
+                        </span>
+                    </div>
+
+                    <p class="font-sans text-xs font-bold leading-4 {{ $s5 === 'pending' ? 'text-ink-quiet' : 'text-ink' }}">
+                        Penerimaan Sah di Dock Klien
+                    </p>
+                    <p class="text-[11px] leading-4 text-ink-body">
+                        {{ $order->received_by_name ? "Diterima oleh: {$order->received_by_name}" : 'Serah terima fisik, cek cold-chain & tanda tangan digital.' }}
+                    </p>
+                </li>
             </ol>
         </section>
 

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Koordinator;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -16,29 +15,6 @@ class MonitoringController extends Controller
      */
     public function index(Request $request): View
     {
-        $user = $request->user();
-
-        $operator = [
-            'name' => $user?->name ?? 'Koordinator Lapangan',
-            'role' => 'Koordinator Lapangan',
-            'code' => '002',
-            'initials' => strtoupper(substr($user?->name ?? 'KL', 0, 2)),
-        ];
-
-        // 1. Mandat PoD
-        $mandate = [
-            'icon' => 'shield',
-            'title' => 'PRD RULE 06 & 12: VALIDASI MUTLAK PROOF OF DELIVERY (POD)',
-            'badge' => 'GATE-STATUS: ENFORCED',
-            'body_lead' => 'Status pesanan dilarang ditutup menjadi',
-            'body_emphasis' => '"Selesai"',
-            'body_tail' => 'tanpa bukti PoD (foto dokumen fisik bertanda tangan & stempel basah penerima, serta foto serah terima barang di dock). Segala selisih timbangan di lokasi wajib disahkan via BA Retur Seketika.',
-            'body' => 'Status pesanan dilarang ditutup menjadi "Selesai" tanpa bukti PoD (foto dokumen fisik bertanda tangan & stempel basah penerima, serta foto serah terima barang di dock). Segala selisih timbangan di lokasi wajib disahkan via BA Retur Seketika.',
-            'protocol_label' => 'PROTOKOL KUNCI',
-            'protocol_value' => 'LEDGER LOCK: ACTIVE',
-        ];
-
-        // 2. Query Orders & Armada Drivers
         $drivers = User::where('role', 'ARMADA')->get();
         $orders = Order::with(['orderItems.product', 'user', 'driver'])
             ->latest()
@@ -98,229 +74,93 @@ class MonitoringController extends Controller
             }
 
             $dossierRef = 'POD-DOC-' . date('Ym') . '-' . str_pad($order->id, 4, '0', STR_PAD_LEFT);
+            $isComplete = $order->status === 'SELESAI' || $index === 0;
+
+            $arrival = 'Tiba ' . ($order->updated_at ? $order->updated_at->format('H:i') : date('H:i')) . ' WIB';
+            $arrivalTone = $hasRetur ? 'warning-deep' : 'success-deep';
+            $discrepancy = $hasRetur ? ('Selisih retur ' . $returnedKg . ' kg tercatat') : null;
 
             $dispatchRows[] = [
-                'sj' => $sj,
+                'id' => $order->id,
                 'driver' => $driverName,
                 'vehicle' => $vehicleName,
-                'arrival' => 'Tiba: 06:' . str_pad(($index * 15) % 60, 2, '0', STR_PAD_LEFT) . ' WIB',
-                'arrival_tone' => 'success-deep',
+                'plate' => $vehiclePlate,
+                'arrival' => $arrival,
+                'arrival_tone' => $arrivalTone,
+                'sj' => $sj,
                 'customer' => $customerName,
-                'customer_tone' => $index === 0 ? 'strong' : 'body',
+                'customer_tone' => 'strong',
+                'discrepancy' => $discrepancy,
                 'destination' => $destination,
                 'cargo_kg' => $cargoKg,
-                'commodity' => $commodityNames,
                 'manifest_kg' => $hasRetur ? ($cargoKg + $returnedKg) : null,
-                'discrepancy' => $hasRetur ? 'Selisih: ' . $returnedKg . ' kg afkir' : null,
+                'commodity' => $commodityNames,
                 'status' => $status,
                 'status_tone' => $statusTone,
-                'dossier_ref' => $dossierRef,
                 'row_tone' => $rowTone,
                 'actions' => $actions,
+                'has_retur' => $hasRetur,
+                'retur_kg' => $returnedKg,
+                'dossier_ref' => $dossierRef,
             ];
 
-            // Setup dossier entry
-            $recipientName = $order->received_by_name ?: ($order->user?->name ?? 'Staff Penerima');
             $dossierEntries[$sj] = [
                 'ref' => $dossierRef,
                 'sj' => $sj,
-                'recipient' => $recipientName . ' (' . $customerName . ')',
+                'po' => $order->order_number,
+                'customer' => $customerName,
+                'address' => $destination,
+                'driver' => $driverName . ' (ID-DRV-' . str_pad($driver?->id ?? 1, 3, '0', STR_PAD_LEFT) . ')',
+                'plate' => $vehiclePlate,
                 'net_kg' => $cargoKg,
-                'gps_radius_m' => 12.0,
-                'gps_tolerance_m' => 20.0,
+                'delivery_time' => ($order->updated_at ? $order->updated_at->format('H:i') : date('H:i')) . ' WIB (' . date('d M Y') . ')',
+                'receiver_name' => $order->received_by_name ?: ($order->user?->name ?? 'Bapak Hendra (Receiving Dept)'),
+                'gps_tolerance_m' => 4.2,
+                'gps_radius_m' => 2.1,
                 'exhibits' => [
                     [
-                        'code' => 'EKSIBIT 1: DOKUMEN SJ',
-                        'meta' => '300 DPI',
-                        'icon' => 'file-text',
-                        'caption' => 'CAP STEMPEL: BASAH ' . strtoupper(substr(str_replace(' ', '', $customerName), 0, 8)),
-                        'status' => 'TERBACA',
+                        'code' => 'EXHIBIT-01',
+                        'meta' => 'JPG • 2.4 MB',
+                        'icon' => 'camera',
+                        'caption' => 'Fisik Surat Jalan & Cap Basah',
+                        'status' => $isComplete ? 'TERBACA' : 'MENUNGGU',
                     ],
                     [
-                        'code' => 'EKSIBIT 2: DOCK / CHILLER',
-                        'meta' => '+3.8°C',
+                        'code' => 'EXHIBIT-02',
+                        'meta' => 'JPG • 1.9 MB',
                         'icon' => 'truck',
-                        'caption' => 'GEO: -6.9175, 107.6191',
-                        'status' => 'TOL: 12M',
+                        'caption' => 'Unloading di Loading Dock',
+                        'status' => $isComplete ? 'TERVERIFIKASI' : 'MENUNGGU',
                     ],
                 ],
                 'checks' => [
-                    'signature' => true,
-                    'stamp' => true,
+                    'signature' => $isComplete,
+                    'stamp' => $isComplete,
+                    'weight' => $isComplete,
+                    'gps' => $isComplete,
                 ],
-                'notes' => 'Surat jalan fisik telah diverifikasi jelas. Stempel basah QC terbaca utuh. Timbangan ' . number_format($cargoKg, 1) . ' kg sesuai manifes timbangan awal.',
+                'notes' => $isComplete ? 'Seluruh parameter fisik lolos verifikasi. Berat timbangan netto cocok, segel utuh, ttd dan cap basah penerima tertera sah.' : 'Menunggu berkas fisik diunggah oleh driver armada.',
+                'decision' => $isComplete ? 'approved' : null,
+                'status' => $isComplete ? 'VERIFIED' : 'PENDING',
+                'empty' => false,
             ];
         }
 
-        // Fallback default SJ if empty
-        if (!$defaultSj) {
-            $defaultSj = 'SJ-GPA-202610-0001';
-            $dossierEntries[$defaultSj] = [
-                'ref' => 'POD-DOC-SUB4-0001',
-                'sj' => $defaultSj,
-                'recipient' => 'Staff Penerima (Mitra B2B)',
-                'net_kg' => 500.0,
-                'gps_radius_m' => 12.0,
-                'gps_tolerance_m' => 20.0,
-                'exhibits' => [
-                    [
-                        'code' => 'EKSIBIT 1: DOKUMEN SJ',
-                        'meta' => '300 DPI',
-                        'icon' => 'file-text',
-                        'caption' => 'CAP STEMPEL: BASAH QC',
-                        'status' => 'TERBACA',
-                    ],
-                    [
-                        'code' => 'EKSIBIT 2: DOCK / CHILLER',
-                        'meta' => '+3.8°C',
-                        'icon' => 'truck',
-                        'caption' => 'GEO: -6.9175, 107.6191',
-                        'status' => 'TOL: 12M',
-                    ],
-                ],
-                'checks' => [
-                    'signature' => true,
-                    'stamp' => true,
-                ],
-                'notes' => 'Surat jalan fisik telah diverifikasi.',
-            ];
-        }
-
-        // 3. KPIs
         $totalOrdersCount = count($dispatchRows);
-        $verifiedCount = count(array_filter($dispatchRows, fn($r) => str_contains($r['status'], 'TERVERIFIKASI')));
-        $returCount = (int) OrderItem::where('returned_weight', '>', 0)->count();
-
-        $kpis = [
-            [
-                'key' => 'fleet',
-                'label' => 'ARMADA AKTIF',
-                'label_tone' => 'body',
-                'value' => max(1, $drivers->count()),
-                'unit' => 'Armada Lapangan',
-                'unit_tone' => 'body',
-                'icon' => 'truck',
-                'icon_tone' => 'success-deep',
-                'foot_left' => 'GPS 100% ONLINE',
-                'foot_left_tone' => 'success-deep',
-                'foot_right' => 'CHILLER TELEMETRY LIVE',
-                'foot_right_tone' => 'muted',
-                'foot_dot' => true,
-            ],
-            [
-                'key' => 'dropoff',
-                'label' => 'TITIK DROPOFF SELESAI',
-                'label_tone' => 'body',
-                'value' => $verifiedCount . ' / ' . max(1, $totalOrdersCount),
-                'unit' => 'Titik (' . ($totalOrdersCount > 0 ? round(($verifiedCount / $totalOrdersCount) * 100) : 0) . '%)',
-                'unit_tone' => 'body',
-                'icon' => 'map-pin',
-                'icon_tone' => 'success-deep',
-                'foot_left' => 'PoD VALID: ' . $verifiedCount . ' BERKAS',
-                'foot_left_tone' => 'success-deep',
-                'foot_right' => 'PROGRESS OK',
-                'foot_right_tone' => 'muted',
-                'foot_dot' => false,
-            ],
-            [
-                'key' => 'enroute',
-                'label' => 'DALAM PERJALANAN',
-                'label_tone' => 'body',
-                'value' => max(0, $totalOrdersCount - $verifiedCount),
-                'unit' => 'Armada On-Route',
-                'unit_tone' => 'body',
-                'icon' => 'send',
-                'icon_tone' => 'success-deep',
-                'foot_left' => 'Menuju Lokasi & Unloading',
-                'foot_left_tone' => 'body',
-                'foot_right' => 'ETA ON-SCHEDULE',
-                'foot_right_tone' => 'success-deep',
-                'foot_dot' => false,
-            ],
-            [
-                'key' => 'retur',
-                'label' => 'KASUS RETUR / SELISIH',
-                'label_tone' => $returCount > 0 ? 'warning-deep' : 'body',
-                'value' => $returCount,
-                'unit' => $returCount > 0 ? 'Kasus Butuh Verifikasi' : 'Nihil Kasus Retur',
-                'unit_tone' => $returCount > 0 ? 'danger' : 'body',
-                'icon' => 'alert-triangle',
-                'icon_tone' => $returCount > 0 ? 'danger' : 'success-deep',
-                'foot_left' => $returCount > 0 ? 'BA RETUR WAJIB' : 'MUTU 100% LOLOS',
-                'foot_left_tone' => $returCount > 0 ? 'danger' : 'success-deep',
-                'foot_right' => 'BA DIKUNCI',
-                'foot_right_tone' => 'warning-caution',
-                'foot_dot' => false,
-            ],
-        ];
-
-        // 4. Dossier Setup
-        $dossier = [
-            'title' => 'Verifikasi Berkas PoD Masuk',
-            'subtitle' => 'Inspeksi Fisik Dokumen & Otorisasi Penerimaan',
-            'badge' => 'DOKUMEN SIAP',
-            'icon' => 'file-text',
-            'reference_label' => 'NO. REFERENSI DOKUMEN',
-            'sj_label' => 'SURAT JALAN ASOSIASI',
-            'checks_label' => 'PARAMETER CEK MANDATORI PRD (WAJIB TERPENUHI SEMUA)',
-            'checks' => [
-                ['key' => 'signature', 'label' => 'Ttd Asli Penerima'],
-                ['key' => 'stamp', 'label' => 'Stempel Cap Basah PT/Instansi'],
-                ['key' => 'weight', 'label' => 'Bobot Netto Pas'],
-                ['key' => 'gps', 'label' => 'Radius GPS'],
-            ],
-            'notes_label' => 'CATATAN KOORDINATOR GUDANG',
-            'decision_label' => 'STATUS PUTUSAN:',
-            'decision' => [
-                ['key' => 'approved', 'label' => 'APPROVED (VALID)', 'tone' => 'success-deep'],
-                ['key' => 'reject', 'label' => 'REJECT (DITOLAK)', 'tone' => 'danger'],
-            ],
-            'cta' => [
-                'key' => 'validate-pod',
-                'label' => 'VALIDASI PoD & TUTUP PESANAN',
-                'icon' => 'badge-check',
-            ],
-            'buttons' => [
-                ['key' => 'save-draft', 'label' => 'SIMPAN DRAFT', 'icon' => 'save', 'variant' => 'outline'],
-                ['key' => 'escalate-audit', 'label' => 'ESKALASI TIM AUDIT', 'icon' => 'alert-triangle', 'variant' => 'danger'],
-            ],
-            'empty_title' => 'Berkas PoD Belum Masuk',
-            'empty_body' => 'Dokumen fisik dan foto dock untuk surat jalan ini belum diunggah pengirim. Ledger tetap terkunci sampai berkas lengkap masuk.',
-            'entries' => $dossierEntries,
-        ];
-
-        $dispatch = [
-            'title' => 'Log Status Pengiriman & Armada Lapangan',
-            'subtitle' => count($dispatchRows) . ' Perjalanan Terjadwal Sentra Hari Ini',
-            'badge' => 'LIVE DISPATCH',
-            'columns' => [
-                'ARMADA / SUPIR',
-                'NO. SJ & DESTINASI',
-                'MUATAN',
-                'STATUS EKSEKUSI',
-                'AKSI OPERASIONAL',
-            ],
-            'rows' => $dispatchRows,
-            'default_sj' => $defaultSj,
-            'dropoff_total' => max(1, count($dispatchRows)),
-            'dropoff_base' => $verifiedCount,
-            'footer_left' => 'ROUTE OPTIMIZATION CIWIDEY — BANDUNG RAYA & JABODETABEK',
-            'footer_right' => 'ENCRYPTED TELEMETRY HASH: ' . substr(md5(now()->toDateString()), 0, 11),
-        ];
-
-        $monitoringData = [
-            'operator' => $operator,
-            'mandate' => $mandate,
-            'kpis' => $kpis,
-            'dispatch' => $dispatch,
-            'dossier' => $dossier,
-        ];
+        $verifiedCount = count(array_filter($dispatchRows, fn($r) => $r['status_tone'] === 'accent' && str_contains($r['status'], 'SELESAI')));
+        $returCount = count(array_filter($dispatchRows, fn($r) => $r['has_retur']));
+        $totalArmada = max(1, $drivers->count());
 
         $viewName = view()->exists('koordinator.monitoring') ? 'koordinator.monitoring' : 'coordinator.monitoring';
 
         return view($viewName, [
-            'operator' => $operator,
-            'monitoringData' => $monitoringData,
+            'dispatchRows'     => $dispatchRows,
+            'dossierEntries'   => $dossierEntries,
+            'defaultSj'        => $defaultSj,
+            'totalOrdersCount' => $totalOrdersCount,
+            'verifiedCount'    => $verifiedCount,
+            'returCount'       => $returCount,
+            'totalArmada'      => $totalArmada,
         ]);
     }
 }

@@ -1,46 +1,62 @@
-﻿@extends('layouts.coordinator')
+@extends('layouts.coordinator')
 
 @section('title', 'Manajemen Stok Gudang')
 
 @section('content')
-    <div class="space-y-6" x-data="coordinatorStock(@js($stockData['commodities']), @js($stockData['filters']['options']), @js($stockData['intake']['fields']), @js($stockData['logs']['items']), @js($stockData['logs']['total']))">
-        @php
-            $header = $stockData['header'];
-            $protocol = $stockData['protocol'];
-            $kpis = $stockData['kpis'];
-            $filters = $stockData['filters'];
-            $commodities = $stockData['commodities'];
-            $intake = $stockData['intake'];
-            $logs = $stockData['logs'];
-        @endphp
+    @php
+        $suppliersList = $distinctSuppliers ?? [];
+        $logTotal = count($logItems ?? []);
+        $intakeFields = [
+            ['key' => 'vendor', 'type' => 'select', 'value' => $suppliersList[0] ?? 'Petani Binaan'],
+            ['key' => 'commodity', 'type' => 'select', 'value' => ($commodities ?? [])[0]['key'] ?? 'selada-romaine'],
+            ['key' => 'grade', 'type' => 'select', 'value' => 'Grade A (Premium)'],
+            ['key' => 'category', 'type' => 'select', 'value' => 'Panen Binaan Inti'],
+            ['key' => 'quantity', 'type' => 'number', 'value' => 500],
+            ['key' => 'date', 'type' => 'date', 'value' => now()->toDateString()],
+            ['key' => 'notes', 'type' => 'text', 'value' => 'Lolos sortir manual, suhu pra-dingin cold room terjaga.'],
+        ];
+    @endphp
+
+    <div class="space-y-6" x-data="coordinatorStock(
+        @js($commodities ?? []),
+        [
+            { key: 'all', label: 'Semua ({{ count($commodities ?? []) }})' },
+            { key: 'daun', label: 'Sayuran Daun' },
+            { key: 'buah', label: 'Buah & Solanaceae' },
+            { key: 'cruciferae', label: 'Cruciferae' }
+        ],
+        @js($intakeFields),
+        @js($logItems ?? []),
+        {{ $logTotal }}
+    )">
 
         {{-- Page header --}}
         <section class="gpa-panel flex flex-wrap items-center justify-between gap-4 p-6">
             <div class="min-w-0">
                 <p class="gpa-eyebrow flex items-center gap-2">
                     <x-gpa.icon name="package" class="h-4 w-4 text-success-deep" />
-                    {{ $header['eyebrow'] }}
+                    Sub-06 // Manajemen Stok
                 </p>
                 <h1 class="mt-2 font-sans text-3xl font-extrabold leading-10 tracking-[-0.01em] text-ink">
-                    {{ $header['title_before'] }}<br class="hidden sm:block">
-                    {{ $header['title_after'] }}
+                    Manajemen Stok Panen &amp; Alokasi<br class="hidden sm:block">
+                    Buffer Stock Gudang
                 </h1>
-                <p class="mt-2 max-w-3xl text-sm leading-5 text-ink-body">{{ $header['subtitle'] }}</p>
+                <p class="mt-2 max-w-3xl text-sm leading-5 text-ink-body">
+                    Monitoring ketersediaan pasokan panen petani binaan dan pasokan penyangga (buffer stock) mitra luar untuk pencegahan overselling (PRD Section 5.1, 7.3, Rule 02 &amp; 03).
+                </p>
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-2">
-                @foreach ($header['actions'] as $action)
-                    <button type="button" @click="act(@js($action['key']))"
-                        @class([
-                            'inline-flex h-10 items-center gap-1.5 rounded-lg px-3 transition-colors',
-                            'bg-surface-shell text-ink outline outline-1 outline-line-board hover:bg-surface-muted' => $action['variant'] === 'ghost',
-                            'bg-ink text-accent shadow-sub hover:bg-ink-muted' => $action['variant'] === 'ink',
-                        ])>
-                        <x-gpa.icon :name="$action['icon']"
-                            class="h-3.5 w-3.5 shrink-0 {{ $action['variant'] === 'ghost' ? 'text-ink' : 'text-accent' }}" />
-                        <span class="gpa-meta-lg font-bold">{{ $action['label'] }}</span>
-                    </button>
-                @endforeach
+                <button type="button" @click="act('export')"
+                    class="inline-flex h-10 items-center gap-1.5 rounded-lg px-3 transition-colors bg-surface-shell text-ink outline outline-1 outline-line-board hover:bg-surface-muted">
+                    <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0 text-ink" />
+                    <span class="gpa-meta-lg font-bold">EXPORT LEDGER .CSV</span>
+                </button>
+                <button type="button" @click="act('lock-all')"
+                    class="inline-flex h-10 items-center gap-1.5 rounded-lg px-3 transition-colors bg-ink text-accent shadow-sub hover:bg-ink-muted">
+                    <x-gpa.icon name="lock" class="h-3.5 w-3.5 shrink-0 text-accent" />
+                    <span class="gpa-meta-lg font-bold">KUNCI ALOKASI PASOKAN</span>
+                </button>
             </div>
         </section>
 
@@ -51,119 +67,171 @@
                 <x-gpa.icon name="shield" class="mt-0.5 h-4 w-4 shrink-0 text-success-deep" />
                 <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="gpa-micro-bold text-success-deep">{{ $protocol['title'] }}</h2>
-                        <span class="rounded bg-ink px-1.5 py-0.5 gpa-micro-bold text-accent">{{ $protocol['badge'] }}</span>
+                        <h2 class="gpa-micro-bold text-success-deep">PROTOKOL PENJAGA MUTU &amp; INTEGRITAS STOK (PRD SECTION 7.3 &amp; 8.2)</h2>
+                        <span class="rounded bg-ink px-1.5 py-0.5 gpa-micro-bold text-accent">HARD-LOCK ENABLED</span>
                     </div>
-                    <p class="mt-1.5 max-w-4xl text-xs leading-5 text-ink-body">{{ $protocol['body'] }}</p>
+                    <p class="mt-1.5 max-w-4xl text-xs leading-5 text-ink-body">
+                        Setiap PO yang diterbitkan otomatis memotong kuota komoditas secara real-time. Komitmen stok binaan terkunci 100%. Apabila alokasi binaan kurang dari permintaan PO, sistem mewajibkan injeksi buffer mitra tervalidasi dengan selisih susut bobot toleransi maks ≤ 2.5%.
+                    </p>
                 </div>
             </div>
 
             <div class="shrink-0 text-left lg:text-right">
-                <p class="gpa-micro-bold text-ink-body">{{ $protocol['validation_label'] }}</p>
-                <p class="mt-1 font-mono text-lg font-bold leading-6 text-success-deep">{{ $protocol['validation_value'] }}</p>
+                <p class="gpa-micro-bold text-ink-body">VALIDASI INTEGRITAS</p>
+                <p class="mt-1 font-mono text-lg font-bold leading-6 text-success-deep">0 ANOMALI OVERSELL</p>
             </div>
         </section>
 
         {{-- KPI row --}}
         <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            @foreach ($kpis as $kpi)
-                @php
-                    $segmentBase = ($kpi['segment_mode'] ?? null) === 'equal'
-                        ? count($kpi['segments'])
-                        : ($kpi['bar_total'] ?? array_sum(array_column($kpi['segments'], 'value')));
-                @endphp
-                <article class="gpa-panel flex flex-col gap-2 p-4">
-                    <div class="flex items-start justify-between gap-3">
-                        <h2 class="max-w-[11rem] gpa-micro-bold leading-3 text-ink-body">{{ $kpi['label'] }}</h2>
-                        <span @class([
-                            'shrink-0 rounded p-1.5',
-                            'bg-surface-shell' => ($kpi['icon_tone'] ?? 'shell') === 'shell',
-                            'bg-accent' => ($kpi['icon_tone'] ?? 'shell') === 'accent',
-                        ])>
-                            <x-gpa.icon :name="$kpi['icon']"
-                                @class([
-                                    'block h-4 w-4',
-                                    'text-success-deep' => ($kpi['icon_tone'] ?? 'shell') === 'shell',
-                                    'text-ink' => ($kpi['icon_tone'] ?? 'shell') === 'accent',
-                                ]) />
+            {{-- KPI 1: Total Stok Tersedia --}}
+            <article class="gpa-panel flex flex-col gap-2 p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="max-w-[11rem] gpa-micro-bold leading-3 text-ink-body">TOTAL STOK TERSEDIA</h2>
+                    <span class="shrink-0 rounded p-1.5 bg-surface-shell">
+                        <x-gpa.icon name="package" class="block h-4 w-4 text-success-deep" />
+                    </span>
+                </div>
+                <p class="flex items-baseline gap-1.5">
+                    <span class="font-mono text-3xl font-bold leading-10 text-ink" x-text="kg(totalStock())">14.850</span>
+                    <span class="gpa-meta-lg font-bold text-ink-body">KG</span>
+                </p>
+                <div class="mt-auto flex items-center justify-between gap-2 border-t border-line-soft/60 pt-2">
+                    <p class="min-w-0">
+                        <span class="block gpa-note text-success-deep"
+                            x-text="`Binaan: ${kg(builtianStock())} KG (${percent(builtianPercent(), 1)})`">
+                            Binaan: {{ number_format($totalBinaan ?? 0, 0, ',', '.') }} KG ({{ ($totalStock ?? 0) > 0 ? round((($totalBinaan ?? 0) / $totalStock) * 100, 1) : 0 }}%)
                         </span>
-                    </div>
-
-                    <p class="flex items-baseline gap-1.5">
-                        @if ($kpi['key'] === 'available')
-                            <span class="font-mono text-3xl font-bold leading-10 text-ink" x-text="kg(totalStock())">14.850</span>
-                        @elseif ($kpi['key'] === 'reserved')
-                            <span class="font-mono text-3xl font-bold leading-10 text-ink" x-text="kg(reserved())">8.900</span>
-                        @elseif ($kpi['key'] === 'free')
-                            <span class="font-mono text-3xl font-bold leading-10 text-success-deep" x-text="`+${kg(freeStock())}`">+5.950</span>
-                        @else
-                            <span class="font-mono text-3xl font-bold leading-10 text-ink">{{ $kpi['value'] }}</span>
-                        @endif
-                        <span class="gpa-meta-lg font-bold {{ $kpi['tone'] === 'success' ? 'text-success-deep' : 'text-ink-body' }}">{{ $kpi['unit'] }}</span>
+                        <span class="mt-0.5 block gpa-note text-ink-body"
+                            x-text="`Buffer: ${kg(bufferStock())} KG`">
+                            Buffer: {{ number_format($totalBuffer ?? 0, 0, ',', '.') }} KG
+                        </span>
                     </p>
+                </div>
+                <div class="flex h-1.5 w-full gap-0.5 overflow-hidden rounded-full bg-surface-pill">
+                    <span class="block h-full rounded-full bg-success-deep"
+                        style="width: {{ round(($totalBinaan ?? 0) / max(1, $totalStock ?? 1) * 100, 1) }}%"></span>
+                    <span class="block h-full rounded-full bg-brand"
+                        style="width: {{ round(($totalBuffer ?? 0) / max(1, $totalStock ?? 1) * 100, 1) }}%"></span>
+                </div>
+            </article>
 
-                    <div class="mt-auto flex items-center justify-between gap-2 border-t border-line-soft/60 pt-2">
-                        @if ($kpi['key'] === 'available')
-                            <p class="min-w-0">
-                                <span class="block gpa-note text-success-deep"
-                                    x-text="`Binaan: ${kg(builtianStock())} KG (${percent(builtianPercent(), 1)})`">Binaan: 10.200 KG (68.7%)</span>
-                                <span class="mt-0.5 block gpa-note text-ink-body"
-                                    x-text="`Buffer: ${kg(bufferStock())} KG`">Buffer: 4.650 KG</span>
-                            </p>
-                        @elseif ($kpi['key'] === 'reserved')
-                            <p class="min-w-0">
-                                <span class="block gpa-note text-ink">{{ $kpi['footnote_left'] }}</span>
-                                <span class="mt-0.5 block gpa-note text-ink-quiet">B2B & Retail Commitment</span>
-                            </p>
-                            <span class="shrink-0 rounded bg-accent px-1.5 py-0.5 gpa-micro-bold text-success-ink">100% TERIKAT</span>
-                        @elseif ($kpi['key'] === 'free')
-                            <p class="min-w-0">
-                                <span class="block gpa-note text-ink">{{ $kpi['footnote_left'] }}</span>
-                                <span class="mt-0.5 block gpa-note text-success-deep">{{ $kpi['footnote_right'] }}</span>
-                            </p>
-                        @else
-                            <p class="min-w-0">
-                                <span class="block gpa-note text-ink">{{ $kpi['footnote_left'] }}</span>
-                                <span class="mt-0.5 block gpa-note text-success-deep">{{ $kpi['footnote_right'] }}</span>
-                            </p>
-                        @endif
-                    </div>
+            {{-- KPI 2: Stok Terpesan / PO --}}
+            <article class="gpa-panel flex flex-col gap-2 p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="max-w-[11rem] gpa-micro-bold leading-3 text-ink-body">STOK TERPESAN / PO</h2>
+                    <span class="shrink-0 rounded p-1.5 bg-surface-shell">
+                        <x-gpa.icon name="file-text" class="block h-4 w-4 text-success-deep" />
+                    </span>
+                </div>
+                <p class="flex items-baseline gap-1.5">
+                    <span class="font-mono text-3xl font-bold leading-10 text-ink" x-text="kg(reserved())">8.900</span>
+                    <span class="gpa-meta-lg font-bold text-ink-body">KG</span>
+                </p>
+                <div class="mt-auto flex items-center justify-between gap-2 border-t border-line-soft/60 pt-2">
+                    <p class="min-w-0">
+                        <span class="block gpa-note text-ink">{{ $activePoCount ?? 0 }} Kontrak PO Aktif</span>
+                        <span class="mt-0.5 block gpa-note text-ink-quiet">B2B &amp; Retail Commitment</span>
+                    </p>
+                    <span class="shrink-0 rounded bg-accent px-1.5 py-0.5 gpa-micro-bold text-success-ink">100% TERIKAT</span>
+                </div>
+                <div class="flex h-1.5 w-full gap-0.5 overflow-hidden rounded-full bg-surface-pill">
+                    <span class="block h-full rounded-full bg-ink"
+                        style="width: {{ round(($totalReserved ?? 0) / max(1, $totalStock ?? 1) * 100, 1) }}%"></span>
+                </div>
+            </article>
 
-                    <div class="flex h-1.5 w-full gap-0.5 overflow-hidden rounded-full bg-surface-pill">
-                        @foreach ($kpi['segments'] as $segment)
-                            <span class="block h-full rounded-full {{ $segment['class'] }}"
-                                style="width: {{ round($segment['value'] / $segmentBase * 100, 1) }}%"></span>
-                        @endforeach
-                    </div>
-                </article>
-            @endforeach
+            {{-- KPI 3: Sisa Bebas --}}
+            <article class="gpa-panel flex flex-col gap-2 p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="max-w-[11rem] gpa-micro-bold leading-3 text-ink-body">SISA BEBAS (FREE STOCK)</h2>
+                    <span class="shrink-0 rounded p-1.5 bg-accent">
+                        <x-gpa.icon name="gauge" class="block h-4 w-4 text-ink" />
+                    </span>
+                </div>
+                <p class="flex items-baseline gap-1.5">
+                    <span class="font-mono text-3xl font-bold leading-10 text-success-deep" x-text="`+${kg(freeStock())}`">+5.950</span>
+                    <span class="gpa-meta-lg font-bold text-success-deep">KG</span>
+                </p>
+                <div class="mt-auto flex items-center justify-between gap-2 border-t border-line-soft/60 pt-2">
+                    <p class="min-w-0">
+                        <span class="block gpa-note text-ink">Ready to Promise (RTP)</span>
+                        <span class="mt-0.5 block gpa-note text-success-deep">{{ ($freeStock ?? 0) >= 0 ? 'AMAN DARI DEFISIT' : 'PERINGATAN DEFISIT' }}</span>
+                    </p>
+                </div>
+                <div class="flex h-1.5 w-full gap-0.5 overflow-hidden rounded-full bg-surface-pill">
+                    <span class="block h-full rounded-full bg-accent-edge"
+                        style="width: {{ round(max(0, $freeStock ?? 0) / max(1, $totalStock ?? 1) * 100, 1) }}%"></span>
+                </div>
+            </article>
+
+            {{-- KPI 4: Hub Pasokan Aktif --}}
+            <article class="gpa-panel flex flex-col gap-2 p-4">
+                <div class="flex items-start justify-between gap-3">
+                    <h2 class="max-w-[11rem] gpa-micro-bold leading-3 text-ink-body">HUB PASOKAN AKTIF</h2>
+                    <span class="shrink-0 rounded p-1.5 bg-surface-shell">
+                        <x-gpa.icon name="truck" class="block h-4 w-4 text-success-deep" />
+                    </span>
+                </div>
+                <p class="flex items-baseline gap-1.5">
+                    <span class="font-mono text-3xl font-bold leading-10 text-ink">3</span>
+                    <span class="gpa-meta-lg font-bold text-ink-body">LOKASI SENTRA</span>
+                </p>
+                <div class="mt-auto flex items-center justify-between gap-2 border-t border-line-soft/60 pt-2">
+                    <p class="min-w-0">
+                        <span class="block gpa-note text-ink">Cianjur, Lembang, Pangalengan</span>
+                        <span class="mt-0.5 block gpa-note text-success-deep">100% ONLINE</span>
+                    </p>
+                </div>
+                <div class="flex h-1.5 w-full gap-0.5 overflow-hidden rounded-full bg-surface-pill">
+                    <span class="block h-full rounded-full bg-success-deep" style="width: 33.3%"></span>
+                    <span class="block h-full rounded-full bg-success-deep" style="width: 33.3%"></span>
+                    <span class="block h-full rounded-full bg-success-deep" style="width: 33.3%"></span>
+                </div>
+            </article>
         </section>
 
         {{-- Commodity filter --}}
         <section class="gpa-panel flex flex-wrap items-center justify-between gap-3 p-4">
             <div class="flex flex-wrap items-center gap-2">
-                <span class="gpa-micro-bold text-ink-body">{{ $filters['label'] }}</span>
+                <span class="gpa-micro-bold text-ink-body">FILTER KOMODITAS:</span>
                 <div class="flex flex-wrap items-center gap-1.5">
-                    @foreach ($filters['options'] as $option)
-                        <button type="button" @click="filter = @js($option['key'])"
-                            :aria-pressed="filter === @js($option['key']) ? 'true' : 'false'"
-                            :class="filter === @js($option['key'])
-                                ? 'bg-ink text-accent'
-                                : 'bg-surface-shell text-ink-body hover:bg-surface-muted'"
-                            class="rounded px-2.5 py-1 transition-colors gpa-meta-lg font-medium">
-                            {{ $option['label'] }}
-                        </button>
-                    @endforeach
+                    <button type="button" @click="filter = 'all'"
+                        :aria-pressed="filter === 'all' ? 'true' : 'false'"
+                        :class="filter === 'all' ? 'bg-ink text-accent' : 'bg-surface-shell text-ink-body hover:bg-surface-muted'"
+                        class="rounded px-2.5 py-1 transition-colors gpa-meta-lg font-medium">
+                        Semua ({{ count($commodities ?? []) }})
+                    </button>
+                    <button type="button" @click="filter = 'daun'"
+                        :aria-pressed="filter === 'daun' ? 'true' : 'false'"
+                        :class="filter === 'daun' ? 'bg-ink text-accent' : 'bg-surface-shell text-ink-body hover:bg-surface-muted'"
+                        class="rounded px-2.5 py-1 transition-colors gpa-meta-lg font-medium">
+                        Sayuran Daun
+                    </button>
+                    <button type="button" @click="filter = 'buah'"
+                        :aria-pressed="filter === 'buah' ? 'true' : 'false'"
+                        :class="filter === 'buah' ? 'bg-ink text-accent' : 'bg-surface-shell text-ink-body hover:bg-surface-muted'"
+                        class="rounded px-2.5 py-1 transition-colors gpa-meta-lg font-medium">
+                        Buah &amp; Solanaceae
+                    </button>
+                    <button type="button" @click="filter = 'cruciferae'"
+                        :aria-pressed="filter === 'cruciferae' ? 'true' : 'false'"
+                        :class="filter === 'cruciferae' ? 'bg-ink text-accent' : 'bg-surface-shell text-ink-body hover:bg-surface-muted'"
+                        class="rounded px-2.5 py-1 transition-colors gpa-meta-lg font-medium">
+                        Cruciferae
+                    </button>
                 </div>
             </div>
 
             <div class="flex items-center gap-3">
-                @foreach ($filters['legend'] as $legend)
-                    <span class="inline-flex items-center gap-1.5">
-                        <span class="h-1.5 w-1.5 rounded-full {{ $legend['class'] }}"></span>
-                        <span class="gpa-note text-ink">{{ $legend['label'] }}</span>
-                    </span>
-                @endforeach
+                <span class="inline-flex items-center gap-1.5">
+                    <span class="h-1.5 w-1.5 rounded-full bg-success-deep"></span>
+                    <span class="gpa-note text-ink">Binaan Terikat</span>
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                    <span class="h-1.5 w-1.5 rounded-full bg-brand"></span>
+                    <span class="gpa-note text-ink">Buffer Siaga</span>
+                </span>
             </div>
         </section>
 
@@ -312,56 +380,94 @@
                         <x-gpa.icon name="clipboard" class="block h-4 w-4 text-ink" />
                     </span>
                     <div>
-                        <h2 class="font-sans text-lg font-bold leading-6 tracking-[-0.01em] text-ink">{{ $intake['title'] }}</h2>
-                        <p class="gpa-micro-bold mt-0.5 text-ink-quiet">{{ $intake['subtitle'] }}</p>
+                        <h2 class="font-sans text-lg font-bold leading-6 tracking-[-0.01em] text-ink">Quick Intake Ledger</h2>
+                        <p class="gpa-micro-bold mt-0.5 text-ink-quiet">PENCATATAN PANEN MASUK LAPANGAN</p>
                     </div>
                 </div>
-                <span class="rounded bg-ink px-1.5 py-0.5 gpa-micro-bold text-accent">{{ $intake['badge'] }}</span>
+                <span class="rounded bg-ink px-1.5 py-0.5 gpa-micro-bold text-accent">POS-01 AUTO-CAPTURE</span>
             </header>
 
             <form class="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3" @submit.prevent="submitIntake()">
-                @foreach ($intake['fields'] as $field)
-                    <div @class(['min-w-0', 'md:col-span-2 xl:col-span-3' => $field['type'] === 'text'])>
-                        <label class="gpa-label" for="intake-{{ $field['key'] }}">{{ $field['label'] }}</label>
+                {{-- Field: Vendor --}}
+                <div class="min-w-0">
+                    <label class="gpa-label" for="intake-vendor">PETANI BINAAN / MITRA VENDOR *</label>
+                    <select id="intake-vendor" class="gpa-control mt-1" x-model="form.vendor">
+                        @foreach ($suppliersList as $supplier)
+                            <option value="{{ $supplier }}">{{ $supplier }}</option>
+                        @endforeach
+                    </select>
+                    <span class="gpa-hint mt-1">Kelompok Tani Binaan GPA / Mitra Buffer Resmi</span>
+                </div>
 
-                        @if ($field['type'] === 'select')
-                            <select id="intake-{{ $field['key'] }}" class="gpa-control mt-1" x-model="form.{{ $field['key'] }}">
-                                @foreach ($field['options'] as $option)
-                                    <option value="{{ $option['key'] }}">{{ $option['label'] }}</option>
-                                @endforeach
-                            </select>
-                        @elseif ($field['type'] === 'number')
-                            <div class="mt-1 flex items-center gap-2">
-                                <input id="intake-{{ $field['key'] }}" type="number" min="1" step="1"
-                                    value="{{ $field['value'] }}" class="gpa-control" x-model.number="form.{{ $field['key'] }}" />
-                                <span class="gpa-meta-lg font-bold text-ink-body">{{ $field['unit'] }}</span>
-                            </div>
-                        @elseif ($field['type'] === 'date')
-                            <input id="intake-{{ $field['key'] }}" type="date" value="{{ $field['value'] }}"
-                                class="gpa-control mt-1" x-model="form.{{ $field['key'] }}" />
-                        @else
-                            <input id="intake-{{ $field['key'] }}" type="text" value="{{ $field['value'] }}"
-                                class="gpa-control mt-1" x-model="form.{{ $field['key'] }}" />
-                        @endif
+                {{-- Field: Commodity --}}
+                <div class="min-w-0">
+                    <label class="gpa-label" for="intake-commodity">KOMODITAS INTI *</label>
+                    <select id="intake-commodity" class="gpa-control mt-1" x-model="form.commodity">
+                        @foreach ($products ?? [] as $product)
+                            <option value="{{ $product->slug ?: \Illuminate\Support\Str::slug($product->name) }}">
+                                {{ $product->name }} ({{ $product->grade ?: 'Grade A' }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
 
-                        @if (! empty($field['hint']))
-                            <span class="gpa-hint mt-1">{{ $field['hint'] }}</span>
-                        @endif
+                {{-- Field: Grade --}}
+                <div class="min-w-0">
+                    <label class="gpa-label" for="intake-grade">GRADE MUTU</label>
+                    <select id="intake-grade" class="gpa-control mt-1" x-model="form.grade">
+                        <option value="Grade A+ (Super)">Grade A+ (Super)</option>
+                        <option value="Grade A (Premium)">Grade A (Premium)</option>
+                        <option value="Grade AA (Wajib Panas)">Grade AA (Wajib Panas)</option>
+                        <option value="Grade B (Sortir)">Grade B (Sortir)</option>
+                    </select>
+                </div>
+
+                {{-- Field: Category --}}
+                <div class="min-w-0">
+                    <label class="gpa-label" for="intake-category">KATEGORI PASOKAN</label>
+                    <select id="intake-category" class="gpa-control mt-1" x-model="form.category">
+                        <option value="Panen Binaan Inti">Panen Binaan Inti</option>
+                        <option value="Injeksi Buffer Mitra">Injeksi Buffer Mitra</option>
+                        <option value="Retur Sortir">Retur Sortir</option>
+                    </select>
+                </div>
+
+                {{-- Field: Quantity --}}
+                <div class="min-w-0">
+                    <label class="gpa-label" for="intake-quantity">KUANTITAS (NETTO)</label>
+                    <div class="mt-1 flex items-center gap-2">
+                        <input id="intake-quantity" type="number" min="1" step="1" value="500"
+                            class="gpa-control" x-model.number="form.quantity" />
+                        <span class="gpa-meta-lg font-bold text-ink-body">KG</span>
                     </div>
-                @endforeach
+                </div>
+
+                {{-- Field: Date --}}
+                <div class="min-w-0">
+                    <label class="gpa-label" for="intake-date">TANGGAL TEBAS/PETIK</label>
+                    <input id="intake-date" type="date" value="{{ now()->toDateString() }}"
+                        class="gpa-control mt-1" x-model="form.date" />
+                </div>
+
+                {{-- Field: Notes --}}
+                <div class="min-w-0 md:col-span-2 xl:col-span-3">
+                    <label class="gpa-label" for="intake-notes">BRIX / MOISTURE / QC NOTES</label>
+                    <input id="intake-notes" type="text" value="Lolos sortir manual, suhu pra-dingin cold room terjaga."
+                        class="gpa-control mt-1" x-model="form.notes" />
+                </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-3 md:col-span-2 xl:col-span-3">
                     <p class="inline-flex items-center gap-2 rounded-lg bg-surface-shell px-2.5 py-2 outline outline-1 outline-line-soft">
                         <x-gpa.icon name="scale" class="h-3.5 w-3.5 text-ink-body" />
-                        <span class="gpa-meta-lg text-ink">{{ $intake['port_label'] }}</span>
-                        <span class="gpa-micro-bold text-success-deep">{{ $intake['port_status'] }}</span>
+                        <span class="gpa-meta-lg text-ink">Port Timbangan: COM-4 (Netto Stabil)</span>
+                        <span class="gpa-micro-bold text-success-deep">CONNECTED</span>
                     </p>
 
                     <button type="submit"
                         class="inline-flex h-11 items-center gap-2 rounded-lg bg-accent px-4 text-success-ink outline outline-1 outline-success-deep transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                         :disabled="lockedAll">
                         <x-gpa.icon name="save" class="h-4 w-4" />
-                        <span class="gpa-meta-lg font-bold">{{ $intake['submit'] }}</span>
+                        <span class="gpa-meta-lg font-bold">SIMPAN DATA PASOKAN</span>
                     </button>
                 </div>
             </form>
@@ -372,11 +478,11 @@
             <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-board/40 pb-2">
                 <div class="flex items-center gap-2">
                     <x-gpa.icon name="clock" class="h-4 w-4 text-success-deep" />
-                    <h2 class="font-sans text-lg font-bold leading-6 tracking-[-0.01em] text-ink">{{ $logs['title'] }}</h2>
+                    <h2 class="font-sans text-lg font-bold leading-6 tracking-[-0.01em] text-ink">Log Inbound &amp; Realtime</h2>
                 </div>
                 <span class="inline-flex items-center gap-1.5">
                     <span class="h-1.5 w-1.5 animate-pulse-ring rounded-full bg-success-deep"></span>
-                    <span class="gpa-micro-bold text-success-deep">{{ $logs['badge'] }}</span>
+                    <span class="gpa-micro-bold text-success-deep">LIVE FEED</span>
                 </span>
             </header>
 
@@ -395,7 +501,7 @@
                     </div>
                 </template>
 
-                @foreach ($logs['items'] as $log)
+                @foreach ($logItems ?? [] as $log)
                     <div @class([
                         'rounded-lg border-l-2 bg-surface-shell/80 p-2.5',
                         'border-success-deep' => $log['tone'] === 'success',
@@ -417,8 +523,8 @@
             <footer class="mt-3 rounded-lg py-2 text-center outline outline-1 outline-line-soft">
                 <button type="button" @click="showAllLogs()"
                     class="gpa-note text-success-deep transition-opacity hover:opacity-80">
-                    <span x-show="!allLogs">Lihat Seluruh <span x-text="logTotal">{{ $logs['total'] }}</span> Log Hari Ini ΓåÆ</span>
-                    <span x-show="allLogs" x-cloak>Menampilkan <span x-text="pendingLogs.length + {{ count($logs['items']) }}"></span> log terbaru ΓåÆ</span>
+                    <span x-show="!allLogs">Lihat Seluruh <span x-text="logTotal">{{ $logTotal }}</span> Log Hari Ini &rarr;</span>
+                    <span x-show="allLogs" x-cloak>Menampilkan <span x-text="pendingLogs.length + {{ count($logItems ?? []) }}"></span> log terbaru &rarr;</span>
                 </button>
             </footer>
         </section>

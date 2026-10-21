@@ -12,11 +12,8 @@
             3 => ['chip' => 'TAHAP 3: MENUNGGU TIMBANGAN', 'tone' => 'accent'],
             4 => ['chip' => 'SIAP TIMBANG', 'tone' => 'accent-soft'],
         ];
-        $qcSamples = [
-            ['krat' => 'KRAT SAMPEL #04', 'status' => 'PASS QC', 'gross' => 22.12, 'tara' => 2.00, 'trim' => 0.18, 'trim_percent' => 0.89],
-            ['krat' => 'KRAT SAMPEL #18', 'status' => 'PASS QC', 'gross' => 22.05, 'tara' => 2.00, 'trim' => 0.22, 'trim_percent' => 1.09],
-            ['krat' => 'KRAT SAMPEL #33', 'status' => 'PASS QC', 'gross' => 22.18, 'tara' => 2.00, 'trim' => 0.14, 'trim_percent' => 0.69],
-        ];
+        $qcSamples = $qcSamples ?? [];
+        $avgTrimValue = $avgTrimValue ?? '0.00%';
     @endphp
 
     <div class="space-y-6"
@@ -26,7 +23,7 @@
             'cta' => ['label' => 'TRANSFER KE MEJA TIMBANGAN NETTO >>'],
         ]), @js([
             'subtitle' => 'Sampel acak dari batch aktif (' . now()->format('d M Y') . ')',
-            'avg_value' => '0.89%',
+            'avg_value' => $avgTrimValue,
             'samples' => $qcSamples,
         ]), @js([
             'totalBatches' => $totalOrders,
@@ -423,7 +420,7 @@
                     <div>
                         <p class="gpa-micro-bold text-success-deep">RATA-RATA SUSUT TRIMMING</p>
                         <p class="flex items-baseline gap-1.5">
-                            <span class="font-mono text-sm font-bold text-ink" x-text="avgTrim()">0.89%</span>
+                            <span class="font-mono text-sm font-bold text-ink" x-text="avgTrim()">{{ $avgTrimValue }}</span>
                             <span class="font-inter text-xs text-ink-body">(Toleransi SOP: Max 2.00%)</span>
                         </p>
                     </div>
@@ -431,7 +428,7 @@
             </header>
 
             <div class="grid gap-4 pt-1 md:grid-cols-3">
-                @foreach ($qcSamples as $sample)
+                @forelse ($qcSamples as $sample)
                     @php($net = $sample['gross'] - $sample['tara'] - $sample['trim'])
                     <article class="flex cursor-pointer flex-col justify-between gap-3 rounded-lg bg-surface-shell p-4 outline outline-1 outline-line-board/40 transition-colors hover:bg-surface-muted"
                         @click="inspectSample(@js($sample['krat']))">
@@ -463,7 +460,11 @@
                             Inspektor: {{ auth()->user()?->name ?? 'QC Officer' }} <span aria-hidden="true">&middot;</span> Sensor Calibrated
                         </footer>
                     </article>
-                @endforeach
+                @empty
+                    <div class="col-span-full rounded-lg bg-surface-shell p-6 text-center text-sm font-medium text-ink-quiet">
+                        Belum ada sampel QC aktif pada batch panen hari ini.
+                    </div>
+                @endforelse
             </div>
         </section>
     </div>

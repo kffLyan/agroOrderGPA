@@ -651,7 +651,7 @@
         </div>
 
         {{-- Lock bar --}}
-        <section class="relative flex flex-col justify-center gap-4 rounded-2xl bg-ink p-4 outline outline-1 -outline-offset-1 outline-success-deep/40">
+        <section class="sticky bottom-4 z-30 flex flex-col justify-center gap-4 rounded-2xl bg-ink p-4 shadow-2xl ring-1 ring-white/10 outline outline-1 -outline-offset-1 outline-success-deep/40">
             <div class="flex flex-wrap items-center gap-4">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent">
                     <x-gpa.icon name="lock" class="h-[22px] w-[22px] shrink-0 text-success-ink" />

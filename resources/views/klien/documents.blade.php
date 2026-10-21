@@ -149,16 +149,16 @@
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-2">
-                <button type="button" @click="runAction({ label: 'Rekap Tagihan (CSV)', variant: 'outline', icon: 'download' })"
+                <a href="{{ route('klien.documents.export') }}"
                     class="inline-flex items-center gap-1.5 rounded-lg bg-surface-pill px-4 py-2 gpa-meta-lg font-medium uppercase tracking-[0.55px] text-ink-body shadow-sub transition-colors hover:bg-surface-disabled hover:text-ink">
                     <x-gpa.icon name="download" class="h-3 w-3 text-ink-body" />
                     <span>Rekap Tagihan (CSV)</span>
-                </button>
-                <button type="button" @click="runAction({ label: 'Cetak Laporan', variant: 'solid', icon: 'printer' })"
+                </a>
+                <a href="{{ route('klien.documents.print-rekap') }}" target="_blank"
                     class="inline-flex items-center gap-1.5 rounded-lg bg-ink px-4 py-2 gpa-meta-lg font-bold uppercase tracking-[0.55px] text-white transition-colors hover:bg-brand-deep">
                     <x-gpa.icon name="printer" class="h-3 w-3 text-white" />
                     <span>Cetak Laporan</span>
-                </button>
+                </a>
 
                 {{-- Dropdown "Unggah Bukti": jalan pintas ke formulir bukti pembayaran --}}
                 <div class="relative" @click.outside="proofMenuOpen = false" @keydown.escape.window="proofMenuOpen = false">
@@ -518,17 +518,19 @@
                             &bull; Tempo {{ $invoice['tempo_days'] }} Hari
                         </p>
                     </div>
-                    <div class="flex shrink-0 items-center gap-1">
-                        <button type="button" @click="runAction({ label: 'Cetak Lampiran', variant: 'ghost' }, @js($invoice))"
-                            class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-ink transition-colors hover:bg-brand-deep">
-                            <x-gpa.icon name="save" class="h-3.5 w-3.5 text-white" />
-                            <span class="sr-only">Cetak lampiran {{ $invoice['po'] }}</span>
-                        </button>
-                        <button type="button" @click="runAction({ label: 'Unduh Lampiran PDF', variant: 'ghost' }, @js($invoice))"
-                            class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-ink transition-colors hover:bg-brand-deep">
-                            <x-gpa.icon name="download" class="h-3 w-3 text-white" />
-                            <span class="sr-only">Unduh lampiran {{ $invoice['po'] }}</span>
-                        </button>
+                    <div class="flex shrink-0 items-center gap-2">
+                        <a href="{{ route('prints.invoice', ['invoice' => $invoice['po']]) }}" target="_blank"
+                            title="Cetak Faktur Resmi A4"
+                            class="inline-flex items-center gap-1 rounded-lg bg-ink px-2.5 py-1 text-white transition-colors hover:bg-brand-deep text-2xs font-bold uppercase">
+                            <x-gpa.icon name="printer" class="h-3 w-3" />
+                            Cetak Faktur A4
+                        </a>
+                        <a href="{{ route('prints.surat-jalan') }}" target="_blank"
+                            title="Cetak Surat Jalan Fisik"
+                            class="inline-flex items-center gap-1 rounded-lg bg-ink px-2.5 py-1 text-white transition-colors hover:bg-brand-deep text-2xs font-bold uppercase">
+                            <x-gpa.icon name="file-text" class="h-3 w-3" />
+                            Cetak SJ
+                        </a>
                     </div>
                 </div>
 

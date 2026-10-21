@@ -35,15 +35,15 @@ class MonitoringController extends Controller
                 $defaultSj = $sj;
             }
 
-            $driver = $order->driver ?: ($drivers[$index % max(1, $drivers->count())] ?? null);
-            $driverName = $driver?->name ?? 'Joko Prasetyo';
-            $vehiclePlate = $order->vehicle_plate_number ?: ($index % 2 === 0 ? 'B 9102 SDA' : 'D 8472 GA');
-            $vehicleName = $index % 2 === 0 ? 'Engkel Box ' . $vehiclePlate : 'Blind Van ' . $vehiclePlate;
+            $driver = $order->driver;
+            $driverName = $driver?->name ?? 'Belum Ditugaskan';
+            $vehiclePlate = $order->vehicle_plate_number ?: '—';
+            $vehicleName = $driver ? ('Armada GPA ' . ($vehiclePlate !== '—' ? $vehiclePlate : '')) : 'Menunggu Penugasan';
 
             $customerName = $order->user?->company_name ?: ($order->user?->name ?? 'Mitra B2B');
-            $destination = $order->delivery_address ?: 'Sentul Barat (Drop #' . ($index + 1) . ')';
+            $destination = $order->delivery_address ?: 'Gudang Klien';
             $cargoKg = (float) $order->orderItems->sum(fn($it) => $it->actual_net_weight ?: $it->ordered_qty);
-            $commodityNames = $order->orderItems->pluck('product.name')->filter()->unique()->join(', ') ?: 'Selada & Sayuran';
+            $commodityNames = $order->orderItems->pluck('product.name')->filter()->unique()->join(', ') ?: 'Komoditas Sayur';
 
             $returnedKg = (float) $order->orderItems->sum('returned_weight');
             $hasRetur = $returnedKg > 0;
@@ -63,7 +63,7 @@ class MonitoringController extends Controller
                     ['key' => 'open-retur', 'label' => 'Buka Lap. Retur', 'icon' => 'refresh', 'variant' => 'danger'],
                     ['key' => 'view-ba', 'label' => 'Detail BA', 'icon' => 'clipboard', 'variant' => 'soft'],
                 ];
-            } elseif ($order->status === 'SELESAI' || $index === 0) {
+            } elseif (in_array($order->status, ['SELESAI', 'SELESAI_CATATAN'])) {
                 $status = 'SELESAI — POD TERVERIFIKASI';
                 $statusTone = 'accent';
                 $rowTone = 'active';
@@ -74,7 +74,7 @@ class MonitoringController extends Controller
             }
 
             $dossierRef = 'POD-DOC-' . date('Ym') . '-' . str_pad($order->id, 4, '0', STR_PAD_LEFT);
-            $isComplete = $order->status === 'SELESAI' || $index === 0;
+            $isComplete = in_array($order->status, ['SELESAI', 'SELESAI_CATATAN']);
 
             $arrival = 'Tiba ' . ($order->updated_at ? $order->updated_at->format('H:i') : date('H:i')) . ' WIB';
             $arrivalTone = $hasRetur ? 'warning-deep' : 'success-deep';
@@ -110,11 +110,11 @@ class MonitoringController extends Controller
                 'po' => $order->order_number,
                 'customer' => $customerName,
                 'address' => $destination,
-                'driver' => $driverName . ' (ID-DRV-' . str_pad($driver?->id ?? 1, 3, '0', STR_PAD_LEFT) . ')',
+                'driver' => $driverName . ($driver ? (' (ID-DRV-' . str_pad($driver->id, 3, '0', STR_PAD_LEFT) . ')') : ''),
                 'plate' => $vehiclePlate,
                 'net_kg' => $cargoKg,
                 'delivery_time' => ($order->updated_at ? $order->updated_at->format('H:i') : date('H:i')) . ' WIB (' . date('d M Y') . ')',
-                'receiver_name' => $order->received_by_name ?: ($order->user?->name ?? 'Bapak Hendra (Receiving Dept)'),
+                'receiver_name' => $order->received_by_name ?: ($order->user?->name ?? 'Bagian Penerimaan Klien'),
                 'gps_tolerance_m' => 4.2,
                 'gps_radius_m' => 2.1,
                 'exhibits' => [

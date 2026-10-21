@@ -151,16 +151,11 @@ export default function directorSales(scopeKeys = [], trend = [], portfolio = []
         },
 
         exportSummary() {
-            this.notify(
-                'Unduh Ringkasan XLSX',
-                `Rekap ${this.activeScopeKey()} berisi omzet, laba kotor, dan rekapitulasi arus kas sedang disusun.`,
-                'success',
-            );
+            window.location.href = '/direktur/sales/export';
         },
 
         printRecap() {
-            window.print();
-            this.notify('Cetak Rekapitulasi PDF', 'Dokumen rekonsiliasi penjualan dikirim ke printer.', 'info');
+            window.open('/direktur/reports/download', '_blank');
         },
 
         /* ---------- toast ---------- */

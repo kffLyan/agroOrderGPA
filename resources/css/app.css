@@ -296,3 +296,21 @@
         border-radius: 9999px;
     }
 }
+
+@media print {
+    .no-print,
+    header.sticky,
+    aside,
+    #sidebar,
+    [aria-label="Buka menu navigasi"],
+    .gpa-toast,
+    #loading-screen {
+        display: none !important;
+    }
+
+    body {
+        background: #ffffff !important;
+        color: #191c18 !important;
+    }
+}
+

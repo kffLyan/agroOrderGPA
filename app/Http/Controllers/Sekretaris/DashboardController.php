@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Sekretaris;
 
 use App\Http\Controllers\Controller;
+use App\Models\HarvestBatch;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
@@ -32,7 +33,7 @@ class DashboardController extends Controller
         $completedOrders = $allOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN']);
 
         // 2. Pembayaran menunggu verifikasi
-        $pendingPaymentsCount = Payment::where('status', 'PENDING')->count();
+        $pendingPaymentsCount = Payment::whereIn('status', ['MENUNGGU_VERIFIKASI', 'PENDING'])->count();
 
         $totalTodayCount = $allOrders->where('created_at', '>=', $today)->count();
 
@@ -67,9 +68,7 @@ class DashboardController extends Controller
                         'label' => $isContract ? 'Term of Payment (Tempo 30D)' : 'Transfer Bank Tunai',
                         'class' => $isContract ? 'font-semibold text-success-deep' : 'text-ink-body',
                     ],
-                    'items'       => $itemsList ?: [
-                        ['name' => 'Komoditas Pangan Hortikultura', 'weight' => '1.000 kg', 'class' => 'font-medium text-ink']
-                    ],
+                    'items'       => $itemsList,
                     'estimate'    => 'Rp ' . number_format($estTotal, 0, ',', '.'),
                     'status'      => [
                         'label' => match ($ord->status) {
@@ -91,7 +90,7 @@ class DashboardController extends Controller
                         },
                     ],
                     'status_note' => [
-                        'label' => $ord->status === 'MENUNGGU_VERIFIKASI' ? 'Sisa SLA: 45 Menit' : 'Operasional Berjalan',
+                        'label' => $ord->status === 'MENUNGGU_VERIFIKASI' ? ('Masuk ' . $ord->created_at->diffForHumans()) : 'Operasional Berjalan',
                         'class' => $ord->status === 'MENUNGGU_VERIFIKASI' ? 'font-semibold text-warning-deep' : 'text-ink-quiet',
                     ],
                     'actions'     => [
@@ -112,31 +111,6 @@ class DashboardController extends Controller
                     ],
                 ];
             }
-        } else {
-            $queueRows = [
-                [
-                    'id'          => 1,
-                    'po'          => 'ORD-GPA-202610-0001',
-                    'client'      => 'PT Sumber Pangan Sejahtera',
-                    'po_chip'     => ['label' => 'KONTRAK B2B', 'class' => 'bg-accent text-success-ink font-bold'],
-                    'terms'       => ['label' => 'Term of Payment (Tempo 30D)', 'class' => 'font-semibold text-success-deep'],
-                    'items'       => [
-                        ['name' => 'Bawang Merah Brebes Super', 'weight' => '600 kg', 'class' => 'font-medium text-ink'],
-                        ['name' => 'Cabai Merah Keriting', 'weight' => '400 kg', 'class' => 'font-medium text-ink'],
-                    ],
-                    'estimate'    => 'Rp 37.200.000',
-                    'status'      => [
-                        'label' => 'Menunggu Verifikasi',
-                        'class' => 'border-warning/40 bg-warning-wash font-bold text-warning-deep',
-                        'icon'  => 'clock',
-                    ],
-                    'status_note' => ['label' => 'Sisa SLA: 38 Menit', 'class' => 'font-semibold text-warning-deep'],
-                    'actions'     => [
-                        ['label' => 'Verifikasi', 'tone' => 'ink', 'intent' => 'approve', 'message' => 'PO disetujui.', 'url' => route('sekretaris.verification')],
-                        ['label' => 'Detail', 'tone' => 'default', 'intent' => 'detail', 'message' => 'Buka detail.', 'url' => route('sekretaris.verification')],
-                    ],
-                ],
-            ];
         }
 
         // 4. Status Kesiapan Buffer Stock Panen
@@ -144,10 +118,13 @@ class DashboardController extends Controller
         $stockRows = [];
 
         foreach ($products as $p) {
-            $currentStock = (float) $p->stock;
+            $currentStock = (float) HarvestBatch::where('product_id', $p->id)
+                ->where('available_quantity', '>', 0)
+                ->sum('available_quantity');
             $maxCapacity = 3000.0;
             $percent = min(100, round(($currentStock / $maxCapacity) * 100));
             $isLow = $currentStock < 500;
+            $supplierName = HarvestBatch::where('product_id', $p->id)->latest('batch_date')->value('supplier_name') ?? 'Petani Mitra GPA';
 
             $stockRows[] = [
                 'name'       => $p->name,
@@ -161,41 +138,12 @@ class DashboardController extends Controller
                 'fill_class' => $isLow ? 'bg-danger' : 'bg-success-deep',
                 'foot'       => [
                     [
-                        'label' => 'Origin: ' . ($p->origin ?: 'Lembang & Ciwidey'),
+                        'label' => 'Pasokan: ' . $supplierName,
                         'class' => 'text-ink-body',
                     ],
                     [
                         'label' => 'Kapasitas: ' . $percent . '%',
                         'class' => $isLow ? 'font-bold text-danger' : 'font-bold text-success-deep',
-                    ],
-                ],
-            ];
-        }
-
-        if (empty($stockRows)) {
-            $stockRows = [
-                [
-                    'name'       => 'Selada Romaine Hydroponic Super',
-                    'alert'      => false,
-                    'card_class' => 'border-line-soft bg-surface-shell',
-                    'chip'       => ['label' => 'AMAN (2.250 kg)', 'class' => 'bg-accent/40 text-success-deep font-bold'],
-                    'percent'    => 75,
-                    'fill_class' => 'bg-success-deep',
-                    'foot'       => [
-                        ['label' => 'Origin: Lembang', 'class' => 'text-ink-body'],
-                        ['label' => 'Kapasitas: 75%', 'class' => 'font-bold text-success-deep'],
-                    ],
-                ],
-                [
-                    'name'       => 'Brokoli Super Lembang',
-                    'alert'      => true,
-                    'card_class' => 'border-danger/30 bg-danger-wash/10',
-                    'chip'       => ['label' => 'KRITIS (420 kg)', 'class' => 'bg-danger-wash text-danger font-bold'],
-                    'percent'    => 20,
-                    'fill_class' => 'bg-danger',
-                    'foot'       => [
-                        ['label' => 'Origin: Lembang', 'class' => 'text-ink-body'],
-                        ['label' => 'Kapasitas: 20%', 'class' => 'font-bold text-danger'],
                     ],
                 ],
             ];

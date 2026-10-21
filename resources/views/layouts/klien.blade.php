@@ -19,6 +19,7 @@
 </head>
 
 <body class="min-h-screen bg-canvas font-sans text-ink antialiased">
+    <x-gpa.loading-screen />
     @php
         $user = auth()->user();
         $clientName = $user->company_name ?: ($user->name ?: config('app.name'));
@@ -33,7 +34,7 @@
             ['label' => 'Keranjang & Draft', 'icon' => 'cart', 'href' => route('klien.cart'), 'badge' => 'draft', 'active' => request()->routeIs('klien.cart*')],
             ['label' => 'Riwayat Pesanan', 'icon' => 'package', 'href' => route('klien.orders.index'), 'active' => request()->routeIs('klien.orders.*')],
             ['label' => 'Dokumen & Faktur', 'icon' => 'file-text', 'href' => route('klien.documents'), 'active' => request()->routeIs('klien.documents*') || request()->routeIs('klien.payment-proof*')],
-            ['label' => 'Profil Pengguna', 'icon' => 'user', 'href' => route('profile.edit'), 'active' => request()->routeIs('profile.*')],
+            ['label' => 'Profil & Gudang', 'icon' => 'building', 'href' => route('profile.edit'), 'active' => request()->routeIs('profile.*')],
         ];
     @endphp
 
@@ -52,7 +53,7 @@
                     </button>
 
                     <a href="{{ route('klien.dashboard') }}" class="flex min-w-0 items-center gap-3">
-                        <x-gpa.brand-mark class="h-7 w-7 shrink-0 text-accent" />
+                        <img src="{{ asset('gpaleaves.png') }}" alt="Logo AgroOrder GPA" class="h-8 w-8 shrink-0 object-contain">
                         <span class="flex min-w-0 flex-col">
                             <span class="flex min-w-0 items-center gap-2">
                                 <span

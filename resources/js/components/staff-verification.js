@@ -173,7 +173,7 @@ export default function secretaryVerification(orders = [], checklistTotal = 0) {
                 return;
             }
 
-            if (this.checked.length < this.checklistTotal) {
+            if (this.checklistTotal > 0 && this.checked.length < this.checklistTotal) {
                 this.run(
                     'Hard-Gate Belum Lengkap',
                     'Centang seluruh poin Hard-Gate Checklist Sekretariat sebelum meneruskan PO.',

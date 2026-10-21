@@ -175,7 +175,7 @@
                             Rp {{ number_format(($verifiedTotal ?? 0) + ($pendingTotal ?? 0), 0, ',', '.') }}
                         </span>
                     </p>
-                    <p class="mt-1 gpa-note text-ink-body">Bank BCA: 65% | Bank Mandiri: 35%</p>
+                    <p class="mt-1 gpa-note text-ink-body">Rekonsiliasi mutasi kas masuk resmi GPA</p>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
@@ -239,7 +239,7 @@
                 </div>
 
                 <ul class="flex flex-col gap-2.5">
-                    @foreach ($queueRows as $row)
+                    @forelse ($queueRows as $row)
                         <li>
                             <button type="button" @click="inspect(@js($row))" :class="rowClass(@js($row))"
                                 class="flex w-full flex-col gap-2 rounded-xl p-4 text-left transition-colors">
@@ -257,7 +257,7 @@
                                     </span>
 
                                     <span style="display:none" x-show="isSettled(@js($row))"
-                                        class="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-success-deep outline outline-1 outline-success-deep">
+                                        class="inline-flex items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-success-deep outline outline-1 outline-accent-deep">
                                         Settled Lunas
                                     </span>
 
@@ -294,7 +294,11 @@
                                 </span>
                             </button>
                         </li>
-                    @endforeach
+                    @empty
+                        <li class="rounded-xl border border-line-soft bg-surface-shell p-6 text-center text-sm text-ink-quiet">
+                            Tidak ada antrean pembayaran yang perlu diverifikasi saat ini.
+                        </li>
+                    @endforelse
                 </ul>
 
                 <div class="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-surface-shell px-4 py-3">
@@ -547,7 +551,7 @@
                     </thead>
 
                     <tbody class="divide-y divide-line-soft">
-                        @foreach ($auditRows as $row)
+                        @forelse ($auditRows as $row)
                             <tr @class(['transition-colors hover:bg-surface-shell/50', $row['status'] === 'rejected' ? 'bg-danger-soft/20' : ''])>
                                 <td class="px-4 py-4 font-mono text-2xs font-medium tracking-[0.88px] text-ink-quiet">
                                     {{ $row['timestamp'] }}
@@ -577,7 +581,13 @@
                                     $row['status'] === 'rejected' ? 'text-danger' : 'text-ink-body',
                                 ])>{{ $row['note'] }}</td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="8" class="px-4 py-8 text-center text-sm text-ink-quiet">
+                                    Belum ada riwayat pembayaran yang tercatat dalam sistem.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

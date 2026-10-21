@@ -51,11 +51,11 @@
     $selected = $selectedPo;
 
     $form = $form ?? [
-        'sender_bank' => ($user && $user->company_name) ? $user->company_name . ' - Bank Mandiri/BCA' : 'BCA',
-        'sender_account' => '0821-xxxx-xxxx',
+        'sender_bank' => '',
+        'sender_account' => $user?->phone ?: '',
         'transfer_at' => \Carbon\Carbon::now()->format('d/m/Y H:i'),
-        'reference' => 'TRX-' . strtoupper(\Illuminate\Support\Str::random(6)),
-        'note' => 'Pelunasan tagihan tempo konsolidasi komoditas agro.',
+        'reference' => '',
+        'note' => '',
     ];
 
     $history = $history ?? [];

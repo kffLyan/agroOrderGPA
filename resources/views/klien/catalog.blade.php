@@ -442,40 +442,38 @@
         {{-- ---------------------------------------------------------------- --}}
         {{-- Ringkasan draft PO (mengikuti badge Keranjang di sidebar) --}}
         {{-- ---------------------------------------------------------------- --}}
-        <div id="quick-reorder" class="scroll-mt-24">
-            <section x-show="draftCount() > 0" x-cloak
-                class="gpa-card sticky bottom-4 flex flex-col gap-3 border border-brand-line p-4 shadow-pop lg:flex-row lg:items-center lg:justify-between">
-                <div class="flex min-w-0 flex-col gap-1">
-                    <p class="gpa-micro-bold text-success-deep">
-                        Draft PO aktif · <span x-text="draftCount()"></span> item
+        <section id="quick-reorder" x-show="draftCount() > 0" x-cloak
+            class="sticky bottom-4 z-30 flex flex-col gap-3 rounded-2xl border border-brand-line bg-surface/95 p-4 shadow-2xl ring-1 ring-black/5 outline outline-1 outline-line-board backdrop-blur-md scroll-mt-24 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex min-w-0 flex-col gap-1">
+                <p class="gpa-micro-bold text-success-deep">
+                    Draft PO aktif · <span x-text="draftCount()"></span> item
+                </p>
+                <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <p class="gpa-figure text-ink"><span x-text="draftWeight()"></span> kg</p>
+                    <p class="gpa-meta-lg font-bold text-ink">
+                        Total <span x-text="money(draftTotal())"></span>
                     </p>
-                    <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                        <p class="gpa-figure text-ink"><span x-text="draftWeight()"></span> kg</p>
-                        <p class="gpa-meta-lg font-bold text-ink">
-                            Total <span x-text="money(draftTotal())"></span>
-                        </p>
-                    </div>
                 </div>
+            </div>
 
-                <div class="flex shrink-0 flex-wrap items-center gap-2">
-                    <template x-for="line in draft" :key="`draft-${line.key}`">
-                        <span
-                            class="inline-flex items-center gap-1.5 rounded-md border border-line-hair bg-surface-shell px-2 py-1 gpa-micro-bold text-ink-body">
-                            <span x-text="`${line.name} · ${line.qty} kg`"></span>
-                            <button type="button" @click="removeFromDraft(line.key)" aria-label="Hapus dari draft"
-                                class="text-ink-quiet transition-colors hover:text-danger">
-                                <x-gpa.icon name="x" class="h-3 w-3" />
-                            </button>
-                        </span>
-                    </template>
+            <div class="flex shrink-0 flex-wrap items-center gap-2">
+                <template x-for="line in draft" :key="`draft-${line.key}`">
+                    <span
+                        class="inline-flex items-center gap-1.5 rounded-md border border-line-hair bg-surface-shell px-2 py-1 gpa-micro-bold text-ink-body">
+                        <span x-text="`${line.name} · ${line.qty} kg`"></span>
+                        <button type="button" @click="removeFromDraft(line.key)" aria-label="Hapus dari draft"
+                            class="text-ink-quiet transition-colors hover:text-danger">
+                            <x-gpa.icon name="x" class="h-3 w-3" />
+                        </button>
+                    </span>
+                </template>
 
-                    <a href="{{ route('klien.cart') }}"
-                        class="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2.5 shadow-sub transition-colors hover:bg-brand-deep">
-                        <x-gpa.icon name="cart" class="h-3.5 w-3.5 text-white" />
-                        <span class="gpa-meta-lg font-bold text-white">Lanjut ke Keranjang PO</span>
-                    </a>
-                </div>
-            </section>
-        </div>
+                <a href="{{ route('klien.cart') }}"
+                    class="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2.5 shadow-sub transition-colors hover:bg-brand-deep">
+                    <x-gpa.icon name="cart" class="h-3.5 w-3.5 text-white" />
+                    <span class="gpa-meta-lg font-bold text-white">Lanjut ke Keranjang PO</span>
+                </a>
+            </div>
+        </section>
     </div>
 @endsection

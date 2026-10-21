@@ -254,4 +254,41 @@ class SekretarisModuleTest extends TestCase
         $this->assertEquals('DITOLAK', $payment->status);
         $this->assertEquals('Kapasitas armada logistik rute Bogor telah melebihi batas muat harian.', $payment->verification_note);
     }
+
+    public function test_sekretaris_can_export_operational_reports_csv(): void
+    {
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($sekretaris)->get('/sekretaris/laporan/export');
+        $response->assertStatus(200);
+        $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
+    }
+
+    public function test_sekretaris_can_view_official_print_report_pdf(): void
+    {
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($sekretaris)->get('/sekretaris/laporan/print');
+        $response->assertStatus(200);
+        $response->assertSee('KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)');
+        $response->assertSee('Jurnal Rekapitulasi Operasional Penimbangan');
+    }
+
+    public function test_sekretaris_can_export_invoices_csv(): void
+    {
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($sekretaris)->get('/sekretaris/faktur/export');
+        $response->assertStatus(200);
+        $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
+    }
 }

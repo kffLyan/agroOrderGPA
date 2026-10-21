@@ -32,22 +32,23 @@
     })->values()->all();
 
     $defaultDeliveryDate = now()->addDay()->format('Y-m-d');
-    $defaultAddress = $user->address ?: 'Gudang Utama Klien (Dock Penerimaan)';
+    $defaultAddress = $user->address ?: '';
 
     $docks = [
         [
             'key'      => 'dock-utama',
-            'name'     => $user->company_name ?: 'Gudang Utama Klien',
+            'name'     => $user->company_name ?: ($user->name ?: 'Alamat Terdaftar'),
             'address'  => $defaultAddress,
-            'chip'     => 'Dock Utama',
-            'access'   => 'Akses Truk Engkel Box Chiller & CDD Long',
+            'chip'     => 'Alamat Utama',
+            'access'   => 'Akses Pengiriman Terdaftar',
         ],
+    ];
+
+    $receivingRoster = $receivingRoster ?? [
         [
-            'key'      => 'dock-sentral',
-            'name'     => 'Central Kitchen / Processing Plant',
-            'address'  => ($user->address ?: 'Bandung Area') . ' (Hub Cabang)',
-            'chip'     => 'Alternatif',
-            'access'   => 'Ramp Hidrolik Cold Storage Standar HACCP',
+            'name'  => $user->pic_name ?: $user->name,
+            'role'  => 'PIC Penerima Klien',
+            'phone' => $user->pic_phone ?: ($user->phone ?: '—'),
         ],
     ];
 
@@ -66,6 +67,7 @@
     ];
 @endphp
 
+@section('content')
     <div x-data="clientCart(@js($commodities), @js($demoLines), @js($cartDefaults))"
         class="flex flex-col gap-4">
         {{-- ---------------------------------------------------------------- --}}

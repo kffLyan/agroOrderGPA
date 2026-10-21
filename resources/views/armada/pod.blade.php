@@ -7,14 +7,14 @@
         $totalNetto = 0;
         if ($currentOrder) {
             foreach ($currentOrder->orderItems as $item) {
-                $totalNetto += (float) ($item->net_weight ?? $item->quantity ?? 0);
+                $totalNetto += (float) ($item->actual_net_weight ?: $item->ordered_qty ?: 0);
             }
         }
 
         $sjNum = $currentOrder?->surat_jalan_number
-            ?: ('SJ-' . date('Ymd', strtotime($currentOrder?->created_at ?: now())) . '-' . str_pad($currentOrder?->id ?: 1, 4, '0', STR_PAD_LEFT));
+            ?: ($currentOrder ? ('SJ-' . date('Ymd', strtotime($currentOrder->created_at ?: now())) . '-' . str_pad($currentOrder->id, 4, '0', STR_PAD_LEFT)) : '—');
 
-        $picName = $currentOrder?->received_by_name ?: ($currentOrder?->user?->name ?: 'Bapak Hendra Kurniawan');
+        $picName = $currentOrder?->received_by_name ?: ($currentOrder?->user?->name ?: '—');
 
         $statusText = match ($currentOrder?->status) {
             'SELESAI', 'SELESAI_CATATAN' => 'DOKUMEN SELESAI',

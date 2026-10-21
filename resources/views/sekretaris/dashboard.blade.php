@@ -55,7 +55,7 @@
                 <div>
                     <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                         <span class="font-sans text-[2rem] font-bold leading-10 tracking-[-0.01em] text-ink">
-                            {{ $allOrdersCount ?? 28 }}
+                            {{ $allOrdersCount ?? 0 }}
                         </span>
                         <span class="text-sm font-medium text-ink-body">
                             Pesanan Terjadwal
@@ -63,7 +63,7 @@
                     </div>
                     <p class="mt-2 text-xs leading-4">
                         <span class="font-bold text-ink">Hari ini: </span>
-                        <span class="text-ink-body">{{ $totalTodayCount ?? 4 }} PO baru masuk via web portal</span>
+                        <span class="text-ink-body">{{ $totalTodayCount ?? 0 }} PO baru masuk via web portal</span>
                     </p>
                 </div>
 
@@ -87,7 +87,7 @@
                 <div>
                     <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                         <span class="font-sans text-[2rem] font-bold leading-10 tracking-[-0.01em] text-warning-deep">
-                            {{ $pendingOrdersCount ?? 3 }}
+                            {{ $pendingOrdersCount ?? 0 }}
                         </span>
                         <span class="text-sm font-medium text-ink-body">
                             PO Butuh Tindakan
@@ -101,7 +101,7 @@
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-faint pt-3">
                     <p class="gpa-note text-ink-body">Antrean Terlama</p>
-                    <span class="gpa-meta-lg font-bold tracking-[0.28px] text-warning-deep">24 Menit Lalu</span>
+                    <span class="gpa-meta-lg font-bold tracking-[0.28px] text-warning-deep">{{ ($pendingOrdersCount ?? 0) > 0 ? 'Prioritas Antrean' : 'Antrean Bersih' }}</span>
                 </div>
             </article>
 
@@ -119,7 +119,7 @@
                 <div>
                     <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                         <span class="font-sans text-[2rem] font-bold leading-10 tracking-[-0.01em] text-ink">
-                            {{ ($readyOrdersCount ?? 0) + ($shippingOrdersCount ?? 0) ?: 5 }}
+                            {{ ($readyOrdersCount ?? 0) + ($shippingOrdersCount ?? 0) }}
                         </span>
                         <span class="text-sm font-medium text-ink-body">
                             Armada Terjadwal
@@ -133,7 +133,7 @@
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-faint pt-3">
                     <p class="gpa-note text-ink-body">Status Armada</p>
-                    <span class="gpa-meta-lg font-bold tracking-[0.28px] text-ink">{{ $shippingOrdersCount ?? 2 }} Dalam Perjalanan</span>
+                    <span class="gpa-meta-lg font-bold tracking-[0.28px] text-ink">{{ $shippingOrdersCount ?? 0 }} Dalam Perjalanan</span>
                 </div>
             </article>
 
@@ -151,7 +151,7 @@
                 <div>
                     <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                         <span class="font-sans text-[2rem] font-bold leading-10 tracking-[-0.01em] text-ink">
-                            {{ $pendingPaymentsCount ?? 2 }}
+                            {{ $pendingPaymentsCount ?? 0 }}
                         </span>
                         <span class="text-sm font-medium text-ink-body">
                             Struk / Mutasi Bank

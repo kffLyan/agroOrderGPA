@@ -165,7 +165,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($dispatchRows ?? [] as $row)
+                            @forelse ($dispatchRows ?? [] as $row)
                                 <tr @click="select(@js($row['sj']))"
                                     class="cursor-pointer border-b border-line-hair/70 align-middle transition-colors hover:bg-surface-shell"
                                     :class="isActive(@js($row['sj'])) ? 'bg-accent/20' : ''">
@@ -232,7 +232,13 @@
                                         </div>
                                     </td>
                                 </tr>
-                            @endforeach
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="py-8 text-center text-sm font-medium text-ink-quiet">
+                                        Belum ada jadwal perjalanan atau data pengiriman armada.
+                                    </td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -379,11 +385,11 @@
                             <x-gpa.icon name="phone" class="h-3.5 w-3.5 shrink-0" />
                             Hubungi PIC Klien
                         </button>
-                        <button type="button" @click="dossierAction('open-ba')"
+                        <a href="{{ route('prints.return-act') }}" target="_blank"
                             class="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg px-3 gpa-meta-lg font-bold transition-colors bg-surface text-danger outline outline-1 outline-danger/50 hover:bg-danger-soft">
                             <x-gpa.icon name="clipboard" class="h-3.5 w-3.5 shrink-0" />
-                            Buat Berita Acara
-                        </button>
+                            Cetak BAP Retur
+                        </a>
                     </div>
                 </footer>
             </div>

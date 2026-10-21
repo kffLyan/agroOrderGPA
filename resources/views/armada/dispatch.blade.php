@@ -9,17 +9,17 @@
         $gatePass = [
             'expiry_minutes'      => 45,
             'is_started'          => $isStarted,
-            'pic_phone'           => $currentOrder?->user?->phone ?: '0812-3456-7890',
+            'pic_phone'           => $currentOrder?->user?->phone ?: '—',
             'destination_address' => $currentOrder?->delivery_address ?: '',
         ];
 
         $sjNumber = $currentOrder?->surat_jalan_number
-            ?: ('SJ-' . date('Ymd', strtotime($currentOrder?->created_at ?: now())) . '-' . str_pad($currentOrder?->id ?: 1, 4, '0', STR_PAD_LEFT));
+            ?: ($currentOrder ? ('SJ-' . date('Ymd', strtotime($currentOrder->created_at ?: now())) . '-' . str_pad($currentOrder->id, 4, '0', STR_PAD_LEFT)) : '—');
 
-        $poNumber = $currentOrder?->order_number ?: ('ORD-GPA-' . date('Ym') . '-0001');
+        $poNumber = $currentOrder?->order_number ?: '—';
 
         $dispatchDate = $currentOrder?->departure_time ? $currentOrder->departure_time->format('d M Y') : date('d M Y');
-        $dispatchTime = $currentOrder?->departure_time ? $currentOrder->departure_time->format('H:i \W\I\B') : '06:00 WIB';
+        $dispatchTime = $currentOrder?->departure_time ? $currentOrder->departure_time->format('H:i \W\I\B') : '—';
 
         $totalEst = 0;
         $totalNetto = 0;
@@ -28,8 +28,8 @@
 
         if ($currentOrder && $currentOrder->orderItems->isNotEmpty()) {
             foreach ($currentOrder->orderItems as $item) {
-                $estKg = (float) $item->quantity;
-                $nettoKg = (float) ($item->net_weight ?? $item->quantity);
+                $estKg = (float) ($item->ordered_qty ?: $item->quantity ?: 0);
+                $nettoKg = (float) ($item->actual_net_weight ?: $item->ordered_qty ?: $item->quantity ?: 0);
                 $crates = (int) ($item->crates ?? ceil($nettoKg / 20));
                 $tare = (float) ($item->tare_weight ?? ($crates * 2.0));
 
@@ -49,13 +49,13 @@
         x-data="armadaDispatch(@js($gatePass))">
 
         {{-- Judul halaman --}}
-        <section class="flex flex-col gap-1 rounded-2xl bg-surface p-4 shadow-card">
+        <section class="no-print flex flex-col gap-1 rounded-2xl bg-surface p-4 shadow-card">
             <h1 class="text-xl font-bold leading-7 text-ink">Surat Jalan Digital & Rincian<br>Muatan Supir</h1>
             <p class="text-xs text-ink-body">Verifikasi kesesuaian fisik muatan & segel timbangan tera sebelum keberangkatan.</p>
         </section>
 
         {{-- Rute pengantaran --}}
-        <section class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+        <section class="no-print flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
             <header class="flex items-center justify-between gap-2 border-b border-surface-shell pb-2">
                 <p class="font-mono text-[10px] font-bold text-ink-body uppercase tracking-wider">RUTE PENGANTARAN ({{ $activeOrders->count() }} TITIK)</p>
                 <p class="font-mono text-[10px] font-bold text-success-deep uppercase tracking-wider">MULTI-DROP HARIAN</p>
@@ -124,11 +124,11 @@
                         <span>Ref PO: </span><span class="font-bold text-ink">#{{ $poNumber }}</span>
                     </span>
 
-                    <button type="button" onclick="window.print()"
-                        class="mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-surface-shell px-2.5 py-1 font-mono text-[10px] font-bold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-disabled">
+                    <a href="{{ route('prints.surat-jalan', ['order_id' => $currentOrder?->id]) }}" target="_blank"
+                        class="no-print mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-surface-shell px-2.5 py-1 font-mono text-[10px] font-bold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-disabled">
                         <x-gpa.icon name="printer" class="h-3 w-3 shrink-0" />
-                        CETAK SURAT JALAN
-                    </button>
+                        CETAK SJ RESMI A4
+                    </a>
                 </div>
 
                 <div class="flex shrink-0 flex-col items-end text-right">
@@ -174,15 +174,15 @@
                         <x-gpa.icon name="user" class="h-4 w-4 shrink-0 text-ink-body" />
                         <div class="flex flex-col">
                             <span class="font-mono text-[9px] text-ink-quiet uppercase">PENANGGUNG JAWAB PENERIMA</span>
-                            <span class="text-xs font-bold text-ink">{{ $currentOrder?->received_by_name ?: ($currentOrder?->user?->name ?: 'Bapak Hendra (Kepala Gudang)') }}</span>
+                            <span class="text-xs font-bold text-ink">{{ $currentOrder?->received_by_name ?: ($currentOrder?->user?->name ?: '—') }}</span>
                         </div>
                     </div>
 
-                    <span class="font-mono text-xs font-bold text-success-deep">{{ $currentOrder?->user?->phone ?: '0812-3456-7890' }}</span>
+                    <span class="font-mono text-xs font-bold text-success-deep">{{ $currentOrder?->user?->phone ?: '—' }}</span>
                 </div>
 
-                <div class="flex items-center gap-2 pt-1">
-                    <button type="button" @click="callPic('{{ $currentOrder?->user?->phone ?: '0812-3456-7890' }}')"
+                <div class="no-print flex items-center gap-2 pt-1">
+                    <button type="button" @click="callPic('{{ $currentOrder?->user?->phone ?: '' }}')"
                         class="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-surface font-mono text-xs font-bold text-ink outline outline-1 -outline-offset-1 outline-line-board shadow-sm hover:bg-surface-disabled">
                         <x-gpa.icon name="phone" class="h-3 w-3 shrink-0" />
                         Hubungi PIC
@@ -296,8 +296,32 @@
             </div>
         </section>
 
+        {{-- Blok Pengesahan Khusus Cetak Fisik Surat Jalan --}}
+        <section class="hidden print:flex flex-col gap-4 border-t-2 border-line-board pt-6 mt-4">
+            <div class="flex justify-between items-center text-center font-mono text-xs">
+                <div class="w-44">
+                    <p class="font-bold">Pengirim / Dispatcher</p>
+                    <div class="h-16"></div>
+                    <p class="font-bold underline">Petugas Gudang GPA</p>
+                    <p class="text-[10px] text-ink-quiet">Sentral Hub Ciwidey</p>
+                </div>
+                <div class="w-44">
+                    <p class="font-bold">Awak Armada / Supir</p>
+                    <div class="h-16"></div>
+                    <p class="font-bold underline">{{ auth()->user()?->name ?: 'Supir Pengiriman' }}</p>
+                    <p class="text-[10px] text-ink-quiet">Plat: [{{ $armadaPlate ?? 'D-8921-GPA' }}]</p>
+                </div>
+                <div class="w-44">
+                    <p class="font-bold">Penerima Barang</p>
+                    <div class="h-16"></div>
+                    <p class="font-bold underline">{{ $currentOrder?->received_by_name ?: ($currentOrder?->user?->name ?: 'Klien Penerima') }}</p>
+                    <p class="text-[10px] text-ink-quiet">Tanda Tangan & Cap Basah</p>
+                </div>
+            </div>
+        </section>
+
         {{-- Gate pass keluar dock & Mulai Pengiriman --}}
-        <section class="flex flex-col gap-3 rounded-2xl bg-surface p-4 shadow-card outline outline-2 -outline-offset-2 outline-ink">
+        <section class="no-print flex flex-col gap-3 rounded-2xl bg-surface p-4 shadow-card outline outline-2 -outline-offset-2 outline-ink">
             <header class="flex items-center justify-between border-b border-surface-shell pb-2.5">
                 <div class="flex items-center gap-2">
                     <x-gpa.icon name="shield" class="h-4 w-4 text-ink" />

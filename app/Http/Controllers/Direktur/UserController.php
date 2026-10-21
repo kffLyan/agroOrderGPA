@@ -217,7 +217,10 @@ class UserController extends Controller
 
         return response()->stream(function () {
             $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF");
+
             fputcsv($handle, ['KOPERASI GREEN PASUNDAN AGRICULTURE - MATRIKS HAK AKSES RBAC']);
+            fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB']);
             fputcsv($handle, []);
             fputcsv($handle, ['Modul & Fitur Operasional', 'Klien / Buyer B2B', 'Sekretaris / Finance', 'Koordinator Lapangan', 'Armada / Supir', 'Direktur / Owner']);
 

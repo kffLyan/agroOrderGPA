@@ -2,7 +2,7 @@
 
 @section('title', 'Rekap Laporan')
 
-@@php
+@php
     $journalRows = $journalRows ?? [];
     $totalEstimate = $totalEstimate ?? 0;
     $totalNet = $totalNet ?? 0;
@@ -52,18 +52,18 @@
                         <x-gpa.icon name="refresh" class="h-4 w-4 shrink-0 text-success-deep" />
                         Segarkan Data Transaksi
                     </button>
-                    <button type="button" @click="act('export')"
+                    <a href="{{ route('sekretaris.reports.export') }}"
                         class="inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2.5 outline outline-1 outline-line-board transition-colors hover:bg-surface-shell gpa-meta-lg font-bold tracking-[0.88px] text-ink">
                         <x-gpa.icon name="download" class="h-4 w-4 shrink-0 text-success-deep" />
                         Unduh Rekap (CSV / Excel)
-                    </button>
+                    </a>
                 </div>
 
-                <button type="button" @click="act('print')"
+                <a href="{{ route('sekretaris.reports.print') }}" target="_blank"
                     class="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 outline outline-1 outline-accent-deep transition-colors hover:bg-brand-deep gpa-meta-lg font-bold tracking-[0.88px] text-accent">
                     <x-gpa.icon name="printer" class="h-4 w-4 shrink-0" />
                     Cetak Laporan Resmi (PDF)
-                </button>
+                </a>
             </div>
         </section>
 
@@ -225,7 +225,7 @@
                 <div>
                     <p class="flex flex-wrap items-center gap-2">
                         <span class="font-mono text-2xl font-bold tracking-[-0.01em] text-success-deep">
-                            98.5%
+                            {{ number_format($deliveryAccuracy ?? 100, 1) }}%
                         </span>
                         <span class="inline-flex shrink-0 rounded px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] bg-surface-track text-ink outline outline-1 outline-line-board">
                             Lancar
@@ -422,7 +422,7 @@
                         </thead>
 
                         <tbody class="divide-y divide-line-soft">
-                            @foreach ($journalRows as $row)
+                            @forelse ($journalRows as $row)
                                 <tr x-show="isVisible(@js($row))" @class(['transition-colors hover:bg-surface-shell/60', $loop->even ? 'bg-canvas' : ''])>
                                     <td class="px-3 py-4 text-right font-mono text-2xs font-bold tracking-[0.88px] text-ink-quiet">
                                         {{ $row['no'] }}
@@ -494,8 +494,13 @@
                                             @endforeach
                                         </span>
                                     </td>
+                            @empty
+                                <tr>
+                                    <td colspan="9" class="px-3 py-8 text-center text-sm text-ink-quiet">
+                                        Tidak ada pesanan sayur yang tercatat dalam rekapitulasi saat ini.
+                                    </td>
                                 </tr>
-                            @endforeach
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -650,7 +655,7 @@
             </section>
         </div>
 
-        <section class="flex flex-col gap-5 rounded-2xl bg-surface p-6 shadow-card">
+        <section class="sticky bottom-4 z-30 flex flex-col gap-5 rounded-2xl bg-surface p-6 shadow-2xl ring-1 ring-black/5 outline outline-1 outline-line-board">
             <div class="flex flex-col gap-4 border-b border-line-soft pb-4 sm:flex-row sm:items-start sm:justify-between">
                 <div class="flex min-w-0 items-start gap-3.5">
                     <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand shadow-sub outline outline-1 outline-success-deep">
@@ -671,16 +676,16 @@
             </div>
 
             <div class="flex flex-wrap items-center justify-end gap-2.5">
-                <button type="button" @click="act('download')"
+                <a href="{{ route('sekretaris.reports.export') }}"
                     class="inline-flex h-10 items-center gap-2 rounded-xl px-4 gpa-micro-bold uppercase tracking-[1.08px] transition-colors shadow-sub bg-surface-shell text-ink-body outline outline-1 outline-line-board hover:bg-surface-track hover:text-ink">
                     <x-gpa.icon name="download" class="h-4 w-4 shrink-0" />
-                    Unduh Laporan Lengkap (.xlsx)
-                </button>
-                <button type="button" @click="act('pdf')"
+                    Unduh Rekap Buku Besar (.csv)
+                </a>
+                <a href="{{ route('sekretaris.reports.print') }}" target="_blank"
                     class="inline-flex h-10 items-center gap-2 rounded-xl px-4 gpa-micro-bold uppercase tracking-[1.08px] transition-colors shadow-sub bg-surface-shell text-ink-body outline outline-1 outline-line-board hover:bg-surface-track hover:text-ink">
                     <x-gpa.icon name="printer" class="h-4 w-4 shrink-0" />
                     Cetak Format Resmi (.pdf)
-                </button>
+                </a>
                 <button type="button" @click="act('send')"
                     class="inline-flex h-10 items-center gap-2 rounded-xl px-4 gpa-micro-bold uppercase tracking-[1.08px] transition-colors shadow-sub bg-brand text-accent outline outline-1 outline-success-deep hover:bg-brand-deep">
                     <x-gpa.icon name="send" class="h-4 w-4 shrink-0" />
@@ -689,4 +694,4 @@
             </div>
         </section>
     </div>
-@endsectionon
+@endsection

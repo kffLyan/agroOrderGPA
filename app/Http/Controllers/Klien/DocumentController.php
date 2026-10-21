@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentController extends Controller
 {
@@ -63,5 +64,76 @@ class DocumentController extends Controller
             'docNumber',
             'printDate'
         ));
+    }
+
+    /**
+     * Unduh Rekap Faktur Konsolidasi Klien B2B (.CSV / Excel)
+     */
+    public function exportCsv(Request $request): StreamedResponse
+    {
+        $userId = Auth::guard('web')->id();
+        $user = Auth::guard('web')->user();
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="Rekap_Faktur_GPA_' . ($user->company_name ? preg_replace('/[^a-zA-Z0-9_-]/', '_', $user->company_name) : 'Klien') . '_' . date('Ymd_His') . '.csv"',
+        ];
+
+        $invoices = Invoice::where('user_id', $userId)
+            ->with(['orders.orderItems', 'payments'])
+            ->orderBy('due_date', 'desc')
+            ->get();
+
+        return response()->stream(function () use ($user, $invoices) {
+            $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)']);
+            fputcsv($handle, ['REKAPITULASI RESMI FAKTUR KONSOLIDASI & STATUS TAGIHAN TEMPO']);
+            fputcsv($handle, ['KLIEN / MITRA B2B', $user->company_name ?: $user->name]);
+            fputcsv($handle, ['WAKTU EKSPOR', date('d/m/Y H:i') . ' WIB']);
+            fputcsv($handle, []);
+            fputcsv($handle, [
+                'No',
+                'No. Faktur Tagihan',
+                'Tanggal Terbit',
+                'Periode Konsolidasi',
+                'Jumlah SJ',
+                'Bobot Netto Tera (Kg)',
+                'Total Tagihan (Rp)',
+                'Jatuh Tempo (TOP)',
+                'Status Pembayaran',
+            ]);
+
+            $no = 1;
+            foreach ($invoices as $inv) {
+                $totalNetto = (float) $inv->orders->sum(function ($o) {
+                    return $o->orderItems->sum(fn($i) => $i->actual_net_weight ?? $i->ordered_qty);
+                });
+
+                $periodLabel = ($inv->period_start ? $inv->period_start->format('d/m/Y') : '-') . ' - ' . ($inv->period_end ? $inv->period_end->format('d/m/Y') : '-');
+                $statusLabel = match ($inv->status) {
+                    'PAID'    => 'Lunas Terverifikasi',
+                    'UNPAID'  => 'Menunggu Pembayaran (Tempo)',
+                    'PARTIAL' => 'Dibayar Sebagian',
+                    'OVERDUE' => 'Melewati Jatuh Tempo',
+                    default   => $inv->status,
+                };
+
+                fputcsv($handle, [
+                    $no++,
+                    $inv->invoice_number,
+                    $inv->created_at ? $inv->created_at->format('d/m/Y') : '-',
+                    $periodLabel,
+                    $inv->orders->count(),
+                    number_format($totalNetto, 1, '.', ''),
+                    (float) $inv->grand_total,
+                    $inv->due_date ? $inv->due_date->format('d/m/Y') : 'Tempo 30 Hari',
+                    $statusLabel,
+                ]);
+            }
+
+            fclose($handle);
+        }, 200, $headers);
     }
 }

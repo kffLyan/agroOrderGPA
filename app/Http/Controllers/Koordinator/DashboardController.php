@@ -33,7 +33,7 @@ class DashboardController extends Controller
                 ->sum('ordered_qty');
             $pBinaan = (float) $product->harvestBatches->where('source_type', 'PETANI_BINAAN')->sum('available_quantity');
             $pBuffer = (float) $product->harvestBatches->where('source_type', 'BUFFER_LUAR')->sum('available_quantity');
-            $supplierName = $product->harvestBatches->first()?->supplier_name ?: 'Poktan Binaan Ciwidey';
+            $supplierName = $product->harvestBatches->first()?->supplier_name ?: 'Kelompok Tani Mitra';
 
             return [
                 'key' => (string) $product->id,
@@ -45,7 +45,7 @@ class DashboardController extends Controller
                 'buffer' => $pBuffer,
                 'group' => $supplierName,
                 'partner' => 'Mitra Binaan Terverifikasi',
-                'zone' => 'Hub Ciwidey',
+                'zone' => 'Sentra Panen',
                 'bar' => 5,
                 'accent' => false,
             ];
@@ -61,7 +61,7 @@ class DashboardController extends Controller
         $packingOrders = $activeOrders->map(function ($order, $index) {
             $isWeighed = $order->status === 'SIAP_KIRIM';
             $totalQty = (float) $order->orderItems->sum('ordered_qty');
-            $clientName = $order->user?->company_name ?: ($order->user?->name ?? 'Klien B2B');
+            $clientName = $order->user?->company_name ?: ($order->user?->name ?? 'Klien');
             $targetDate = $order->target_delivery_date ? $order->target_delivery_date->format('d M') : date('d M');
 
             return [
@@ -86,7 +86,7 @@ class DashboardController extends Controller
                 'ticket' => 'TKT-' . date('Y') . '-' . str_pad($batch->id, 4, '0', STR_PAD_LEFT),
                 'time' => $batch->created_at ? $batch->created_at->format('H:i') . ' WIB' : date('H:i') . ' WIB',
                 'name' => $batch->supplier_name,
-                'commodity' => $batch->product?->name ?? 'Aneka Sayur',
+                'commodity' => $batch->product?->name ?? '—',
                 'gross' => $gross,
                 'tare' => 20.0,
                 'net' => $net,

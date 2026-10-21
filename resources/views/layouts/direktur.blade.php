@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="Dashboard Eksekutif Monitoring Bisnis &amp; Otorisasi Direktur AgroOrder GPA.">
 
-    <title>@yield('title', 'Dashboard Eksekutif Direktur').' &middot; '.config('app.name', 'AgroOrder GPA')</title>
+    <title>@yield('title', 'Dashboard Eksekutif Direktur') &middot; {{ config('app.name', 'AgroOrder GPA') }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,6 +19,7 @@
 </head>
 
 <body class="min-h-screen bg-canvas font-sans text-ink antialiased">
+    <x-gpa.loading-screen />
     @php
         $operator = $operator ?? [
             'role'     => 'Direktur Utama',
@@ -74,20 +75,19 @@
                     </a>
                 </div>
 
-                <div class="ml-auto flex shrink-0 items-center gap-3">
-                    <button type="button" @click="exportExcel()"
-                        class="inline-flex h-8 items-center gap-1.5 rounded-lg bg-accent px-4 shadow-sub transition-colors hover:bg-accent-deep">
-                        <x-gpa.icon name="download" class="h-3 w-3 text-ink" />
-                        <span class="hidden text-[11px] font-bold tracking-[0.28px] text-ink gpa-meta sm:inline">Export
-                            Excel</span>
-                    </button>
+                <div class="ml-auto flex shrink-0 items-center gap-3 lg:ml-0">
+                    <a href="{{ route('direktur.contracts.approval') }}"
+                        class="hidden items-center gap-1.5 rounded-lg border border-success px-3 py-1.5 gpa-meta-lg text-white transition-colors hover:bg-white/10 md:inline-flex">
+                        <x-gpa.icon name="shield" class="h-3.5 w-3.5" />
+                        Otorisasi Kontrak
+                    </a>
 
-                    <button type="button" @click="printPdf()"
-                        class="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#FF4438] px-4 shadow-sub transition-colors hover:bg-danger">
-                        <x-gpa.icon name="file-text" class="h-3 w-3 text-brand" />
-                        <span class="hidden text-[11px] font-bold tracking-[0.28px] text-ink gpa-meta sm:inline">Cetak
-                            PDF</span>
-                    </button>
+                    <a href="{{ route('direktur.reports.index') }}"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-1.5 gpa-meta-lg font-bold text-ink shadow-sub transition-colors hover:bg-accent-deep">
+                        <x-gpa.icon name="file-text" class="h-3.5 w-3.5 text-ink" />
+                        <span class="hidden sm:inline">Laporan Eksekutif</span>
+                        <span class="sm:hidden">Laporan</span>
+                    </a>
 
                     <span class="hidden h-6 w-px bg-success lg:block" aria-hidden="true"></span>
 
@@ -180,9 +180,9 @@
                         Pengaturan
                     </button>
                     @auth
-                        <form method="POST" action="{{ route('logout') }}">
+                        <form method="POST" action="{{ route('logout') }}" id="logout-form">
                             @csrf
-                            <button type="submit"
+                            <button type="submit" id="sidebar-logout-btn"
                                 class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left gpa-body text-ink-quiet transition-colors hover:bg-surface-shell hover:text-ink">
                                 <x-gpa.icon name="logout" class="h-3.5 w-3.5 shrink-0" />
                                 Keluar Sesi

@@ -3,12 +3,6 @@
 @section('title', 'Dashboard Direktur')
 
 @section('content')
-    @php
-        $w44Revenue = $totalRevenue > 0 ? min($totalRevenue, 112650000) : 112650000;
-        $w44Tons = $totalTonnageKg > 0 ? $totalTonnageKg / 1000 : 202.5;
-        $totalRecValue = $totalReceivables > 0 ? $totalReceivables : 235500000;
-    @endphp
-
     <div class="mx-auto flex max-w-[1280px] flex-col gap-6">
 
         {{-- Page header --}}
@@ -21,11 +15,16 @@
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-3">
-                <button type="button" @click="printPdf()"
+                <a href="{{ route('direktur.reports.export') }}"
+                    class="inline-flex items-center gap-2 rounded-lg bg-surface px-4 py-2.5 text-ink shadow-sub outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-shell">
+                    <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0" />
+                    <span class="text-center text-xs font-semibold leading-4 text-ink">Unduh Buku Besar (CSV)</span>
+                </a>
+                <a href="{{ route('direktur.reports.download') }}" target="_blank"
                     class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-white shadow-sub outline outline-1 -outline-offset-1 outline-success transition-colors hover:bg-brand-hover">
                     <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0" />
-                    <span class="text-center text-xs font-semibold leading-4 text-white">Cetak Dokumen Persetujuan</span>
-                </button>
+                    <span class="text-center text-xs font-semibold leading-4 text-white">Cetak Laporan Eksekutif (PDF)</span>
+                </a>
             </div>
         </section>
 
@@ -96,22 +95,22 @@
                         <x-gpa.icon name="alert-triangle" class="h-4 w-4 shrink-0 text-warning-caution" />
                     </div>
                     <p class="gpa-figure text-[30px] leading-9 text-ink">
-                        Rp {{ number_format($totalReceivables > 0 ? $totalReceivables : 74320000, 0, ',', '.') }}
+                        Rp {{ number_format($totalReceivables, 0, ',', '.') }}
                     </p>
                     <div class="flex flex-wrap items-center gap-1.5">
                         <span class="rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-warning-cream text-warning-caution outline outline-1 -outline-offset-1 outline-warning-caution">
-                            {{ $nearDueCount ?: 2 }} pelanggan jatuh tempo &le;7 hari
+                            {{ $nearDueCount }} pelanggan jatuh tempo &le;7 hari
                         </span>
-                        <span class="gpa-meta-lg text-ink-body">12 Kontrak Aktif</span>
+                        <span class="gpa-meta-lg text-ink-body">{{ $activeContractsCount }} Kontrak Aktif</span>
                     </div>
                 </div>
                 <div class="pt-4">
                     <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
                         <span class="inline-flex items-center gap-1 gpa-note font-bold text-warning-caution">
                             <x-gpa.icon name="check-circle" class="h-3 w-3 shrink-0" />
-                            Sudah tertagih: 91.2%
+                            Sudah tertagih: {{ $paidRatio }}%
                         </span>
-                        <span class="gpa-note font-semibold text-ink-body">Jatuh tempo dekat: Rp 45,2 juta</span>
+                        <span class="gpa-note font-semibold text-ink-body">Jatuh tempo dekat: Rp {{ number_format($nearDueAmount, 0, ',', '.') }}</span>
                     </div>
                 </div>
             </article>
@@ -155,18 +154,18 @@
                         <x-gpa.icon name="shield" class="h-4 w-4 shrink-0 text-danger" />
                     </div>
                     <p class="gpa-figure text-[30px] leading-9 text-ink">
-                        {{ $pendingCount ?: 3 }} Kontrak
+                        {{ $pendingCount }} Kontrak
                     </p>
                     <p class="text-xs font-bold leading-4">
                         <span class="text-ink-body">Total Nilai: </span>
-                        <span class="text-ink font-mono">Rp {{ number_format($pendingValue > 0 ? $pendingValue : 385000000, 0, ',', '.') }}</span>
+                        <span class="text-ink font-mono">Rp {{ number_format($pendingValue, 0, ',', '.') }}</span>
                     </p>
                 </div>
                 <div class="pt-4">
                     <div class="flex flex-col gap-2 border-t border-line-board/60 pt-3">
                         <a href="{{ route('director.approval') }}"
                             class="inline-flex items-center justify-center gap-1 rounded bg-brand px-3 py-1.5 gpa-meta font-bold text-accent transition-colors hover:bg-brand-hover">
-                            Tinjau Pengajuan ({{ $pendingCount ?: 3 }})
+                            Tinjau Pengajuan ({{ $pendingCount }})
                             <x-gpa.icon name="arrow-right" class="h-2.5 w-2.5 shrink-0" />
                         </a>
                     </div>
@@ -199,84 +198,31 @@
                 </header>
 
                 <div class="flex flex-col gap-4">
-                    {{-- W40 --}}
-                    <div class="flex flex-col gap-1">
-                        <div class="flex flex-wrap items-start justify-between gap-2">
-                            <p class="gpa-meta-lg font-bold text-ink">W40: 275 ton | Target Rp 110 juta</p>
-                            <p class="gpa-meta-lg font-bold text-success-deep">Omzet: Rp 108.000.000 (98.1%)</p>
-                        </div>
-                        <div class="relative flex h-7 items-center rounded-lg p-1 bg-surface-shell">
-                            <div class="flex items-center whitespace-nowrap rounded px-2 pb-px text-[16px] leading-6 text-white bg-brand" style="width: 77.1%">
-                                Rp 108 juta
+                    @forelse ($weeklyTrends as $wt)
+                        <div class="flex flex-col gap-1">
+                            <div class="flex flex-wrap items-start justify-between gap-2">
+                                <p class="gpa-meta-lg font-bold text-ink">
+                                    {{ $wt['week'] }}{{ $wt['is_running'] ? ' (berjalan)' : '' }}: Panen {{ number_format($wt['harvest_ton'], 1, ',', '.') }} ton | Target Rp {{ number_format($wt['target'] / 1000000, 0) }} juta
+                                </p>
+                                <p class="gpa-meta-lg font-bold text-success-deep">
+                                    Omzet: Rp {{ number_format($wt['revenue'], 0, ',', '.') }} ({{ $wt['pct'] }}%)
+                                </p>
                             </div>
-                            <span class="pointer-events-none absolute top-0.5 whitespace-nowrap text-[16px] font-bold leading-6 text-success-deep" style="left: 81.1%">Panen 275 ton</span>
-                        </div>
-                    </div>
-
-                    {{-- W41 --}}
-                    <div class="flex flex-col gap-1">
-                        <div class="flex flex-wrap items-start justify-between gap-2">
-                            <p class="gpa-meta-lg font-bold text-ink">W41: 290 ton | Target Rp 120 juta</p>
-                            <p class="gpa-meta-lg font-bold text-success-deep">Omzet: Rp 124.000.000 (103.3%)</p>
-                        </div>
-                        <div class="relative flex h-7 items-center rounded-lg p-1 bg-surface-shell">
-                            <div class="flex items-center whitespace-nowrap rounded px-2 pb-px text-[16px] leading-6 text-white bg-brand" style="width: 88.6%">
-                                Rp 124 juta
+                            <div class="relative flex h-7 items-center rounded-lg p-1 bg-surface-shell">
+                                <div class="flex items-center whitespace-nowrap rounded px-2 pb-px text-[14px] font-semibold text-white {{ $wt['is_running'] ? 'bg-success' : 'bg-brand' }}"
+                                    style="width: {{ max(4, min(100, $wt['pct'])) }}%">
+                                    Rp {{ number_format($wt['revenue'] / 1000000, 1, ',', '.') }} jt
+                                </div>
                             </div>
-                            <span class="pointer-events-none absolute top-0.5 whitespace-nowrap text-[16px] font-bold leading-6 text-success-deep" style="left: 81.1%">Panen 290 ton</span>
                         </div>
-                    </div>
-
-                    {{-- W42 --}}
-                    <div class="flex flex-col gap-1">
-                        <div class="flex flex-wrap items-start justify-between gap-2">
-                            <p class="gpa-meta-lg font-bold text-ink">W42: 315 ton | Target Rp 135 juta</p>
-                            <p class="gpa-meta-lg font-bold text-success-deep">Omzet: Rp 138.000.000 (102.2%)</p>
-                        </div>
-                        <div class="relative flex h-7 items-center rounded-lg p-1 bg-surface-shell">
-                            <div class="flex items-center whitespace-nowrap rounded px-2 pb-px text-[16px] leading-6 text-white bg-brand" style="width: 98.6%">
-                                Rp 138 juta
-                            </div>
-                            <span class="pointer-events-none absolute top-0.5 whitespace-nowrap text-[16px] font-bold leading-6 text-success-deep" style="left: 81.1%">Panen 315 ton</span>
-                        </div>
-                    </div>
-
-                    {{-- W43 --}}
-                    <div class="flex flex-col gap-1">
-                        <div class="flex flex-wrap items-start justify-between gap-2">
-                            <p class="gpa-meta-lg font-bold text-ink">W43: 338 ton | Target Rp 140 juta</p>
-                            <p class="gpa-meta-lg font-bold text-success-deep">Omzet: Rp 140.000.000 (100.0%)</p>
-                        </div>
-                        <div class="relative flex h-7 items-center rounded-lg p-1 bg-surface-shell">
-                            <div class="flex items-center whitespace-nowrap rounded px-2 pb-px text-[16px] leading-6 text-white bg-brand" style="width: 100%">
-                                Rp 140 juta
-                            </div>
-                            <span class="pointer-events-none absolute top-0.5 whitespace-nowrap text-[16px] font-bold leading-6 text-success-deep" style="left: 81.1%">Panen 338 ton</span>
-                        </div>
-                    </div>
-
-                    {{-- W44 --}}
-                    <div class="flex flex-col gap-1">
-                        <div class="flex flex-wrap items-start justify-between gap-2">
-                            <p class="gpa-meta-lg font-bold text-ink">W44 (berjalan, hari ke-4): Target Rp 140 juta</p>
-                            <p class="gpa-meta-lg font-bold text-[#C6904A]">
-                                Omzet: Rp {{ number_format($w44Revenue, 0, ',', '.') }} (80.5%)
-                            </p>
-                        </div>
-                        <div class="relative flex h-7 items-center rounded-lg p-1 bg-[#EFF4DC] outline outline-1 -outline-offset-1 outline-accent-deep">
-                            <div class="flex items-center whitespace-nowrap rounded px-2 pb-px text-[16px] leading-6 text-white bg-success" style="width: 80.5%">
-                                Rp {{ number_format($w44Revenue, 0, ',', '.') }}
-                            </div>
-                            <span class="pointer-events-none absolute top-0.5 whitespace-nowrap text-[16px] font-bold leading-6 text-ink" style="left: 66.1%">
-                                Terkirim {{ number_format($w44Tons, 1, ',', '.') }} ton
-                            </span>
-                        </div>
-                    </div>
+                    @empty
+                        <p class="py-4 text-center text-xs text-ink-body">Belum ada riwayat pesanan mingguan.</p>
+                    @endforelse
                 </div>
 
                 <footer>
                     <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-board pt-4">
-                        <p class="gpa-note font-bold text-ink">Selisih terbesar: +3.3% (W41)</p>
+                        <p class="gpa-note font-bold text-ink">SUMBER DATA: DATABASE RIIL KOPERASI GPA</p>
                     </div>
                 </footer>
             </div>
@@ -289,55 +235,19 @@
 
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col gap-3">
-                        <div class="flex flex-col gap-1">
-                            <div class="flex items-start justify-between gap-2">
-                                <p class="gpa-meta font-bold text-ink">1. Selada Romaine</p>
-                                <p class="gpa-meta font-semibold text-success-deep">14.20 ton (37%)</p>
+                        @forelse ($topProductsData as $idx => $tp)
+                            <div class="flex flex-col gap-1">
+                                <div class="flex items-start justify-between gap-2">
+                                    <p class="gpa-meta font-bold text-ink">{{ $idx + 1 }}. {{ $tp['name'] }}</p>
+                                    <p class="gpa-meta font-semibold text-success-deep">{{ number_format($tp['ton'], 2, ',', '.') }} ton ({{ $tp['share'] }}%)</p>
+                                </div>
+                                <div class="h-2 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
+                                    <div class="h-full rounded-full {{ $tp['color'] }}" style="width: {{ max(2, min(100, $tp['share'])) }}%"></div>
+                                </div>
                             </div>
-                            <div class="h-2 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
-                                <div class="h-full rounded-full bg-ink" style="width: 37%"></div>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col gap-1">
-                            <div class="flex items-start justify-between gap-2">
-                                <p class="gpa-meta font-bold text-ink">2. Tomat Sayur &amp; Beef</p>
-                                <p class="gpa-meta font-semibold text-success-deep">10.80 ton (28%)</p>
-                            </div>
-                            <div class="h-2 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
-                                <div class="h-full rounded-full bg-brand" style="width: 28%"></div>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col gap-1">
-                            <div class="flex items-start justify-between gap-2">
-                                <p class="gpa-meta font-bold text-ink">3. Brokoli Super</p>
-                                <p class="gpa-meta font-semibold text-success-deep">7.10 ton (18%)</p>
-                            </div>
-                            <div class="h-2 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
-                                <div class="h-full rounded-full bg-success" style="width: 18%"></div>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col gap-1">
-                            <div class="flex items-start justify-between gap-2">
-                                <p class="gpa-meta font-bold text-ink">4. Stroberi Ciwidey</p>
-                                <p class="gpa-meta font-semibold text-success-deep">4.20 ton (11%)</p>
-                            </div>
-                            <div class="h-2 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
-                                <div class="h-full rounded-full bg-accent-deep" style="width: 11%"></div>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col gap-1">
-                            <div class="flex items-start justify-between gap-2">
-                                <p class="gpa-meta font-bold text-ink">5. Kol Putih Organik</p>
-                                <p class="gpa-meta font-semibold text-success-deep">2.15 ton (6%)</p>
-                            </div>
-                            <div class="h-2 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
-                                <div class="h-full rounded-full bg-accent-edge" style="width: 6%"></div>
-                            </div>
-                        </div>
+                        @empty
+                            <p class="py-4 text-center text-xs text-ink-body">Belum ada data komoditas.</p>
+                        @endforelse
                     </div>
 
                     <div class="flex flex-col gap-2 border-t border-line-board pt-6">
@@ -345,18 +255,18 @@
                         <div class="flex items-start gap-2">
                             <div class="flex flex-1 flex-col items-center gap-0.5 rounded bg-surface-shell p-2 text-center outline outline-1 -outline-offset-1 outline-line-board">
                                 <p class="text-[10px] leading-[15px] text-ink-body gpa-meta">Horeca &amp; Inflight</p>
-                                <p class="pt-0.5 text-[14px] font-bold leading-5 text-ink gpa-meta">65%</p>
-                                <p class="text-[9px] leading-[13.5px] text-success-deep gpa-meta">25.00 ton</p>
+                                <p class="pt-0.5 text-[14px] font-bold leading-5 text-ink gpa-meta">{{ $channelData['horeca']['share'] ?? 0 }}%</p>
+                                <p class="text-[9px] leading-[13.5px] text-success-deep gpa-meta">{{ number_format($channelData['horeca']['ton'] ?? 0, 2, ',', '.') }} ton</p>
                             </div>
                             <div class="flex flex-1 flex-col items-center gap-0.5 rounded bg-surface-shell p-2 text-center outline outline-1 -outline-offset-1 outline-line-board">
                                 <p class="text-[10px] leading-[15px] text-ink-body gpa-meta">Ritel Modern</p>
-                                <p class="pt-0.5 text-[14px] font-bold leading-5 text-ink gpa-meta">25%</p>
-                                <p class="text-[9px] leading-[13.5px] text-success-deep gpa-meta">9.60 ton</p>
+                                <p class="pt-0.5 text-[14px] font-bold leading-5 text-ink gpa-meta">{{ $channelData['retail']['share'] ?? 0 }}%</p>
+                                <p class="text-[9px] leading-[13.5px] text-success-deep gpa-meta">{{ number_format($channelData['retail']['ton'] ?? 0, 2, ',', '.') }} ton</p>
                             </div>
                             <div class="flex flex-1 flex-col items-center gap-0.5 rounded bg-surface-shell p-2 text-center outline outline-1 -outline-offset-1 outline-line-board">
                                 <p class="text-[10px] leading-[15px] text-ink-body gpa-meta">Reguler WA</p>
-                                <p class="pt-0.5 text-[14px] font-bold leading-5 text-ink gpa-meta">10%</p>
-                                <p class="text-[9px] leading-[13.5px] text-success-deep gpa-meta">3.85 ton</p>
+                                <p class="pt-0.5 text-[14px] font-bold leading-5 text-ink gpa-meta">{{ $channelData['manual']['share'] ?? 0 }}%</p>
+                                <p class="text-[9px] leading-[13.5px] text-success-deep gpa-meta">{{ number_format($channelData['manual']['ton'] ?? 0, 2, ',', '.') }} ton</p>
                             </div>
                         </div>
                     </div>
@@ -375,7 +285,7 @@
                     <h2 class="gpa-section-title text-ink">Pemantauan Tagihan Pelanggan</h2>
                 </div>
                 <p class="gpa-meta font-bold text-success-deep">
-                    TOTAL TAGIHAN BELUM DIBAYAR: Rp {{ number_format($totalRecValue, 0, ',', '.') }}
+                    TOTAL TAGIHAN BELUM DIBAYAR: Rp {{ number_format($totalReceivables, 0, ',', '.') }}
                 </p>
             </header>
 
@@ -387,9 +297,9 @@
                         <x-gpa.icon name="dot" class="h-3 w-3 shrink-0 opacity-70" />
                     </div>
                     <p class="text-lg font-bold leading-6 font-inter text-ink">
-                        Rp {{ number_format($totalReceivables > 0 ? round($totalReceivables * 0.51) : 120000000, 0, ',', '.') }}
+                        Rp {{ number_format($bucket0_15, 0, ',', '.') }}
                     </p>
-                    <p class="gpa-meta-lg leading-4 text-ink-body">8 pelanggan // Pembayaran lancar</p>
+                    <p class="gpa-meta-lg leading-4 text-ink-body">Pembayaran lancar sesuai tempo</p>
                     <p class="pt-1 text-[10px] font-semibold leading-[15px] gpa-meta text-success-deep">STATUS: LANCAR</p>
                 </article>
 
@@ -400,9 +310,9 @@
                         <x-gpa.icon name="dot" class="h-3 w-3 shrink-0 opacity-70" />
                     </div>
                     <p class="text-lg font-bold leading-6 font-inter text-ink">
-                        Rp {{ number_format($totalReceivables > 0 ? round($totalReceivables * 0.28) : 65300000, 0, ',', '.') }}
+                        Rp {{ number_format($bucket16_30, 0, ',', '.') }}
                     </p>
-                    <p class="gpa-meta-lg leading-4 text-ink-body">4 pelanggan // Pengingat otomatis terkirim</p>
+                    <p class="gpa-meta-lg leading-4 text-ink-body">Pengingat tempo terkirim otomatis</p>
                     <p class="pt-1 text-[10px] font-semibold leading-[15px] gpa-meta text-ink">STATUS: DIINGATKAN</p>
                 </article>
 
@@ -413,9 +323,9 @@
                         <x-gpa.icon name="dot" class="h-3 w-3 shrink-0 opacity-70" />
                     </div>
                     <p class="text-lg font-bold leading-6 font-inter text-ink">
-                        Rp {{ number_format($totalReceivables > 0 ? round($totalReceivables * 0.14) : 32200000, 0, ',', '.') }}
+                        Rp {{ number_format($bucket31_45, 0, ',', '.') }}
                     </p>
-                    <p class="gpa-meta-lg leading-4 text-ink-body">2 pelanggan // Surat teguran pertama</p>
+                    <p class="gpa-meta-lg leading-4 text-ink-body">Surat teguran pertama diterbitkan</p>
                     <p class="pt-1 text-[10px] font-semibold leading-[15px] gpa-meta text-warning-caution">PERLU TINDAKAN</p>
                 </article>
 
@@ -426,31 +336,33 @@
                         <x-gpa.icon name="dot" class="h-3 w-3 shrink-0 opacity-70" />
                     </div>
                     <p class="text-lg font-bold leading-6 font-inter text-ink">
-                        Rp {{ number_format($totalReceivables > 0 ? round($totalReceivables * 0.07) : 18000000, 0, ',', '.') }}
+                        Rp {{ number_format($bucketOver45, 0, ',', '.') }}
                     </p>
-                    <p class="gpa-meta-lg leading-4 text-ink-body">1 Klien (CV Mitra Boga Nusantara)</p>
+                    <p class="gpa-meta-lg leading-4 text-ink-body">{{ $worstOverdueInvoice ? '1 Klien (' . ($worstOverdueInvoice->user?->name ?: 'Klien') . ')' : '0 Klien' }}</p>
                     <p class="pt-1 text-[10px] font-semibold leading-[15px] gpa-meta text-danger">PESANAN BARU: DITAHAN OTOMATIS</p>
                 </article>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-surface-shell p-3 outline outline-1 -outline-offset-1 outline-line-board">
-                <p class="flex items-start gap-2">
-                    <x-gpa.icon name="alert-triangle" class="mt-0.5 h-4 w-4 shrink-0 text-warning-caution" />
-                    <span class="text-xs leading-4 text-ink">
-                        CV Mitra Boga Nusantara terlambat membayar Rp 18.000.000 selama 18 hari. Pengiriman baru <strong class="font-bold">DITAHAN OTOMATIS</strong> sampai tagihan dibayar.
-                    </span>
-                </p>
-                <div class="flex shrink-0 items-center gap-2">
-                    <button type="button" @click="openAuditNote()"
-                        class="rounded bg-surface-track px-2.5 py-1 text-center text-[12px] font-bold leading-4 text-ink gpa-meta outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-disabled">
-                        Lihat catatan
-                    </button>
-                    <button type="button" @click="dispensation()"
-                        class="rounded bg-ink px-2.5 py-1 text-center text-[12px] font-bold leading-4 text-white gpa-meta transition-opacity hover:opacity-90">
-                        Ajukan pengecualian
-                    </button>
+            @if ($worstOverdueInvoice)
+                <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-surface-shell p-3 outline outline-1 -outline-offset-1 outline-line-board">
+                    <p class="flex items-start gap-2">
+                        <x-gpa.icon name="alert-triangle" class="mt-0.5 h-4 w-4 shrink-0 text-warning-caution" />
+                        <span class="text-xs leading-4 text-ink">
+                            {{ $worstOverdueInvoice->user?->company_name ?: $worstOverdueInvoice->user?->name }} memiliki faktur terlambat ({{ $worstOverdueInvoice->invoice_number }}) sebesar Rp {{ number_format($worstOverdueInvoice->grand_total, 0, ',', '.') }}. Pengiriman baru <strong class="font-bold">DITAHAN OTOMATIS</strong> sampai tagihan diselesaikan.
+                        </span>
+                    </p>
+                    <div class="flex shrink-0 items-center gap-2">
+                        <button type="button" @click="openAuditNote()"
+                            class="rounded bg-surface-track px-2.5 py-1 text-center text-[12px] font-bold leading-4 text-ink gpa-meta outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-disabled">
+                            Lihat catatan
+                        </button>
+                        <button type="button" @click="dispensation()"
+                            class="rounded bg-ink px-2.5 py-1 text-center text-[12px] font-bold leading-4 text-white gpa-meta transition-opacity hover:opacity-90">
+                            Ajukan pengecualian
+                        </button>
+                    </div>
                 </div>
-            </div>
+            @endif
         </section>
 
         {{-- Ringkasan Pesanan & Kontrak Terbaru --}}

@@ -35,13 +35,13 @@ class GovernanceService
                 'master_freeze_reason' => null,
                 'master_freeze_engaged_at' => null,
                 'plt_active' => false,
-                'plt_delegate_name' => 'Nurhayati, S.Ak (VP Finance & Controller)',
-                'plt_ceiling_amount' => 350000000,
+                'plt_delegate_name' => null,
+                'plt_ceiling_amount' => 100000000,
                 'plt_duration_hours' => 72,
                 'plt_activated_at' => null,
                 'period_lock' => [
                     'is_locked' => false,
-                    'period' => 'Kuartal IV (Okt - Des 2026)',
+                    'period' => 'Kuartal ' . ceil(date('n') / 3) . ' (' . date('Y') . ')',
                     'locked_at' => null,
                     'locked_by' => null,
                     'sha256_hash' => null,
@@ -51,64 +51,7 @@ class GovernanceService
         }
 
         if (!File::exists($this->auditLogPath)) {
-            $initialLogs = [
-                [
-                    'block_id' => '#4412',
-                    'timestamp' => '2026-10-24 15:18:02 WIB',
-                    'actor' => 'Ahmad Sanusi, S.P.',
-                    'actor_uid' => 'DIR-01 [CLEARANCE L4]',
-                    'action_category' => 'APPROVAL KONTRAK',
-                    'document_ref' => 'CTR-B2B-2025-089',
-                    'details' => 'Persetujuan Khusus Kontrak B2B Hotel Grand Pangrango (Margin 18.5%, Plafon TOP Rp 200M, Tenor 30 Hari).',
-                    'status' => 'SEALED',
-                    'hash' => hash('sha256', 'CTR-B2B-2025-089-SEALED-4412'),
-                ],
-                [
-                    'block_id' => '#4411',
-                    'timestamp' => '2026-10-24 14:02:44 WIB',
-                    'actor' => 'Nurhayati, S.Ak',
-                    'actor_uid' => 'FIN-LEAD-03 [L3]',
-                    'action_category' => 'REKONSILIASI KAS',
-                    'document_ref' => 'INV-GPA-202610-0088',
-                    'details' => 'Kliring Pembayaran Invoice Termin 2 Rp 114.200.000 via VA Mandiri Korporat, Selisih Kliring Rp 0.',
-                    'status' => 'SEALED',
-                    'hash' => hash('sha256', 'INV-GPA-202610-0088-SEALED-4411'),
-                ],
-                [
-                    'block_id' => '#4410',
-                    'timestamp' => '2026-10-24 11:15:00 WIB',
-                    'actor' => 'Ahmad Sanusi, S.P.',
-                    'actor_uid' => 'DIR-01 [CLEARANCE L4]',
-                    'action_category' => 'SYSTEM GOVERNANCE',
-                    'document_ref' => 'Q3-2026-LEDGER',
-                    'details' => 'Eksekusi Audit Freeze Q3 2026: Penutupan Mutasi Jurnal Buku Besar Agribisnis Kuartal 3. Status Finalized.',
-                    'status' => 'SEALED',
-                    'hash' => hash('sha256', 'Q3-2026-LEDGER-SEALED-4410'),
-                ],
-                [
-                    'block_id' => '#4409',
-                    'timestamp' => '2026-10-24 09:40:12 WIB',
-                    'actor' => 'Agung Wicaksono',
-                    'actor_uid' => 'WMS-SUPER-01 [L2]',
-                    'action_category' => 'BUFFER OVERRIDE',
-                    'document_ref' => 'STK-TMT-LEMBANG-04',
-                    'details' => 'Penyesuaian Kalibrasi Buffer Tomat Beef Pasca Sortir Gudang Lembang (+240 KG dari panen kemitraan Gapoktan).',
-                    'status' => 'SEALED',
-                    'hash' => hash('sha256', 'STK-TMT-LEMBANG-04-SEALED-4409'),
-                ],
-                [
-                    'block_id' => '#4408',
-                    'timestamp' => '2026-10-24 08:12:55 WIB',
-                    'actor' => 'System Auto-Guard',
-                    'actor_uid' => 'DAEMON CORE RULE 02',
-                    'action_category' => 'SECURITY BLOCK',
-                    'document_ref' => 'ORD-GPA-202610-0112',
-                    'details' => 'Pencegahan Otomatis Overselling: Permintaan PO Melebihi Buffer Fisik Kentang Granola Gudang Ciwidey (Defisit 1.8 MT).',
-                    'status' => 'INTERCEPTED',
-                    'hash' => hash('sha256', 'ORD-GPA-202610-0112-INTERCEPTED-4408'),
-                ],
-            ];
-            File::put($this->auditLogPath, json_encode($initialLogs, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+            File::put($this->auditLogPath, json_encode([], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }
     }
 
@@ -138,7 +81,7 @@ class GovernanceService
         $nextNumber = 4413 + count($logs) - 5;
         $blockId = '#block-' . $nextNumber;
         $timestamp = now()->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s') . ' WIB';
-        
+
         $prevHash = !empty($logs) ? ($logs[0]['hash'] ?? '') : '';
         $rawContent = $prevHash . $blockId . $timestamp . $docRef . $details;
         $hash = hash('sha256', $rawContent);

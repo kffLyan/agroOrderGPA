@@ -16,9 +16,17 @@
         rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>
+        @media print {
+            header, nav, .no-print { display: none !important; }
+            body { background: #fff !important; }
+            main { padding: 0 !important; }
+        }
+    </style>
 </head>
 
 <body class="min-h-screen bg-canvas font-sans text-ink antialiased">
+    <x-gpa.loading-screen />
     @php
         $operatorRole = $operator['role'] ?? 'Supir Pengiriman';
         $operatorName = $operator['name'] ?? (auth()->user()?->name ?? 'Supir Armada');
@@ -41,9 +49,6 @@
             'pod' => 'armada.pod',
             'fleet' => 'armada.status',
         ];
-        $component = $component ?? 'armadaTasks';
-        $componentPayload = $componentPayload ?? [];
-
         $headerShell = $headerTone === 'light'
             ? 'sticky top-0 z-40 flex h-14 items-center gap-2.5 border-b-2 border-surface-shell bg-surface px-4 text-ink'
             : 'sticky top-0 z-40 flex h-14 items-center gap-2.5 bg-brand px-3 text-white';
@@ -61,7 +66,7 @@
             : 'inline-flex h-7 w-7 items-center justify-center rounded-full bg-surface-disabled text-[11px] font-bold text-ink ring-1 ring-inset ring-accent';
     @endphp
 
-    <div x-data="{{ $component }}(@js($componentPayload))">
+    <div x-data="{ openMenu(label) { $dispatch('gpa:toast', { title: label, message: 'Modul armada siap digunakan untuk operasional lapangan.', tone: 'info' }); } }">
         <a href="#main-content"
             class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2 focus:text-xs focus:font-semibold focus:shadow-card">
             Lewati ke konten utama

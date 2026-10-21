@@ -139,8 +139,10 @@ class GovernanceController extends Controller
 
         return response()->stream(function () use ($logs) {
             $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF");
+
             fputcsv($handle, ['LOG AUDIT FORENSIK APPEND-ONLY SHA-256 - KOPERASI GPA']);
-            fputcsv($handle, ['TANGGAL CETAK', date('d-m-Y H:i:s')]);
+            fputcsv($handle, ['TANGGAL CETAK', date('d-m-Y H:i:s') . ' WIB']);
             fputcsv($handle, []);
             fputcsv($handle, ['Timestamp', 'Kategori Aksi', 'Dokumen Ref', 'Aktor', 'Clearance Level', 'Status', 'Rincian Perubahan', 'Hash SHA-256']);
 

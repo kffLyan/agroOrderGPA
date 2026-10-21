@@ -86,9 +86,6 @@ class StockController extends Controller
         })->values()->all();
 
         $distinctSuppliers = HarvestBatch::distinct()->pluck('supplier_name')->filter()->values()->all();
-        if (empty($distinctSuppliers)) {
-            $distinctSuppliers = ['Pak Endang (Gapoktan Pacet Makmur)', 'Bu Yanti (Gapoktan Barokah)', 'Mitra Tani Sejahtera'];
-        }
 
         $recentBatches = HarvestBatch::with('product', 'inputter')->latest()->take(10)->get();
         $logItems = $recentBatches->map(function ($batch) {

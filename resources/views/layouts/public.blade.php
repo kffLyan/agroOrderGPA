@@ -18,6 +18,8 @@
 </head>
 
 <body class="bg-canvas font-sans text-ink antialiased selection:bg-surface-raised">
+    <x-gpa.loading-screen />
+
     <a href="#main-content"
         class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2 focus:text-xs focus:font-semibold focus:shadow-card">
         Lewati ke konten utama

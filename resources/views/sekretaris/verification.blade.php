@@ -3,7 +3,7 @@
 @section('title', 'Verifikasi Pesanan')
 
 @section('content')
-    <div class="space-y-6" x-data="secretaryVerification(@js($mappedOrders ?? []), 3)"
+    <div class="space-y-6" x-data="secretaryVerification(@js($mappedOrders ?? []), 0)"
         @gpa:search.window="query = $event.detail">
         <section class="gpa-panel overflow-hidden">
             <div class="flex flex-wrap items-start justify-between gap-4 border-b border-line-soft px-6 py-6">
@@ -46,8 +46,7 @@
             </div>
         </section>
 
-        <div class="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_20rem]">
-            <section class="gpa-panel overflow-hidden">
+        <section class="gpa-panel overflow-hidden">
                 <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-5">
                     <h2 class="flex items-center gap-2 font-sans text-lg font-bold text-ink">
                         <x-gpa.icon name="package" class="h-[18px] w-[18px] shrink-0 text-success-deep" />
@@ -161,42 +160,7 @@
                         <span x-text="'Tampilkan ' + resolved.length + ' PO Diproses'"></span>
                     </button>
                 </div>
-            </section>
-
-            <section class="gpa-panel bg-surface-shell p-4 outline outline-1 outline-line-board/50">
-                <h2 class="flex items-center gap-2 gpa-meta-lg font-bold tracking-[0.88px] text-ink">
-                    <x-gpa.icon name="badge-check" class="h-4 w-4 shrink-0 text-ink" />
-                    Daftar Periksa Wajib Sebelum Menyetujui:
-                </h2>
-
-                <ul class="mt-3 space-y-1.5">
-                    <li class="flex items-start gap-2">
-                        <input type="checkbox" id="hard-gate-0" value="0" x-model="checked" class="gpa-check">
-                        <label for="hard-gate-0" class="text-xs leading-5 text-ink-body">
-                            Pastikan ketersediaan sayur di kebun atau mitra tani binaan mencukupi.
-                        </label>
-                    </li>
-                    <li class="flex items-start gap-2">
-                        <input type="checkbox" id="hard-gate-1" value="1" x-model="checked" class="gpa-check">
-                        <label for="hard-gate-1" class="text-xs leading-5 text-ink-body">
-                            Pastikan alamat pengiriman dan permintaan armada sudah sesuai.
-                        </label>
-                    </li>
-                    <li class="flex items-start gap-2">
-                        <input type="checkbox" id="hard-gate-2" value="2" x-model="checked" class="gpa-check">
-                        <label for="hard-gate-2" class="text-xs leading-5 text-ink-body">
-                            Periksa limit batas kredit dan kesepakatan tempo pembayaran klien.
-                        </label>
-                    </li>
-                </ul>
-
-                <p class="mt-4 flex items-center gap-1.5 border-t border-line-soft pt-3">
-                    <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
-                    <span class="gpa-note text-ink-body" x-text="checked.length + ' / ' + checklistTotal + ' poin terverifikasi'">
-                    </span>
-                </p>
-            </section>
-        </div>
+        </section>
 
         <section id="order-inspection" class="gpa-panel scroll-mt-24 p-6">
             <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft pb-4">
@@ -375,7 +339,7 @@
                 </template>
             </div>
 
-            <div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line-soft pt-4">
+            <div class="sticky bottom-4 z-20 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line-soft bg-surface/95 p-4 shadow-xl ring-1 ring-black/5 backdrop-blur-md">
                 <div class="flex flex-wrap items-center gap-2">
                     <button type="button" @click="reject()"
                         class="inline-flex h-10 items-center gap-1.5 rounded-lg px-4 text-danger outline outline-1 outline-danger transition-colors hover:bg-danger-soft gpa-meta-lg font-bold tracking-[0.88px]">

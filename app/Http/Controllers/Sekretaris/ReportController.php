@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
@@ -25,17 +26,19 @@ class ReportController extends Controller
         $totalNet = 0;
         $totalValue = 0;
 
+        $completedOrdersCount = $orders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count();
+        $activeOrdersCount = $orders->whereNotIn('status', ['BATAL'])->count();
+        $deliveryAccuracy = $activeOrdersCount > 0 ? round(($completedOrdersCount / $activeOrdersCount) * 100, 1) : 100.0;
+
         foreach ($orders->values() as $idx => $ord) {
             $clientName = $ord->user?->company_name ?: ($ord->user?->name ?: 'Mitra Klien');
             $address = $ord->delivery_address ?: 'Gudang Pembeli';
             $firstItem = $ord->orderItems->first();
-            $commodityName = $firstItem?->product?->name ?: 'Sayur Segar Grade A';
-            $unitPrice = $firstItem ? (float) $firstItem->unit_price : 15000;
+            $commodityName = $firstItem?->product?->name ?: 'Sayur Segar';
+            $unitPrice = $firstItem ? (float) $firstItem->unit_price : 0;
 
             $est = (float) $ord->orderItems->sum('ordered_qty');
-            if ($est <= 0) $est = 500.0;
             $net = (float) $ord->orderItems->sum(fn($it) => $it->actual_net_weight ?: $it->ordered_qty);
-            if ($net <= 0) $net = $est;
 
             $val = (float) ($ord->grand_total ?: ($net * $unitPrice));
             $diffKg = $net - $est;
@@ -72,37 +75,6 @@ class ReportController extends Controller
             ];
         }
 
-        if (empty($journalRows)) {
-            $journalRows = [
-                [
-                    'no'              => '01',
-                    'invoice'         => 'ORD-GPA-' . date('Ym') . '-0001',
-                    'sj'              => 'SJ-GPA-' . date('Ym') . '-0001',
-                    'client'          => 'PT Sinar Agro Mandiri',
-                    'location'        => 'Gudang Pembeli Sentral',
-                    'commodity'       => 'Selada Romaine Grade A',
-                    'estimate'        => 500.0,
-                    'estimate_label'  => '500 kg',
-                    'net'             => 498.5,
-                    'net_label'       => '498.5 kg',
-                    'unit_price'      => 15000,
-                    'value'           => 7477500,
-                    'value_label'     => 'Rp 7.477.500',
-                    'deviation_value' => -0.3,
-                    'deviation_label' => '-0.30%',
-                    'deviation_class' => 'text-success-deep',
-                    'blocked'         => false,
-                    'status'          => 'lunas',
-                    'status_label'    => 'Lunas',
-                    'status_class'    => 'bg-accent text-success-deep outline outline-1 outline-success-deep',
-                    'audit_files'     => 3,
-                ]
-            ];
-            $totalEstimate = 500;
-            $totalNet = 498.5;
-            $totalValue = 7477500;
-        }
-
         $overallDeviation = $totalEstimate > 0 ? round((($totalNet - $totalEstimate) / $totalEstimate) * 100, 2) : 0;
 
         return view('sekretaris.report', [
@@ -111,6 +83,135 @@ class ReportController extends Controller
             'totalNet'         => $totalNet,
             'totalValue'       => $totalValue,
             'overallDeviation' => $overallDeviation,
+            'deliveryAccuracy' => $deliveryAccuracy,
+        ]);
+    }
+
+    /**
+     * Unduh Rekap Laporan Operasional (.CSV)
+     */
+    public function exportCsv(Request $request): StreamedResponse
+    {
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="Rekap_Laporan_Operasional_GPA_' . date('Ymd_His') . '.csv"',
+        ];
+
+        return response()->stream(function () {
+            $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)']);
+            fputcsv($handle, ['JURNAL REKAPITULASI OPERASIONAL, PENIMBANGAN & PENJUALAN']);
+            fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB']);
+            fputcsv($handle, []);
+            fputcsv($handle, [
+                'No',
+                'No. PO / Invoice',
+                'Surat Jalan',
+                'Entitas Klien / Pembeli',
+                'Lokasi / Alamat Kirim',
+                'Komoditas Sayur',
+                'Estimasi PO (Kg)',
+                'Netto Tera (Kg)',
+                'Deviasi Bobot (Kg)',
+                'Deviasi Bobot (%)',
+                'Harga Satuan (Rp)',
+                'Total Nilai (Rp)',
+                'Status Pembayaran',
+            ]);
+
+            $orders = Order::with(['user', 'orderItems.product', 'invoice'])->latest()->get();
+            $no = 1;
+            foreach ($orders as $ord) {
+                $clientName = $ord->user?->company_name ?: ($ord->user?->name ?: 'Mitra Klien');
+                $address = $ord->delivery_address ?: 'Gudang Pembeli';
+                $firstItem = $ord->orderItems->first();
+                $commodityName = $firstItem?->product?->name ?: 'Sayur Segar';
+                $unitPrice = $firstItem ? (float) $firstItem->unit_price : 0;
+
+                $est = (float) $ord->orderItems->sum('ordered_qty');
+                $net = (float) $ord->orderItems->sum(fn($it) => $it->actual_net_weight ?: $it->ordered_qty);
+                $val = (float) ($ord->grand_total ?: ($net * $unitPrice));
+                $diffKg = $net - $est;
+                $diffPct = $est > 0 ? round(($diffKg / $est) * 100, 2) : 0;
+                $isPaid = $ord->status === 'SELESAI' || ($ord->invoice && $ord->invoice->status === 'PAID');
+
+                fputcsv($handle, [
+                    $no++,
+                    $ord->order_number,
+                    $ord->surat_jalan_number ?: ('SJ-' . date('Ym') . '-' . str_pad($ord->id, 4, '0', STR_PAD_LEFT)),
+                    $clientName,
+                    $address,
+                    $commodityName,
+                    $est,
+                    $net,
+                    $diffKg,
+                    ($diffPct >= 0 ? '+' : '') . $diffPct . '%',
+                    $unitPrice,
+                    $val,
+                    $isPaid ? 'Lunas' : 'Tempo 30',
+                ]);
+            }
+
+            fclose($handle);
+        }, 200, $headers);
+    }
+
+    /**
+     * Tampilan Siap Cetak Dokumen Rekap Resmi Sekretaris (.PDF)
+     */
+    public function printReport(Request $request): View
+    {
+        $orders = Order::with(['user', 'orderItems.product', 'invoice'])->latest()->get();
+
+        $journalRows = [];
+        $totalEstimate = 0;
+        $totalNet = 0;
+        $totalValue = 0;
+
+        foreach ($orders->values() as $idx => $ord) {
+            $clientName = $ord->user?->company_name ?: ($ord->user?->name ?: 'Mitra Klien');
+            $firstItem = $ord->orderItems->first();
+            $commodityName = $firstItem?->product?->name ?: 'Sayur Segar';
+            $unitPrice = $firstItem ? (float) $firstItem->unit_price : 0;
+
+            $est = (float) $ord->orderItems->sum('ordered_qty');
+            $net = (float) $ord->orderItems->sum(fn($it) => $it->actual_net_weight ?: $it->ordered_qty);
+            $val = (float) ($ord->grand_total ?: ($net * $unitPrice));
+            $diffKg = $net - $est;
+            $diffPct = $est > 0 ? round(($diffKg / $est) * 100, 2) : 0;
+
+            $totalEstimate += $est;
+            $totalNet += $net;
+            $totalValue += $val;
+
+            $isPaid = $ord->status === 'SELESAI' || ($ord->invoice && $ord->invoice->status === 'PAID');
+
+            $journalRows[] = [
+                'no'              => str_pad($idx + 1, 2, '0', STR_PAD_LEFT),
+                'invoice'         => $ord->order_number,
+                'sj'              => $ord->surat_jalan_number ?: ('SJ-' . date('Ym') . '-' . str_pad($ord->id, 4, '0', STR_PAD_LEFT)),
+                'client'          => $clientName,
+                'commodity'       => $commodityName,
+                'estimate'        => $est,
+                'net'             => $net,
+                'value'           => $val,
+                'deviation_label' => ($diffPct >= 0 ? '+' : '') . number_format($diffPct, 2, '.', '') . '%',
+                'status_label'    => $isPaid ? 'Lunas' : 'Tempo 30',
+            ];
+        }
+
+        $overallDeviation = $totalEstimate > 0 ? round((($totalNet - $totalEstimate) / $totalEstimate) * 100, 2) : 0;
+        $operatorName = Auth::user()?->name ?: 'Sekretaris Operasional';
+
+        return view('sekretaris.reports.print', [
+            'journalRows'      => $journalRows,
+            'totalEstimate'    => $totalEstimate,
+            'totalNet'         => $totalNet,
+            'totalValue'       => $totalValue,
+            'overallDeviation' => $overallDeviation,
+            'operatorName'     => $operatorName,
         ]);
     }
 }

@@ -6,17 +6,40 @@
     @php
         $user = auth()->user();
         $code = $user ? 'SK-' . str_pad($user->id, 4, '0', STR_PAD_LEFT) : 'SK-001';
-        $clientCode = 'CLI-' . str_pad($clientUser?->id ?? 1, 4, '0', STR_PAD_LEFT);
-        $clientName = $clientUser?->company_name ?: ($clientUser?->name ?: 'Hotel Grand Pangrango');
-        $clientContact = $clientUser?->pic_name ?: ($clientUser?->name ?: 'Bpk. Ridwan (Bagian Dapur)');
-        $clientPhone = $clientUser?->phone ?: '0812-3456-7890';
-        $clientAddress = $clientUser?->address ?: 'Jl. Raya Pajajaran No. 45, Bogor Tengah';
+        $clientCode = $clientUser ? ('CLI-' . str_pad($clientUser->id, 4, '0', STR_PAD_LEFT)) : '—';
+        $clientName = $clientUser?->company_name ?: ($clientUser?->name ?: '—');
+        $clientContact = $clientUser?->pic_name ?: ($clientUser?->name ?: '—');
+        $clientPhone = $clientUser?->phone ?: '—';
+        $clientAddress = $clientUser?->address ?: '—';
 
-        $sourceData = [
-            'reference' => 'WA-' . date('Ymd') . '-001',
-            'received'  => now()->format('d M Y, H:i') . ' WIB',
-            'active'    => 'whatsapp',
+        $creditLimit = 0.0;
+        $usedCredit = 0.0;
+        if ($clientUser) {
+            $activeContracts = \App\Models\Contract::where('user_id', $clientUser->id)->where('status', 'ACTIVE')->get();
+            foreach ($activeContracts as $c) {
+                $creditLimit += (float) (($c->committed_volume_per_cycle ?: 0) * ($c->fixed_price_per_kg ?: 0));
+            }
+            $usedCredit = (float) \App\Models\Invoice::where('user_id', $clientUser->id)->whereIn('status', ['UNPAID', 'OVERDUE'])->sum('grand_total');
+        }
+
+        $source = [
+            'reference'       => 'MANUAL-' . date('Ymd') . '-' . str_pad($clientUser?->id ?? 1, 3, '0', STR_PAD_LEFT),
+            'received'        => now()->format('d M Y, H:i') . ' WIB',
+            'active'          => 'whatsapp',
+            'channels'        => [
+                ['key' => 'whatsapp', 'label' => 'WhatsApp Bisnis GPA', 'note' => 'Pesan teks / dokumen PDF'],
+                ['key' => 'telepon', 'label' => 'Telepon Langsung', 'note' => 'Konfirmasi lisan via call center'],
+                ['key' => 'email', 'label' => 'Email Resmi', 'note' => 'Lampiran purchase order'],
+            ],
+            'reference_label' => 'Nomor Referensi / Chat',
+            'reference_hint'  => 'Contoh: WA-' . date('Ym') . '-001',
+            'received_label'  => 'Waktu Diterima',
+            'validator_label' => 'Petugas yang Mencatat',
+            'validator'       => ($user?->name ?: 'Sekretaris') . ' (' . $code . ')',
+            'warehouse_label' => 'Lokasi Gudang',
+            'warehouse'       => 'Gudang Konsolidasi Ciwidey',
         ];
+        $sourceData = $source;
         $clientData = [
             'name'        => $clientName,
             'contact'     => $clientContact,
@@ -24,24 +47,24 @@
             'address'     => $clientAddress,
             'active_mode' => 'registered',
             'credit'      => [
-                'limit' => 50000000,
-                'used'  => 15000000,
+                'limit' => $creditLimit,
+                'used'  => $usedCredit,
             ],
         ];
         $logisticsData = [
             'date'    => now()->addDay()->format('Y-m-d'),
             'arrival' => 'Pagi Hari (05:00 - 08:00 WIB)',
-            'route'   => 'Rute Koridor Utama Jabodetabek',
-            'fleet'   => 'Mobil Boks Pendingin (Chilled 4°C)',
-            'notes'   => 'Sayur disusun rapi dalam keranjang bersih, PIC dapur siap menerima pagi hari.',
-            'fee'     => 150000,
+            'route'   => 'Rute Koridor Pengantaran GPA',
+            'fleet'   => 'Armada Reefer Chilled',
+            'notes'   => '',
+            'fee'     => 0,
         ];
         $paymentData = [
             'active'    => 'transfer',
-            'file'      => 'BUKTI_PEMBAYARAN_MANUAL.PNG',
-            'size'      => '520 KB',
+            'file'      => '',
+            'size'      => '',
             'hash'      => 'VERIF-' . date('Ymd'),
-            'hash_note' => 'Bukti Terverifikasi',
+            'hash_note' => 'Menunggu Dokumen',
         ];
     @endphp
 

@@ -246,7 +246,7 @@
             </div>
 
             <ul class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                @foreach ($products as $product)
+                @forelse ($products as $product)
                     @php
                         $stock = (float) $product->harvestBatches->sum('available_quantity');
                         $nameLower = strtolower($product->name);
@@ -324,7 +324,11 @@
                             </div>
                         </div>
                     </li>
-                @endforeach
+                @empty
+                    <li class="col-span-full rounded-2xl border border-line-hair bg-white p-8 text-center text-[#5C6B57] text-sm">
+                        Belum ada komoditas panen yang terdaftar di database.
+                    </li>
+                @endforelse
 
                 <li
                     class="relative flex flex-col justify-between gap-4 overflow-hidden rounded-2xl border-2 border-accent-deep bg-brand p-6 shadow-md">
@@ -480,7 +484,7 @@
             </div>
 
             <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                @foreach ($contracts as $index => $contract)
+                @forelse ($contracts as $index => $contract)
                     @php
                         $client = $contract->user;
                         $clientName = $client ? ($client->company_name ?: $client->name) : 'Mitra Korporat';
@@ -533,7 +537,11 @@
                             </div>
                         </div>
                     </div>
-                @endforeach
+                @empty
+                    <div class="col-span-full rounded-2xl border border-line-hair bg-white p-8 text-center text-[#5C6B57] text-sm">
+                        Belum ada data kemitraan kontrak komersial aktif saat ini.
+                    </div>
+                @endforelse
 
                 <div
                     class="flex flex-col gap-4 rounded-2xl border border-line-hair bg-white p-6 shadow-sm sm:col-span-2 sm:flex-row sm:items-center sm:justify-between xl:col-span-3">

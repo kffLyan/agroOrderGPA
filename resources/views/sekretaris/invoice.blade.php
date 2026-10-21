@@ -15,7 +15,7 @@
 
     @endphp
 
-    <div class="space-y-6" x-data="secretaryInvoicing(@js($clients), @js($ledgerRows), @js($statusFilters), @js($totalInvoices))"
+    <div class="space-y-6" x-data="secretaryInvoicing(@js($clients), @js($ledgerRows), @js($statusFilters), @js($totalInvoices), @js(route('prints.invoice', ['invoice' => '__invoice__'])))"
         @gpa:search.window="query = $event.detail">
         <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0">
@@ -33,11 +33,11 @@
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-3">
-                <button type="button" @click="exportLedger()"
+                <a href="{{ route('sekretaris.invoices.export') }}"
                     class="inline-flex items-center gap-2 rounded-xl bg-surface-shell px-4 py-3 outline outline-1 outline-line-board transition-colors hover:bg-surface-track gpa-meta-lg font-bold tracking-[0.88px] text-ink">
                     <x-gpa.icon name="download" class="h-[15px] w-[15px] shrink-0" />
                     Unduh Laporan Faktur (CSV)
-                </button>
+                </a>
 
                 <button type="button" @click="manualInvoice()"
                     class="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-3 text-white shadow-sub transition-colors hover:bg-brand-deep gpa-meta-lg font-bold tracking-[0.88px]">
@@ -451,10 +451,10 @@
                                             <x-gpa.icon name="eye" class="h-[15px] w-[15px] shrink-0" />
                                         </button>
 
-                                        <button type="button" @click="printInvoice(@js($row))" title="Cetak faktur"
-                                            aria-label="Cetak faktur {{ $row['id'] }}"
+                                        <button type="button" @click="printInvoice(@js($row))" title="Cetak faktur resmi"
+                                            aria-label="Cetak faktur resmi {{ $row['id'] }}"
                                             class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-surface-track text-ink transition-colors hover:bg-surface-disabled">
-                                            <x-gpa.icon name="download" class="h-[15px] w-[15px] shrink-0" />
+                                            <x-gpa.icon name="printer" class="h-[15px] w-[15px] shrink-0" />
                                         </button>
 
                                         <button type="button" @click="followUp(@js($row))" title="Tindak lanjut penagihan"

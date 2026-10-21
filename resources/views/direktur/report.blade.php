@@ -7,7 +7,7 @@
         $user = auth()->user();
         $lockPeriod = $periodLock['period'] ?? 'Kuartal IV 2026 (Okt - Des 2026)';
         $lockedAt = $periodLock['locked_at'] ?? '24 Okt 2026 23:59:59 WIB';
-        $lockedBy = $periodLock['locked_by'] ?? ($user?->name ?: 'Ahmad Sanusi, S.P.');
+        $lockedBy = $periodLock['locked_by'] ?? ($user?->name ?: 'Direktur GPA');
         $sha256Hash = $periodLock['sha256_hash'] ?? '0x8F9C4A217B1E90D4CC67F814E32A0B7D18C992E5F67104B8A293CD0891DE33';
 
         // Format commodities
@@ -133,8 +133,18 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-3 pt-1">
-                    <button type="button" @click="revealAudit()"
+                    <a href="{{ route('direktur.reports.download') }}" target="_blank"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-[11px] font-bold tracking-[0.88px] text-ink shadow-sub transition-colors hover:bg-accent-deep gpa-meta">
+                        <x-gpa.icon name="printer" class="h-3.5 w-3.5" />
+                        CETAK DOKUMEN LAPORAN RESMI (PDF)
+                    </a>
+                    <a href="{{ route('direktur.reports.export') }}"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-[11px] font-bold tracking-[0.88px] text-white transition-colors hover:bg-white/20 gpa-meta">
+                        <x-gpa.icon name="download" class="h-3.5 w-3.5" />
+                        UNDUH BUKU BESAR (CSV / EXCEL)
+                    </a>
+                    <button type="button" @click="revealAudit()"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-[11px] font-bold tracking-[0.88px] text-white transition-colors hover:bg-white/20 gpa-meta">
                         <x-gpa.icon name="clipboard" class="h-3.5 w-3.5" />
                         LIHAT LOG AUDIT FORENSIK
                     </button>
@@ -353,7 +363,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($cList as $row)
+                        @forelse ($cList as $row)
                             <tr class="border-b border-line-faint transition-colors hover:bg-surface-base">
                                 <th scope="row"
                                     class="sticky left-0 z-10 bg-surface px-4 py-3 text-[12px] font-semibold text-ink">
@@ -382,7 +392,13 @@
                                     </span>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="9" class="px-4 py-8 text-center text-sm font-medium text-ink-subtle">
+                                    Belum ada data komoditas dalam periode ini.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                     <tfoot class="bg-surface-shell">
                         <tr class="border-t-2 border-brand-line">
@@ -453,7 +469,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($clList as $row)
+                        @forelse ($clList as $row)
                             <tr class="border-b border-line-faint transition-colors hover:bg-surface-base">
                                 <th scope="row" class="sticky left-0 z-10 bg-surface px-4 py-3">
                                     <span class="block text-[12px] font-semibold leading-5 text-ink">{{ $row['name'] }}</span>
@@ -475,7 +491,13 @@
                                     </span>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="8" class="px-4 py-8 text-center text-sm font-medium text-ink-subtle">
+                                    Belum ada data rekapitulasi penjualan klien B2B.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                     <tfoot class="bg-surface-shell">
                         <tr class="border-t-2 border-brand-line">

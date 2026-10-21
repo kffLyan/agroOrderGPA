@@ -44,9 +44,6 @@ class CatalogController extends Controller
 
         // Hitung kuota bulanan dari kontrak
         $totalCommittedQuota = (float) $activeContracts->sum('committed_volume_per_cycle');
-        if ($totalCommittedQuota <= 0) {
-            $totalCommittedQuota = 5000.0; // Kuota default
-        }
 
         // Hitung serapan kuota bulan berjalan
         $startOfMonth = now()->startOfMonth();
@@ -60,7 +57,12 @@ class CatalogController extends Controller
             });
 
         // Plafon kredit tempo
-        $creditLimit = $isB2b ? 50000000.0 : 0.0;
+        $creditLimit = 0.0;
+        if ($isB2b) {
+            $creditLimit = (float) $activeContracts->sum(function ($c) {
+                return (float) ($c->fixed_price_per_kg * $c->committed_volume_per_cycle * 2);
+            });
+        }
         $unpaidTotal = (float) Order::where('user_id', $user->id)
             ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'TERVERIFIKASI', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])
             ->sum('grand_total');

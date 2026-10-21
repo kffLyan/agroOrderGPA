@@ -46,11 +46,11 @@ class TaskController extends Controller
         $totalWeightKg = 0;
         foreach ($orders as $order) {
             foreach ($order->orderItems as $item) {
-                $totalWeightKg += (float) ($item->net_weight ?? $item->quantity ?? 0);
+                $totalWeightKg += (float) ($item->actual_net_weight ?: $item->ordered_qty ?: 0);
             }
         }
 
-        $activePlate = $orders->first(fn ($o) => !empty($o->vehicle_plate_number))?->vehicle_plate_number ?? 'B 9284 TDA';
+        $activePlate = $orders->first(fn ($o) => !empty($o->vehicle_plate_number))?->vehicle_plate_number ?? '—';
 
         return view('armada.tasks', [
             'orders'        => $orders,

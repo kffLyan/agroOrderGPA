@@ -41,21 +41,21 @@ class WeighingController extends Controller
                 ?? (clone $orderQuery)->latest()->first();
         }
 
-        $orderId = $realOrder?->id ?? 1;
-        $orderCode = $realOrder?->order_number ?? 'PO-GPA-2026-0001';
-        $clientName = $realOrder?->user?->company_name ?: ($realOrder?->user?->name ?? 'Grand Hotel Bandung');
-        $commodities = $realOrder?->orderItems?->pluck('product.name')->filter()->unique()->join(', ') ?: 'Selada Romaine Grade A Super';
-        $estimate = (float) ($realOrder?->orderItems?->sum('ordered_qty') ?: 500.0);
+        $orderId = $realOrder?->id;
+        $orderCode = $realOrder?->order_number ?: '—';
+        $clientName = $realOrder?->user?->company_name ?: ($realOrder?->user?->name ?? '—');
+        $commodities = $realOrder?->orderItems?->pluck('product.name')->filter()->unique()->join(', ') ?: '—';
+        $estimate = (float) ($realOrder?->orderItems?->sum('ordered_qty') ?: 0.0);
         $firstItem = $realOrder?->orderItems?->first();
-        $unitRate = (float) ($firstItem?->unit_price ?: 18000.0);
+        $unitRate = (float) ($firstItem?->unit_price ?: 0.0);
         $isWeighed = $realOrder?->status === 'SIAP_KIRIM';
         $actualNet = (float) ($realOrder?->orderItems?->sum(fn($it) => $it->actual_net_weight ?: $it->ordered_qty) ?: $estimate);
         $crates = max(1, (int) ceil($actualNet / 20));
         $tareEach = 2.0;
         $tareCrates = (float) ($crates * $tareEach);
         $gross = $actualNet + $tareCrates;
-        $verifierName = $realOrder?->verifier?->name ?? 'Sekretaris Operasional';
-        $sjNumber = $realOrder?->surat_jalan_number ?: ('SJ-GPA-' . date('Ym') . '-' . str_pad($orderId, 4, '0', STR_PAD_LEFT));
+        $verifierName = $realOrder?->verifier?->name ?? '—';
+        $sjNumber = $realOrder?->surat_jalan_number ?: ($realOrder ? ('SJ-GPA-' . date('Ym') . '-' . str_pad($orderId, 4, '0', STR_PAD_LEFT)) : '—');
 
         $afkirKg = max(0, round($estimate * 0.006, 2));
         $cleanKg = $actualNet;

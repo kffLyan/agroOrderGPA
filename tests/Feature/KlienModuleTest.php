@@ -252,4 +252,30 @@ class KlienModuleTest extends TestCase
         $response->assertSee('REKAPITULASI RESMI FAKTUR KONSOLIDASI');
         $response->assertSee('PT GREEN PASUNDAN AGRICULTURE');
     }
+
+    public function test_klien_can_export_orders_csv(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($klien)->get(route('klien.orders.export'));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
+    }
+
+    public function test_klien_can_export_documents_csv(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($klien)->get(route('klien.documents.export'));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
+    }
 }

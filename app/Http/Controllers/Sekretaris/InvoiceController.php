@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InvoiceController extends Controller
 {
@@ -69,30 +70,20 @@ class InvoiceController extends Controller
                 ];
             }
 
-            if (empty($docs)) {
-                $docs = [
-                    [
-                        'sj'           => 'SJ-' . date('Ym') . '-0001',
-                        'date'         => now()->format('d M Y'),
-                        'commodity'    => 'Selada Romaine Grade A',
-                        'weight'       => 500,
-                        'weight_label' => '500 kg',
-                        'pod'          => 'Telah Diterima & Sah',
-                        'value'        => 7500000,
-                        'value_label'  => 'Rp 7.500.000',
-                    ]
-                ];
-            }
+            $contractObj = method_exists($c, 'contracts') ? $c->contracts()->where('status', 'ACTIVE')->first() : null;
+            $topDays = $contractObj?->top_days ?: 30;
+            $plafon = $contractObj ? (float) ($contractObj->fixed_price_per_kg * $contractObj->committed_volume_per_cycle * 2) : 0;
+            $usedPlafon = (float) $c->orders()->whereIn('status', ['MENUNGGU_VERIFIKASI', 'TERVERIFIKASI', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])->sum('grand_total');
 
             $clients[] = [
                 'id'          => (string) $c->id,
                 'name'        => $c->company_name ?: ($c->name ?: 'Mitra Klien'),
-                'terms_label' => 'Tempo 30 Hari',
-                'terms_days'  => 30,
-                'npwp'        => '01.324.981.4-051.000',
-                'contract'    => 'KONTRAK-B2B-' . str_pad($c->id, 3, '0', STR_PAD_LEFT),
-                'plafon'      => 100000000,
-                'used'        => 35000000,
+                'terms_label' => 'Tempo ' . $topDays . ' Hari',
+                'terms_days'  => $topDays,
+                'npwp'        => '—',
+                'contract'    => $contractObj?->contract_number ?: ('KONTRAK-' . str_pad($c->id, 3, '0', STR_PAD_LEFT)),
+                'plafon'      => $plafon,
+                'used'        => $usedPlafon,
                 'issue_date'  => now()->format('Y-m-d'),
                 'documents'   => $docs,
             ];
@@ -177,67 +168,6 @@ class InvoiceController extends Controller
                     'paid'           => $isPaid,
                 ];
             }
-        } else {
-            // Default rows jika tabel invoice masih baru
-            $ledgerRows = [
-                [
-                    'id'             => 'INV-' . date('Y-m') . '-0001',
-                    'issued'         => now()->format('d M Y'),
-                    'issued_note'    => '(Konsolidasi)',
-                    'client'         => 'PT Aerofood ACS (Garuda Group)',
-                    'contract'       => 'KONTRAK-B2B-001',
-                    'contract_note'  => null,
-                    'contract_class' => 'text-ink-quiet',
-                    'sj_count'       => 3,
-                    'total'          => 45200000,
-                    'total_label'    => 'Rp 45.200.000',
-                    'total_class'    => 'text-ink font-bold',
-                    'terms_days'     => 30,
-                    'terms_label'    => 'Tempo 30',
-                    'terms_class'    => 'bg-surface-pill text-ink-body outline outline-1 outline-line-board/70',
-                    'due'            => now()->addDays(25)->format('d M Y'),
-                    'due_class'      => 'text-ink',
-                    'remaining'      => 'Sisa 25 Hari',
-                    'remaining_class'=> 'text-success-deep font-semibold',
-                    'remaining_dot'  => 'bg-success-deep',
-                    'status_key'     => 'lancar',
-                    'status_label'   => 'Lancar',
-                    'status_class'   => 'bg-accent text-success-deep outline outline-1 outline-success-deep',
-                    'row_class'      => '',
-                    'highlight'      => '',
-                    'paid'           => false,
-                ],
-                [
-                    'id'             => 'INV-' . date('Y-m') . '-0002',
-                    'issued'         => now()->subDays(28)->format('d M Y'),
-                    'issued_note'    => null,
-                    'client'         => 'Royal Ambarrukmo Hotel',
-                    'contract'       => 'KONTRAK-B2B-002',
-                    'contract_note'  => null,
-                    'contract_class' => 'text-ink-quiet',
-                    'sj_count'       => 2,
-                    'total'          => 28400000,
-                    'total_label'    => 'Rp 28.400.000',
-                    'total_class'    => 'text-warning-deep font-bold',
-                    'terms_days'     => 30,
-                    'terms_label'    => 'Tempo 30',
-                    'terms_class'    => 'bg-surface-pill text-ink-body outline outline-1 outline-line-board/70',
-                    'due'            => now()->addDays(2)->format('d M Y'),
-                    'due_class'      => 'text-warning-deep',
-                    'remaining'      => 'H-2 Jatuh Tempo',
-                    'remaining_class'=> 'text-warning-deep font-semibold',
-                    'remaining_dot'  => 'bg-warning',
-                    'status_key'     => 'follow_up',
-                    'status_label'   => 'Perlu Dihubungi',
-                    'status_class'   => 'bg-warning-soft/60 text-warning-deep outline outline-1 outline-warning/50',
-                    'row_class'      => '',
-                    'highlight'      => '',
-                    'paid'           => false,
-                ],
-            ];
-            $receivableTotal = 73600000;
-            $dueSoonTotal = 28400000;
-            $paidTotal = 120500000;
         }
 
         return view('sekretaris.invoice', [
@@ -247,5 +177,58 @@ class InvoiceController extends Controller
             'dueSoonTotal'    => $dueSoonTotal,
             'paidTotal'       => $paidTotal,
         ]);
+    }
+
+    /**
+     * Unduh Laporan Faktur Tagihan & Piutang B2B (.CSV)
+     */
+    public function exportCsv(Request $request): StreamedResponse
+    {
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="Laporan_Faktur_Tagihan_GPA_' . date('Ymd_His') . '.csv"',
+        ];
+
+        return response()->stream(function () {
+            $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF");
+
+            fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)']);
+            fputcsv($handle, ['BUKU BESAR FAKTUR PENAGIHAN & MONITORING TEMPO PEMBAYARAN (TOP)']);
+            fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB']);
+            fputcsv($handle, []);
+            fputcsv($handle, [
+                'No. Faktur',
+                'Tanggal Terbit',
+                'Entitas Klien / Mitra B2B',
+                'Nomor Kontrak',
+                'Jumlah SJ Terlampir',
+                'Total Tagihan (Rp)',
+                'Skema Tempo',
+                'Jatuh Tempo',
+                'Status Tagihan',
+            ]);
+
+            $invoices = Invoice::with(['user', 'orders'])->latest()->get();
+            foreach ($invoices as $inv) {
+                $clientName = $inv->user?->company_name ?: ($inv->user?->name ?: 'Mitra Klien');
+                $contractNo = 'KONTRAK-' . ($inv->user_id ? str_pad($inv->user_id, 3, '0', STR_PAD_LEFT) : '001');
+                $dueDate = $inv->due_date ?: now()->addDays(30);
+
+                fputcsv($handle, [
+                    $inv->invoice_number,
+                    $inv->created_at ? $inv->created_at->format('d/m/Y') : '-',
+                    $clientName,
+                    $contractNo,
+                    max(1, $inv->orders->count()),
+                    (float) $inv->grand_total,
+                    'Tempo 30 Hari',
+                    $dueDate->format('d/m/Y'),
+                    $inv->status === 'PAID' ? 'Lunas' : ($inv->status === 'OVERDUE' ? 'Jatuh Tempo' : 'Belum Lunas'),
+                ]);
+            }
+
+            fclose($handle);
+        }, 200, $headers);
     }
 }

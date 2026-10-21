@@ -143,8 +143,8 @@
                 </div>
 
                 <p class="mt-3 font-sans text-3xl font-extrabold leading-9 tracking-[-0.01em] text-ink">
-                    100%
-                    <span class="ml-1 font-mono text-sm font-normal text-ink-body">Siap</span>
+                    {{ number_format($totalBuffer ?? 0, 0, ',', '.') }}
+                    <span class="ml-1 font-mono text-sm font-normal text-ink-body">kg</span>
                 </p>
 
                 <div class="mt-3 flex flex-wrap items-center justify-between gap-1 border-t border-line-soft pt-2">

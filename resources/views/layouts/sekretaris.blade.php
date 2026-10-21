@@ -19,6 +19,7 @@
 </head>
 
 <body class="min-h-screen bg-canvas font-sans text-ink antialiased">
+    <x-gpa.loading-screen />
     @php
         $user = auth()->user();
         $operatorRole = 'Sekretaris Operasional';
@@ -52,7 +53,7 @@
                     </button>
 
                     <a href="{{ route('sekretaris.dashboard') }}" class="flex min-w-0 items-center gap-3">
-                        <x-gpa.brand-mark class="h-7 w-7 shrink-0 text-accent" />
+                        <img src="{{ asset('gpaleaves.png') }}" alt="Logo AgroOrder GPA" class="h-8 w-8 shrink-0 object-contain">
                         <span class="flex min-w-0 flex-col">
                             <span class="truncate font-inter text-lg font-extrabold uppercase leading-6 text-white">
                                 AgroOrder GPA

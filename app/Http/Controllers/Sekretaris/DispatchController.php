@@ -41,17 +41,15 @@ class DispatchController extends Controller
             $address = $order->delivery_address ?: 'Gudang Utama Klien';
             $estimateWeight = (float) $order->orderItems->sum('ordered_qty');
             $nettoWeight = (float) $order->orderItems->sum(fn($it) => $it->actual_net_weight ?: $it->ordered_qty);
-            if ($estimateWeight <= 0) $estimateWeight = 500.0;
-            if ($nettoWeight <= 0) $nettoWeight = $estimateWeight;
 
             $diffKg = round($nettoWeight - $estimateWeight, 2);
-            $diffPct = round(($diffKg / $estimateWeight) * 100, 2);
+            $diffPct = $estimateWeight > 0 ? round(($diffKg / $estimateWeight) * 100, 2) : 0;
             $deviationStr = ($diffKg >= 0 ? '+' : '') . number_format($diffKg, 1, ',', '.') . " kg ({$diffPct}%)";
 
-            $driver = $order->driver ?: ($drivers[$index % max(1, $drivers->count())] ?? null);
-            $driverName = $driver?->name ?: 'Joko Prasetyo';
-            $plateNumber = $order->vehicle_plate_number ?: ($index % 2 === 0 ? 'B 9421 TX' : 'D 8812 GA');
-            $armadaName = $index % 2 === 0 ? 'Isuzu Elf Boks Pendingin' : 'Blind Van Chiller';
+            $driver = $order->driver;
+            $driverName = $driver?->name ?: 'Belum Ditugaskan';
+            $plateNumber = $order->vehicle_plate_number ?: '—';
+            $armadaName = $driver ? 'Armada Logistik GPA' : 'Menunggu Penugasan';
 
             $sjNumber = $order->surat_jalan_number ?: ('SJ-GPA-' . date('Ym') . '-' . str_pad($order->id, 4, '0', STR_PAD_LEFT));
             $isReady = $order->status === 'SIAP_KIRIM';
@@ -62,26 +60,13 @@ class DispatchController extends Controller
                 $diff = round($act - $est, 2);
                 return [
                     'no'        => $lineIdx + 1,
-                    'commodity' => $it->product?->name ?: 'Sayur Segar Grade A',
+                    'commodity' => $it->product?->name ?: 'Komoditas Sayur',
                     'lot'       => 'Wadah Keranjang GPA',
                     'estimate'  => number_format($est, 1, ',', '.') . ' kg',
                     'netto'     => number_format($act, 1, ',', '.') . ' kg',
                     'delta'     => ($diff >= 0 ? '+' : '') . number_format($diff, 1, ',', '.') . ' kg',
                 ];
             })->all();
-
-            if (empty($itemLines)) {
-                $itemLines = [
-                    [
-                        'no'        => 1,
-                        'commodity' => 'Selada Romaine Super',
-                        'lot'       => 'Wadah Keranjang GPA',
-                        'estimate'  => number_format($estimateWeight, 1, ',', '.') . ' kg',
-                        'netto'     => number_format($nettoWeight, 1, ',', '.') . ' kg',
-                        'delta'     => $deviationStr,
-                    ]
-                ];
-            }
 
             $rows[] = [
                 'id'          => $order->order_number,
@@ -109,12 +94,12 @@ class DispatchController extends Controller
                     'client'       => $clientName,
                     'drop_point'   => $address,
                     'address'      => $address,
-                    'pic'          => 'PIC Klien: ' . ($order->user?->name ?: 'Bagian Penerimaan') . ' (' . ($order->user?->phone ?: '0812-3456-7890') . ')',
+                    'pic'          => 'PIC Klien: ' . ($order->user?->name ?: 'Bagian Penerimaan') . ($order->user?->phone ? ' (' . $order->user->phone . ')' : ''),
                     'armada'       => $armadaName,
                     'plate'        => $plateNumber,
                     'driver'       => $driverName,
-                    'sim'          => 'SIM B1: 8810293102',
-                    'chiller'      => 'Suhu Ruang Mobil: 4°C - 6°C (Dingin & Segar)',
+                    'sim'          => 'SIM: ' . ($driver?->phone ?: 'Terdata di Sistem'),
+                    'chiller'      => 'Suhu Ruang Mobil: 4°C - 6°C (Cold Chain)',
                     'officer'      => $order->verifier?->name ?: 'Koordinator Lapangan',
                     'officer_role' => 'Koordinator Penimbangan Gudang',
                     'officer_note' => 'Sayur telah disortir dan ditimbang sesuai standar mutu.',

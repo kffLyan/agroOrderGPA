@@ -105,7 +105,7 @@
             </div>
 
             <ol class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                @foreach ($clients as $index => $client)
+                @forelse ($clients as $index => $client)
                     @php
                         $clientName = $client->company_name ?: $client->name;
                         $firstContract = $client->contracts->first();
@@ -136,7 +136,7 @@
                                 <div class="flex items-baseline justify-between gap-3">
                                     <dt class="gpa-mono-xs text-ink-subtle">Volume Komitmen:</dt>
                                     <dd class="gpa-mono-xs text-right font-semibold text-ink-strong">
-                                        {{ $totalCommitted > 0 ? number_format($totalCommitted, 0, ',', '.') : '500' }} kg / siklus
+                                        {{ $totalCommitted > 0 ? number_format($totalCommitted, 0, ',', '.') : '0' }} kg / siklus
                                     </dd>
                                 </div>
                                 <div class="flex items-baseline justify-between gap-3">
@@ -154,7 +154,11 @@
                             <span class="gpa-mono-xs font-bold text-brand">SLA 99.8%</span>
                         </div>
                     </li>
-                @endforeach
+                @empty
+                    <li class="col-span-full rounded-xl border border-line-hair bg-surface p-8 text-center text-ink-subtle text-sm">
+                        Belum ada daftar mitra kontrak yang aktif saat ini.
+                    </li>
+                @endforelse
             </ol>
         </div>
     </section>
@@ -178,7 +182,7 @@
             </div>
 
             <ol class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                @foreach ($poktan as $item)
+                @forelse ($poktan as $item)
                     @php
                         $name = $item->supplier_name;
                         $region = 'Sentra Ciwidey & Lembang (1.200 - 1.400 mdpl)';
@@ -222,7 +226,11 @@
                             </div>
                         </dl>
                     </li>
-                @endforeach
+                @empty
+                    <li class="col-span-full rounded-xl border border-line-hair bg-surface p-8 text-center text-ink-subtle text-sm">
+                        Belum ada data kelompok tani binaan saat ini.
+                    </li>
+                @endforelse
             </ol>
         </div>
     </section>

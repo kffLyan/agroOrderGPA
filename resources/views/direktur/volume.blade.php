@@ -4,27 +4,11 @@
 
 @section('content')
     @php
-        $weeklyRows = [
-            ['week' => 'W40', 'total' => 108.0, 'demand' => 70, 'yield' => 20, 'reserve' => 10, 'status' => 'closed'],
-            ['week' => 'W41', 'total' => 120.0, 'demand' => 68, 'yield' => 22, 'reserve' => 10, 'status' => 'closed'],
-            ['week' => 'W42', 'total' => 125.0, 'demand' => 72, 'yield' => 18, 'reserve' => 10, 'status' => 'closed'],
-            ['week' => 'W43', 'total' => 130.0, 'demand' => 70, 'yield' => 20, 'reserve' => 10, 'status' => 'closed'],
-            ['week' => 'W44', 'total' => 135.0, 'demand' => 74, 'yield' => 18, 'reserve' => 8,  'status' => 'running'],
-            ['week' => 'W45', 'total' => 124.0, 'demand' => 70, 'yield' => 20, 'reserve' => 10, 'status' => 'forecast'],
-            ['week' => 'W46', 'total' => 127.0, 'demand' => 72, 'yield' => 18, 'reserve' => 10, 'status' => 'forecast'],
-            ['week' => 'W47', 'total' => 130.0, 'demand' => 70, 'yield' => 20, 'reserve' => 10, 'status' => 'forecast'],
-        ];
-
-        $maxWeekly = max(array_column($weeklyRows, 'total'));
-        $peakWeek = $weeklyRows[array_search($maxWeekly, array_column($weeklyRows, 'total'))];
-
-        $allocationsList = [
-            ['name' => 'PT Aerofood ACS',            'sentra' => 'CIANJUR (AGR-01)',     'commitment' => 28.50, 'priority' => 'PRIORITAS UTAMA'],
-            ['name' => 'Royal Ambarrukmo',           'sentra' => 'CIWIDEY (AGR-04)',     'commitment' => 12.20, 'priority' => 'KONTRAK BULANAN'],
-            ['name' => 'PT Segar Makmur Ritelindo',  'sentra' => 'LEMBANG (AGR-02)',     'commitment' => 18.40, 'priority' => 'DISTRIBUSI NASIONAL'],
-            ['name' => 'PT Boga Rasa Kulina Prima',  'sentra' => 'PANGALENGAN (AGR-03)', 'commitment' => 14.60, 'priority' => 'FOOD SERVICE QSR'],
-        ];
-
+        $weeklyRows = $weeklyRows ?? [];
+        $allocationsList = $allocationsList ?? [];
+        $maxWeekly = !empty($weeklyRows) ? max(array_column($weeklyRows, 'total')) : 0;
+        $maxWeekly = $maxWeekly > 0 ? $maxWeekly : 1;
+        $peakWeek = !empty($weeklyRows) ? ($weeklyRows[array_search(max(array_column($weeklyRows, 'total')), array_column($weeklyRows, 'total'))] ?? null) : null;
         $totalCommitment = array_sum(array_column($allocationsList, 'commitment'));
     @endphp
 
@@ -39,13 +23,21 @@
                 </h1>
             </div>
 
-            <div class="flex shrink-0 flex-col items-stretch gap-3">
+            <div class="flex shrink-0 flex-col sm:flex-row items-stretch gap-3">
                 <span
                     class="inline-flex h-10 items-center gap-2 rounded-lg bg-surface px-3 outline outline-1 -outline-offset-1 outline-line-board">
                     <span class="gpa-meta text-success-deep">RANGE:</span>
                     <span class="gpa-meta font-bold text-ink">W{{ date('W') - 4 }} - W{{ date('W') }} MTD</span>
                     <span class="h-3 w-3 rounded-sm bg-success-deep" aria-hidden="true"></span>
                 </span>
+
+                <a href="{{ route('direktur.commodities.export') }}"
+                    class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-surface px-4 text-ink shadow-sub outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-shell">
+                    <x-gpa.icon name="download" class="h-4 w-4 shrink-0 text-success-deep" />
+                    <span class="text-sm font-semibold leading-5 text-ink font-inter">
+                        UNDUH NERACA VOLUME (CSV)
+                    </span>
+                </a>
 
                 <button type="button" @click="reconcile()"
                     class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-ink shadow-sub transition-colors hover:bg-accent-deep">
@@ -297,11 +289,11 @@
                                     class="flex w-full flex-col justify-end overflow-hidden rounded-t bg-surface-track {{ $isForecast ? 'opacity-70' : '' }} {{ $isRunning ? 'shadow-[0_0_0_2px_#aabd06]' : '' }}"
                                     style="height: {{ $barPercent }}%">
                                     <span class="w-full {{ $isForecast ? 'bg-accent/60' : 'bg-accent' }}"
-                                        style="height: {{ round($reserveTons / $row['total'] * 100, 2) }}%"></span>
+                                        style="height: {{ $row['total'] > 0 ? round($reserveTons / $row['total'] * 100, 2) : 0 }}%"></span>
                                     <span class="w-full {{ $isForecast ? 'bg-accent-deep/60' : 'bg-accent-deep' }}"
-                                        style="height: {{ round($yieldTons / $row['total'] * 100, 2) }}%"></span>
+                                        style="height: {{ $row['total'] > 0 ? round($yieldTons / $row['total'] * 100, 2) : 0 }}%"></span>
                                     <span class="w-full {{ $isForecast ? 'bg-ink-strong/60' : 'bg-ink-strong' }}"
-                                        style="height: {{ round($demandTons / $row['total'] * 100, 2) }}%"></span>
+                                        style="height: {{ $row['total'] > 0 ? round($demandTons / $row['total'] * 100, 2) : 0 }}%"></span>
                                 </button>
                             </div>
 
@@ -314,8 +306,8 @@
                 </div>
 
                 <div class="flex flex-col gap-2">
-                    <p class="gpa-micro-bold text-ink">Puncak Demand: {{ $peakWeek['week'] }} ({{ number_format($peakWeek['total'], 0, '.', '') }} T)</p>
-                    <p class="gpa-micro-bold text-ink">KONFIDENSI MODEL: 97.4%</p>
+                    <p class="gpa-micro-bold text-ink">Puncak Demand: {{ $peakWeek ? ($peakWeek['week'] . ' (' . number_format($peakWeek['total'], 0, '.', '') . ' T)') : '—' }}</p>
+                    <p class="gpa-micro-bold text-ink">SUMBER DATA: DATABASE NYATA KOPERASI GPA</p>
                 </div>
             </div>
 
@@ -329,12 +321,12 @@
                         </div>
 
                         <span class="rounded bg-accent px-2 py-1 text-[9px] font-bold leading-3 gpa-micro-bold text-ink-strong">
-                            {{ round(($totalCommitment / 80.80) * 100, 1) }}% SERAP
+                            {{ $totalTon > 0 ? round(($totalCommitment / $totalTon) * 100, 1) : 0 }}% SERAP
                         </span>
                     </header>
 
                     <div class="flex flex-col gap-3">
-                        @foreach ($allocationsList as $row)
+                        @forelse ($allocationsList as $row)
                             <button type="button" @click="inspectPartner(@js($row))"
                                 class="flex items-center justify-between gap-3 rounded-xl bg-surface-shell p-3 text-left outline outline-1 -outline-offset-1 outline-line-board/60 transition-colors hover:bg-surface-muted">
                                 <span class="flex min-w-0 flex-col gap-0.5">
@@ -357,14 +349,16 @@
                                     </span>
                                 </span>
                             </button>
-                        @endforeach
+                        @empty
+                            <p class="py-4 text-center text-xs text-ink-body">Belum ada komitmen kontrak B2B aktif dalam sistem.</p>
+                        @endforelse
                     </div>
                 </div>
 
                 <footer class="border-t border-line-board pt-3">
                     <div class="flex items-center justify-between gap-3 pt-3">
                         <span class="text-[11px] font-medium leading-[14px] tracking-[0.88px] font-mono text-success-deep">
-                            TOTAL KOMITMEN 4 MITRA:
+                            TOTAL KOMITMEN {{ count($allocationsList) }} MITRA:
                         </span>
                         <span
                             class="rounded bg-accent/60 px-2 py-0.5 text-[11px] font-bold leading-[14px] tracking-[0.88px] font-mono text-ink outline outline-1 -outline-offset-1 outline-accent-deep">

@@ -79,7 +79,10 @@ class OrderVerificationController extends Controller
             })->all();
 
             $firstItem = $ord->orderItems->first();
-            $unitPrice = $firstItem ? (float) $firstItem->unit_price : 15000;
+            $unitPrice = $firstItem ? (float) $firstItem->unit_price : ($totalQty > 0 ? ($totalVal / $totalQty) : 0);
+
+            $clientContract = method_exists($ord->user, 'contracts') ? $ord->user->contracts()->where('status', 'ACTIVE')->first() : null;
+            $plafonVal = $clientContract ? (float) ($clientContract->fixed_price_per_kg * $clientContract->committed_volume_per_cycle * 2) : 0;
 
             $mappedOrders[] = [
                 'id'                       => $ord->order_number,
@@ -93,7 +96,7 @@ class OrderVerificationController extends Controller
                     'class' => $isContract ? 'bg-accent text-success-ink font-bold' : 'bg-surface-pill text-ink-body font-medium',
                 ],
                 'queue_commodity_label'    => 'Sayur Dipesan:',
-                'queue_commodities'        => $itemsList ?: [['name' => 'Sayuran Segar Berkualitas', 'weight' => '100 kg', 'class' => 'text-ink font-semibold', 'weight_class' => 'text-ink-body']],
+                'queue_commodities'        => $itemsList,
                 'queue_estimate_label'     => 'Perkiraan Nilai Pesanan',
                 'queue_estimate'           => 'Rp ' . number_format($totalVal, 0, ',', '.'),
                 'queue_estimate_note'      => ['label' => 'Alokasi Siap', 'class' => 'text-success-deep'],
@@ -117,9 +120,9 @@ class OrderVerificationController extends Controller
                     [
                         'label'      => 'Kontak Penerima',
                         'name'       => $ord->user?->name ?: 'Penanggung Jawab',
-                        'code'       => ($ord->user?->phone ?: '0812-3456-7890') . ' (WhatsApp)',
+                        'code'       => ($ord->user?->phone ?: '—') . ' (WhatsApp)',
                         'code_class' => 'text-ink-body',
-                        'note'       => 'Email: ' . ($ord->user?->email ?: 'klien@agroorder.id'),
+                        'note'       => 'Email: ' . ($ord->user?->email ?: '—'),
                     ],
                     [
                         'label'      => 'Alamat & Waktu Kirim',
@@ -130,33 +133,17 @@ class OrderVerificationController extends Controller
                     ],
                 ],
                 'rule03_status'            => ['label' => 'Pasokan Aman', 'icon' => 'check', 'class' => 'bg-accent text-success-ink font-bold'],
-                'allocations'              => $allocations ?: [
-                    [
-                        'name'         => 'Selada Romaine Grade A',
-                        'sku'          => 'Kode: GPA-VEG-ROM • Standar Mutu Prima',
-                        'request'      => '500',
-                        'request_unit' => 'KG',
-                        'system'       => '600',
-                        'system_unit'  => 'KG',
-                        'system_class' => 'text-success-deep font-bold',
-                        'surplus'      => 'Cadangan +100 kg',
-                        'surplus_class'=> 'text-success-deep',
-                        'plan'         => [
-                            ['label' => '1. Alokasi Panen Kebun Binaan:', 'qty' => '500 kg', 'percent' => 100, 'fill' => 'bg-success-deep'],
-                        ],
-                        'status'       => ['label' => 'Siap Panen', 'icon' => 'lock', 'class' => 'bg-accent text-success-ink'],
-                    ]
-                ],
+                'allocations'              => $allocations,
                 'pricing'                  => [
                     ['label' => 'Harga Satuan per Kg', 'value' => 'Rp ' . number_format($unitPrice, 0, ',', '.'), 'suffix' => '/ kg', 'note' => null, 'highlight' => false],
                     ['label' => 'Perkiraan Nilai Pesanan', 'value' => 'Rp ' . number_format($totalVal, 0, ',', '.'), 'suffix' => null, 'note' => null, 'highlight' => false],
                     ['label' => 'Pajak / PPN (0%)', 'value' => 'Rp 0', 'suffix' => null, 'note' => '(Bebas Pajak Produk Pertanian)', 'highlight' => false],
                     ['label' => 'Total Estimasi Tagihan', 'value' => 'Rp ' . number_format($totalVal, 0, ',', '.'), 'suffix' => null, 'note' => null, 'highlight' => true],
                 ],
-                'rule04_qty'               => number_format($totalQty ?: 500, 0, ',', '.') . ' kg',
+                'rule04_qty'               => number_format($totalQty, 0, ',', '.') . ' kg',
                 'deliveries'               => [],
                 'deliveries_total'         => 'Rp ' . number_format($totalVal, 0, ',', '.'),
-                'plafon'                   => 'Rp 50.000.000',
+                'plafon'                   => $plafonVal > 0 ? ('Rp ' . number_format($plafonVal, 0, ',', '.')) : 'Sesuai Ketentuan PO',
             ];
         }
 

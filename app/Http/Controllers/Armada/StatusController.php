@@ -28,21 +28,18 @@ class StatusController extends Controller
             ->latest()
             ->get();
 
-        $dropsCount = $orders->count() ?: 2;
+        $dropsCount = $orders->count();
         $doneCount = $orders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count();
         $returCount = $orders->where('status', 'SELESAI_CATATAN')->count();
 
-        $totalTonaseKg = 0;
+        $totalTonaseKg = 0.0;
         foreach ($orders as $order) {
             foreach ($order->orderItems as $item) {
-                $totalTonaseKg += (float) ($item->net_weight ?? $item->quantity ?? 0);
+                $totalTonaseKg += (float) ($item->actual_net_weight ?: $item->ordered_qty ?: 0);
             }
         }
-        if ($totalTonaseKg <= 0) {
-            $totalTonaseKg = 1986.5;
-        }
 
-        $plate = $orders->first(fn ($o) => !empty($o->vehicle_plate_number))?->vehicle_plate_number ?? 'B 9284 TDA';
+        $plate = $orders->first(fn ($o) => !empty($o->vehicle_plate_number))?->vehicle_plate_number ?? '—';
 
         return view('armada.status', [
             'plate'         => $plate,

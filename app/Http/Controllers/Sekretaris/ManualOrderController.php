@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Sekretaris;
 
 use App\Http\Controllers\Controller;
+use App\Models\HarvestBatch;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -43,6 +44,18 @@ class ManualOrderController extends Controller
         $catalog = [];
 
         foreach ($dbProducts as $idx => $prod) {
+            $stockBud = (float) HarvestBatch::where('product_id', $prod->id)
+                ->where('source_type', 'PETANI_BINAAN')
+                ->where('available_quantity', '>', 0)
+                ->sum('available_quantity');
+
+            $stockBuffer = (float) HarvestBatch::where('product_id', $prod->id)
+                ->where('source_type', 'BUFFER_LUAR')
+                ->where('available_quantity', '>', 0)
+                ->sum('available_quantity');
+
+            $totalStock = $stockBud + $stockBuffer;
+
             $entry = [
                 'key'          => 'prod-' . $prod->id,
                 'product_id'   => $prod->id,
@@ -50,38 +63,20 @@ class ManualOrderController extends Controller
                 'sku'          => $prod->sku ?: ('GPA-VEG-' . str_pad($prod->id, 3, '0', STR_PAD_LEFT)),
                 'grade'        => $prod->grade ?: 'Grade A Pilihan',
                 'unit'         => 'kg',
-                'min_order'    => (float) ($prod->minimum_order ?: 10),
-                'stock'        => 500,
-                'stock_bud'    => 400,
-                'stock_buffer' => 100,
+                'min_order'    => (float) ($prod->minimum_order ?: 1),
+                'stock'        => $totalStock,
+                'stock_bud'    => $stockBud,
+                'stock_buffer' => $stockBuffer,
                 'price'        => (float) $prod->base_price,
             ];
 
             if ($idx < 3) {
                 $commodities[] = array_merge($entry, [
-                    'quantity' => (float) max(20, $prod->minimum_order ?: 20),
+                    'quantity' => (float) max(1, $prod->minimum_order ?: 1),
                 ]);
             } else {
                 $catalog[] = $entry;
             }
-        }
-
-        if (empty($commodities)) {
-            $commodities = [
-                [
-                    'key'          => 'romaine',
-                    'name'         => 'Selada Romaine',
-                    'sku'          => 'GPA-VEG-ROM',
-                    'grade'        => 'Grade A Super',
-                    'unit'         => 'kg',
-                    'min_order'    => 10,
-                    'stock'        => 500,
-                    'stock_bud'    => 400,
-                    'stock_buffer' => 100,
-                    'price'        => 15000,
-                    'quantity'     => 50,
-                ]
-            ];
         }
 
         return view('sekretaris.manual-order', [

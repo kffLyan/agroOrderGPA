@@ -237,7 +237,7 @@
 
         {{-- Commodity cards --}}
         <section class="grid gap-4 2xl:grid-cols-2">
-            @foreach ($commodities as $commodity)
+            @forelse ($commodities as $commodity)
                 <article class="gpa-panel p-4" x-show="visible.includes(@js($commodity['key']))"
                     x-transition.opacity.duration.150ms>
                     <header class="flex items-start justify-between gap-4 border-b border-line-soft/60 pb-3">
@@ -369,7 +369,11 @@
                         </div>
                     </footer>
                 </article>
-            @endforeach
+            @empty
+                <div class="col-span-full rounded-xl border border-dashed border-line-board/70 bg-surface-shell/40 p-8 text-center">
+                    <p class="text-sm font-semibold text-ink">Belum ada komoditas aktif yang terdaftar di database.</p>
+                </div>
+            @endforelse
         </section>
 
         {{-- Quick intake ledger --}}

@@ -43,7 +43,9 @@ use App\Http\Controllers\Armada\TaskController as ArmadaTaskController;
 use App\Http\Controllers\Armada\DispatchController as ArmadaDispatchController;
 use App\Http\Controllers\Armada\PodController as ArmadaPodController;
 use App\Http\Controllers\Armada\StatusController as ArmadaStatusController;
-use App\Models\Order;
+use App\Http\Controllers\Prints\ReturnActController;
+use App\Http\Controllers\Prints\SecretaryInvoiceController as PrintsSecretaryInvoiceController;
+use App\Http\Controllers\Prints\SuratJalanController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -70,6 +72,17 @@ Route::get('/galeri', PublicGalleryController::class)
 
 Route::get('/kontak', PublicKontakController::class)
     ->name('public.kontak');
+
+Route::get('/loading', fn() => view('loading'))
+    ->name('loading');
+
+// Rute pengujian seluruh halaman error
+Route::get('/errors/{code}', function ($code) {
+    if (view()->exists("errors.{$code}")) {
+        return response()->view("errors.{$code}", [], (int) $code);
+    }
+    abort(404);
+})->where('code', '403|404|419|429|500')->name('errors.preview');
 
 // Pengalihan cerdas /dashboard utama ke dasbor masing-masing peran
 Route::middleware(['auth'])->get('/dashboard', function () {
@@ -109,6 +122,7 @@ Route::middleware(['auth', 'role:KLIEN'])->prefix('klien')->name('klien.')->grou
     // Riwayat & Pelacakan Pesanan Live Tracking 5 Tahap
     Route::get('/orders', [KlienOrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/print-rekap', [KlienOrderController::class, 'printRekap'])->name('orders.print-rekap');
+    Route::get('/orders/export', [KlienOrderController::class, 'exportCsv'])->name('orders.export');
     Route::get('/orders/create', [KlienOrderController::class, 'create'])->name('orders.create');
     Route::post('/orders', [KlienOrderController::class, 'store'])->name('orders.store');
     Route::get('/orders/{id}', [KlienOrderController::class, 'show'])->name('orders.show');
@@ -116,6 +130,7 @@ Route::middleware(['auth', 'role:KLIEN'])->prefix('klien')->name('klien.')->grou
     // Pusat Dokumen, Faktur Konsolidasi & Unggah Bukti Bayar
     Route::get('/documents', [KlienDocumentController::class, 'index'])->name('documents');
     Route::get('/documents/print-rekap', [KlienDocumentController::class, 'printRekap'])->name('documents.print-rekap');
+    Route::get('/documents/export', [KlienDocumentController::class, 'exportCsv'])->name('documents.export');
     Route::get('/payment-proof', [KlienPaymentProofController::class, 'index'])->name('payment-proof');
     Route::post('/payment-proof', [KlienPaymentProofController::class, 'store'])->name('payment-proof.store');
 });
@@ -139,12 +154,15 @@ Route::middleware(['auth', 'role:SEKRETARIS'])->prefix('sekretaris')->name('sekr
 
     // 5. Faktur Konsolidasi & Penagihan Tempo B2B
     Route::get('/faktur', [SekretarisInvoiceController::class, 'index'])->name('invoices');
+    Route::get('/faktur/export', [SekretarisInvoiceController::class, 'exportCsv'])->name('invoices.export');
 
     // 6. Verifikasi Pembayaran & Pencocokan Rekening Giro
     Route::get('/pembayaran', [SekretarisPaymentController::class, 'index'])->name('payments');
 
     // 7. Rekap Laporan & Jurnal Harian Operasional
     Route::get('/laporan', [SekretarisReportController::class, 'index'])->name('reports');
+    Route::get('/laporan/export', [SekretarisReportController::class, 'exportCsv'])->name('reports.export');
+    Route::get('/laporan/print', [SekretarisReportController::class, 'printReport'])->name('reports.print');
 
     // 8. Input Pesanan Manual / Darurat Telepon & WA
     Route::get('/pesanan-manual', [SekretarisManualOrderController::class, 'index'])->name('manual-order');
@@ -282,6 +300,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Dokumen Cetak Format Resmi A4 (Surat Jalan, Faktur Penagihan, Berita Acara Retur)
+Route::middleware('auth')->group(function () {
+    Route::get('/cetak/surat-jalan', SuratJalanController::class)->name('prints.surat-jalan');
+    Route::get('/cetak/faktur/{invoice}', PrintsSecretaryInvoiceController::class)->name('prints.invoice');
+    Route::get('/cetak/berita-acara-retur', ReturnActController::class)->name('prints.return-act');
 });
 
 require __DIR__.'/auth.php';

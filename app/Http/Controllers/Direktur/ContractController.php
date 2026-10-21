@@ -35,10 +35,10 @@ class ContractController extends Controller
         $rows = [];
         if ($pendingDb->count() > 0) {
             foreach ($pendingDb as $c) {
-                $clientName = $c->user ? ($c->user->company_name ?: $c->user->name) : 'Klien Korporat B2B';
+                $clientName = $c->user ? ($c->user->company_name ?: $c->user->name) : 'Klien';
                 $prodName = $c->product ? $c->product->name : 'Komoditas Inti';
-                $vol = (float) ($c->committed_volume_per_cycle ?: 1000);
-                $price = (float) ($c->fixed_price_per_kg ?: 15000);
+                $vol = (float) ($c->committed_volume_per_cycle ?: 0);
+                $price = (float) ($c->fixed_price_per_kg ?: ($c->product?->base_price ?: 0));
                 $contractVal = $vol * $price;
                 $top = (int) ($c->top_days ?: 30);
 
@@ -55,7 +55,7 @@ class ContractController extends Controller
                     'client'           => $clientName,
                     'client_tone'      => 'success',
                     'submitted_by'     => 'Key Account Executive',
-                    'submitted_at'     => $c->created_at ? $c->created_at->translatedFormat('d M Y') : '12 Okt 2026',
+                    'submitted_at'     => $c->created_at ? $c->created_at->translatedFormat('d M Y') : date('d M Y'),
                     'commodity'        => $prodName,
                     'volume'           => number_format($vol, 0, ',', '.') . ' kg / siklus',
                     'segment'          => 'Standar Kemitraan GPA',
@@ -80,8 +80,8 @@ class ContractController extends Controller
                     'approve_label'    => 'Setujui Kontrak',
                     'approve_tone'     => 'solid',
                     'filter_key'       => $filterKey,
-                    'value'            => $contractVal > 0 ? $contractVal : 100000000,
-                    'value_label'      => 'Rp ' . number_format($contractVal > 0 ? $contractVal : 100000000, 0, ',', '.'),
+                    'value'            => $contractVal,
+                    'value_label'      => 'Rp ' . number_format($contractVal, 0, ',', '.'),
                     'exceeds_plafon'   => $top > 30 || $price < 14000,
                 ];
             }
@@ -102,7 +102,7 @@ class ContractController extends Controller
         }
 
         $approvedCount = 0;
-        $directorName = Auth::guard('web')->user()->name;
+        $directorName = Auth::guard('web')->user()?->name ?: 'Direktur Utama';
 
         foreach ($contractIds as $id) {
             $contract = Contract::find($id);

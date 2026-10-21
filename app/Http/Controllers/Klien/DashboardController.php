@@ -29,8 +29,8 @@ class DashboardController extends Controller
             ->first();
 
         // 2. Plafon Kredit & Tempo (Top 30D)
-        $creditLimit = $contract && $contract->credit_limit ? (float) $contract->credit_limit : ($isContractClient ? 50000000.0 : 0.0);
-        if ($contract && $contract->fixed_price_per_kg && $contract->committed_volume_per_cycle && $creditLimit <= 0) {
+        $creditLimit = 0.0;
+        if ($contract && $contract->fixed_price_per_kg && $contract->committed_volume_per_cycle) {
             $creditLimit = (float) ($contract->fixed_price_per_kg * $contract->committed_volume_per_cycle * 2);
         }
 

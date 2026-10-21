@@ -6,12 +6,11 @@ export default function directorDashboard(operator = {}) {
         /* ---------- dashboard actions ---------- */
 
         exportExcel() {
-            this.run('Export Excel', 'Rekap sentral eksekutif sedang disiapkan dalam format .xlsx.', 'success');
+            window.location.href = '/direktur/reports/export';
         },
 
         printPdf() {
-            window.print();
-            this.run('Cetak PDF', 'Ringkasan eksekutif dikirim ke printer dokumen.', 'info');
+            window.open('/direktur/reports/download', '_blank');
         },
 
         auditLog() {

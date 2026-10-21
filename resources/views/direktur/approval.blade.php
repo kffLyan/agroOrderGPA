@@ -4,117 +4,9 @@
 
 @section('content')
     @php
-        $defaultRows = [
-            [
-                'contract'         => 'CTR-B2B-2025-089',
-                'region'           => 'BOGOR',
-                'client'           => 'Hotel Grand Pangrango',
-                'client_tone'      => 'caution',
-                'submitted_by'     => 'Tim Sales Key Account',
-                'submitted_at'     => '10 Okt 2026',
-                'commodity'        => 'Selada Romaine Super',
-                'volume'           => '800 kg / minggu (3.2 Ton/Bln)',
-                'segment'          => 'Grade A - Hydroponik Binaan',
-                'price'            => 'Rp 13.800 / kg',
-                'price_strike'     => 'Rp 15.000',
-                'list_price'       => 15000,
-                'offer_price'      => 13800,
-                'discount_percent' => 8.0,
-                'discount_ceiling' => 5.0,
-                'exception'        => 'Diskon Khusus: 8.0% (Plafon 5%)',
-                'exception_tone'   => 'caution',
-                'term'             => 'TOP 30 Hari',
-                'top_days'         => 30,
-                'top_default'      => 30,
-                'margin'           => '18.5% Net Margin',
-                'margin_value'     => 18.5,
-                'margin_minimum'   => 15.0,
-                'margin_delta'     => 3.5,
-                'margin_flag'      => 'Safe Margin Pass (+3.5%)',
-                'score'            => 'A- (82/100)',
-                'score_note'       => '0 Riwayat Macet // 18 bln',
-                'approve_label'    => 'Setujui Kontrak',
-                'approve_tone'     => 'solid',
-                'filter_key'       => 'discount',
-                'value'            => 145000000,
-                'value_label'      => 'Rp 145.000.000',
-                'exceeds_plafon'   => true,
-            ],
-            [
-                'contract'         => 'CTR-B2B-2025-092',
-                'region'           => 'JAKARTA PUSAT',
-                'client'           => 'PT Boga Rasa Kulina Prima',
-                'client_tone'      => 'success',
-                'submitted_by'     => 'VP Commercial',
-                'submitted_at'     => '12 Okt 2026',
-                'commodity'        => 'Beras Slyp & Bumbu Basah',
-                'volume'           => 'Plafon Transaksi: Rp 150.000.000',
-                'segment'          => 'Distribusi Multi-Resto Chain (14 Outlet)',
-                'price'            => 'Harga Standard List Katalog',
-                'price_strike'     => null,
-                'list_price'       => null,
-                'offer_price'      => null,
-                'discount_percent' => null,
-                'discount_ceiling' => null,
-                'exception'        => 'Usulan Ekstensi: TOP 45 Hari',
-                'exception_tone'   => 'caution',
-                'term'             => 'Reguler Default 30 Hari',
-                'top_days'         => 45,
-                'top_default'      => 30,
-                'margin'           => '21.2% Net Margin',
-                'margin_value'     => 21.2,
-                'margin_minimum'   => 15.0,
-                'margin_delta'     => 6.2,
-                'margin_flag'      => 'High Yield Account (+6.2%)',
-                'score'            => 'A+ (88/100)',
-                'score_note'       => 'Jaminan Bank Garansi BNI',
-                'approve_label'    => 'Setujui Kontrak',
-                'approve_tone'     => 'solid',
-                'filter_key'       => 'top',
-                'value'            => 120000000,
-                'value_label'      => 'Rp 120.000.000',
-                'exceeds_plafon'   => true,
-            ],
-            [
-                'contract'         => 'CTR-B2B-2025-095',
-                'region'           => 'SOEKARNO-HATTA HUB',
-                'client'           => 'PT Aerofood ACS Indonesia',
-                'client_tone'      => 'solid',
-                'submitted_by'     => 'Directorate Key Account',
-                'submitted_at'     => '13 Okt 2026',
-                'commodity'        => 'Sayuran Cut & Clean Hygienic',
-                'volume'           => '300 kg / hari (Daily Reefer Delivery)',
-                'segment'          => 'Standard Inflight Catering HACCP',
-                'price'            => 'Kontrak Tahunan Terikat (12 Bln)',
-                'price_strike'     => null,
-                'list_price'       => null,
-                'offer_price'      => null,
-                'discount_percent' => null,
-                'discount_ceiling' => null,
-                'exception'        => 'Harga Fixed Index + Eskalasi BBM',
-                'exception_tone'   => 'neutral',
-                'term'             => 'TOP 30 Hari via Virtual Account BNI',
-                'top_days'         => 30,
-                'top_default'      => 30,
-                'margin'           => '18.0% Net Margin',
-                'margin_value'     => 18.0,
-                'margin_minimum'   => 15.0,
-                'margin_delta'     => null,
-                'margin_flag'      => 'Corporate Tier-1 Stable',
-                'score'            => 'AAA (96/100)',
-                'score_note'       => 'BUMN Subsidiary // 0 Default',
-                'approve_label'    => 'Setujui Kontrak',
-                'approve_tone'     => 'solid',
-                'filter_key'       => 'annual',
-                'value'            => 120000000,
-                'value_label'      => 'Rp 120.000.000',
-                'exceeds_plafon'   => false,
-            ],
-        ];
-
-        $rows = !empty($rows) ? $rows : $defaultRows;
-        $totalVal = array_sum(array_column($rows, 'value'));
-        $exceedCount = count(array_filter($rows, fn ($r) => !empty($r['exceeds_plafon'])));
+        $rows = $rows ?? [];
+        $totalVal = !empty($rows) ? array_sum(array_column($rows, 'value')) : 0;
+        $exceedCount = !empty($rows) ? count(array_filter($rows, fn ($r) => !empty($r['exceeds_plafon']))) : 0;
     @endphp
 
     <div class="mx-auto flex max-w-[1280px] flex-col gap-6"
@@ -131,7 +23,7 @@
             <div class="flex shrink-0 flex-wrap items-center gap-3">
                 <p class="flex flex-col rounded-lg bg-surface px-3 py-2 text-right outline outline-1 -outline-offset-1 outline-line-board">
                     <span class="gpa-note text-ink-body">PERIODE LAPORAN</span>
-                    <span class="gpa-meta-lg font-bold text-ink">PERIODE: OKTOBER 2026</span>
+                    <span class="gpa-meta-lg font-bold text-ink">PERIODE: {{ strtoupper(now()->translatedFormat('F Y')) }}</span>
                 </p>
                 <button type="button" @click="printAuthorization()"
                     class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 shadow-sub outline outline-1 -outline-offset-1 outline-success transition-colors hover:bg-brand-hover">
@@ -332,7 +224,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-line-hair">
-                        @foreach ($rows as $index => $row)
+                        @forelse ($rows as $index => $row)
                             <tr class="align-top transition-colors hover:bg-surface-shell/50"
                                 x-show="matches('{{ $row['filter_key'] ?? '' }}', {{ $index }})">
                                 <td class="py-4 pr-2 align-top">
@@ -421,7 +313,13 @@
                                     </div>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="8" class="px-4 py-8 text-center text-xs text-ink-body">
+                                    Tidak ada pengajuan kontrak pending otorisasi saat ini.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>

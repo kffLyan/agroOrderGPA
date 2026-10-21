@@ -172,6 +172,11 @@
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-2">
+                <a :href="'{{ route('klien.orders.export') }}?status=' + encodeURIComponent(status || 'all')"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-surface-pill px-4 py-2 text-ink-body shadow-sub transition-colors hover:bg-surface-disabled hover:text-ink">
+                    <x-gpa.icon name="download" class="h-3 w-3 text-ink" />
+                    <span class="gpa-meta-lg text-ink">Unduh Excel (CSV)</span>
+                </a>
                 <button type="button" @click="exportRecap()"
                     class="inline-flex items-center gap-1.5 rounded-lg bg-surface-pill px-4 py-2 text-ink-body shadow-sub transition-colors hover:bg-surface-disabled hover:text-ink">
                     <x-gpa.icon name="printer" class="h-3 w-3 text-ink" />

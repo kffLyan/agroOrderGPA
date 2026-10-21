@@ -41,10 +41,19 @@ class CartController extends Controller
             $stockMap[$p->id] = $this->stockService->getAvailableStock($p->id);
         }
 
+        $receivingRoster = [
+            [
+                'name'  => $user->pic_name ?: $user->name,
+                'role'  => 'PIC Penerima Klien',
+                'phone' => $user->pic_phone ?: ($user->phone ?: '—'),
+            ],
+        ];
+
         return view('klien.cart', compact(
             'products',
             'activeContracts',
             'stockMap',
+            'receivingRoster',
             'user'
         ));
     }

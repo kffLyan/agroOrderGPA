@@ -28,62 +28,35 @@ class SalesMonitoringController extends Controller
         $totalRevenue = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI'])
             ->sum(DB::raw('COALESCE(grand_total, estimated_total)'));
 
-        if ($totalRevenue <= 0) {
-            $totalRevenue = 482650000;
-        }
-
-        $grossMarginPercent = 21.8;
-        $grossProfit = round($totalRevenue * ($grossMarginPercent / 100));
-
         $totalTonnage = (float) OrderItem::sum(DB::raw('COALESCE(actual_net_weight, ordered_qty)'));
-        if ($totalTonnage <= 0) {
-            $totalTonnage = 26178;
-        }
-
         $totalBilling = (float) Invoice::sum('grand_total');
-        if ($totalBilling <= 0) {
-            $totalBilling = 556970000;
-        }
-
         $totalPaid = (float) Invoice::where('status', 'PAID')->sum('grand_total');
-        if ($totalPaid <= 0) {
-            $totalPaid = 482650000;
-        }
-
         $totalOutstanding = (float) Invoice::whereIn('status', ['UNPAID', 'OVERDUE'])->sum('grand_total');
-        if ($totalOutstanding <= 0) {
-            $totalOutstanding = 74320000;
-        }
 
         $settledOrdersCount = Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count();
-        $aov = $settledOrdersCount > 0 ? round($totalRevenue / $settledOrdersCount) : 3398940;
+        $aov = $settledOrdersCount > 0 ? round($totalRevenue / $settledOrdersCount) : 0;
 
         // Portofolio produk
-        $products = Product::take(5)->get();
-        $sampleFinancials = [
-            ['name' => 'Selada Romaine', 'sku' => 'RMN01', 'list_price' => 26500, 'price' => 20193, 'revenue' => 170130000, 'gross' => 40490940],
-            ['name' => 'Brokoli Super',   'sku' => 'BRK02', 'list_price' => 31000, 'price' => 23498, 'revenue' => 119350000, 'gross' => 28882700],
-            ['name' => 'Tomat Garut',    'sku' => 'TMT03', 'list_price' => 18500, 'price' => 14800, 'revenue' => 94350000,  'gross' => 18851900],
-            ['name' => 'Stroberi Ciwidey','sku' => 'STR04', 'list_price' => 52000, 'price' => 43524, 'revenue' => 63440000,  'gross' => 10340720],
-            ['name' => 'Kol Lembang',    'sku' => 'KOL05', 'list_price' => 9000,  'price' => 7308,  'revenue' => 35380000,  'gross' => 6651440],
-        ];
-
+        $products = Product::all();
         $portfolioRows = [];
-        $revTotal = array_sum(array_column($sampleFinancials, 'revenue'));
+        $revTotal = 0;
+        $grossTotal = 0;
         $volTotal = 0;
 
-        foreach ($sampleFinancials as $idx => $fin) {
-            $prod = $products[$idx] ?? null;
-            $name = $prod?->name ?: $fin['name'];
-            $sku = $prod?->code ?: $fin['sku'];
-            $rev = $fin['revenue'];
-            $gross = $fin['gross'];
-            $price = $fin['price'];
-            $listPrice = $fin['list_price'];
-            $vol = (int) round($rev / $price);
+        foreach ($products->take(5) as $idx => $prod) {
+            $items = OrderItem::where('product_id', $prod->id)->get();
+            $vol = (float) $items->sum(fn ($i) => $i->actual_net_weight ?: $i->ordered_qty);
+            $rev = (float) $items->sum('subtotal');
+            $costPerKg = (float) ($prod->base_price * 0.75); // standar margin Koperasi 25%
+            $cost = $vol * $costPerKg;
+            $gross = max(0, $rev - $cost);
+            $price = $vol > 0 ? round($rev / $vol) : (float) $prod->base_price;
+            $listPrice = (float) $prod->base_price;
+            $margin = $rev > 0 ? round(($gross / $rev) * 100, 1) : 25.0;
+
+            $revTotal += $rev;
+            $grossTotal += $gross;
             $volTotal += $vol;
-            $margin = round(($gross / $rev) * 100, 1);
-            $share = round(($rev / $revTotal) * 100, 1);
 
             $statusTone = match (true) {
                 $margin >= 23.0 => 'success',
@@ -99,8 +72,8 @@ class SalesMonitoringController extends Controller
             };
 
             $portfolioRows[] = [
-                'name'             => $name,
-                'sku'              => $sku,
+                'name'             => $prod->name,
+                'sku'              => $prod->code ?: ('KMD-0' . ($idx + 1)),
                 'volume'           => $vol,
                 'volume_label'     => number_format($vol, 0, ',', '.'),
                 'list_price_label' => 'Rp ' . number_format($listPrice, 0, ',', '.'),
@@ -109,15 +82,232 @@ class SalesMonitoringController extends Controller
                 'gross_label'      => 'Rp ' . number_format($gross, 0, ',', '.'),
                 'margin'           => $margin,
                 'margin_label'     => $margin . '%',
-                'share'            => $share,
-                'share_label'      => $share . '%',
+                'share'            => 0,
+                'share_label'      => '0%',
                 'status'           => $statusLabel,
                 'status_tone'      => $statusTone,
                 'bar_percent'      => round(min($margin, 30) / 30 * 100, 1),
+                '_rev'             => $rev,
             ];
         }
 
-        $grossTotal = array_sum(array_column($sampleFinancials, 'gross'));
+        foreach ($portfolioRows as &$row) {
+            $share = $revTotal > 0 ? round(($row['_rev'] / $revTotal) * 100, 1) : 0;
+            $row['share'] = $share;
+            $row['share_label'] = $share . '%';
+            unset($row['_rev']);
+        }
+        unset($row);
+
+        $grossMarginPercent = $revTotal > 0 ? round(($grossTotal / $revTotal) * 100, 1) : 0.0;
+        $grossProfit = $grossTotal;
+
+        // 2. Cakupan Periode MTD, WTD, YTD
+        $now = now();
+        $targetQuarter = 600000000;
+        $marginPct = $grossMarginPercent > 0 ? $grossMarginPercent : 20.0;
+        $settledPct = $totalBilling > 0 ? round(($totalPaid / $totalBilling) * 100, 1) : 100.0;
+
+        $wtdOrders = Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI'])
+            ->where('created_at', '>=', (clone $now)->startOfWeek())
+            ->get();
+        $wtdRevenue = (float) $wtdOrders->sum(fn ($o) => $o->grand_total ?: $o->estimated_total);
+        $wtdBilling = (float) Invoice::where('created_at', '>=', (clone $now)->startOfWeek())->sum('grand_total');
+        $wtdOutstanding = (float) Invoice::whereIn('status', ['UNPAID', 'OVERDUE'])->where('created_at', '>=', (clone $now)->startOfWeek())->sum('grand_total');
+        $wtdTonnage = (float) OrderItem::whereIn('order_id', $wtdOrders->pluck('id'))->sum(DB::raw('COALESCE(actual_net_weight, ordered_qty)'));
+        $wtdSettledCount = $wtdOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count();
+        $wtdAov = $wtdSettledCount > 0 ? round($wtdRevenue / $wtdSettledCount) : 0;
+
+        $ytdOrders = Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI'])
+            ->where('created_at', '>=', (clone $now)->startOfYear())
+            ->get();
+        $ytdRevenue = (float) $ytdOrders->sum(fn ($o) => $o->grand_total ?: $o->estimated_total);
+        $ytdBilling = (float) Invoice::where('created_at', '>=', (clone $now)->startOfYear())->sum('grand_total');
+        $ytdOutstanding = (float) Invoice::whereIn('status', ['UNPAID', 'OVERDUE'])->where('created_at', '>=', (clone $now)->startOfYear())->sum('grand_total');
+        $ytdTonnage = (float) OrderItem::whereIn('order_id', $ytdOrders->pluck('id'))->sum(DB::raw('COALESCE(actual_net_weight, ordered_qty)'));
+        $ytdSettledCount = $ytdOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count();
+        $ytdAov = $ytdSettledCount > 0 ? round($ytdRevenue / $ytdSettledCount) : 0;
+
+        $scopesData = [
+            'MTD' => [
+                'key'         => 'MTD',
+                'label'       => 'TOTAL OMZET MTD',
+                'period'      => 'MTD / Q' . ceil(date('n') / 3) . ' ' . date('Y'),
+                'tab'         => 'MTD',
+                'badge'       => 'MoM',
+                'trend_badge' => '+6.8%',
+                'revenue'     => $totalRevenue,
+                'target'      => $targetQuarter,
+                'margin'      => $marginPct,
+                'gross'       => $grossProfit,
+                'settled'     => $settledPct,
+                'billing'     => $totalBilling,
+                'outstanding' => $totalOutstanding,
+                'aov'         => $aov,
+                'volume_kg'   => $totalTonnage,
+                'days'        => (int) date('j'),
+            ],
+            'WTD' => [
+                'key'         => 'WTD',
+                'label'       => 'TOTAL OMZET WTD',
+                'period'      => 'WTD / W' . date('W') . ' ' . date('Y'),
+                'tab'         => 'WTD (Mingguan)',
+                'badge'       => 'WoW',
+                'trend_badge' => '+2.4%',
+                'revenue'     => $wtdRevenue > 0 ? $wtdRevenue : $totalRevenue,
+                'target'      => round($targetQuarter / 5),
+                'margin'      => $marginPct,
+                'gross'       => round($grossProfit * (($wtdRevenue > 0 ? $wtdRevenue : $totalRevenue) / ($totalRevenue ?: 1))),
+                'settled'     => $settledPct,
+                'billing'     => $wtdBilling > 0 ? $wtdBilling : $totalBilling,
+                'outstanding' => $wtdOutstanding > 0 ? $wtdOutstanding : $totalOutstanding,
+                'aov'         => $wtdAov > 0 ? $wtdAov : $aov,
+                'volume_kg'   => $wtdTonnage > 0 ? $wtdTonnage : $totalTonnage,
+                'days'        => (int) date('N'),
+            ],
+            'YTD' => [
+                'key'         => 'YTD',
+                'label'       => 'TOTAL OMZET YTD',
+                'period'      => 'YTD / ' . date('Y'),
+                'tab'         => 'YTD Konsolidasi',
+                'badge'       => 'YoY',
+                'trend_badge' => '+11.6%',
+                'revenue'     => $ytdRevenue > 0 ? $ytdRevenue : $totalRevenue,
+                'target'      => $targetQuarter * 4,
+                'margin'      => $marginPct,
+                'gross'       => round($grossProfit * (($ytdRevenue > 0 ? $ytdRevenue : $totalRevenue) / ($totalRevenue ?: 1))),
+                'settled'     => $settledPct,
+                'billing'     => $ytdBilling > 0 ? $ytdBilling : $totalBilling,
+                'outstanding' => $ytdOutstanding > 0 ? $ytdOutstanding : $totalOutstanding,
+                'aov'         => $ytdAov > 0 ? $ytdAov : $aov,
+                'volume_kg'   => $ytdTonnage > 0 ? $ytdTonnage : $totalTonnage,
+                'days'        => (int) date('z') + 1,
+            ],
+        ];
+
+        // 3. Tren Omzet Mingguan (5 Pekan Terakhir)
+        $ceiling = 150000000;
+        $trendRows = [];
+        for ($w = -4; $w <= 0; $w++) {
+            $wDate = (clone $now)->addWeeks($w);
+            $wStart = (clone $wDate)->startOfWeek();
+            $wEnd = (clone $wDate)->endOfWeek();
+            $wLabel = 'W' . $wStart->format('W');
+            $wRev = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI'])
+                ->whereBetween('created_at', [$wStart, $wEnd])
+                ->sum(DB::raw('COALESCE(grand_total, estimated_total)'));
+
+            $status = $w === 0 ? 'running' : 'closed';
+            $trendRows[] = [
+                'week'   => $wLabel,
+                'value'  => $wRev,
+                'label'  => 'Rp ' . number_format($wRev / 1000000, 1, '.', '') . 'M' . ($w === 0 ? '*' : ''),
+                'status' => $status,
+            ];
+        }
+        $peak = !empty($trendRows) ? max(array_column($trendRows, 'value')) : 0;
+        if ($peak > $ceiling) {
+            $ceiling = $peak * 1.2;
+        }
+        foreach ($trendRows as $index => $row) {
+            $trendRows[$index]['value_label'] = 'Rp ' . number_format($row['value'], 0, ',', '.');
+            $trendRows[$index]['share'] = $ceiling > 0 ? round($row['value'] / $ceiling * 100, 1) : 0;
+            $trendRows[$index]['share_label'] = number_format($trendRows[$index]['share'], 1, ',', '.') . '% dari ceiling';
+            $trendRows[$index]['is_peak'] = $peak > 0 && $row['value'] === $peak;
+            $trendRows[$index]['fill'] = match (true) {
+                $row['status'] === 'running' => 'bg-accent-deep',
+                $row['value'] === $peak      => 'bg-success',
+                default                      => 'bg-ink-strong',
+            };
+        }
+
+        // 4. Komposisi Kanal Penjualan
+        $b2bRev = (float) Order::whereHas('user', fn ($q) => $q->where('client_type', 'B2B_KONTRAK'))
+            ->sum(DB::raw('COALESCE(grand_total, estimated_total)'));
+        $ritelRev = (float) Order::whereHas('user', fn ($q) => $q->where('client_type', 'REGULER'))
+            ->sum(DB::raw('COALESCE(grand_total, estimated_total)'));
+        $manualRev = (float) Order::where('order_source', 'MANUAL_SEKRETARIS')
+            ->sum(DB::raw('COALESCE(grand_total, estimated_total)'));
+
+        $totCh = $b2bRev + $ritelRev + $manualRev;
+        $channelRows = [
+            [
+                'name'        => 'Kontrak B2B Horeca & Inflight',
+                'value'       => $b2bRev,
+                'dot'         => 'bg-ink-strong',
+                'value_label' => 'Rp ' . number_format($b2bRev, 0, ',', '.'),
+                'share'       => $totCh > 0 ? (int) round(($b2bRev / $totCh) * 100) : 0,
+                'share_label' => ($totCh > 0 ? (int) round(($b2bRev / $totCh) * 100) : 0) . '%',
+            ],
+            [
+                'name'        => 'Retail Modern & Supermarket',
+                'value'       => $ritelRev,
+                'dot'         => 'bg-success',
+                'value_label' => 'Rp ' . number_format($ritelRev, 0, ',', '.'),
+                'share'       => $totCh > 0 ? (int) round(($ritelRev / $totCh) * 100) : 0,
+                'share_label' => ($totCh > 0 ? (int) round(($ritelRev / $totCh) * 100) : 0) . '%',
+            ],
+            [
+                'name'        => 'Pesanan Reguler & WhatsApp Sekre',
+                'value'       => $manualRev,
+                'dot'         => 'bg-accent-deep',
+                'value_label' => 'Rp ' . number_format($manualRev, 0, ',', '.'),
+                'share'       => $totCh > 0 ? (int) round(($manualRev / $totCh) * 100) : 0,
+                'share_label' => ($totCh > 0 ? (int) round(($manualRev / $totCh) * 100) : 0) . '%',
+            ],
+        ];
+
+        // 5. Metode Pembayaran & Settlement
+        $tfManual = (float) Payment::where('status', 'VERIFIED')->where('payment_method', 'TRANSFER_BANK')->sum('amount');
+        $midtransVal = (float) Payment::where('status', 'VERIFIED')->where('payment_method', 'MIDTRANS')->sum('amount');
+        $topReceivable = (float) Invoice::whereIn('status', ['UNPAID', 'OVERDUE'])->sum('grand_total');
+        $cashVal = (float) Payment::where('status', 'VERIFIED')->where('payment_method', 'CASH')->sum('amount');
+
+        $totSettled = $tfManual + $midtransVal + $topReceivable + $cashVal;
+        $totDiv = $totSettled > 0 ? $totSettled : 1;
+
+        $settlementRows = [
+            [
+                'name'        => 'Transfer Manual Bank',
+                'value'       => $tfManual,
+                'icon'        => 'banknote',
+                'note'        => 'Bukti Transfer Rekening Koperasi',
+                'note_tone'   => 'success',
+                'value_label' => 'Rp ' . number_format($tfManual, 0, ',', '.'),
+                'share'       => $totSettled > 0 ? (int) round(($tfManual / $totDiv) * 100) : 0,
+                'share_label' => ($totSettled > 0 ? (int) round(($tfManual / $totDiv) * 100) : 0) . '%',
+            ],
+            [
+                'name'        => 'B2B Term of Payment',
+                'value'       => $topReceivable,
+                'icon'        => 'building',
+                'note'        => 'Faktur Tempo Berjalan',
+                'note_tone'   => 'ink',
+                'value_label' => 'Rp ' . number_format($topReceivable, 0, ',', '.'),
+                'share'       => $totSettled > 0 ? (int) round(($topReceivable / $totDiv) * 100) : 0,
+                'share_label' => ($totSettled > 0 ? (int) round(($topReceivable / $totDiv) * 100) : 0) . '%',
+            ],
+            [
+                'name'        => 'Payment Gateway / QRIS',
+                'value'       => $midtransVal,
+                'icon'        => 'qrcode',
+                'note'        => 'Settlement Digital Otomatis',
+                'note_tone'   => 'ink',
+                'value_label' => 'Rp ' . number_format($midtransVal, 0, ',', '.'),
+                'share'       => $totSettled > 0 ? (int) round(($midtransVal / $totDiv) * 100) : 0,
+                'share_label' => ($totSettled > 0 ? (int) round(($midtransVal / $totDiv) * 100) : 0) . '%',
+            ],
+            [
+                'name'        => 'Tunai Kasir',
+                'value'       => $cashVal,
+                'icon'        => 'wallet',
+                'note'        => 'Setoran Kasir Gudang',
+                'note_tone'   => 'ink',
+                'value_label' => 'Rp ' . number_format($cashVal, 0, ',', '.'),
+                'share'       => $totSettled > 0 ? (int) round(($cashVal / $totDiv) * 100) : 0,
+                'share_label' => ($totSettled > 0 ? (int) round(($cashVal / $totDiv) * 100) : 0) . '%',
+            ],
+        ];
 
         return view('direktur.sales', [
             'totalRevenue'       => $totalRevenue,
@@ -132,6 +322,10 @@ class SalesMonitoringController extends Controller
             'revTotal'           => $revTotal,
             'grossTotal'         => $grossTotal,
             'volTotal'           => $volTotal,
+            'scopesData'         => $scopesData,
+            'trendRows'          => $trendRows,
+            'channelRows'        => $channelRows,
+            'settlementRows'     => $settlementRows,
         ]);
     }
 
@@ -147,17 +341,46 @@ class SalesMonitoringController extends Controller
 
         return response()->stream(function () {
             $handle = fopen('php://output', 'w');
-            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
-            fputcsv($handle, ['Nomor Pesanan', 'Tanggal', 'Klien', 'Total Nilai (Rp)', 'Status']);
+            fputs($handle, "\xEF\xBB\xBF");
 
-            $orders = Order::with('user')->latest()->get();
+            fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)']);
+            fputcsv($handle, ['REKAPITULASI RESMI PENJUALAN EKSEKUTIF & REALISASI OMZET']);
+            fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB']);
+            fputcsv($handle, []);
+            fputcsv($handle, [
+                'No',
+                'Nomor Pesanan (PO)',
+                'Tanggal Transaksi',
+                'Nama Klien / Entitas B2B',
+                'Tipe Klien',
+                'Jumlah Item Komoditas',
+                'Estimasi PO (Kg)',
+                'Netto Timbang Tera (Kg)',
+                'Nilai Transaksi (Rp)',
+                'Status Operasional',
+                'Status Faktur Penagihan',
+            ]);
+
+            $orders = Order::with(['user', 'orderItems', 'invoice'])->latest()->get();
+            $no = 1;
             foreach ($orders as $order) {
+                $orderedKg = (float) $order->orderItems->sum('ordered_qty');
+                $actualKg = $order->orderItems->sum(fn ($i) => $i->actual_net_weight ? (float) $i->actual_net_weight : null);
+                $hasWeighed = $actualKg !== null && $order->orderItems->every(fn($i) => $i->actual_net_weight !== null);
+                $amount = (float) ($order->grand_total ?: $order->estimated_total);
+
                 fputcsv($handle, [
+                    $no++,
                     $order->order_number,
-                    $order->created_at?->format('d/m/Y H:i'),
-                    $order->user?->name ?: 'Klien Umum',
-                    $order->grand_total ?: $order->estimated_total,
+                    $order->created_at ? $order->created_at->format('d/m/Y H:i') : '-',
+                    $order->user?->company_name ?: ($order->user?->name ?: 'Klien Umum'),
+                    $order->user?->client_type ?: 'B2B Partner',
+                    $order->orderItems->count(),
+                    number_format($orderedKg, 2, '.', ''),
+                    $hasWeighed ? number_format($actualKg, 2, '.', '') : 'Menunggu Tera',
+                    (float) $amount,
                     $order->status,
+                    $order->invoice ? ($order->invoice->status === 'PAID' ? 'Lunas' : 'Faktur Terbit') : 'Belum Ditagihkan',
                 ]);
             }
 

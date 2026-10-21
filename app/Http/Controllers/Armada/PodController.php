@@ -38,7 +38,7 @@ class PodController extends Controller
             $currentOrder = Order::with(['orderItems.product', 'user', 'driver'])->latest()->first();
         }
 
-        $plate = $currentOrder?->vehicle_plate_number ?: 'B 9284 TDA';
+        $plate = $currentOrder?->vehicle_plate_number ?: '—';
 
         return view('armada.pod', [
             'currentOrder' => $currentOrder,

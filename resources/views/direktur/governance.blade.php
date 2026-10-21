@@ -4,85 +4,17 @@
 
 @section('content')
     @php
-        $defaultAuditRows = [
-            [
-                'date'        => '24-OKT-2024',
-                'time'        => '15:18:02 WIB',
-                'actor'       => 'Ir. H. Sudarto',
-                'actor_meta'  => 'UID: DIR-001 [CLEARANCE L4]',
-                'action'      => 'APPROVAL KONTRAK',
-                'action_tone' => 'success',
-                'document'    => 'KTR-B2B-2024-089',
-                'detail'      => 'Persetujuan Khusus Kontrak B2B PT Pangan Nusantara Raya (Margin 16.2%, Plafon TOP Rp 450M, Tenor 45 Hari).',
-                'hash'        => '7f83b165...e92a',
-                'block'       => 'BLOCK #4412 [SEALED]',
-                'blocked'     => false,
-            ],
-            [
-                'date'        => '24-OKT-2024',
-                'time'        => '14:02:44 WIB',
-                'actor'       => 'Nurhayati S.Ak',
-                'actor_meta'  => 'UID: FIN-LEAD-03 [L3]',
-                'action'      => 'REKONSILIASI KAS',
-                'action_tone' => 'neutral',
-                'document'    => 'INV-GPA-202410-0089',
-                'detail'      => 'Kliring Pembayaran Invoice Termin 2 Rp 215.000.000 via VA Mandiri Corporat, Selisih Kliring Rp 0.',
-                'hash'        => 'b94d27b9...1348',
-                'block'       => 'BLOCK #4411 [SEALED]',
-                'blocked'     => false,
-            ],
-            [
-                'date'        => '24-OKT-2024',
-                'time'        => '11:15:00 WIB',
-                'actor'       => 'Ir. H. Sudarto',
-                'actor_meta'  => 'UID: DIR-001 [CLEARANCE L4]',
-                'action'      => 'SYSTEM GOVERNANCE',
-                'action_tone' => 'dark',
-                'document'    => 'Q3-2024-LEDGER',
-                'detail'      => 'Eksekusi Audit Freeze Q3 2024: Penutupan Mutasi Jurnal Buku Besar Agribisnis Kuartal 3. Status Finalized.',
-                'hash'        => '1188e6dd...5672',
-                'block'       => 'BLOCK #4410 [SEALED]',
-                'blocked'     => false,
-            ],
-            [
-                'date'        => '24-OKT-2024',
-                'time'        => '09:40:12 WIB',
-                'actor'       => 'Agung W.',
-                'actor_meta'  => 'UID: WMS-SUPER-01 [L2]',
-                'action'      => 'BUFFER OVERRIDE',
-                'action_tone' => 'neutral',
-                'document'    => 'STK-TMT-LEMBANG-04',
-                'detail'      => 'Penyesuaian Kalibrasi Buffer Tomat Beef Pasca Sortir Gudang Lembang (+240 KG dari panen kemitraan Gapoktan).',
-                'hash'        => '4c8a2b10...99aa',
-                'block'       => 'BLOCK #4409 [SEALED]',
-                'blocked'     => false,
-            ],
-            [
-                'date'        => '24-OKT-2024',
-                'time'        => '08:12:55 WIB',
-                'actor'       => 'System Auto-Guard',
-                'actor_meta'  => 'DAEMON CORE RULE 02',
-                'action'      => 'SECURITY BLOCK',
-                'action_tone' => 'danger',
-                'document'    => 'ORD-GPA-202410-0112',
-                'detail'      => 'Pencegahan Otomatis Overselling: Permintaan PO Melebihi Buffer Fisik Kentang Granola Gudang Ciwidey (Defisit 1.8 MT).',
-                'hash'        => 'e3b0c442...9823',
-                'block'       => 'BLOCK #4408 [INTERCEPTED]',
-                'blocked'     => true,
-            ],
-        ];
-
         $auditRows = [];
         if (!empty($storedLogs)) {
             foreach ($storedLogs as $l) {
-                $timeCarbon = isset($l['created_at']) ? \Carbon\Carbon::parse($l['created_at']) : now();
-                $isBlocked = ($l['status'] ?? '') === 'REJECTED' || ($l['status'] ?? '') === 'INTERCEPTED';
+                $timeCarbon = isset($l['timestamp']) ? \Carbon\Carbon::parse($l['timestamp']) : (isset($l['created_at']) ? \Carbon\Carbon::parse($l['created_at']) : now());
+                $isBlocked = in_array($l['status'] ?? '', ['REJECTED', 'INTERCEPTED']);
                 $tone = 'neutral';
                 if ($isBlocked) {
                     $tone = 'danger';
                 } elseif (str_contains(strtoupper($l['action_category'] ?? ''), 'APPROVAL')) {
                     $tone = 'success';
-                } elseif (str_contains(strtoupper($l['action_category'] ?? ''), 'GOVERNANCE')) {
+                } elseif (str_contains(strtoupper($l['action_category'] ?? ''), 'GOVERNANCE') || str_contains(strtoupper($l['action_category'] ?? ''), 'LOCK')) {
                     $tone = 'dark';
                 }
 
@@ -90,20 +22,16 @@
                     'date'        => $timeCarbon->format('d-M-Y'),
                     'time'        => $timeCarbon->format('H:i:s') . ' WIB',
                     'actor'       => $l['actor'] ?? 'System',
-                    'actor_meta'  => $l['clearance'] ?? 'UID: ROOT',
+                    'actor_meta'  => $l['actor_uid'] ?? ($l['clearance'] ?? 'UID: ROOT'),
                     'action'      => str_replace('_', ' ', $l['action_category'] ?? 'ACTION'),
                     'action_tone' => $tone,
                     'document'    => $l['document_ref'] ?? '-',
                     'detail'      => $l['details'] ?? '-',
                     'hash'        => substr($l['hash'] ?? 'sha256...', 0, 8) . '...' . substr($l['hash'] ?? '0000', -4),
-                    'block'       => $l['block_number'] ?? 'BLOCK #' . rand(4400, 4500) . ' [SEALED]',
+                    'block'       => $l['block_id'] ?? ($l['block_number'] ?? 'BLOCK [SEALED]'),
                     'blocked'     => $isBlocked,
                 ];
             }
-        }
-
-        if (empty($auditRows)) {
-            $auditRows = $defaultAuditRows;
         }
 
         $auditActions = array_values(array_unique(array_column($auditRows, 'action')));
@@ -479,7 +407,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-line-hair">
-                        @foreach ($auditRows as $row)
+                        @forelse ($auditRows as $row)
                             <tr @class([
                                 'align-top transition-colors hover:bg-surface-shell/50',
                                 'bg-danger-soft/25' => $row['blocked'],
@@ -516,7 +444,13 @@
                                     </p>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="6" class="px-3 py-8 text-center text-xs text-ink-body">
+                                    Belum ada entri riwayat audit trail tercatat di sistem.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
@@ -532,7 +466,7 @@
                 </p>
                 <div class="flex flex-col items-end gap-1">
                     <p class="gpa-note text-ink-body">Halaman 1 dari 1</p>
-                    <p class="gpa-note font-bold text-ink">Menampilkan {{ count($auditRows) }} dari 1.482 Aksi Terverifikasi</p>
+                    <p class="gpa-note font-bold text-ink">Menampilkan {{ count($auditRows) }} Aksi Terverifikasi</p>
                 </div>
             </footer>
         </section>

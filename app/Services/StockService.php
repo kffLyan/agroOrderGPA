@@ -11,12 +11,9 @@ class StockService
     // Dapatkan sisa kuota stok panen tersedia untuk suatu produk.
     public function getAvailableStock(int $productId): float
     {
-        $total = (float) HarvestBatch::where('product_id', $productId)
+        return (float) HarvestBatch::where('product_id', $productId)
             ->where('available_quantity', '>', 0)
             ->sum('available_quantity');
-
-        // Jika belum ada pencatatan batch di database pengujian, berikan default aman
-        return $total > 0 ? $total : 10000.0;
     }
 
     // Periksa apakah kuota stok mencukupi untuk jumlah yang diminta

@@ -4,117 +4,16 @@
 
 @section('content')
     @php
-        // 3 Cakupan Periode: MTD, WTD, YTD
-        $scopesData = [
-            'MTD' => [
-                'key'         => 'MTD',
-                'label'       => 'TOTAL OMZET MTD',
-                'period'      => 'MTD / Q4 2026',
-                'tab'         => 'MTD',
-                'badge'       => 'MoM',
-                'trend_badge' => '+6.8%',
-                'revenue'     => $totalRevenue,
-                'target'      => 600000000,
-                'margin'      => 21.8,
-                'gross'       => $grossProfit,
-                'settled'     => 98.6,
-                'billing'     => $totalBilling,
-                'outstanding' => $totalOutstanding,
-                'aov'         => $aov,
-                'volume_kg'   => $totalTonnage,
-                'days'        => 28,
-            ],
-            'WTD' => [
-                'key'         => 'WTD',
-                'label'       => 'TOTAL OMZET WTD',
-                'period'      => 'WTD / W' . date('W') . ' ' . date('Y'),
-                'tab'         => 'WTD (Mingguan)',
-                'badge'       => 'WoW',
-                'trend_badge' => '+2.4%',
-                'revenue'     => round($totalRevenue * 0.20),
-                'target'      => 120000000,
-                'margin'      => 21.2,
-                'gross'       => round($grossProfit * 0.20),
-                'settled'     => 98.6,
-                'billing'     => round($totalBilling * 0.20),
-                'outstanding' => round($totalOutstanding * 0.16),
-                'aov'         => round($aov * 0.95),
-                'volume_kg'   => round($totalTonnage * 0.20),
-                'days'        => 4,
-            ],
-            'YTD' => [
-                'key'         => 'YTD',
-                'label'       => 'TOTAL OMZET YTD',
-                'period'      => 'YTD / Q4 ' . date('Y'),
-                'tab'         => 'YTD Konsolidasi',
-                'badge'       => 'YoY',
-                'trend_badge' => '+11.6%',
-                'revenue'     => round($totalRevenue * 7.07),
-                'target'      => 4000000000,
-                'margin'      => 20.9,
-                'gross'       => round($grossProfit * 6.78),
-                'settled'     => 97.9,
-                'billing'     => round($totalBilling * 6.62),
-                'outstanding' => round($totalOutstanding * 2.83),
-                'aov'         => $aov,
-                'volume_kg'   => round($totalTonnage * 6.82),
-                'days'        => 300,
-            ],
-        ];
-
-        // Tren mingguan
-        $ceiling = 120000000;
-        $bep = 65000000;
-        $trendRows = [
-            ['week' => 'W40', 'value' => 88400000,  'label' => 'Rp 88.4M', 'status' => 'closed'],
-            ['week' => 'W41', 'value' => 92100000,  'label' => 'Rp 92.1M', 'status' => 'closed'],
-            ['week' => 'W42', 'value' => 97600000,  'label' => 'Rp 97.6M', 'status' => 'closed'],
-            ['week' => 'W43', 'value' => 106800000, 'label' => 'Rp 106.8M', 'status' => 'closed'],
-            ['week' => 'W44', 'value' => 97750000,  'label' => 'Rp 97.7M*', 'status' => 'running'],
-        ];
-
-        $peak = max(array_column($trendRows, 'value'));
-        foreach ($trendRows as $index => $row) {
-            $trendRows[$index]['value_label'] = 'Rp ' . number_format($row['value'], 0, ',', '.');
-            $trendRows[$index]['share'] = round($row['value'] / $ceiling * 100, 1);
-            $trendRows[$index]['share_label'] = number_format($row['value'] / $ceiling * 100, 1, ',', '.') . '% dari ceiling';
-            $trendRows[$index]['is_peak'] = $row['value'] === $peak;
-            $trendRows[$index]['fill'] = match (true) {
-                $row['status'] === 'running' => 'bg-accent-deep',
-                $row['value'] === $peak => 'bg-success',
-                default => 'bg-ink-strong',
-            };
-        }
-
-        // Komposisi kanal
-        $channelRows = [
-            ['name' => 'Kontrak B2B Horeca & Inflight', 'value' => 328202000, 'dot' => 'bg-ink-strong'],
-            ['name' => 'Retail Modern & Supermarket',     'value' => 106183000, 'dot' => 'bg-success'],
-            ['name' => 'Pesanan Reguler & WhatsApp Sekre','value' => 48265000,  'dot' => 'bg-accent-deep'],
-        ];
+        $scopesData = $scopesData ?? [];
+        $trendRows = $trendRows ?? [];
+        $channelRows = $channelRows ?? [];
+        $settlementRows = $settlementRows ?? [];
         $totalChVal = array_sum(array_column($channelRows, 'value'));
-        foreach ($channelRows as $idx => $r) {
-            $channelRows[$idx]['value_label'] = 'Rp ' . number_format($r['value'], 0, ',', '.');
-            $share = (int) round(($r['value'] / $totalChVal) * 100);
-            $channelRows[$idx]['share'] = $share;
-            $channelRows[$idx]['share_label'] = $share . '%';
-        }
-
-        // Metode pembayaran
-        $settlementTotal = $totalPaid > 0 ? $totalPaid : 482650000;
-        $settlementRows = [
-            ['name' => 'Transfer Manual Bank', 'value' => round($settlementTotal * 0.54), 'icon' => 'banknote', 'note' => '100% Bukti Bayar Tervalidasi', 'note_tone' => 'success'],
-            ['name' => 'B2B Term of Payment',  'value' => round($settlementTotal * 0.36), 'icon' => 'building', 'note' => 'Jatuh Tempo W46 - W48',       'note_tone' => 'ink'],
-            ['name' => 'QRIS Statis Sekre',    'value' => round($settlementTotal * 0.06), 'icon' => 'qrcode',   'note' => 'Settlement Otomatis H+0',      'note_tone' => 'ink'],
-            ['name' => 'Tunai Kasir',          'value' => round($settlementTotal * 0.04), 'icon' => 'wallet',   'note' => 'Disetor ke Kasir Lembang',     'note_tone' => 'ink'],
-        ];
-
-        foreach ($settlementRows as $idx => $sr) {
-            $settlementRows[$idx]['value_label'] = 'Rp ' . number_format($sr['value'], 0, ',', '.');
-            $share = (int) round(($sr['value'] / $settlementTotal) * 100);
-            $settlementRows[$idx]['share'] = $share;
-            $settlementRows[$idx]['share_label'] = $share . '%';
-        }
+        $settlementTotal = array_sum(array_column($settlementRows, 'value'));
+        $bep = 65000000;
+        $ceiling = !empty($trendRows) ? max(array_column($trendRows, 'value')) : 120000000;
+        $ceiling = $ceiling > 0 ? $ceiling * 1.2 : 120000000;
+        $peakRow = !empty($trendRows) ? ($trendRows[array_search(max(array_column($trendRows, 'value')), array_column($trendRows, 'value'))] ?? null) : null;
     @endphp
 
     <div class="mx-auto flex max-w-[1280px] flex-col gap-6"
@@ -151,16 +50,16 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    <button type="button" @click="exportSummary()"
+                    <a href="{{ route('direktur.sales.export') }}"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-surface px-4 py-2.5 outline outline-1 -outline-offset-1 outline-ink-quiet transition-colors hover:bg-surface-shell">
                         <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0" />
-                        <span class="text-xs font-semibold leading-4 text-ink font-inter">Unduh Ringkasan XLSX</span>
-                    </button>
-                    <button type="button" @click="printRecap()"
+                        <span class="text-xs font-semibold leading-4 text-ink font-inter">Unduh Data Penjualan (CSV / Excel)</span>
+                    </a>
+                    <a href="{{ route('direktur.reports.download') }}" target="_blank"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-ink-strong px-4 py-2.5 text-white outline outline-1 -outline-offset-1 outline-ink-quiet transition-colors hover:bg-brand-hover">
                         <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0" />
-                        <span class="text-xs font-semibold leading-4 text-white font-inter">Cetak Rekapitulasi PDF</span>
-                    </button>
+                        <span class="text-xs font-semibold leading-4 text-white font-inter">Cetak Laporan Penjualan (PDF)</span>
+                    </a>
                 </div>
             </div>
         </section>
@@ -373,7 +272,7 @@
             </div>
 
             <footer class="flex flex-wrap items-center justify-between gap-2 border-t border-line-board/60 pt-4">
-                <p class="gpa-note font-bold text-ink">Puncak Realisasi: W43 (Rp 106.8M)</p>
+                <p class="gpa-note font-bold text-ink">Puncak Realisasi: {{ $peakRow && $peakRow['value'] > 0 ? ($peakRow['week'] . ' (' . $peakRow['label'] . ')') : '—' }}</p>
             </footer>
         </section>
 
@@ -384,7 +283,7 @@
                     <h2 class="font-sans text-lg font-semibold leading-6 text-ink">Komposisi Revenue Saluran</h2>
                 </div>
 
-                <p class="gpa-note font-bold text-ink">Konsolidasi 3 Kanal: Rp {{ number_format($totalChVal, 0, ',', '.') }}</p>
+                <p class="gpa-note font-bold text-ink">Konsolidasi {{ count($channelRows) }} Kanal: Rp {{ number_format($totalChVal, 0, ',', '.') }}</p>
             </header>
 
             <div class="grid gap-4 md:grid-cols-3">

@@ -34,100 +34,68 @@ class ReportController extends Controller
             'is_locked'   => true,
             'period'      => 'Kuartal IV 2026 (Okt - Des 2026)',
             'locked_at'   => '24 Okt 2026 23:59:59 WIB',
-            'locked_by'   => Auth::user()?->name ?: 'Ahmad Sanusi, S.P.',
+            'locked_by'   => Auth::user()?->name ?: 'Direktur GPA',
             'sha256_hash' => '0x8F9C4A217B1E90D4CC67F814E32A0B7D18C992E5F67104B8A293CD0891DE33',
         ];
 
         // 1. Metrik omzet riil
         $totalRevenue = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI'])
             ->sum(DB::raw('COALESCE(grand_total, estimated_total)'));
-        if ($totalRevenue <= 0) {
-            $totalRevenue = 482650000;
-        }
 
         $totalTonnageKg = (float) OrderItem::whereHas('order', function ($q) {
             $q->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI']);
         })->sum(DB::raw('COALESCE(actual_net_weight, ordered_qty)'));
-        if ($totalTonnageKg <= 0) {
-            $totalTonnageKg = 38450;
-        }
 
         $cashInflow = (float) Invoice::where('status', 'PAID')->sum('grand_total');
-        if ($cashInflow <= 0) {
-            $cashInflow = 408330000;
-        }
-
         $openReceivables = (float) Invoice::whereIn('status', ['UNPAID', 'OVERDUE'])->sum('grand_total');
-        if ($openReceivables <= 0) {
-            $openReceivables = 74320000;
-        }
 
         $quarterTarget = 600000000;
-        $revenuePercent = round(($totalRevenue / $quarterTarget) * 100, 1);
-        $settledPercent = round(($cashInflow / $totalRevenue) * 100, 1);
-        $shrinkageClaim = 7400000;
-        $tolerancePercent = round(($shrinkageClaim / $totalRevenue) * 100, 2);
+        $revenuePercent = $quarterTarget > 0 ? round(($totalRevenue / $quarterTarget) * 100, 1) : 0;
+        $settledPercent = $totalRevenue > 0 ? round(($cashInflow / $totalRevenue) * 100, 1) : 0;
+        $shrinkageClaim = (float) OrderItem::whereNotNull('returned_weight')->sum(DB::raw('returned_weight * unit_price'));
+        $tolerancePercent = $totalRevenue > 0 ? round(($shrinkageClaim / $totalRevenue) * 100, 2) : 0;
 
-        $commodityList = [
-            ['name' => 'Selada Romaine Hydro',        'po_kg' => 10200, 'tera_kg' => 10080, 'price' => 14500, 'margin' => 28.4],
-            ['name' => 'Tomat Cherry Beef Grade A',    'po_kg' => 8100,  'tera_kg' => 8010,  'price' => 16000, 'margin' => 24.8],
-            ['name' => 'Brokoli Hijau Dataran Tinggi', 'po_kg' => 7400,  'tera_kg' => 7320,  'price' => 13500, 'margin' => 22.1],
-            ['name' => 'Stroberi Ciwidey Segar',       'po_kg' => 4660,  'tera_kg' => 4590,  'price' => 14000, 'margin' => 31.0],
-            ['name' => 'Kol Putih Organik Lembang',    'po_kg' => 8500,  'tera_kg' => 8450,  'price' => 5355,  'margin' => 19.5],
-        ];
+        $products = Product::all();
+        $commodityList = [];
+        foreach ($products->take(5) as $p) {
+            $items = OrderItem::where('product_id', $p->id)->get();
+            $poKg = (float) $items->sum('ordered_qty');
+            $teraKg = (float) $items->sum(fn ($i) => $i->actual_net_weight ?: $i->ordered_qty);
+            $price = (float) $p->base_price;
+            $margin = 25.0; // standard margin
+            $commodityList[] = [
+                'name'    => $p->name,
+                'po_kg'   => $poKg,
+                'tera_kg' => $teraKg,
+                'price'   => $price,
+                'margin'  => $margin,
+            ];
+        }
 
-        $clientList = [
-            [
-                'name'      => 'Hotel Grand Pangrango Bogor',
-                'code'      => 'KTR-2026-HGP-004',
-                'po_count'  => 12,
-                'volume_kg' => 9600,
-                'gross'     => 132480000,
-                'settled'   => 107980000,
-                'term_days' => 30,
-                'due_label' => 'JT: 15 Nov',
-            ],
-            [
-                'name'      => 'Resto Dapur Sunda Asli (Jaringan 4 Cabang)',
-                'code'      => 'KTR-2026-DSA-019',
-                'po_count'  => 16,
-                'volume_kg' => 7200,
-                'gross'     => 98400000,
-                'settled'   => 80180000,
-                'term_days' => 14,
-                'due_label' => 'JT: 08 Nov',
-            ],
-            [
-                'name'      => 'PT Mitra Boga Nusantara (Catering Industri)',
-                'code'      => 'KTR-2026-MBN-008',
-                'po_count'  => 8,
-                'volume_kg' => 8400,
-                'gross'     => 105000000,
-                'settled'   => 88600000,
-                'term_days' => 30,
-                'due_label' => 'JT: 22 Nov',
-            ],
-            [
-                'name'      => 'Superindo Distribusi Regional Jabar',
-                'code'      => 'KTR-2026-SPI-002',
-                'po_count'  => 6,
-                'volume_kg' => 11200,
-                'gross'     => 124000000,
-                'settled'   => 108800000,
-                'term_days' => 45,
-                'due_label' => 'JT: 30 Nov',
-            ],
-            [
-                'name'      => 'Klien Retail Reguler & Spot Non-Kontrak',
-                'code'      => 'REKAP TRANSAKSI TUNAI',
-                'po_count'  => 42,
-                'volume_kg' => 2050,
-                'gross'     => 22770000,
-                'settled'   => 22770000,
-                'term_days' => 0,
-                'due_label' => 'CBD (Cash Before Deliv)',
-            ],
-        ];
+        $clients = User::where('role', 'KLIEN')->with(['orders.orderItems', 'invoices', 'contracts'])->get();
+        $clientList = [];
+        foreach ($clients as $client) {
+            $clientOrders = $client->orders->whereNotIn('status', ['BATAL']);
+            $poCount = $clientOrders->count();
+            $volumeKg = (float) $clientOrders->sum(fn ($o) => $o->orderItems->sum(fn ($i) => $i->actual_net_weight ?: $i->ordered_qty));
+            $gross = (float) $clientOrders->sum(fn ($o) => (float) ($o->grand_total ?: $o->estimated_total));
+            $settled = (float) $client->invoices->where('status', 'PAID')->sum('grand_total');
+            $contract = $client->contracts->first();
+            $termDays = $contract ? (int) $contract->top_days : 30;
+            $earliestDue = $client->invoices->whereIn('status', ['UNPAID', 'OVERDUE'])->min('due_date');
+            $dueLabel = $earliestDue ? ('JT: ' . \Carbon\Carbon::parse($earliestDue)->translatedFormat('d M')) : 'Lancar';
+
+            $clientList[] = [
+                'name'      => $client->company_name ?: $client->name,
+                'code'      => $contract ? $contract->contract_number : ('CLI-' . str_pad($client->id, 3, '0', STR_PAD_LEFT)),
+                'po_count'  => $poCount,
+                'volume_kg' => $volumeKg,
+                'gross'     => $gross,
+                'settled'   => $settled,
+                'term_days' => $termDays,
+                'due_label' => $dueLabel,
+            ];
+        }
 
         $orders = Order::with(['user', 'orderItems.product'])->latest()->take(20)->get();
 
@@ -154,7 +122,7 @@ class ReportController extends Controller
     public function lockPeriod(Request $request)
     {
         $periodName = $request->input('period', 'Kuartal IV (Okt - Des 2026)');
-        $directorName = Auth::user()?->name ?: 'Ahmad Sanusi, S.P.';
+        $directorName = Auth::user()?->name ?: 'Direktur GPA';
 
         $lockInfo = $this->governanceService->lockPeriod($periodName, $directorName);
 
@@ -168,7 +136,7 @@ class ReportController extends Controller
     public function unlockPeriod(Request $request)
     {
         $periodName = $request->input('period', 'Kuartal IV (Okt - Des 2026)');
-        $directorName = Auth::user()?->name ?: 'Ahmad Sanusi, S.P.';
+        $directorName = Auth::user()?->name ?: 'Direktur GPA';
 
         $this->governanceService->unlockPeriod($periodName, $directorName);
 
@@ -199,15 +167,8 @@ class ReportController extends Controller
         $orders = $query->orderBy('created_at', 'desc')->get();
 
         $totalRevenue = (float) $orders->sum(fn ($o) => (float) ($o->grand_total ?? $o->estimated_total));
-        if ($totalRevenue == 0) {
-            $totalRevenue = 482650000.00;
-        }
-
         $totalTonnageKg = (float) OrderItem::whereIn('order_id', $orders->pluck('id'))
             ->sum(DB::raw('COALESCE(actual_net_weight, ordered_qty)'));
-        if ($totalTonnageKg == 0) {
-            $totalTonnageKg = 38450.00;
-        }
 
         $commoditySummary = OrderItem::whereIn('order_id', $orders->pluck('id'))
             ->select(
@@ -248,22 +209,37 @@ class ReportController extends Controller
 
         return response()->stream(function () {
             $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF");
+
             fputcsv($handle, ['BUKU BESAR PENJUALAN EKSEKUTIF KOPERASI GREEN PASUNDAN AGRICULTURE']);
             fputcsv($handle, ['STATUS', 'DISAHKAN // IMMUTABLE ARCHIVE']);
             fputcsv($handle, ['HASH SHA-256', '0x8F9C4A217B1E90D4CC67F814E32A0B7D18C992E5F67104B8A293CD0891DE33']);
+            fputcsv($handle, ['TANGGAL CETAK', date('d/m/Y H:i') . ' WIB']);
             fputcsv($handle, []);
             fputcsv($handle, ['Entitas Mitra B2B', 'No Kontrak', 'Frekuensi PO', 'Volume Tera Sah (kg)', 'Tagihan Bruto (Rp)', 'Settled / Kas Masuk (Rp)', 'Sisa Piutang (Rp)', 'Status']);
 
-            $rows = [
-                ['Hotel Grand Pangrango Bogor', 'KTR-2026-HGP-004', 12, 9600, 132480000, 107980000, 24500000, 'LANCAR'],
-                ['Resto Dapur Sunda Asli', 'KTR-2026-DSA-019', 16, 7200, 98400000, 80180000, 18220000, 'LANCAR'],
-                ['PT Mitra Boga Nusantara', 'KTR-2026-MBN-008', 8, 8400, 105000000, 88600000, 16400000, 'LANCAR'],
-                ['Superindo Distribusi Regional Jabar', 'KTR-2026-SPI-002', 6, 11200, 124000000, 112800000, 11200000, 'LANCAR'],
-                ['Klien Retail Reguler & Spot', 'REKAP-TUNAI', 42, 2050, 22770000, 22770000, 0, 'LUNAS'],
-            ];
+            $clients = User::where('role', 'KLIEN')->with(['orders.orderItems', 'invoices', 'contracts'])->get();
+            foreach ($clients as $client) {
+                $clientOrders = $client->orders->whereNotIn('status', ['BATAL']);
+                $poCount = $clientOrders->count();
+                $volumeKg = (float) $clientOrders->sum(fn ($o) => $o->orderItems->sum(fn ($i) => $i->actual_net_weight ?: $i->ordered_qty));
+                $gross = (float) $clientOrders->sum(fn ($o) => (float) ($o->grand_total ?: $o->estimated_total));
+                $settled = (float) $client->invoices->where('status', 'PAID')->sum('grand_total');
+                $outstanding = max(0, $gross - $settled);
+                $contract = $client->contracts->first();
+                $contractNo = $contract ? $contract->contract_number : ('CLI-' . str_pad($client->id, 3, '0', STR_PAD_LEFT));
+                $status = $outstanding <= 0 ? 'LUNAS' : 'LANCAR';
 
-            foreach ($rows as $r) {
-                fputcsv($handle, $r);
+                fputcsv($handle, [
+                    $client->company_name ?: $client->name,
+                    $contractNo,
+                    $poCount,
+                    number_format($volumeKg, 2, '.', ''),
+                    number_format($gross, 0, ',', '.'),
+                    number_format($settled, 0, ',', '.'),
+                    number_format($outstanding, 0, ',', '.'),
+                    $status,
+                ]);
             }
 
             fclose($handle);

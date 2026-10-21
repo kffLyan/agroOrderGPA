@@ -36,7 +36,7 @@
                     class="inline-flex items-center gap-1.5 rounded bg-surface-shell px-3 py-1 outline outline-1 -outline-offset-1 outline-line-board">
                     <x-gpa.icon name="calendar" class="h-3 w-3 text-ink-subtle" />
                     <span class="text-[11px] font-bold tracking-[0.88px] text-ink {{ $mono }}">
-                        PERIODE: OKTOBER 2026
+                        PERIODE: {{ strtoupper(now()->translatedFormat('F Y')) }}
                     </span>
                 </span>
                 <button type="button" @click="filterTopOnly()"
@@ -64,7 +64,7 @@
 
                 <div class="mt-auto flex items-center justify-between gap-3 border-t border-line-board pt-1">
                     <span class="inline-flex items-center gap-1 text-[12px] leading-4 text-ink-body">
-                        18 Klien Kontrak Aktif
+                        {{ $activeContracts ?? 0 }} Klien Kontrak Aktif
                     </span>
                     <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-3 tracking-[1px] bg-accent text-ink">
                         100% TERMONITOR
@@ -167,10 +167,10 @@
                 <div class="flex h-7 gap-0.5 overflow-hidden rounded-lg bg-surface-pill p-0.5 shadow-[inset_0_2px_4px_1px_rgb(0_0_0/0.05)] outline outline-1 -outline-offset-1 outline-line-board"
                     role="img" aria-label="Komposisi umur piutang">
                     @php
-                        $stage1Share = $agingTotal > 0 ? round(($stagesDef[0]['value'] / $agingTotal) * 100, 1) : 25;
-                        $stage2Share = $agingTotal > 0 ? round(($stagesDef[1]['value'] / $agingTotal) * 100, 1) : 25;
-                        $stage3Share = $agingTotal > 0 ? round(($stagesDef[2]['value'] / $agingTotal) * 100, 1) : 25;
-                        $stage4Share = $agingTotal > 0 ? round(($stagesDef[3]['value'] / $agingTotal) * 100, 1) : 25;
+                        $stage1Share = $agingTotal > 0 ? round(($stagesDef[0]['value'] / $agingTotal) * 100, 1) : 0;
+                        $stage2Share = $agingTotal > 0 ? round(($stagesDef[1]['value'] / $agingTotal) * 100, 1) : 0;
+                        $stage3Share = $agingTotal > 0 ? round(($stagesDef[2]['value'] / $agingTotal) * 100, 1) : 0;
+                        $stage4Share = $agingTotal > 0 ? round(($stagesDef[3]['value'] / $agingTotal) * 100, 1) : 0;
                     @endphp
                     <div class="flex items-center justify-center px-1 pb-0.5 bg-brand text-accent rounded-l" style="width: {{ $stage1Share }}%">
                         <span class="font-mono text-[16px] font-bold leading-6">{{ $stage1Share }}%</span>
@@ -320,7 +320,7 @@
                     </thead>
 
                     <tbody>
-                        @forelse (array_slice($ledgerRows ?? [], 0, 4, true) as $rowIndex => $row)
+                        @forelse (($ledgerRows ?? []) as $rowIndex => $row)
                             <tr x-show="rowVisible({{ $rowIndex }})"
                                 @class([
                                     'border-l-4 border-danger/40 bg-danger-soft/20' => !empty($row['locked']),

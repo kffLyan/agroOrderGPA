@@ -50,7 +50,7 @@ class DispatchController extends Controller
             $activeOrders = collect([$currentOrder]);
         }
 
-        $plate = $currentOrder?->vehicle_plate_number ?: 'B 9284 TDA';
+        $plate = $currentOrder?->vehicle_plate_number ?: '—';
 
         return view('armada.dispatch', [
             'currentOrder' => $currentOrder,

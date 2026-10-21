@@ -3,702 +3,348 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Rekapitulasi Resmi Transaksi Pesanan PO — {{ $user->company_name ?: $user->name }}</title>
+    <title>Rekapitulasi Transaksi Pemesanan PO — {{ $user->company_name ?: $user->name }}</title>
+    @vite(['resources/css/app.css'])
     <style>
         @page {
             size: A4 landscape;
-            margin: 10mm 12mm;
-        }
-
-        * {
-            box-sizing: border-box;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
-
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 10px;
-            color: #000000;
-            background-color: #ffffff;
-            margin: 0;
-            padding: 16px 20px;
-            line-height: 1.35;
-        }
-
-        /* Panel Kontrol Layar (Tidak Tercetak) */
-        .no-print {
-            background-color: #1a1a1a;
-            color: #ffffff;
-            padding: 12px 18px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-        }
-
-        .no-print .btn-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .btn-print {
-            background-color: #ffffff;
-            color: #000000;
-            border: 1px solid #000000;
-            padding: 7px 18px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: 11px;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            transition: all 0.15s ease;
-        }
-
-        .btn-print:hover {
-            background-color: #e5e5e5;
-        }
-
-        .btn-close {
-            background-color: transparent;
-            color: #ffffff;
-            border: 1px solid #777777;
-            padding: 7px 14px;
-            border-radius: 4px;
-            font-size: 11px;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .btn-close:hover {
-            background-color: #333333;
-        }
-
-        .print-tip {
-            font-size: 11px;
-            color: #cccccc;
-        }
-
-        /* Kop Surat Resmi Monokrom Formal */
-        .kop-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 3px solid #000000;
-            padding-bottom: 10px;
-            margin-bottom: 12px;
-            position: relative;
-        }
-
-        .kop-header::after {
-            content: "";
-            position: absolute;
-            bottom: -5px;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background-color: #000000;
-        }
-
-        .kop-brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .kop-logo-box {
-            width: 44px;
-            height: 44px;
-            border: 2px solid #000000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #000000;
-            font-weight: 900;
-            font-size: 20px;
-            letter-spacing: 1px;
-        }
-
-        .kop-info h1 {
-            margin: 0;
-            font-size: 16px;
-            font-weight: 900;
-            color: #000000;
-            letter-spacing: 0.8px;
-            text-transform: uppercase;
-        }
-
-        .kop-info h2 {
-            margin: 2px 0 0;
-            font-size: 10.5px;
-            font-weight: 700;
-            color: #333333;
-            letter-spacing: 0.3px;
-        }
-
-        .kop-info p {
-            margin: 3px 0 0;
-            font-size: 9px;
-            color: #444444;
-            line-height: 1.3;
-        }
-
-        .kop-cert {
-            text-align: right;
-            border-left: 1px solid #999999;
-            padding-left: 14px;
-        }
-
-        .kop-cert .cert-chip {
-            display: inline-block;
-            border: 1px solid #000000;
-            padding: 2px 7px;
-            font-weight: 700;
-            font-size: 8.5px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #000000;
-        }
-
-        .kop-cert p {
-            margin: 4px 0 0;
-            font-size: 8.5px;
-            color: #444444;
-            font-family: monospace;
-        }
-
-        /* Dokumen Title & Profil */
-        .doc-title-bar {
-            text-align: center;
-            margin-bottom: 12px;
-            padding-top: 4px;
-        }
-
-        .doc-title-bar h2 {
-            margin: 0;
-            font-size: 13.5px;
-            font-weight: 900;
-            color: #000000;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-        }
-
-        .doc-title-bar p {
-            margin: 3px 0 0;
-            font-size: 9px;
-            color: #444444;
-        }
-
-        .meta-grid {
-            display: grid;
-            grid-template-columns: 1.4fr 1fr;
-            gap: 12px;
-            margin-bottom: 12px;
-        }
-
-        .meta-card {
-            border: 1px solid #000000;
-            background-color: #ffffff;
-            padding: 8px 12px;
-        }
-
-        .meta-card-title {
-            font-size: 9px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #000000;
-            border-bottom: 1px solid #888888;
-            padding-bottom: 3px;
-            margin-bottom: 5px;
-        }
-
-        .meta-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .meta-table td {
-            padding: 2px 0;
-            font-size: 9px;
-            vertical-align: top;
-        }
-
-        .meta-table td.label {
-            width: 32%;
-            color: #444444;
-        }
-
-        .meta-table td.value {
-            font-weight: 700;
-            color: #000000;
-        }
-
-        /* Kartu Metrik Ringkasan Monokrom */
-        .summary-tiles {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-bottom: 12px;
-        }
-
-        .tile {
-            border: 1px solid #000000;
-            background-color: #ffffff;
-            padding: 8px 10px;
-            border-left: 4px solid #000000;
-        }
-
-        .tile .tile-label {
-            font-size: 8.5px;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: #444444;
-            letter-spacing: 0.4px;
-        }
-
-        .tile .tile-val {
-            font-size: 13.5px;
-            font-weight: 900;
-            color: #000000;
-            margin-top: 3px;
-            font-family: "Courier New", Courier, monospace;
-        }
-
-        .tile .tile-sub {
-            font-size: 8px;
-            color: #555555;
-            margin-top: 1px;
-        }
-
-        /* Tabel Data Transaksi Monokrom Tegas */
-        .table-wrap {
-            margin-bottom: 12px;
-        }
-
-        table.data-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 9px;
-        }
-
-        table.data-table th,
-        table.data-table td {
-            border: 1px solid #333333;
-            padding: 5px 6px;
-            text-align: left;
-        }
-
-        table.data-table th {
-            background-color: #f2f2f2;
-            color: #000000;
-            font-weight: 800;
-            text-transform: uppercase;
-            font-size: 8.5px;
-            letter-spacing: 0.3px;
-        }
-
-        table.data-table tfoot td {
-            background-color: #f2f2f2;
-            font-weight: 900;
-            color: #000000;
-            border-top: 2px solid #000000;
-            font-size: 9.5px;
-        }
-
-        .text-right { text-align: right !important; }
-        .text-center { text-align: center !important; }
-        .font-mono { font-family: "Courier New", Courier, monospace; }
-
-        .status-badge {
-            display: inline-block;
-            padding: 1.5px 5px;
-            border: 1px solid #000000;
-            font-weight: 700;
-            font-size: 8px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            background-color: #ffffff;
-            color: #000000;
-        }
-
-        /* Ketentuan & SOP Monokrom */
-        .notes-box {
-            border: 1px solid #000000;
-            background-color: #ffffff;
-            padding: 8px 12px;
-            margin-bottom: 16px;
-        }
-
-        .notes-box h4 {
-            margin: 0 0 3px;
-            font-size: 8.5px;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: #000000;
-            border-bottom: 1px dashed #777777;
-            padding-bottom: 2px;
-        }
-
-        .notes-box ol {
-            margin: 0;
-            padding-left: 14px;
-            font-size: 8px;
-            color: #333333;
-            line-height: 1.35;
-        }
-
-        /* Lembar Tanda Tangan */
-        .signatures {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin-top: 16px;
-            page-break-inside: avoid;
-        }
-
-        .sig-block {
-            text-align: center;
-            border: 1px solid #555555;
-            padding: 8px 6px;
-            background-color: #ffffff;
-        }
-
-        .sig-role {
-            font-size: 8px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #555555;
-            margin-bottom: 2px;
-        }
-
-        .sig-org {
-            font-size: 9px;
-            font-weight: 800;
-            color: #000000;
-        }
-
-        .sig-space {
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 4px 0;
-            position: relative;
-        }
-
-        .sig-stamp {
-            border: 1px solid #000000;
-            color: #000000;
-            padding: 2px 8px;
-            font-size: 7.5px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .sig-name {
-            font-size: 9px;
-            font-weight: 800;
-            color: #000000;
-            border-top: 1px solid #000000;
-            padding-top: 3px;
-            display: inline-block;
-            min-width: 140px;
-        }
-
-        .sig-title {
-            font-size: 7.5px;
-            color: #555555;
-            margin-top: 1px;
-        }
-
-        /* Footer Cetak */
-        .doc-footer {
-            margin-top: 12px;
-            padding-top: 6px;
-            border-top: 1px solid #000000;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 8px;
-            color: #444444;
+            margin: 8mm 10mm;
         }
 
         @media print {
+            body {
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
             .no-print {
                 display: none !important;
             }
-            body {
+
+            .a4-landscape {
+                width: 100% !important;
+                max-width: 100% !important;
+                min-height: auto !important;
+                margin: 0 !important;
                 padding: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
             }
+
+            table {
+                page-break-inside: auto;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            tfoot {
+                display: table-footer-group;
+            }
+
+            .signatures {
+                page-break-inside: avoid;
+            }
+        }
+
+        @media screen {
+            body {
+                background: #f4f6f0;
+            }
+        }
+
+        .a4-landscape {
+            width: 297mm;
+            min-height: 210mm;
+            margin: 20px auto;
+            background: #ffffff;
+            box-shadow: 0 10px 35px -15px rgba(21, 58, 1, 0.35);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 8pt;
+            line-height: 1.45;
+            color: #191c18;
+            padding: 10mm 12mm;
+            box-sizing: border-box;
         }
     </style>
 </head>
-<body>
+<body class="antialiased">
 
-    {{-- Panel Kontrol Layar (Tidak Tercetak) --}}
-    <div class="no-print">
-        <div class="print-tip">
-            <strong>Format Monokrom Cetak Resmi (Black &amp; White High-Contrast):</strong>
-            Didesain khusus untuk printer laserjet kantor, arsip legal, dan fotokopi tajam. Pilih <em>"Save as PDF"</em> pada jendela cetak browser.
-        </div>
-        <div class="btn-group">
-            <button onclick="window.print()" class="btn-print">
-                &#128438; Cetak Dokumen / Simpan PDF
-            </button>
-            <a href="{{ route('klien.orders.index') }}" class="btn-close">
-                Kembali ke Portal
-            </a>
+    {{-- Topbar Kontrol Layar (Tidak Tercetak) --}}
+    <div class="no-print sticky top-0 z-30 border-b border-line-board bg-white/95 backdrop-blur shadow-sub">
+        <div class="mx-auto flex max-w-[297mm] items-center justify-between gap-3 px-4 py-2.5">
+            <div class="flex items-center gap-2">
+                <a href="{{ route('klien.orders.index') }}"
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-line-board bg-surface px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-surface-shell">
+                    <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5" />
+                    Kembali ke Daftar Pesanan
+                </a>
+                <span class="rounded bg-brand/10 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-brand">
+                    REKAP RESMI PURCHASE ORDER (A4 LANDSCAPE)
+                </span>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('klien.orders.export', ['status' => $statusFilter]) }}"
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-line-board bg-surface px-3 py-1.5 text-xs font-semibold text-ink shadow-sub transition-colors hover:bg-surface-muted">
+                    <x-gpa.icon name="download" class="h-3.5 w-3.5" />
+                    Unduh Excel (CSV)
+                </a>
+                <button type="button" onclick="window.print()"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-1.5 text-xs font-bold text-white shadow-sub transition-colors hover:bg-brand-deep">
+                    <x-gpa.icon name="printer" class="h-3.5 w-3.5" />
+                    Cetak Dokumen (Ctrl+P)
+                </button>
+            </div>
         </div>
     </div>
 
-    {{-- Kop Surat Resmi GPA Monokrom --}}
-    <header class="kop-header">
-        <div class="kop-brand">
-            <div class="kop-logo-box">GPA</div>
-            <div class="kop-info">
-                <h1>PT GREEN PASUNDAN AGRICULTURE</h1>
-                <h2>Divisi Distribusi Rantai Pasok Sayuran Segar &amp; Kemitraan Agribisnis B2B</h2>
-                <p>
-                    Sentra Logistik Lembang: Jl. Raya Kolonel Masturi No. 108, Lembang, Bandung Barat 40391<br>
-                    Website: agroorder.gpa.co.id &bull; Surel: supplychain@greenpasundan.id &bull; Hotline: +62 811-2345-6789
+    {{-- Kanvas A4 Landscape --}}
+    <main class="a4-landscape">
+        {{-- Kop Surat Resmi GPA --}}
+        <header class="flex items-start justify-between gap-4 border-b-2 border-brand pb-3">
+            <div class="flex items-start gap-3">
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-brand/30 bg-surface-shell p-1.5">
+                    <img src="{{ asset('gpaleaves.png') }}" alt="Logo GPA" class="h-9 w-9 object-contain">
+                </div>
+                <div>
+                    <h1 class="text-sm font-extrabold uppercase tracking-wide text-ink">
+                        PT GREEN PASUNDAN AGRICULTURE
+                    </h1>
+                    <p class="text-[7.5pt] text-ink-body">
+                        Divisi Distribusi Rantai Pasok Sayuran Segar &amp; Kemitraan Agribisnis B2B<br>
+                        Sentra Logistik Lembang &amp; Ciwidey &bull; Desa Panundaan, Kab. Bandung 40973 &bull; Hotline: +62 811-2345-6789
+                    </p>
+                </div>
+            </div>
+            <div class="text-right shrink-0">
+                <span class="inline-block rounded bg-brand px-2 py-0.5 text-[7pt] font-extrabold uppercase tracking-wider text-white">
+                    Cold-Chain Standard &bull; ISO 22000
+                </span>
+                <p class="mt-1 font-mono text-[7pt] font-semibold text-ink-muted">
+                    REG: {{ $docNumber }}
+                </p>
+                <p class="text-[7pt] text-ink-muted">
+                    Dicetak: <span class="font-mono text-ink">{{ $printDate }}</span>
                 </p>
             </div>
-        </div>
-        <div class="kop-cert">
-            <span class="cert-chip">Cold-Chain Standard</span>
-            <p>ISO 22000 &bull; HACCP Verified</p>
-            <p>Sentra Kebun: Lembang &amp; Ciwidey</p>
-        </div>
-    </header>
+        </header>
 
-    {{-- Judul Dokumen --}}
-    <div class="doc-title-bar">
-        <h2>REKAPITULASI RESMI TRANSAKSI PEMESANAN (PURCHASE ORDER)</h2>
-        <p>Lampiran Rekonsiliasi Pesanan, Realisasi Penimbangan Gudang, &amp; Status Pengiriman Armada Chiller</p>
-    </div>
-
-    {{-- Identitas Mitra & Legalitas Dokumen --}}
-    <section class="meta-grid">
-        <div class="meta-card">
-            <div class="meta-card-title">Profil Perusahaan Mitra / Klien</div>
-            <table class="meta-table">
-                <tr>
-                    <td class="label">Nama Perusahaan</td>
-                    <td class="value">: {{ $user->company_name ?: $user->name }}</td>
-                </tr>
-                <tr>
-                    <td class="label">PIC Penanggung Jawab</td>
-                    <td class="value">: {{ $user->pic_name ?: $user->name }} ({{ $user->pic_phone ?: ($user->phone ?: '-') }})</td>
-                </tr>
-                <tr>
-                    <td class="label">Alamat Dock Bongkar</td>
-                    <td class="value">: {{ $user->address ?: 'Gudang / Receiving Dock Utama Klien' }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Skema Kemitraan</td>
-                    <td class="value">: {{ $user->client_type === 'B2B_KONTRAK' ? 'Mitra Kontrak B2B Terikat (Fasilitas TOP Tempo)' : 'Mitra Reguler Spot Order' }}</td>
-                </tr>
-            </table>
+        {{-- Judul Dokumen --}}
+        <div class="mt-3 flex items-center justify-between border-b border-line-board pb-2">
+            <div>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-brand">
+                    REKAPITULASI RESMI TRANSAKSI PEMESANAN (PURCHASE ORDER)
+                </h2>
+                <p class="text-[7.5pt] text-ink-body">
+                    Lampiran Rekonsiliasi Pesanan, Realisasi Penimbangan Fisik Gudang &amp; Status Pengiriman Armada Chiller
+                </p>
+            </div>
+            <div class="text-right">
+                <span class="rounded border border-brand/40 bg-brand/5 px-2 py-0.5 font-mono text-[7pt] font-bold text-brand uppercase">
+                    FILTER: {{ $statusFilter === 'all' ? 'SELURUH PESANAN' : strtoupper($statusFilter) }}
+                </span>
+            </div>
         </div>
 
-        <div class="meta-card">
-            <div class="meta-card-title">Parameter Arsip &amp; Dokumen</div>
-            <table class="meta-table">
-                <tr>
-                    <td class="label">Nomor Registrasi</td>
-                    <td class="value font-mono">: {{ $docNumber }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Tanggal Cetak</td>
-                    <td class="value">: {{ $printDate }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Filter Transaksi</td>
-                    <td class="value">: {{ $statusFilter === 'all' ? 'Seluruh Siklus Operasional' : strtoupper($statusFilter) }}</td>
-                </tr>
-                <tr>
-                    <td class="label">Keabsahan Dokumen</td>
-                    <td class="value">: <strong>TERVERIFIKASI SISTEM ELEKTRONIK GPA</strong></td>
-                </tr>
-            </table>
-        </div>
-    </section>
+        {{-- Parameter Mitra & Legalitas Dokumen --}}
+        <section class="mt-3 grid grid-cols-2 gap-3 text-[7.5pt]">
+            <div class="rounded-lg border border-line-board bg-surface-shell p-2">
+                <p class="text-[7pt] font-bold uppercase tracking-wider text-brand">Profil Mitra / Klien Penerima</p>
+                <div class="mt-1 grid grid-cols-3 gap-y-0.5">
+                    <span class="text-ink-muted">Nama Entitas</span>
+                    <span class="col-span-2 font-bold text-ink">: {{ $user->company_name ?: $user->name }}</span>
 
-    {{-- Kartu Ringkasan Metrik Monokrom --}}
-    <section class="summary-tiles">
-        <div class="tile">
-            <div class="tile-label">Total Transaksi PO</div>
-            <div class="tile-val">{{ $countOrders }} Pesanan</div>
-            <div class="tile-sub">Tercatat di Portal GPA</div>
-        </div>
-        <div class="tile">
-            <div class="tile-label">Total Permintaan Dipesan</div>
-            <div class="tile-val">{{ number_format($totalKgOrder, 1, ',', '.') }} Kg</div>
-            <div class="tile-sub">Estimasi Bobot Pesanan</div>
-        </div>
-        <div class="tile">
-            <div class="tile-label">Realisasi Netto Gudang</div>
-            <div class="tile-val">{{ number_format($totalKgActual, 1, ',', '.') }} Kg</div>
-            <div class="tile-sub">Hasil Timbangan Sah Fisik</div>
-        </div>
-        <div class="tile">
-            <div class="tile-label">Akumulasi Nilai Transaksi</div>
-            <div class="tile-val">Rp {{ number_format($totalValue, 0, ',', '.') }}</div>
-            <div class="tile-sub">Grand Total Kewajiban Sah</div>
-        </div>
-    </section>
+                    <span class="text-ink-muted">PIC / Kontak</span>
+                    <span class="col-span-2 text-ink">: {{ $user->pic_name ?: $user->name }} ({{ $user->pic_phone ?: ($user->phone ?: '-') }})</span>
 
-    {{-- Tabel Data Transaksi Rekapitulasi Rinci --}}
-    <div class="table-wrap">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th class="text-center" style="width: 25px;">No</th>
-                    <th style="width: 105px;">No. PO &amp; Tanggal</th>
-                    <th>Rincian Komoditas &amp; Estimasi Qty</th>
-                    <th class="text-right" style="width: 80px;">Pesan (Kg)</th>
-                    <th class="text-right" style="width: 85px;">Netto Sah (Kg)</th>
-                    <th style="width: 130px;">Surat Jalan &amp; Armada</th>
-                    <th class="text-center" style="width: 110px;">Status Siklus</th>
-                    <th class="text-right" style="width: 105px;">Total Nilai (Rp)</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($orders as $idx => $order)
-                    @php
-                        $orderedKg = (float) $order->orderItems->sum('ordered_qty');
-                        $actualKg = $order->orderItems->sum(fn ($i) => $i->actual_net_weight ? (float) $i->actual_net_weight : null);
-                        $hasWeighed = $actualKg !== null && $order->orderItems->every(fn($i) => $i->actual_net_weight !== null);
-                        $amount = (float) ($order->grand_total ?: $order->estimated_total);
+                    <span class="text-ink-muted">Alamat Dock</span>
+                    <span class="col-span-2 text-ink truncate">: {{ $user->address ?: 'Gudang / Receiving Dock Utama Klien' }}</span>
 
-                        $commoditiesList = $order->orderItems->map(function ($item) {
-                            return ($item->product->name ?? 'Komoditas') . ' (' . number_format($item->ordered_qty, 0, ',', '.') . ' kg)';
-                        })->join(', ');
+                    <span class="text-ink-muted">Skema Kemitraan</span>
+                    <span class="col-span-2 font-semibold text-brand">: {{ $user->client_type === 'B2B_KONTRAK' ? 'Mitra Kontrak B2B (Fasilitas TOP Tempo 30D)' : 'Mitra Reguler Spot Order' }}</span>
+                </div>
+            </div>
 
-                        $statusLabel = match ($order->status) {
-                            'MEUNUNGGU_VERIFIKASI', 'MENUNGGU_VERIFIKASI' => 'MENUNGGU VERIFIKASI',
-                            'TERVERIFIKASI'       => 'TERVERIFIKASI SEKRE',
-                            'SIAP_KIRIM'          => 'SIAP KIRIM (NETTO SAH)',
-                            'DALAM_PENGIRIMAN'    => 'DALAM PENGIRIMAN',
-                            'SELESAI'             => 'SELESAI DITERIMA',
-                            'SELESAI_CATATAN'     => 'SELESAI (CATATAN)',
-                            'BATAL'               => 'DIBATALKAN',
-                            default               => strtoupper($order->status),
-                        };
-                    @endphp
-                    <tr>
-                        <td class="text-center font-mono">{{ $idx + 1 }}</td>
-                        <td>
-                            <strong class="font-mono">{{ $order->order_number }}</strong><br>
-                            <span style="color: #444; font-size: 8px;">{{ $order->created_at->format('d/m/Y H:i') }} WIB</span>
-                        </td>
-                        <td>
-                            <span>{{ $commoditiesList ?: 'Komoditas Sayuran Segar Pasundan' }}</span>
-                        </td>
-                        <td class="text-right font-mono font-medium">
-                            {{ number_format($orderedKg, 1, ',', '.') }}
-                        </td>
-                        <td class="text-right font-mono font-bold">
-                            {{ $hasWeighed ? number_format($actualKg, 1, ',', '.') : 'Belum Timbang' }}
-                        </td>
-                        <td>
-                            @if ($order->surat_jalan_number)
-                                <strong class="font-mono">{{ $order->surat_jalan_number }}</strong><br>
-                                <span style="color: #444; font-size: 8px;">
-                                    {{ $order->vehicle_plate_number ?: 'Truk Chiller' }} &bull; {{ $order->driver ? $order->driver->name : 'Supir GPA' }}
+            <div class="rounded-lg border border-line-board bg-surface-shell p-2">
+                <p class="text-[7pt] font-bold uppercase tracking-wider text-brand">Ringkasan Konsolidasi Rekap</p>
+                <div class="mt-1 grid grid-cols-4 gap-2 text-center">
+                    <div class="rounded border border-line-board bg-white p-1">
+                        <span class="block text-[6.5pt] text-ink-muted uppercase">Total PO</span>
+                        <span class="font-mono text-xs font-bold text-ink">{{ $countOrders }}</span>
+                    </div>
+                    <div class="rounded border border-line-board bg-white p-1">
+                        <span class="block text-[6.5pt] text-ink-muted uppercase">Est. Pesan</span>
+                        <span class="font-mono text-xs font-bold text-ink">{{ number_format($totalKgOrder, 1, ',', '.') }} kg</span>
+                    </div>
+                    <div class="rounded border border-line-board bg-white p-1">
+                        <span class="block text-[6.5pt] text-ink-muted uppercase">Netto Tera</span>
+                        <span class="font-mono text-xs font-bold text-brand">{{ number_format($totalKgActual, 1, ',', '.') }} kg</span>
+                    </div>
+                    <div class="rounded border border-line-board bg-white p-1">
+                        <span class="block text-[6.5pt] text-ink-muted uppercase">Total Nilai</span>
+                        <span class="font-mono text-xs font-extrabold text-brand">Rp {{ number_format($totalValue, 0, ',', '.') }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        {{-- Tabel Data Transaksi Rekapitulasi Rinci --}}
+        <section class="mt-3">
+            <table class="w-full border-collapse text-left text-[7.5pt]">
+                <thead>
+                    <tr class="border-b border-line-board bg-surface-shell">
+                        <th class="py-1 px-1.5 text-center font-bold text-ink" style="width: 25px;">No</th>
+                        <th class="py-1 px-1.5 font-bold text-ink" style="width: 95px;">No. PO &amp; Tgl</th>
+                        <th class="py-1 px-1.5 font-bold text-ink">Rincian Komoditas &amp; Estimasi</th>
+                        <th class="py-1 px-1.5 text-right font-bold text-ink" style="width: 75px;">Pesan (Kg)</th>
+                        <th class="py-1 px-1.5 text-right font-bold text-ink" style="width: 80px;">Netto (Kg)</th>
+                        <th class="py-1 px-1.5 font-bold text-ink" style="width: 140px;">Surat Jalan &amp; Armada</th>
+                        <th class="py-1 px-1.5 text-center font-bold text-ink" style="width: 90px;">Status Siklus</th>
+                        <th class="py-1 px-1.5 text-right font-bold text-ink" style="width: 100px;">Total Nilai (Rp)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-line-hair">
+                    @forelse ($orders as $idx => $order)
+                        @php
+                            $orderedKg = (float) $order->orderItems->sum('ordered_qty');
+                            $actualKg = $order->orderItems->sum(fn ($i) => $i->actual_net_weight ? (float) $i->actual_net_weight : null);
+                            $hasWeighed = $actualKg !== null && $order->orderItems->every(fn($i) => $i->actual_net_weight !== null);
+                            $amount = (float) ($order->grand_total ?: $order->estimated_total);
+
+                            $commoditiesList = $order->orderItems->map(function ($item) {
+                                return ($item->product->name ?? 'Komoditas') . ' (' . number_format($item->ordered_qty, 0, ',', '.') . ' kg)';
+                            })->join(', ');
+
+                            $statusLabel = match ($order->status) {
+                                'MENUNGGU_VERIFIKASI' => 'MENUNGGU VERIFIKASI',
+                                'TERVERIFIKASI'       => 'TERVERIFIKASI SEKRE',
+                                'SIAP_KIRIM'          => 'SIAP KIRIM (NETTO SAH)',
+                                'DALAM_PENGIRIMAN'    => 'DALAM PENGIRIMAN',
+                                'SELESAI'             => 'SELESAI DITERIMA',
+                                'SELESAI_CATATAN'     => 'SELESAI (CATATAN)',
+                                'BATAL'               => 'DIBATALKAN',
+                                default               => strtoupper($order->status),
+                            };
+                        @endphp
+                        <tr class="{{ $idx % 2 === 1 ? 'bg-surface-shell/40' : '' }}">
+                            <td class="py-1 px-1.5 text-center font-mono text-ink-muted">{{ $idx + 1 }}</td>
+                            <td class="py-1 px-1.5">
+                                <strong class="font-mono text-brand">{{ $order->order_number }}</strong><br>
+                                <span class="text-[6.5pt] text-ink-muted">{{ $order->created_at->format('d/m/Y H:i') }}</span>
+                            </td>
+                            <td class="py-1 px-1.5 text-ink-body">
+                                <span>{{ $commoditiesList ?: 'Komoditas Sayuran Segar Pasundan' }}</span>
+                            </td>
+                            <td class="py-1 px-1.5 text-right font-mono text-ink-muted">
+                                {{ number_format($orderedKg, 1, ',', '.') }}
+                            </td>
+                            <td class="py-1 px-1.5 text-right font-mono font-bold text-ink">
+                                {{ $hasWeighed ? number_format($actualKg, 1, ',', '.') : 'Antrean Timbang' }}
+                            </td>
+                            <td class="py-1 px-1.5 text-[7pt]">
+                                @if ($order->surat_jalan_number)
+                                    <strong class="font-mono text-ink">{{ $order->surat_jalan_number }}</strong><br>
+                                    <span class="text-ink-muted">
+                                        {{ $order->vehicle_plate_number ?: 'Truk Chiller' }} &bull; {{ $order->driver ? $order->driver->name : 'Supir GPA' }}
+                                    </span>
+                                @else
+                                    <span class="italic text-ink-quiet">SJ Belum Terbit</span>
+                                @endif
+                            </td>
+                            <td class="py-1 px-1.5 text-center">
+                                <span class="inline-block rounded px-1.5 py-0.5 text-[6.5pt] font-bold uppercase tracking-wider {{ $order->status === 'SELESAI' ? 'bg-brand/10 text-brand' : 'bg-surface-pill text-ink-body' }}">
+                                    {{ $statusLabel }}
                                 </span>
-                            @else
-                                <span style="color: #666; font-style: italic;">Belum Terbit</span>
-                            @endif
+                            </td>
+                            <td class="py-1 px-1.5 text-right font-mono font-bold text-ink">
+                                Rp {{ number_format($amount, 0, ',', '.') }}
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="8" class="py-3 text-center text-ink-muted italic">
+                                Belum ada catatan riwayat transaksi pesanan untuk filter yang dipilih.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+                <tfoot>
+                    <tr class="border-t-2 border-brand bg-surface-shell font-bold">
+                        <td colspan="3" class="py-1 px-1.5 text-right text-brand uppercase tracking-wider text-[7.5pt]">
+                            TOTAL KESELURUHAN KONSOLIDASI:
                         </td>
-                        <td class="text-center">
-                            <span class="status-badge">
-                                {{ $statusLabel }}
-                            </span>
-                        </td>
-                        <td class="text-right font-mono font-bold">
-                            {{ number_format($amount, 0, ',', '.') }}
+                        <td class="py-1 px-1.5 text-right font-mono text-ink">{{ number_format($totalKgOrder, 1, ',', '.') }} kg</td>
+                        <td class="py-1 px-1.5 text-right font-mono text-brand">{{ number_format($totalKgActual, 1, ',', '.') }} kg</td>
+                        <td colspan="2"></td>
+                        <td class="py-1 px-1.5 text-right font-mono text-brand text-[8pt]">
+                            Rp {{ number_format($totalValue, 0, ',', '.') }}
                         </td>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="8" class="text-center" style="padding: 16px; color: #555; font-style: italic;">
-                            Belum ada catatan riwayat transaksi pesanan untuk filter yang dipilih.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="3" class="text-right">TOTAL KESELURUHAN (KONSOLIDASI):</td>
-                    <td class="text-right font-mono">{{ number_format($totalKgOrder, 1, ',', '.') }} Kg</td>
-                    <td class="text-right font-mono">{{ number_format($totalKgActual, 1, ',', '.') }} Kg</td>
-                    <td colspan="2"></td>
-                    <td class="text-right font-mono">Rp {{ number_format($totalValue, 0, ',', '.') }}</td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
+                </tfoot>
+            </table>
+        </section>
 
-    {{-- Ketentuan Operasional & Jaminan Mutu --}}
-    <section class="notes-box">
-        <h4>Catatan Ketentuan &amp; Standar Mutu PT Green Pasundan Agriculture (SOP Cold-Chain):</h4>
-        <ol>
-            <li>Data bobot netto sah merupakan hasil penimbangan digital terkalibrasi di Packing House Lembang yang tercantum pada Surat Jalan resmi fisik.</li>
-            <li>Untuk pesanan Klien Kontrak B2B dengan termin <em>Term of Payment (TOP)</em>, seluruh nominal tagihan sah diagregasi secara otomatis ke dalam Faktur Bulanan Konsolidasi.</li>
-            <li>Batas toleransi deviasi susut perjalanan cold-chain maksimum 0.5% sesuai standar garansi komoditas agro segar PT Green Pasundan Agriculture.</li>
-            <li>Dokumen ini digenerate secara resmi melalui Portal Sistem Terintegrasi AgroOrder GPA dan memiliki nilai pembuktian rekonsiliasi yang sah.</li>
-        </ol>
-    </section>
+        {{-- Ketentuan Standar Mutu & Catatan Operasional --}}
+        <section class="mt-3 rounded border border-line-board bg-surface-shell/50 p-2 text-[7pt] text-ink-body">
+            <h4 class="font-bold uppercase tracking-wider text-brand">Catatan Ketentuan &amp; Standar Mutu GPA (SOP Cold-Chain):</h4>
+            <ol class="mt-0.5 list-decimal list-inside space-y-0.5">
+                <li>Data bobot netto sah merupakan hasil penimbangan digital terkalibrasi di Packing House Lembang yang tercantum pada Surat Jalan resmi fisik.</li>
+                <li>Untuk pesanan Klien Kontrak B2B dengan termin <em>Term of Payment (TOP)</em>, seluruh nominal tagihan sah diagregasi ke dalam Faktur Bulanan Konsolidasi.</li>
+                <li>Batas toleransi deviasi susut perjalanan cold-chain maksimum 0.5% sesuai standar garansi mutu PT Green Pasundan Agriculture.</li>
+            </ol>
+        </section>
 
-    {{-- Lembar Pengesahan Sah (Tanda Tangan) Monokrom --}}
-    <section class="signatures">
-        <div class="sig-block">
-            <div class="sig-role">Pihak Penerima / Mitra Klien</div>
-            <div class="sig-org">{{ $user->company_name ?: 'Perusahaan Mitra' }}</div>
-            <div class="sig-space">
-                <span class="sig-stamp">Tanda Tangan &amp; Cap Basah</span>
+        {{-- Lembar Pengesahan Sah (Tanda Tangan) --}}
+        <section class="signatures mt-4 border-t border-line-board pt-3 text-[7.5pt]">
+            <div class="grid grid-cols-3 gap-6 text-center">
+                <div>
+                    <p class="text-ink-muted">Pihak Penerima / Mitra Klien</p>
+                    <p class="font-bold text-ink">{{ $user->company_name ?: 'Perusahaan Mitra' }}</p>
+                    <div class="h-12 flex items-center justify-center">
+                        <span class="rounded border border-dashed border-line-board px-2 py-0.5 font-mono text-[6.5pt] text-ink-quiet">
+                            CAP &amp; TANDA TANGAN
+                        </span>
+                    </div>
+                    <p class="font-bold text-ink underline">{{ $user->pic_name ?: $user->name }}</p>
+                    <p class="text-[6.5pt] text-ink-muted">Purchasing / Receiving Dock</p>
+                </div>
+
+                <div>
+                    <p class="text-ink-muted">Verifikasi Gudang &amp; Logistik</p>
+                    <p class="font-bold text-ink">Sentra Logistik Lembang GPA</p>
+                    <div class="h-12 flex items-center justify-center">
+                        <span class="rounded border border-dashed border-brand/50 px-2 py-0.5 font-mono text-[6.5pt] text-brand">
+                            QC PASUNDAN VALIDATED
+                        </span>
+                    </div>
+                    <p class="font-bold text-ink underline">Agus Hendrawan, S.Pt.</p>
+                    <p class="text-[6.5pt] text-ink-muted">Koordinator Mutu &amp; Armada</p>
+                </div>
+
+                <div>
+                    <p class="text-ink-muted">Otorisasi Keuangan &amp; Faktur</p>
+                    <p class="font-bold text-brand">PT Green Pasundan Agriculture</p>
+                    <div class="h-12 flex items-center justify-center">
+                        <div class="rounded border border-brand/60 px-2 py-0.5 text-center">
+                            <span class="block font-mono text-[6pt] font-extrabold tracking-wider text-brand">GPA FINANCE VERIFIED</span>
+                        </div>
+                    </div>
+                    <p class="font-bold text-brand underline">Siti Aminah, S.E.</p>
+                    <p class="text-[6.5pt] text-ink-muted">Administrasi &amp; Sekretariat Keuangan</p>
+                </div>
             </div>
-            <div class="sig-name">{{ $user->pic_name ?: $user->name }}</div>
-            <div class="sig-title">Kepala Bagian Purchasing / Receiving Dock</div>
-        </div>
-
-        <div class="sig-block">
-            <div class="sig-role">Verifikasi Gudang &amp; Logistik</div>
-            <div class="sig-org">Sentra Distribusi Lembang GPA</div>
-            <div class="sig-space">
-                <span class="sig-stamp">QC Pasundan Validated</span>
+            <div class="mt-2 text-center text-[6pt] text-ink-quiet font-mono">
+                DOKUMEN RESMI DICETAK MELALUI SISTEM AGROORDER GPA PADA {{ $printDate }} &bull; ARSIP ELEKTRONIK NO. {{ $docNumber }}
             </div>
-            <div class="sig-name">Agus Hendrawan, S.Pt.</div>
-            <div class="sig-title">Koordinator Mutu &amp; Armada Logistik</div>
-        </div>
-
-        <div class="sig-block">
-            <div class="sig-role">Otorisasi Keuangan &amp; Faktur</div>
-            <div class="sig-org">PT Green Pasundan Agriculture</div>
-            <div class="sig-space">
-                <span class="sig-stamp">GPA FINANCE SIGNED</span>
-            </div>
-            <div class="sig-name">Siti Aminah, S.E.</div>
-            <div class="sig-title">Staf Administrasi &amp; Sekretariat Keuangan</div>
-        </div>
-    </section>
-
-    {{-- Footer Cetak --}}
-    <footer class="doc-footer">
-        <div>
-            Dicetak secara resmi melalui sistem AgroOrder GPA pada {{ $printDate }}.
-        </div>
-        <div class="font-mono">
-            Halaman 1 dari 1 &bull; Arsip Elektronik B2B No. {{ $docNumber }}
-        </div>
-    </footer>
+        </section>
+    </main>
 
     @if (request()->query('auto_print'))
         <script>

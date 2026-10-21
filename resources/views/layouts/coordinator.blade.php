@@ -7,7 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="Konsol Koordinator Lapangan AgroOrder GPA.">
 
-    <title>@yield('title', 'Dashboard Koordinator Lapangan').' &middot; '.config('app.name', 'AgroOrder GPA')</title>
+    <title>@yield('title', 'Dashboard Koordinator Lapangan') &middot; {{ config('app.name', 'AgroOrder GPA') }}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,12 +19,13 @@
 </head>
 
 <body class="min-h-screen bg-canvas font-sans text-ink antialiased">
+    <x-gpa.loading-screen />
     @php
         $user = auth()->user();
         $operatorRole = $operator['role'] ?? 'Koordinator Lapangan';
-        $operatorName = $user ? $user->name : ($operator['name'] ?? 'Agus Tusan');
-        $operatorCode = $user ? '002' : ($operator['code'] ?? '002');
-        $operatorInitials = $user ? strtoupper(substr($user->name, 0, 2)) : ($operator['initials'] ?? 'AT');
+        $operatorName = $user ? $user->name : ($operator['name'] ?? 'Koordinator Lapangan');
+        $operatorCode = $user ? str_pad($user->id, 3, '0', STR_PAD_LEFT) : ($operator['code'] ?? '—');
+        $operatorInitials = $user ? strtoupper(substr($user->name, 0, 2)) : ($operator['initials'] ?? 'KL');
 
         $navigation = [
             ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('koordinator.dashboard'), 'active' => request()->routeIs('*dashboard*')],
@@ -52,7 +53,7 @@
                     </button>
 
                     <a href="{{ route('koordinator.dashboard') }}" class="flex min-w-0 items-center gap-3">
-                        <x-gpa.brand-mark class="h-7 w-7 shrink-0 text-accent" />
+                        <img src="{{ asset('gpaleaves.png') }}" alt="Logo AgroOrder GPA" class="h-8 w-8 shrink-0 object-contain">
                         <span class="flex min-w-0 flex-col">
                             <span class="truncate font-inter text-lg font-extrabold uppercase leading-6 text-white">
                                 AgroOrder GPA

@@ -25,90 +25,123 @@ class CommodityVolumeController extends Controller
         $bufferKg = (float) HarvestBatch::where('source_type', 'BUFFER_LUAR')->sum('initial_quantity');
         $totalHarvestKg = $binaanKg + $bufferKg;
 
-        $binaanTon = $totalHarvestKg > 0 ? round($binaanKg / 1000, 2) : 395.77;
-        $bufferTon = $totalHarvestKg > 0 ? round($bufferKg / 1000, 2) : 86.88;
+        $binaanTon = round($binaanKg / 1000, 2);
+        $bufferTon = round($bufferKg / 1000, 2);
         $totalTon = round($binaanTon + $bufferTon, 2);
 
-        $binaanPercent = $totalTon > 0 ? round(($binaanTon / $totalTon) * 100) : 82;
-        $bufferPercent = 100 - $binaanPercent;
+        $binaanPercent = $totalTon > 0 ? round(($binaanTon / $totalTon) * 100) : 0;
+        $bufferPercent = $totalTon > 0 ? (100 - $binaanPercent) : 0;
 
         // Total Penjualan Riil (MTD)
         $realSoldKg = (float) OrderItem::whereHas('order', function ($q) {
             $q->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI']);
         })->sum(DB::raw('COALESCE(actual_net_weight, ordered_qty)'));
 
-        $totalSoldTon = $realSoldKg > 0 ? round($realSoldKg / 1000, 2) : 482.65;
+        $totalSoldTon = round($realSoldKg / 1000, 2);
 
         // Susut Gudang & Sortir
         $orderedTotalKg = (float) OrderItem::sum('ordered_qty');
         $returnedTotalKg = (float) OrderItem::sum('returned_weight');
-        $shrinkagePercent = $orderedTotalKg > 0 ? round(($returnedTotalKg / $orderedTotalKg) * 100, 1) : 0.7;
+        $shrinkagePercent = $orderedTotalKg > 0 ? round(($returnedTotalKg / $orderedTotalKg) * 100, 1) : 0.0;
 
         // Safety stock buffer siap pakai
         $availBufferKg = (float) HarvestBatch::where('source_type', 'BUFFER_LUAR')->sum('available_quantity');
-        $safetyStockBufferTon = $availBufferKg > 0 ? round($availBufferKg / 1000, 2) : 11.20;
+        $safetyStockBufferTon = round($availBufferKg / 1000, 2);
 
         // 2. Neraca Volume Lima Komoditas Inti
         $products = Product::orderBy('id')->get();
-        $fallbackCommodities = [
-            1 => ['code' => 'KMD-01', 'name' => 'Selada Romaine', 'grade' => 'Hydroponic Super Grade A', 'share' => 45, 'value' => 217.1, 'farmer' => 180.0, 'buffer' => 37.1, 'headroom' => 14.5, 'status' => 'PASOKAN STABIL', 'status_tone' => 'success', 'headroom_tone' => 'shell'],
-            2 => ['code' => 'KMD-02', 'name' => 'Tomat Beef & Sayur', 'grade' => 'Greenhouse Climate-Ctrl', 'share' => 25, 'value' => 120.6, 'farmer' => 98.0, 'buffer' => 22.6, 'headroom' => 8.2, 'status' => 'PASOKAN STABIL', 'status_tone' => 'success', 'headroom_tone' => 'shell'],
-            3 => ['code' => 'KMD-03', 'name' => 'Brokoli Super', 'grade' => 'High Altitude Lembang', 'share' => 15, 'value' => 72.4, 'farmer' => 61.0, 'buffer' => 11.4, 'headroom' => 4.8, 'status' => 'KUOTA TERBATAS', 'status_tone' => 'caution', 'headroom_tone' => 'shell'],
-            4 => ['code' => 'KMD-04', 'name' => 'Stroberi Ciwidey', 'grade' => 'Sweet Grade Premium', 'share' => 10, 'value' => 48.3, 'farmer' => 39.0, 'buffer' => 9.3, 'headroom' => 2.1, 'status' => 'KETAT (HIGH DEMAND)', 'status_tone' => 'caution', 'headroom_tone' => 'danger'],
-            5 => ['code' => 'KMD-05', 'name' => 'Kol Putih Organik', 'grade' => 'Certified Organic Pangalengan', 'share' => 5, 'value' => 24.25, 'farmer' => 17.77, 'buffer' => 6.48, 'headroom' => 6.0, 'status' => 'MELIMPAH (SAFE)', 'status_tone' => 'success', 'headroom_tone' => 'shell'],
-        ];
+        $totalHarvestAll = HarvestBatch::sum('initial_quantity') ?: 1;
 
         $commodityRows = [];
-        $totalVolItems = 0;
-
         foreach ($products->take(5) as $idx => $p) {
-            $def = $fallbackCommodities[$p->id] ?? [
+            $prodBinaan = (float) HarvestBatch::where('product_id', $p->id)->where('source_type', 'PETANI_BINAAN')->sum('initial_quantity');
+            $prodBuffer = (float) HarvestBatch::where('product_id', $p->id)->where('source_type', 'BUFFER_LUAR')->sum('initial_quantity');
+            $prodTotal = $prodBinaan + $prodBuffer;
+            $prodAvail = (float) HarvestBatch::where('product_id', $p->id)->sum('available_quantity');
+
+            $farmerTon = round($prodBinaan / 1000, 1);
+            $bufferTon = round($prodBuffer / 1000, 1);
+            $valueTon = round($prodTotal / 1000, 1);
+            $headroomTon = round($prodAvail / 1000, 1);
+
+            $sharePercent = $totalHarvestAll > 1 ? round(($prodTotal / $totalHarvestAll) * 100) : 0;
+            $status = $prodAvail > 500 ? 'PASOKAN STABIL' : ($prodAvail > 0 ? 'KUOTA TERBATAS' : 'STOK HABIS');
+            $statusTone = $prodAvail > 500 ? 'success' : ($prodAvail > 0 ? 'caution' : 'danger');
+
+            $commodityRows[] = [
                 'code'          => 'KMD-0' . ($idx + 1),
                 'name'          => $p->name,
                 'grade'         => $p->category ?: 'Grade A Standard',
-                'share'         => 20,
-                'value'         => 50.0,
-                'farmer'        => 40.0,
-                'buffer'        => 10.0,
-                'headroom'      => 5.0,
-                'status'        => 'PASOKAN STABIL',
-                'status_tone'   => 'success',
-                'headroom_tone' => 'shell',
+                'share'         => $sharePercent,
+                'value'         => $valueTon,
+                'farmer'        => $farmerTon,
+                'buffer'        => $bufferTon,
+                'headroom'      => $headroomTon,
+                'status'        => $status,
+                'status_tone'   => $statusTone,
+                'headroom_tone' => $prodAvail > 100 ? 'shell' : 'danger',
+                'value_label'   => number_format($valueTon, 1, '.', ''),
+                'farmer_label'  => number_format($farmerTon, 1, '.', '') . ' T',
+                'buffer_label'  => number_format($bufferTon, 1, '.', '') . ' T',
+                'headroom_label'=> number_format($headroomTon, 1, '.', '') . ' T',
+                'share_label'   => $sharePercent . '% VOL',
+                'share_tone'    => $statusTone === 'caution' ? 'caution' : 'success',
             ];
-
-            // Hitung aktual dari harvest batch jika ada
-            $prodBinaan = (float) HarvestBatch::where('product_id', $p->id)->where('source_type', 'PETANI_BINAAN')->sum('initial_quantity');
-            $prodBuffer = (float) HarvestBatch::where('product_id', $p->id)->where('source_type', 'BUFFER_LUAR')->sum('initial_quantity');
-            $prodAvail = (float) HarvestBatch::where('product_id', $p->id)->sum('available_quantity');
-
-            if ($prodBinaan > 0 || $prodBuffer > 0) {
-                $def['farmer'] = round($prodBinaan / 1000, 1);
-                $def['buffer'] = round($prodBuffer / 1000, 1);
-                $def['value'] = round(($prodBinaan + $prodBuffer) / 1000, 1);
-                $def['headroom'] = round($prodAvail / 1000, 1);
-            }
-
-            $def['value_label'] = number_format($def['value'], 1, '.', '');
-            $def['farmer_label'] = number_format($def['farmer'], 1, '.', '') . ' T';
-            $def['buffer_label'] = number_format($def['buffer'], 1, '.', '') . ' T';
-            $def['headroom_label'] = number_format($def['headroom'], 1, '.', '') . ' T';
-            $def['share_label'] = $def['share'] . '% VOL';
-            $def['share_tone'] = $def['status_tone'] === 'caution' ? 'caution' : 'success';
-
-            $totalVolItems += $def['value'];
-            $commodityRows[] = $def;
         }
 
-        if (empty($commodityRows)) {
-            foreach ($fallbackCommodities as $def) {
-                $def['value_label'] = number_format($def['value'], 1, '.', '');
-                $def['farmer_label'] = number_format($def['farmer'], 1, '.', '') . ' T';
-                $def['buffer_label'] = number_format($def['buffer'], 1, '.', '') . ' T';
-                $def['headroom_label'] = number_format($def['headroom'], 1, '.', '') . ' T';
-                $def['share_label'] = $def['share'] . '% VOL';
-                $def['share_tone'] = $def['status_tone'] === 'caution' ? 'caution' : 'success';
-                $commodityRows[] = $def;
-            }
+        // 3. Matriks Alokasi Kontrak B2B Aktif
+        $activeContracts = Contract::with(['user', 'product'])
+            ->where('status', 'ACTIVE')
+            ->get();
+
+        $allocationsList = [];
+        foreach ($activeContracts as $contract) {
+            $volKg = (float) $contract->committed_volume_per_cycle;
+            $volTon = round($volKg / 1000, 2);
+            $allocationsList[] = [
+                'name'       => $contract->user?->company_name ?: ($contract->user?->name ?: 'Mitra B2B'),
+                'sentra'     => $contract->product ? strtoupper($contract->product->name) : 'SENTRA PRODUKSI',
+                'commitment' => $volTon > 0 ? $volTon : round($volKg, 2),
+                'priority'   => 'KONTRAK AKTIF',
+            ];
+        }
+
+        // 4. Tren Mingguan Volume vs Kapasitas Panen (8 Pekan)
+        $weeklyRows = [];
+        $now = now();
+        for ($i = -4; $i <= 3; $i++) {
+            $targetDate = (clone $now)->addWeeks($i);
+            $startOfWeek = (clone $targetDate)->startOfWeek();
+            $endOfWeek = (clone $targetDate)->endOfWeek();
+            $wNum = 'W' . $startOfWeek->format('W');
+
+            $demandKg = (float) OrderItem::whereHas('order', function ($q) use ($startOfWeek, $endOfWeek) {
+                $q->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
+            })->sum('ordered_qty');
+
+            $harvestKg = (float) HarvestBatch::whereBetween('batch_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])->sum('initial_quantity');
+            $availKg = (float) HarvestBatch::whereBetween('batch_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])->sum('available_quantity');
+
+            $totalTons = round(($demandKg + $harvestKg) / 1000, 1);
+            $demandTon = round($demandKg / 1000, 1);
+            $yieldTon = round($harvestKg / 1000, 1);
+            $reserveTon = round($availKg / 1000, 1);
+
+            $sumTon = $demandTon + $yieldTon + $reserveTon;
+            $demandPct = $sumTon > 0 ? round(($demandTon / $sumTon) * 100) : 0;
+            $yieldPct = $sumTon > 0 ? round(($yieldTon / $sumTon) * 100) : 0;
+            $reservePct = $sumTon > 0 ? (100 - $demandPct - $yieldPct) : 0;
+
+            $status = $i < 0 ? 'closed' : ($i === 0 ? 'running' : 'forecast');
+
+            $weeklyRows[] = [
+                'week'    => $wNum,
+                'total'   => $totalTons > 0 ? $totalTons : 0.0,
+                'demand'  => $demandPct,
+                'yield'   => $yieldPct,
+                'reserve' => $reservePct,
+                'status'  => $status,
+            ];
         }
 
         return view('direktur.volume', [
@@ -121,6 +154,8 @@ class CommodityVolumeController extends Controller
             'shrinkagePercent'     => $shrinkagePercent,
             'safetyStockBufferTon' => $safetyStockBufferTon,
             'commodityRows'        => $commodityRows,
+            'weeklyRows'           => $weeklyRows,
+            'allocationsList'      => $allocationsList,
         ]);
     }
 
@@ -136,21 +171,31 @@ class CommodityVolumeController extends Controller
 
         return response()->stream(function () {
             $handle = fopen('php://output', 'w');
+            fputs($handle, "\xEF\xBB\xBF");
+
             fputcsv($handle, ['LAPORAN NERACA VOLUME KOMODITAS & SUPPLY CHAIN KOPERASI GPA']);
-            fputcsv($handle, ['WAKTU EKSPOR', date('d-m-Y H:i:s')]);
+            fputcsv($handle, ['WAKTU EKSPOR', date('d-m-Y H:i:s') . ' WIB']);
             fputcsv($handle, []);
             fputcsv($handle, ['ID', 'Nama Komoditas', 'Kebutuhan B2B (ton)', 'Realisasi Panen (ton)', 'Status Pasokan']);
 
-            $rows = [
-                [1, 'Selada Romaine Hydro', '24.50', '26.80', 'SURPLUS (+9.4%)'],
-                [2, 'Brokoli Hijau Dataran Tinggi', '18.20', '19.40', 'OPTIMAL (+6.6%)'],
-                [3, 'Wortel Brastagi Super', '15.00', '14.80', 'TETAP (-1.3%)'],
-                [4, 'Kentang Granola L', '22.00', '23.10', 'OPTIMAL (+5.0%)'],
-                [5, 'Buncis Kenia Ekspor', '12.50', '12.20', 'WASPADA (-2.4%)'],
-            ];
+            $allProducts = Product::orderBy('id')->get();
+            foreach ($allProducts as $p) {
+                $demandKg = (float) OrderItem::where('product_id', $p->id)->sum('ordered_qty');
+                $harvestKg = (float) HarvestBatch::where('product_id', $p->id)->sum('initial_quantity');
+                $demandTon = round($demandKg / 1000, 2);
+                $harvestTon = round($harvestKg / 1000, 2);
 
-            foreach ($rows as $r) {
-                fputcsv($handle, $r);
+                $status = $harvestTon >= $demandTon ? 'SURPLUS' : 'DEFISIT';
+                $diff = $demandTon > 0 ? round((($harvestTon - $demandTon) / $demandTon) * 100, 1) : 0;
+                $statusLabel = $status . ' (' . ($diff >= 0 ? '+' : '') . $diff . '%)';
+
+                fputcsv($handle, [
+                    $p->id,
+                    $p->name,
+                    number_format($demandTon, 2, '.', ''),
+                    number_format($harvestTon, 2, '.', ''),
+                    $statusLabel,
+                ]);
             }
 
             fclose($handle);

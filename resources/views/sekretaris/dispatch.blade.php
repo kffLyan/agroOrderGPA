@@ -298,19 +298,27 @@
                                 </td>
 
                                 <td class="px-4 py-4 text-right">
-                                    @if (! empty($row['armada']))
-                                        <button type="button" @click.stop="issue(@js($row))"
-                                            class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-ink shadow-sub outline outline-1 outline-success-deep transition-colors hover:bg-accent-deep gpa-meta-lg font-bold tracking-[0.88px]">
-                                            <x-gpa.icon name="file-text" class="h-3 w-3 shrink-0" />
-                                            Terbitkan Surat Jalan
-                                        </button>
-                                    @else
-                                        <span
-                                            class="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-surface-pill px-4 py-2 text-ink-quiet opacity-80 outline outline-1 outline-line-board/60 gpa-meta-lg font-bold tracking-[0.88px]">
-                                            <x-gpa.icon name="lock" class="h-3 w-3 shrink-0" />
-                                            Kunci Estimasi Ditolak
-                                        </span>
-                                    @endif
+                                    <div class="flex items-center justify-end gap-2">
+                                        @if (! empty($row['armada']))
+                                            <button type="button" @click.stop="issue(@js($row))"
+                                                class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-ink shadow-sub outline outline-1 outline-success-deep transition-colors hover:bg-accent-deep gpa-meta font-bold tracking-[0.88px]">
+                                                <x-gpa.icon name="file-text" class="h-3 w-3 shrink-0" />
+                                                Terbitkan SJ
+                                            </button>
+                                        @else
+                                            <span
+                                                class="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg bg-surface-pill px-3 py-2 text-ink-quiet opacity-80 outline outline-1 outline-line-board/60 gpa-meta font-bold tracking-[0.88px]">
+                                                <x-gpa.icon name="lock" class="h-3 w-3 shrink-0" />
+                                                Kunci Estimasi Ditolak
+                                            </span>
+                                        @endif
+
+                                        <a href="{{ route('prints.surat-jalan') }}" target="_blank" @click.stop
+                                            class="inline-flex items-center gap-1.5 rounded-lg bg-surface-pill px-3 py-2 text-ink outline outline-1 outline-line-board transition-colors hover:bg-surface-disabled gpa-meta font-bold tracking-[0.88px]">
+                                            <x-gpa.icon name="printer" class="h-3 w-3 shrink-0" />
+                                            Cetak SJ A4
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
@@ -344,11 +352,11 @@
                         class="rounded bg-accent px-2 py-1 gpa-micro-bold uppercase tracking-[1px] text-success-ink outline outline-1 outline-success-deep">
                         STANDAR FORMULIR RESMI GPA-SJ-REV4
                     </span>
-                    <button type="button" @click="printProof()"
-                        class="inline-flex items-center gap-1 rounded bg-surface-track px-3 py-1 transition-colors hover:bg-surface-disabled">
-                        <x-gpa.icon name="download" class="h-3 w-3 shrink-0 text-ink" />
-                        <span class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Cetak Dokumen Fisik</span>
-                    </button>
+                    <a href="{{ route('prints.surat-jalan') }}" target="_blank"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-surface-track px-3 py-1.5 transition-colors hover:bg-surface-disabled outline outline-1 outline-line-board">
+                        <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0 text-ink" />
+                        <span class="gpa-meta-lg font-bold tracking-[0.88px] text-ink">Cetak Format Resmi A4</span>
+                    </a>
                 </div>
             </div>
 
@@ -559,7 +567,7 @@
         </section>
 
         <section
-            class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-ink p-4 outline outline-2 outline-accent/40">
+            class="sticky bottom-4 z-30 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-ink p-4 shadow-2xl ring-1 ring-white/10 outline outline-2 outline-accent/40">
             <div class="flex items-center gap-4">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent">
                     <x-gpa.icon name="lock" class="h-5 w-5 shrink-0 text-ink" />

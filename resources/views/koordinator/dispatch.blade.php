@@ -171,7 +171,7 @@
             </header>
 
             <div class="grid gap-4 2xl:grid-cols-2">
-                @foreach ($queueItems as $item)
+                @forelse ($queueItems as $item)
                     <article class="gpa-panel flex flex-col justify-between gap-4 p-4">
                         <div class="space-y-2">
                             <div class="flex items-start justify-between gap-4 border-b border-line-soft/60 pb-3">
@@ -217,16 +217,28 @@
 
                         <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft/60 pt-4">
                             <p class="gpa-note text-ink-quiet">LOCK STAMP: {{ $item['lock_stamp'] }}</p>
-                            <button type="button" @click="issue(@js($item['sj']))"
-                                :disabled="isIssued(@js($item['sj'])) || !canIssue(@js($item['sj']))"
-                                class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-accent px-4 shadow-sub outline outline-1 outline-success-deep transition-colors hover:bg-accent-deep disabled:cursor-not-allowed disabled:bg-surface-pill disabled:text-ink-quiet disabled:outline-line-board">
-                                <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0 text-ink" />
-                                <span class="gpa-meta-lg font-bold text-ink"
-                                    x-text="isIssued(@js($item['sj'])) ? @js($item['issued_label']) : @js($item['issue_label'])">{{ $item['issue_label'] }}</span>
-                            </button>
+                            <div class="flex items-center gap-2">
+                                <a href="{{ route('prints.surat-jalan') }}" target="_blank"
+                                    class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-surface px-4 outline outline-1 outline-line-board transition-colors hover:bg-surface-muted">
+                                    <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0 text-ink" />
+                                    <span class="gpa-meta-lg font-bold text-ink">Cetak SJ</span>
+                                </a>
+                                <button type="button" @click="issue(@js($item['sj']))"
+                                    :disabled="isIssued(@js($item['sj'])) || !canIssue(@js($item['sj']))"
+                                    class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-accent px-4 shadow-sub outline outline-1 outline-success-deep transition-colors hover:bg-accent-deep disabled:cursor-not-allowed disabled:bg-surface-pill disabled:text-ink-quiet disabled:outline-line-board">
+                                    <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0 text-ink" />
+                                    <span class="gpa-meta-lg font-bold text-ink"
+                                        x-text="isIssued(@js($item['sj'])) ? @js($item['issued_label']) : @js($item['issue_label'])">{{ $item['issue_label'] }}</span>
+                                </button>
+                            </div>
                         </div>
                     </article>
-                @endforeach
+                @empty
+                    <div class="col-span-full rounded-xl border border-dashed border-line-board/70 bg-surface-shell/40 p-8 text-center">
+                        <p class="text-sm font-semibold text-ink">Tidak ada antrean penerbitan surat jalan saat ini.</p>
+                        <p class="gpa-note mt-1 text-ink-quiet">Semua surat jalan telah diproses atau belum ada pesanan yang siap kirim.</p>
+                    </div>
+                @endforelse
             </div>
         </section>
 
@@ -288,7 +300,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($manifestRows as $row)
+                        @forelse ($manifestRows as $row)
                             @php($rowId = \Illuminate\Support\Js::from($row['id']))
                             <tr @class([
                                 'border-b border-line-hair/70',
@@ -378,14 +390,20 @@
                                     </button>
                                 </td>
                             </tr>
-                        @endforeach
+                        @empty
+                            <tr>
+                                <td colspan="7" class="px-3 py-8 text-center text-sm font-medium text-ink-quiet">
+                                    Tidak ada data pengiriman armada untuk ditampilkan.
+                                </td>
+                            </tr>
+                        @endforelse
                     </tbody>
                 </table>
             </div>
         </section>
 
         {{-- Batch operations --}}
-        <section class="gpa-panel flex flex-wrap items-center justify-between gap-4 p-4">
+        <section class="sticky bottom-4 z-30 gpa-panel flex flex-wrap items-center justify-between gap-4 p-4 shadow-2xl">
             <div class="flex items-center gap-3">
                 <span
                     class="flex h-10 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-shell outline outline-1 outline-line-board/40">

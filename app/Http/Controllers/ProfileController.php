@@ -16,9 +16,51 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        return view('profile.edit', [
-            'user' => $request->user(),
-        ]);
+        $user = $request->user();
+
+        $contract = null;
+        if (method_exists($user, 'contracts')) {
+            $contract = $user->contracts()
+                ->where('status', 'ACTIVE')
+                ->latest()
+                ->first()
+                ?? $user->contracts()->latest()->first();
+        }
+
+        $creditLimit = 0.0;
+        if ($contract && $contract->fixed_price_per_kg && $contract->committed_volume_per_cycle) {
+            $creditLimit = (float) ($contract->fixed_price_per_kg * $contract->committed_volume_per_cycle * 2);
+        }
+        if ($creditLimit <= 0) {
+            $creditLimit = 500000000.0;
+        }
+
+        $unpaidInvoicesSum = (float) \App\Models\Invoice::where('user_id', $user->id)
+            ->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])
+            ->sum('grand_total');
+
+        $availableCredit = max(0, $creditLimit - $unpaidInvoicesSum);
+        $creditPercent = $creditLimit > 0 ? min(100, max(0, ($availableCredit / $creditLimit) * 100)) : 100.0;
+
+        $clientId = 'BYR-KPN-' . str_pad($user->id, 3, '0', STR_PAD_LEFT);
+        $contractNumber = $contract?->contract_number ?? ('PKS-GPA-KPN/2026/' . str_pad($user->id, 3, '0', STR_PAD_LEFT));
+        $topDays = $contract?->top_days ?? 30;
+        $accountType = ($user->client_type === 'B2B_KONTRAK' || $contract)
+            ? "Klien Kontrak B2B (TOP {$topDays} Hari)"
+            : "Klien Reguler Harian";
+
+        return view('profile.edit', compact(
+            'user',
+            'contract',
+            'creditLimit',
+            'unpaidInvoicesSum',
+            'availableCredit',
+            'creditPercent',
+            'clientId',
+            'contractNumber',
+            'topDays',
+            'accountType'
+        ));
     }
 
     /**
@@ -26,13 +68,22 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $user->fill($request->validated());
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        if ($request->filled('password')) {
+            $request->validate([
+                'current_password' => ['required', 'current_password'],
+                'password' => ['required', \Illuminate\Validation\Rules\Password::defaults(), 'confirmed'],
+            ]);
+            $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
+        }
+
+        $user->save();
 
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }

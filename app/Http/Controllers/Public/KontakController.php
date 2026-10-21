@@ -11,7 +11,6 @@ class KontakController extends Controller
     public function __invoke(): View
     {
         $products = Product::where('is_active', true)->get();
-
         return view('public.kontak', compact('products'));
     }
 }

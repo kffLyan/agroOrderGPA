@@ -122,6 +122,20 @@ export default function directorSales(scopeKeys = [], trend = [], portfolio = []
     },
 
 
+        isSealed: false,
+        isVerified: false,
+
+        init() {
+            try {
+                if (localStorage.getItem('gpa_director_sales_sealed') === '1') {
+                    this.isSealed = true;
+                }
+                if (localStorage.getItem('gpa_director_portfolio_verified') === '1') {
+                    this.isVerified = true;
+                }
+            } catch (e) {}
+        },
+
         inspectCommodity(row) {
             this.notify(
                 `Portofolio ${row.sku}`,
@@ -131,10 +145,12 @@ export default function directorSales(scopeKeys = [], trend = [], portfolio = []
         },
 
         verifyPortfolio() {
+            this.isVerified = true;
+            try { localStorage.setItem('gpa_director_portfolio_verified', '1'); } catch (e) {}
             const below = this.portfolio.filter((row) => row.margin < 15);
 
             this.notify(
-                below.length === 0 ? 'Portofolio VERIFIED' : 'Margin Perlu Perhatian',
+                below.length === 0 ? 'Portofolio Terverifikasi' : 'Margin Perlu Perhatian',
                 below.length === 0
                     ? `Omzet ${this.portfolioTotalLabel()} dan laba kotor ${this.portfolioGrossLabel()} lolos seluruh ambang margin 15.0%.`
                     : `${below.length} komoditas berada di bawah margin floor 15.0% dan memerlukan tinjauan Direksi.`,
@@ -143,9 +159,11 @@ export default function directorSales(scopeKeys = [], trend = [], portfolio = []
         },
 
         sealRecap() {
+            this.isSealed = true;
+            try { localStorage.setItem('gpa_director_sales_sealed', '1'); } catch (e) {}
             this.notify(
-                'Tanda Tangan Digital',
-                'Rekapitulasi kas harian diverifikasi dengan sertifikat elektronik dan hash SHA-256.',
+                'Tanda Tangan Digital Direktur',
+                'Rekapitulasi kas harian diverifikasi dengan sertifikat elektronik dan hash SHA-256 resmi.',
                 'success',
             );
         },
@@ -165,3 +183,4 @@ export default function directorSales(scopeKeys = [], trend = [], portfolio = []
         },
     };
 }
+

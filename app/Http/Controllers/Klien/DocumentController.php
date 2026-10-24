@@ -43,7 +43,7 @@ class DocumentController extends Controller
 
         $totalNetto = (float) $invoices->sum(function ($inv) {
             return $inv->orders->sum(function ($o) {
-                return $o->orderItems->sum(fn($i) => $i->actual_net_weight ?? $i->ordered_qty);
+                return $o->orderItems->sum('ordered_qty');
             });
         });
 
@@ -108,7 +108,7 @@ class DocumentController extends Controller
             $no = 1;
             foreach ($invoices as $inv) {
                 $totalNetto = (float) $inv->orders->sum(function ($o) {
-                    return $o->orderItems->sum(fn($i) => $i->actual_net_weight ?? $i->ordered_qty);
+                    return $o->orderItems->sum('ordered_qty');
                 });
 
                 $periodLabel = ($inv->period_start ? $inv->period_start->format('d/m/Y') : '-') . ' - ' . ($inv->period_end ? $inv->period_end->format('d/m/Y') : '-');

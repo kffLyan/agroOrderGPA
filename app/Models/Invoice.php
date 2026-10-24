@@ -41,4 +41,37 @@ class Invoice extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    /**
+     * Memeriksa apakah faktur ini sudah memiliki bukti pembayaran yang sedang diverifikasi
+     */
+    public function getHasPendingProofAttribute(): bool
+    {
+        return $this->payments
+            ->where('status', 'MENUNGGU_VERIFIKASI')
+            ->filter(fn ($p) => !empty($p->proof_url))
+            ->isNotEmpty();
+    }
+
+    /**
+     * Memeriksa apakah faktur ini memiliki bukti pembayaran terakhir yang ditolak oleh verifikator
+     */
+    public function getHasRejectedProofAttribute(): bool
+    {
+        $latestPayment = $this->payments->sortByDesc('id')->first();
+
+        return $latestPayment && in_array($latestPayment->status, ['DITOLAK', 'REJECTED']);
+    }
+
+    /**
+     * Mengambil entitas pembayaran dengan bukti yang ditolak
+     */
+    public function getRejectedProofPaymentAttribute(): ?Payment
+    {
+        $latestPayment = $this->payments->sortByDesc('id')->first();
+
+        return ($latestPayment && in_array($latestPayment->status, ['DITOLAK', 'REJECTED']))
+            ? $latestPayment
+            : null;
+    }
 }

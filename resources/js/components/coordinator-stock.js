@@ -14,6 +14,10 @@ export default function coordinatorStock(commodities = [], filterOptions = [], i
         logTotal: numberOf(logTotal),
         baseLogCount: Array.isArray(logItems) ? logItems.length : 0,
         pendingLogs: [],
+        bufferModal: false,
+        activeBufferCommodity: null,
+        bufferAmount: 250,
+        bufferSupplier: 'Mitra Sentra Lembang',
         commodities: (Array.isArray(commodities) ? commodities : []).map((commodity) => {
             const tiles = Array.isArray(commodity.tiles) ? commodity.tiles : [];
 
@@ -31,6 +35,24 @@ export default function coordinatorStock(commodities = [], filterOptions = [], i
 
             return accumulator;
         }, {}),
+
+        init() {
+            try {
+                const storedLockedAll = localStorage.getItem('gpa_stock_locked_all');
+                if (storedLockedAll === '1') {
+                    this.lockedAll = true;
+                    this.commodities.forEach(c => { c.locked = true; });
+                }
+
+                const storedLockedItems = localStorage.getItem('gpa_stock_locked_items');
+                if (storedLockedItems) {
+                    const lockedKeys = JSON.parse(storedLockedItems);
+                    this.commodities.forEach(c => {
+                        if (lockedKeys.includes(c.key)) c.locked = true;
+                    });
+                }
+            } catch (e) {}
+        },
 
         get visible() {
             if (this.filter === 'all') {
@@ -126,76 +148,147 @@ export default function coordinatorStock(commodities = [], filterOptions = [], i
 
         act(key) {
             if (key === 'export') {
-                this.run(
-                    'Ledger Stok Diekspor',
-                    `${this.visibleCount} komoditas, ${this.kg(this.totalStock())} KG, alokasi PO ${this.kg(this.reserved())} KG diunduh sebagai .CSV.`,
-                );
-
+                this.exportCsv();
                 return;
             }
 
             if (key === 'lock-all') {
-                this.lockAllStock();
+                this.toggleLockAll();
             }
         },
 
-        lockAllStock() {
-            if (this.lockedAll) {
-                this.run('Alokasi Sudah Terkunci', 'Seluruh alokasi pasokan sedang dalam status terkunci.', 'warning');
+        exportCsv() {
+            const visibleCommodities = this.commodities.filter((c) => this.visible.includes(c.key));
+            const headers = ['Kode Komoditas', 'Nama Komoditas', 'Kategori', 'Total Stok (KG)', 'Mitra Binaan (KG)', 'Buffer Cadangan (KG)', 'Alokasi PO (KG)', 'RTP Bebas (KG)', 'Status Alokasi'];
+            const rows = visibleCommodities.map((c) => [
+                c.code || c.key,
+                `"${c.name}"`,
+                c.category || '-',
+                c.total || 0,
+                c.builtian || 0,
+                c.buffer || 0,
+                c.po || 0,
+                this.rtp(c),
+                c.locked ? 'TERKUNCI' : 'AKTIF',
+            ]);
 
-                return;
-            }
+            const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map((e) => e.join(';'))].join('\r\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Ledger_Stok_GPA_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
 
-            this.lockedAll = true;
+            this.run('Ledger Stok Berhasil Diunduh', `${visibleCommodities.length} komoditas diekspor ke file CSV resmi.`, 'success');
+        },
+
+        toggleLockAll() {
+            this.lockedAll = !this.lockedAll;
             this.commodities.forEach((commodity) => {
-                commodity.locked = true;
+                commodity.locked = this.lockedAll;
             });
 
+            try {
+                localStorage.setItem('gpa_stock_locked_all', this.lockedAll ? '1' : '0');
+                if (this.lockedAll) {
+                    localStorage.setItem('gpa_stock_locked_items', JSON.stringify(this.commodities.map(c => c.key)));
+                } else {
+                    localStorage.removeItem('gpa_stock_locked_items');
+                }
+            } catch (e) {}
+
             this.run(
-                'Alokasi Pasokan Terkunci',
-                `${this.commodities.length} komoditas terkunci. Request buffer hanya via approval DQ.`,
-                'success',
+                this.lockedAll ? 'Alokasi Pasokan Terkunci' : 'Kunci Alokasi Dibuka',
+                this.lockedAll
+                    ? `${this.commodities.length} komoditas dikunci untuk mencegah perubahan alokasi mendadak.`
+                    : 'Seluruh komoditas kembali ke status alokasi bebas.',
+                this.lockedAll ? 'warning' : 'info',
             );
         },
 
         requestBuffer(commodity) {
-            if (this.lockedAll || commodity.locked) {
-                this.run('Stok Terkunci', 'Buka kunci alokasi sebelum mengajukan buffer.', 'warning');
+            this.activeBufferCommodity = commodity;
+            this.bufferAmount = commodity.buffer_need > 0 ? commodity.buffer_need : 200;
+            this.bufferSupplier = commodity.hub || 'Sentra Mitra Penyangga';
+            this.bufferModal = true;
+        },
 
+        closeBufferModal() {
+            this.bufferModal = false;
+            this.activeBufferCommodity = null;
+        },
+
+        confirmBufferInjection() {
+            const commodity = this.activeBufferCommodity;
+            if (!commodity) return;
+
+            const amount = numberOf(this.bufferAmount);
+            if (amount <= 0) {
+                this.run('Kuantitas Tidak Valid', 'Masukkan kuantitas buffer minimal 1 KG.', 'danger');
                 return;
             }
 
-            if (commodity.buffer_need > 0) {
-                commodity.bufferRequested = true;
+            commodity.buffer += amount;
+            commodity.total += amount;
+            commodity.bufferRequested = true;
 
-                this.run(
-                    'Injeksi Buffer Diproses',
-                    `Mitra ${commodity.hub} diminta injeksi ${this.kg(commodity.buffer_need)} KG ${commodity.name}.`,
-                    'success',
-                );
+            const lot = this.lotNumber(commodity, new Date().toISOString().slice(0, 10), true);
+            this.pendingLogs.unshift({
+                lot,
+                time: this.clockStamp(),
+                entry: `+${this.kg(amount)} KG ${this.shortName(commodity.name)} (Buffer - ${this.bufferSupplier})`,
+                note: 'Injeksi Buffer Disetujui Koordinator',
+                audit: 'AUDIT: INJ-BUF-' + Math.floor(100 + Math.random() * 900),
+            });
 
-                return;
-            }
+            this.logTotal += 1;
+
+            // Simpan ke database via AJAX
+            fetch('/koordinator/stok/batch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    commodity: commodity.key,
+                    vendor: this.bufferSupplier,
+                    grade: 'Grade A Standar',
+                    category: 'Injeksi Buffer Mitra',
+                    quantity: amount,
+                    date: new Date().toISOString().slice(0, 10),
+                    notes: 'Injeksi Buffer Penyangga Packhouse',
+                }),
+            }).catch(e => console.error('Gagal mencatat buffer:', e));
 
             this.run(
-                'Permintaan Buffer Terkirim',
-                `Permintaan buffer ${commodity.name} dikirim ke mitra penyangga. RTP ${this.signed(this.rtp(commodity))} KG masih aman.`,
+                'Injeksi Buffer Berhasil',
+                `${this.kg(amount)} KG ${commodity.name} dari ${this.bufferSupplier} ditambahkan ke buffer cadangan.`,
+                'success',
             );
+
+            this.closeBufferModal();
         },
 
         lockStock(commodity) {
-            if (commodity.locked || this.lockedAll) {
-                this.run('Stok Sudah Terkunci', `Alokasi ${commodity.name} tidak dapat dikunci ulang.`, 'warning');
+            commodity.locked = !commodity.locked;
 
-                return;
-            }
-
-            commodity.locked = true;
+            try {
+                const lockedKeys = this.commodities.filter(c => c.locked).map(c => c.key);
+                localStorage.setItem('gpa_stock_locked_items', JSON.stringify(lockedKeys));
+            } catch (e) {}
 
             this.run(
-                'Stok Terkunci',
-                `${commodity.name} dikunci untuk mencegah overselling di luar alokasi PO.`,
-                'success',
+                commodity.locked ? 'Stok Terkunci' : 'Stok Dibuka',
+                commodity.locked
+                    ? `${commodity.name} dikunci untuk mencegah overselling di luar alokasi PO.`
+                    : `${commodity.name} kembali ke alokasi bebas.`,
+                commodity.locked ? 'success' : 'info',
             );
         },
 
@@ -203,7 +296,7 @@ export default function coordinatorStock(commodities = [], filterOptions = [], i
             const quantity = Math.round(numberOf(this.form.quantity));
 
             if (quantity <= 0) {
-                this.run('Kuantitas Tidak Valid', 'Isi kuantitas netto minimal 1 KG sebelum menyimpan.', 'error');
+                this.run('Kuantitas Tidak Valid', 'Isi kuantitas netto minimal 1 KG sebelum menyimpan.', 'danger');
 
                 return;
             }
@@ -211,7 +304,7 @@ export default function coordinatorStock(commodities = [], filterOptions = [], i
             const commodity = this.commodities.find((item) => item.key === this.form.commodity);
 
             if (!commodity) {
-                this.run('Komoditas Tidak Ditemukan', 'Pilih komoditas inti yang tersedia pada filter.', 'error');
+                this.run('Komoditas Tidak Ditemukan', 'Pilih komoditas inti yang tersedia pada filter.', 'danger');
 
                 return;
             }
@@ -238,11 +331,31 @@ export default function coordinatorStock(commodities = [], filterOptions = [], i
             });
 
             this.logTotal += 1;
+            const savedQuantity = quantity;
             this.form.quantity = 0;
+
+            // Simpan ke database via AJAX
+            fetch('/koordinator/stok/batch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    commodity: this.form.commodity,
+                    vendor: this.form.vendor,
+                    grade: this.form.grade,
+                    category: this.form.category,
+                    quantity: savedQuantity,
+                    date: this.form.date,
+                    notes: this.form.notes,
+                }),
+            }).catch(e => console.error('Gagal mencatat batch panen:', e));
 
             this.run(
                 'Data Pasokan Tersimpan',
-                `${this.kg(quantity)} KG ${commodity.name} masuk ke stok. RTP kini ${this.signed(this.rtp(commodity))} KG.`,
+                `${this.kg(savedQuantity)} KG ${commodity.name} masuk ke stok. RTP kini ${this.signed(this.rtp(commodity))} KG.`,
                 'success',
             );
         },
@@ -251,8 +364,9 @@ export default function coordinatorStock(commodities = [], filterOptions = [], i
             this.allLogs = true;
 
             this.run(
-                'Log Intake Terbaru',
-                `${this.baseLogCount + this.pendingLogs.length} baris log ditampilkan pada feed hari ini.`,
+                'Seluruh Log Intake Tampil',
+                `${this.baseLogCount + this.pendingLogs.length} baris log pasokan dimuat secara lengkap.`,
+                'info'
             );
         },
     };

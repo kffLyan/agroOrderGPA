@@ -297,4 +297,81 @@ class DirekturUiUxModuleTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
     }
+
+    public function test_direktur_can_customize_payment_channels(): void
+    {
+        $response = $this->actingAs($this->director)
+            ->post(route('direktur.governance.payment-channels'), [
+                'channels' => [
+                    [
+                        'id'             => 'bca',
+                        'type'           => 'BANK',
+                        'name'           => 'Bank BCA Corporate',
+                        'bank_code'      => 'BCA',
+                        'account_number' => '8210-992-3841',
+                        'account_name'   => 'PT Guntur Pandu Agro',
+                        'description'    => 'Rekening Utama',
+                        'instructions'   => 'Sertakan nomor invoice',
+                        'is_active'      => 1,
+                    ],
+                    [
+                        'id'             => 'qris',
+                        'type'           => 'QRIS',
+                        'name'           => 'QRIS Dinamis GPA',
+                        'bank_code'      => 'QRIS',
+                        'account_number' => 'ID1020039182948',
+                        'account_name'   => 'PT GUNTUR PANDU AGRO',
+                        'description'    => 'Scan QRIS Instan',
+                        'instructions'   => 'Pindai barcode QRIS resmi',
+                        'is_active'      => 1,
+                    ],
+                ],
+            ]);
+
+        $response->assertStatus(302);
+        $response->assertSessionHas('success');
+
+        $governanceService = app(\App\Services\GovernanceService::class);
+        $activeChannels = $governanceService->getActivePaymentChannels();
+        $this->assertCount(2, $activeChannels);
+        $this->assertEquals('Bank BCA Corporate', $activeChannels[0]['name']);
+        $this->assertEquals('QRIS Dinamis GPA', $activeChannels[1]['name']);
+    }
+
+    public function test_direktur_can_upload_qris_photo_and_save_channel(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $file = \Illuminate\Http\UploadedFile::fake()->image('custom_qris.png', 400, 400);
+
+        $response = $this->actingAs($this->director)
+            ->post(route('direktur.governance.payment-channels'), [
+                'channels' => [
+                    [
+                        'id'             => 'qris',
+                        'type'           => 'QRIS',
+                        'name'           => 'QRIS Khusus Upload',
+                        'bank_code'      => 'QRIS',
+                        'account_number' => 'ID9999999999',
+                        'account_name'   => 'PT GUNTUR PANDU AGRO',
+                        'description'    => 'Scan QRIS Upload',
+                        'instructions'   => 'Scan foto QRIS',
+                        'image'          => $file,
+                        'is_active'      => 1,
+                    ],
+                ],
+            ]);
+
+        $response->assertStatus(302);
+        $response->assertSessionHas('success');
+
+        $governanceService = app(\App\Services\GovernanceService::class);
+        $channels = $governanceService->getActivePaymentChannels();
+        $this->assertCount(1, $channels);
+        $this->assertNotNull($channels[0]['image_url']);
+        $this->assertStringContainsString('/storage/payment-channels/channel_qris_', $channels[0]['image_url']);
+
+        $storedPath = str_replace('/storage/', '', $channels[0]['image_url']);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($storedPath);
+    }
 }

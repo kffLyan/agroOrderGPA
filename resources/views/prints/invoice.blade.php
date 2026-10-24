@@ -4,17 +4,19 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Faktur {{ $invoice['id'] }} &middot; GPA</title>
+    <title>INVOICE {{ $invoice['id'] ?? 'GPA' }} &middot; Green Pasundan Agriculture</title>
     @vite(['resources/css/app.css'])
     <style>
         @page {
             size: A4 portrait;
-            margin: 10mm 12mm;
+            margin: 8mm 10mm;
         }
 
         @media print {
             body {
                 background: #ffffff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             .no-print {
@@ -22,201 +24,404 @@
             }
 
             .a4-canvas {
-                margin: 0 auto;
-                box-shadow: none;
-                page-break-after: auto;
+                margin: 0 auto !important;
+                box-shadow: none !important;
+                border: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+            }
+
+            .page-break {
+                page-break-before: always;
             }
         }
 
         @media screen {
             body {
-                background: #f8faf3;
+                background: #eef2ea;
+            }
+
+            .a4-canvas {
+                width: 210mm;
+                min-height: 297mm;
+                margin: 20px auto;
+                background: #ffffff;
+                box-shadow: 0 12px 36px -12px rgba(20, 58, 0, 0.25);
             }
         }
 
         .a4-canvas {
-            width: 210mm;
-            min-height: 297mm;
-            margin: 16px auto;
-            background: #ffffff;
-            box-shadow: 0 10px 30px -20px rgba(12, 36, 1, 0.9);
-            font-family: 'Inter', 'Helvetica', 'Arial', sans-serif;
-            font-size: 9pt;
-            line-height: 1.6;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 8.5pt;
+            line-height: 1.35;
             color: #191c18;
+            padding: 24px 32px;
+            box-sizing: border-box;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #1f2937;
+        }
+
+        .stamp-rotate {
+            transform: rotate(-7deg);
         }
     </style>
 </head>
 
 <body>
-    <div class="no-print sticky top-0 z-20 border-b border-line-board bg-surface/95 backdrop-blur">
-        <div class="mx-auto flex max-w-[210mm] items-center justify-between gap-3 px-4 py-2">
+    <!-- Floating Toolbar (No Print) -->
+    <div class="no-print sticky top-0 z-30 border-b border-line bg-surface/95 shadow-sm backdrop-blur">
+        <div class="mx-auto flex max-w-[210mm] items-center justify-between gap-3 px-4 py-2.5">
             <div class="flex items-center gap-2">
                 <a href="{{ url()->previous() }}"
-                    class="inline-flex items-center gap-1.5 rounded-md border border-line-board bg-surface px-2.5 py-1 text-[11px] font-medium text-ink transition-colors hover:bg-surface-shell">
-                    <x-gpa.icon name="arrow-left" class="h-3 w-3" />
+                    class="inline-flex items-center gap-1.5 rounded border border-line-strong bg-white px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-sunken">
+                    <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5" />
                     Kembali
                 </a>
-                <span class="rounded bg-surface-pill px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-widest text-ink-muted">
-                    LEMBAR TAGIHAN RESMI
+                <span class="rounded bg-brand/10 px-2.5 py-1 text-xs font-bold text-brand">
+                    FAKTUR / INVOICE PENAGIHAN
                 </span>
             </div>
-            <button type="button" onclick="window.print()"
-                class="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-1 text-[11px] font-semibold text-white shadow-sub transition-colors hover:bg-brand-deep">
-                <x-gpa.icon name="printer" class="h-3 w-3" />
-                Cetak Faktur (Ctrl+P)
-            </button>
+
+            <div class="flex items-center gap-2">
+                <!-- Toggle Tampilan Format: Kontrak vs Reguler -->
+                <div class="inline-flex rounded-lg border border-line bg-white p-0.5 text-xs shadow-sm">
+                    <a href="{{ request()->fullUrlWithQuery(['format' => 'kontrak']) }}"
+                        class="rounded-md px-2.5 py-1 font-semibold transition-colors {{ !empty($is_contract) ? 'bg-brand text-white shadow-sm' : 'text-ink-body hover:text-ink' }}">
+                        Format Kontrak (B2B Split Kuota)
+                    </a>
+                    <a href="{{ request()->fullUrlWithQuery(['format' => 'reguler']) }}"
+                        class="rounded-md px-2.5 py-1 font-semibold transition-colors {{ empty($is_contract) ? 'bg-brand text-white shadow-sm' : 'text-ink-body hover:text-ink' }}">
+                        Format Reguler (Standar Tunggal)
+                    </a>
+                </div>
+
+                <button type="button" onclick="window.print()"
+                    class="inline-flex items-center gap-1.5 rounded bg-brand px-4 py-1.5 text-xs font-bold text-white shadow transition-all hover:bg-brand-strong">
+                    <x-gpa.icon name="printer" class="h-3.5 w-3.5" />
+                    Cetak Dokumen (Ctrl+P)
+                </button>
+            </div>
         </div>
     </div>
 
     <main class="a4-canvas">
-        <div class="flex h-full flex-col px-8 py-6">
-            <header class="flex items-start justify-between gap-6 border-b-2 border-brand pb-4">
-                <div class="flex items-start gap-3">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-lg border border-line-hair bg-surface-shell">
-                        <img src="{{ asset('gpaleaves.png') }}" alt="Logo GPA" class="h-8 w-8 object-contain">
-                    </div>
-                    <div>
-                        <p class="text-sm font-extrabold uppercase tracking-widest text-ink">{{ $brand }}</p>
-                        <p class="mt-0.5 text-[8pt] leading-relaxed text-ink-body">
-                            @foreach ($company_lines as $line)
-                                {{ $line }}<br>
-                            @endforeach
-                        </p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="text-[10pt] font-bold uppercase tracking-widest text-brand">
-                        FAKTUR / INVOICE PENAGIHAN
+        <!-- KOP SURAT ASLI GREEN PASUNDAN AGRICULTURE DARI CONTOH RESMI -->
+        <header class="flex items-start justify-between border-b-2 border-brand pb-3">
+            <div class="flex items-start gap-3">
+                <img src="{{ asset('gpaleaves.png') }}" alt="Logo GPA" class="h-14 w-14 shrink-0 object-contain">
+                <div>
+                    <h1 class="text-base font-black tracking-wider text-brand">
+                        GREEN PASUNDAN AGRICULTURE
+                    </h1>
+                    <p class="text-[7.5pt] font-semibold text-ink leading-tight">
+                        {{ $brand ?? 'KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)' }} &middot; {{ $company['legal_number'] ?? 'Badan Hukum : Nomor AHU-0004853.AH.01.29.TH 2024' }}
                     </p>
-                    <dl class="mt-1 space-y-0.5 text-[8pt]">
-                        <div class="flex items-baseline justify-end gap-2">
-                            <dt class="text-ink-quiet">No. Faktur:</dt>
-                            <dd class="font-mono font-semibold text-ink">{{ $invoice['id'] }}</dd>
-                        </div>
-                        <div class="flex items-baseline justify-end gap-2">
-                            <dt class="text-ink-quiet">No. Kontrak:</dt>
-                            <dd class="font-mono font-semibold text-ink">{{ $client['contract'] }}</dd>
-                        </div>
-                    </dl>
+                    <p class="text-[7.5pt] leading-tight text-ink-body">
+                        {{ $company['address'] ?? 'Kp. Lebakwangi RT. 001 RW. 009 Desa Panundaan Kecamatan Ciwidey Kabupaten Bandung (40973)' }}
+                    </p>
+                    <p class="text-[7.5pt] leading-tight text-ink-body font-medium">
+                        Tlp/ Whatsapp : {{ $company['phone'] ?? '081321422231' }}
+                    </p>
                 </div>
-            </header>
+            </div>
 
-            <section class="mt-4 grid grid-cols-2 divide-x divide-y divide-line-hair border border-line-hair sm:grid-cols-4 sm:divide-y-0 bg-surface-shell">
-                <div class="p-2.5">
-                    <span class="text-[7.5pt] font-semibold uppercase text-ink-quiet">Tanggal Terbit</span>
-                    <p class="font-mono text-xs font-semibold text-ink">{{ $invoice['issued'] }}</p>
-                </div>
-                <div class="p-2.5">
-                    <span class="text-[7.5pt] font-semibold uppercase text-ink-quiet">Jatuh Tempo</span>
-                    <p class="font-mono text-xs font-semibold text-danger">{{ $invoice['due'] }}</p>
-                </div>
-                <div class="p-2.5">
-                    <span class="text-[7.5pt] font-semibold uppercase text-ink-quiet">Syarat Pembayaran</span>
-                    <p class="font-mono text-xs font-semibold text-ink">{{ $invoice['terms_label'] }}</p>
-                </div>
-                <div class="p-2.5">
-                    <span class="text-[7.5pt] font-semibold uppercase text-ink-quiet">Surat Jalan</span>
-                    <p class="font-mono text-xs font-semibold text-ink">{{ $totals['document_count'] }} Dokumen</p>
-                </div>
-            </section>
+            <!-- Lambang Koperasi Indonesia -->
+            <div class="hidden sm:flex flex-col items-center justify-center px-2">
+                <svg class="h-12 w-12 text-yellow-600" viewBox="0 0 100 100" fill="currentColor">
+                    <circle cx="50" cy="50" r="45" fill="#fef08a" stroke="#ca8a04" stroke-width="3"/>
+                    <circle cx="50" cy="50" r="34" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+                    <path d="M50 20 L58 38 L78 38 L62 50 L68 70 L50 58 L32 70 L38 50 L22 38 L42 38 Z" fill="#ca8a04"/>
+                    <circle cx="50" cy="50" r="8" fill="#dc2626"/>
+                </svg>
+                <span class="mt-0.5 text-[6.5pt] font-extrabold uppercase tracking-widest text-ink">KOPERASI INDONESIA</span>
+            </div>
 
-            <section class="mt-4 grid gap-4 md:grid-cols-2">
-                <div class="border border-line-hair bg-surface">
-                    <div class="border-b border-line-hair bg-brand px-3 py-1.5">
-                        <p class="text-[9pt] font-bold uppercase tracking-widest text-white">Tagihan Kepada</p>
-                    </div>
-                    <div class="space-y-1 px-3 py-2 text-[8pt]">
-                        <p class="font-semibold text-ink text-sm">{{ $client['name'] }}</p>
-                        <p class="text-ink-body">No. Kontrak: {{ $client['contract'] }}</p>
-                        <p class="text-ink-body">NPWP: {{ $client['npwp'] }}</p>
-                    </div>
-                </div>
-                <div class="border border-line-hair bg-surface">
-                    <div class="border-b border-line-hair bg-brand px-3 py-1.5">
-                        <p class="text-[9pt] font-bold uppercase tracking-widest text-white">Rekening Pembayaran Resmi</p>
-                    </div>
-                    <div class="space-y-1 px-3 py-2 text-[8pt]">
-                        <p class="text-ink-body">Pembayaran wajib ditransfer ke rekening giro resmi:</p>
-                        <p class="flex justify-between gap-2"><span class="text-ink-quiet">Bank / Cabang:</span><strong class="text-ink">{{ $payment['bank'] }} &middot; {{ $payment['branch'] }}</strong></p>
-                        <p class="flex justify-between gap-2"><span class="text-ink-quiet">No. Rekening:</span><strong class="font-mono text-ink">{{ $payment['account'] }}</strong></p>
-                        <p class="flex justify-between gap-2"><span class="text-ink-quiet">Atas Nama:</span><strong class="text-ink">{{ $payment['name'] }}</strong></p>
-                    </div>
-                </div>
-            </section>
+            <!-- Metadata Faktur / Invoice di Sisi Kanan -->
+            <div class="text-right">
+                <h2 class="text-2xl font-black uppercase tracking-wider text-brand">
+                    INVOICE
+                </h2>
+                <table class="mt-1 text-[8pt] text-left">
+                    <tr>
+                        <td class="pr-2 font-semibold text-ink-muted">Nomor PO</td>
+                        <td class="font-mono font-bold text-ink">: {{ $invoice['po_number'] ?? '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="pr-2 font-semibold text-ink-muted">Hari/ Tanggal</td>
+                        <td class="font-medium text-ink">: {{ $invoice['issued'] ?? date('d F Y') }}</td>
+                    </tr>
+                    <tr>
+                        <td class="pr-2 font-semibold text-ink-muted">Nomor Invoice</td>
+                        <td class="font-mono font-bold text-brand">: {{ $invoice['id'] ?? '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td class="pr-2 font-semibold text-ink-muted">Jatuh Tempo</td>
+                        <td class="font-medium text-ink">: {{ $invoice['due'] ?? '-' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </header>
 
-            <section class="mt-5 flex-1">
-                <div class="overflow-hidden border border-line-hair">
-                    <table class="w-full border-collapse text-[8pt]">
+        <!-- Kotak Informasi Penerima (To & Office) Sesuai Desain Asli -->
+        <div class="mt-3 flex border border-ink text-[8.5pt]">
+            <div class="w-1/2 border-r border-ink bg-white px-3 py-1 font-semibold text-ink">
+                <span>To : </span>
+                <span class="font-bold">{{ $client['to'] ?? ($client['name'] ?? 'Mitra Klien') }}</span>
+            </div>
+            <div class="w-1/2 bg-white px-3 py-1 font-semibold text-ink">
+                <span>Office : </span>
+                <span class="font-bold">{{ $client['office'] ?? ($client['name'] ?? 'Perusahaan Klien') }}</span>
+            </div>
+        </div>
+
+        @if (!empty($is_contract))
+            {{-- ========================================================================= --}}
+            {{-- FORMAT KLIEN KONTRAK: TABEL 1 (SAYUR GUDANG) & TABEL 2 (SAYUR KONTRAK)    --}}
+            {{-- ========================================================================= --}}
+
+            {{-- TABEL 1: SAYUR GUDANG / PASOKAN NON-KONTRAK --}}
+            @if (!empty($hasWarehouseItems) && !empty($warehouse['items']))
+                <div class="mt-3">
+                    <table class="table-bordered text-[7.8pt]">
                         <thead>
-                            <tr class="bg-brand text-white">
-                                <th class="w-10 px-2 py-1.5 text-center font-semibold uppercase tracking-widest">No</th>
-                                <th class="px-2 py-1.5 text-left font-semibold uppercase tracking-widest">Referensi Surat Jalan</th>
-                                <th class="px-2 py-1.5 text-left font-semibold uppercase tracking-widest">Rincian Komoditas</th>
-                                <th class="w-24 px-2 py-1.5 text-right font-semibold uppercase tracking-widest">Netto (kg)</th>
-                                <th class="w-28 px-2 py-1.5 text-right font-semibold uppercase tracking-widest">Harga (Rp/kg)</th>
-                                <th class="w-32 px-2 py-1.5 text-right font-semibold uppercase tracking-widest">Jumlah Tagihan (Rp)</th>
+                            <tr class="bg-[#1e3a8a] text-white font-bold">
+                                <th class="py-1 px-2 text-center" style="width: 14%;">Tanggal</th>
+                                <th class="py-1 px-2 text-left" style="width: 44%;">Nama Barang</th>
+                                <th class="py-1 px-2 text-right" style="width: 12%;">Qty (Kg)</th>
+                                <th class="py-1 px-2 text-right" style="width: 14%;">Harga (Rp)</th>
+                                <th class="py-1 px-2 text-right" style="width: 16%;">Jumlah (Rp)</th>
+                            </tr>
+                            <tr class="bg-gray-100 font-bold text-ink">
+                                <td colspan="5" class="py-0.5 px-2 font-bold">{{ $warehouse['title'] ?? 'Sayur Gudang Pasirimpun' }}</td>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($items as $index => $item)
-                                <tr class="border-b border-line-hair {{ $index % 2 === 1 ? 'bg-surface-shell/60' : '' }}">
-                                    <td class="px-2 py-1.5 text-center text-ink-body">{{ $index + 1 }}</td>
-                                    <td class="px-2 py-1.5 font-mono text-ink-body">{{ $item['code'] }}</td>
-                                    <td class="px-2 py-1.5 text-ink-body font-medium">{{ $item['name'] }}</td>
-                                    <td class="px-2 py-1.5 text-right font-mono text-ink-body">{{ number_format($item['qty'], 1, ',', '.') }}</td>
-                                    <td class="px-2 py-1.5 text-right font-mono text-ink-body">Rp {{ number_format($item['price'], 0, ',', '.') }}</td>
-                                    <td class="px-2 py-1.5 text-right font-mono font-semibold text-ink">Rp {{ number_format($item['amount'], 0, ',', '.') }}</td>
-                                </tr>
-                            @empty
-                                <tr class="border-b border-line-hair">
-                                    <td colspan="6" class="px-2 py-3 text-center text-ink-muted">
-                                        Rincian tagihan mengikuti dokumen Surat Jalan terlampir.
+                            @php $currentDate = null; @endphp
+                            @foreach ($warehouse['items'] as $wItem)
+                                <tr class="hover:bg-gray-50">
+                                    <td class="py-0.5 px-2 text-center font-mono">
+                                        @if ($currentDate !== $wItem['date'])
+                                            {{ $wItem['date'] }}
+                                            @php $currentDate = $wItem['date']; @endphp
+                                        @endif
+                                    </td>
+                                    <td class="py-0.5 px-2 text-ink font-medium">{{ $wItem['name'] }}</td>
+                                    <td class="py-0.5 px-2 text-right font-mono">{{ number_format($wItem['qty'], 1, ',', '.') }}</td>
+                                    <td class="py-0.5 px-2 text-right font-mono">{{ number_format($wItem['price'], 0, ',', '.') }}</td>
+                                    <td class="py-0.5 px-2 text-right font-mono font-semibold">
+                                        <span class="float-left text-ink-muted">Rp</span>
+                                        {{ number_format($wItem['amount'], 0, ',', '.') }}
                                     </td>
                                 </tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                         <tfoot>
-                            <tr class="bg-brand text-white">
-                                <th colspan="3" class="px-2 py-1.5 text-left font-semibold uppercase tracking-widest">
-                                    Total Tagihan Konsolidasi &middot; {{ $totals['document_count'] }} Surat Jalan
-                                </th>
-                                <th class="px-2 py-1.5 text-right font-mono font-semibold">
-                                    {{ number_format($totals['qty'], 1, ',', '.') }} kg
-                                </th>
-                                <th class="px-2 py-1.5 text-right">&nbsp;</th>
-                                <th class="px-2 py-1.5 text-right font-mono font-semibold">
-                                    Rp {{ number_format($totals['amount'], 0, ',', '.') }}
-                                </th>
+                            <tr class="bg-[#fef08a] font-bold text-ink">
+                                <td colspan="4" class="py-1 px-2 text-center uppercase tracking-wider font-extrabold">SUBTOTAL</td>
+                                <td class="py-1 px-2 text-right font-mono font-extrabold">
+                                    <span class="float-left">Rp</span>
+                                    {{ number_format($warehouse['subtotal'], 0, ',', '.') }}
+                                </td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
-                <div class="mt-3 flex items-start justify-between gap-4 border border-line-hair bg-surface-shell px-3 py-2">
-                    <p class="text-[8pt] text-ink-body">
-                        Jatuh tempo <strong>{{ $invoice['due'] }}</strong> ({{ $invoice['terms_label'] }}). Mohon cantumkan nomor faktur pada berita transfer bank.
-                    </p>
-                    <p class="shrink-0 text-right text-[10pt] font-bold text-brand">
-                        TOTAL TAGIHAN: Rp {{ number_format($totals['amount'], 0, ',', '.') }}
-                    </p>
-                </div>
-            </section>
+            @endif
 
-            <section class="mt-8 grid gap-4 sm:grid-cols-3">
-                @foreach ([
-                    ['label' => 'Diterbitkan Oleh', 'role' => 'Sekretariat / Keuangan GPA'],
-                    ['label' => 'Disetujui Oleh', 'role' => 'Direktur Utama GPA'],
-                    ['label' => 'Diterima & Disetujui', 'role' => 'Perwakilan Bagian Finance Klien'],
-                ] as $signature)
-                    <div class="flex min-h-32 flex-col border border-line-hair bg-surface px-3 py-2 text-center">
-                        <p class="text-[8pt] font-semibold uppercase tracking-wide text-ink">{{ $signature['label'] }}</p>
-                        <p class="text-[7pt] text-ink-quiet">{{ $signature['role'] }}</p>
-                        <div class="mt-auto border-b border-dashed border-line-board pt-12"></div>
-                        <p class="pt-1 text-[7pt] text-ink-quiet">Tanda Tangan &amp; Cap Basah</p>
-                    </div>
-                @endforeach
-            </section>
+            {{-- TABEL 2: SAYUR KONTRAK (ALOKASI KUOTA & REGULER PERSIS SEPERTI DI PDF) --}}
+            @if (!empty($hasContractItems) && !empty($contract['pages']))
+                <div class="mt-4">
+                    <table class="table-bordered text-[7.5pt]">
+                        <thead>
+                            <tr class="bg-[#be185d] text-white font-bold">
+                                <th rowspan="2" class="py-1 px-2 text-center" style="width: 10%;">Tanggal</th>
+                                <th rowspan="2" class="py-1 px-2 text-left" style="width: 24%;">Nama Barang</th>
+                                <th rowspan="2" class="py-1 px-2 text-center" style="width: 9%;">All Qty Order (Kg)</th>
+                                <th colspan="3" class="py-0.5 px-2 text-center bg-[#9d174d]" style="width: 25%;">Kontrak</th>
+                                <th colspan="3" class="py-0.5 px-2 text-center bg-[#831843]" style="width: 22%;">Reguler</th>
+                                <th rowspan="2" class="py-1 px-2 text-center" style="width: 10%;">TOTAL</th>
+                            </tr>
+                            <tr class="bg-[#be185d] text-white font-bold">
+                                <th class="py-0.5 px-1 text-center" style="width: 7%;">Qty</th>
+                                <th class="py-0.5 px-1 text-center" style="width: 8%;">Harga</th>
+                                <th class="py-0.5 px-1 text-center" style="width: 10%;">Jumlah</th>
+                                <th class="py-0.5 px-1 text-center" style="width: 6%;">Qty</th>
+                                <th class="py-0.5 px-1 text-center" style="width: 7%;">Harga</th>
+                                <th class="py-0.5 px-1 text-center" style="width: 9%;">Jumlah</th>
+                            </tr>
+                            <tr class="bg-gray-100 font-bold text-ink">
+                                <td colspan="10" class="py-0.5 px-2 font-bold">{{ $contract['title'] ?? 'Sayur Lettuce' }}</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($contract['pages'] as $pageGroup)
+                                @foreach ($pageGroup['rows'] as $rIdx => $row)
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="py-0.5 px-1 text-center font-mono">
+                                            {{ $rIdx === 0 ? $pageGroup['date'] : '' }}
+                                        </td>
+                                        <td class="py-0.5 px-2 font-medium text-ink">{{ $row['name'] }}</td>
+                                        <td class="py-0.5 px-1 text-center font-mono font-semibold">{{ number_format($row['all_qty'], 1, ',', '.') }}</td>
+                                        <td class="py-0.5 px-1 text-center font-mono">{{ $row['c_qty'] ? number_format($row['c_qty'], 1, ',', '.') : '-' }}</td>
+                                        <td class="py-0.5 px-1 text-right font-mono">{{ $row['c_price'] ? 'Rp ' . number_format($row['c_price'], 0, ',', '.') : '-' }}</td>
+                                        <td class="py-0.5 px-1 text-right font-mono">{{ $row['c_amount'] ? 'Rp ' . number_format($row['c_amount'], 0, ',', '.') : '-' }}</td>
+                                        <td class="py-0.5 px-1 text-center font-mono">{{ $row['r_qty'] ? number_format($row['r_qty'], 1, ',', '.') : '-' }}</td>
+                                        <td class="py-0.5 px-1 text-right font-mono">{{ $row['r_price'] ? 'Rp ' . number_format($row['r_price'], 0, ',', '.') : '-' }}</td>
+                                        <td class="py-0.5 px-1 text-right font-mono">{{ $row['r_amount'] ? 'Rp ' . number_format($row['r_amount'], 0, ',', '.') : '-' }}</td>
+                                        <td class="py-0.5 px-1 text-right font-mono font-bold">Rp {{ number_format($row['total'], 0, ',', '.') }}</td>
+                                    </tr>
+                                @endforeach
+                                <!-- Subtotal per Tanggal -->
+                                <tr class="bg-gray-100 font-bold text-ink">
+                                    <td colspan="2" class="py-0.5 px-2 text-right">Subtotal {{ $pageGroup['date'] }}:</td>
+                                    <td class="py-0.5 px-1 text-center font-mono">{{ number_format($pageGroup['subtotal']['all_qty'], 1, ',', '.') }}</td>
+                                    <td class="py-0.5 px-1 text-center font-mono">{{ number_format($pageGroup['subtotal']['c_qty'], 1, ',', '.') }}</td>
+                                    <td class="py-0.5 px-1 text-right font-mono">-</td>
+                                    <td class="py-0.5 px-1 text-right font-mono">Rp {{ number_format($pageGroup['subtotal']['c_amount'], 0, ',', '.') }}</td>
+                                    <td class="py-0.5 px-1 text-center font-mono">{{ number_format($pageGroup['subtotal']['r_qty'], 1, ',', '.') }}</td>
+                                    <td class="py-0.5 px-1 text-right font-mono">-</td>
+                                    <td class="py-0.5 px-1 text-right font-mono">Rp {{ number_format($pageGroup['subtotal']['r_amount'], 0, ',', '.') }}</td>
+                                    <td class="py-0.5 px-1 text-right font-mono font-bold">Rp {{ number_format($pageGroup['subtotal']['total'], 0, ',', '.') }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot>
+                            <!-- Subtotal Kontrak Keseluruhan -->
+                            <tr class="bg-[#db2777] font-bold text-white">
+                                <td colspan="2" class="py-1 px-2 text-center uppercase tracking-wider font-extrabold">SUBTOTAL</td>
+                                <td class="py-1 px-1 text-center font-mono font-extrabold">{{ number_format($contract['grand_subtotal']['all_qty'], 1, ',', '.') }}</td>
+                                <td class="py-1 px-1 text-center font-mono font-extrabold">{{ number_format($contract['grand_subtotal']['c_qty'], 1, ',', '.') }}</td>
+                                <td class="py-1 px-1 text-right font-mono font-extrabold">Rp</td>
+                                <td class="py-1 px-1 text-right font-mono font-extrabold">{{ number_format($contract['grand_subtotal']['c_amount'], 0, ',', '.') }}</td>
+                                <td class="py-1 px-1 text-center font-mono font-extrabold">{{ number_format($contract['grand_subtotal']['r_qty'], 1, ',', '.') }}</td>
+                                <td class="py-1 px-1 text-right font-mono font-extrabold">Rp</td>
+                                <td class="py-1 px-1 text-right font-mono font-extrabold">{{ number_format($contract['grand_subtotal']['r_amount'], 0, ',', '.') }}</td>
+                                <td class="py-1 px-1 text-right font-mono font-extrabold">Rp {{ number_format($contract['grand_subtotal']['total'], 0, ',', '.') }}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            @endif
+        @else
+            {{-- ========================================================================= --}}
+            {{-- FORMAT KLIEN REGULER: SATU TABEL STANDAR YANG BERSIH TANPA SPLIT KUOTA    --}}
+            {{-- ========================================================================= --}}
+            <div class="mt-3">
+                <table class="table-bordered text-[8pt]">
+                    <thead>
+                        <tr class="bg-[#1e3a8a] text-white font-bold">
+                            <th class="py-1.5 px-2 text-center" style="width: 5%;">No</th>
+                            <th class="py-1.5 px-2 text-center" style="width: 14%;">Tanggal</th>
+                            <th class="py-1.5 px-2 text-left" style="width: 45%;">Nama Komoditas / Barang</th>
+                            <th class="py-1.5 px-2 text-right" style="width: 12%;">Qty (Kg)</th>
+                            <th class="py-1.5 px-2 text-right" style="width: 12%;">Harga (Rp)</th>
+                            <th class="py-1.5 px-2 text-right" style="width: 12%;">Jumlah (Rp)</th>
+                        </tr>
+                        <tr class="bg-gray-100 font-bold text-ink">
+                            <td colspan="6" class="py-1 px-2 font-bold">{{ $regular['title'] ?? 'Daftar Pasokan Komoditas Reguler' }}</td>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($regular['items'] ?? [] as $idx => $rItem)
+                            <tr class="hover:bg-gray-50">
+                                <td class="py-1 px-2 text-center font-mono">{{ $idx + 1 }}</td>
+                                <td class="py-1 px-2 text-center font-mono">{{ $rItem['date'] }}</td>
+                                <td class="py-1 px-2 text-ink font-semibold">{{ $rItem['name'] }}</td>
+                                <td class="py-1 px-2 text-right font-mono">{{ number_format($rItem['qty'], 1, ',', '.') }}</td>
+                                <td class="py-1 px-2 text-right font-mono">{{ number_format($rItem['price'], 0, ',', '.') }}</td>
+                                <td class="py-1 px-2 text-right font-mono font-semibold">
+                                    <span class="float-left text-ink-muted">Rp</span>
+                                    {{ number_format($rItem['amount'], 0, ',', '.') }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr class="bg-[#fef08a] font-bold text-ink">
+                            <td colspan="5" class="py-1 px-2 text-center uppercase tracking-wider font-extrabold">SUBTOTAL</td>
+                            <td class="py-1 px-2 text-right font-mono font-extrabold">
+                                <span class="float-left">Rp</span>
+                                {{ number_format($regular['subtotal'] ?? $grand_total, 0, ',', '.') }}
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        @endif
+
+        {{-- BARIS TOTAL TAGIHAN GABUNGAN --}}
+        <div class="mt-3">
+            <table class="table-bordered text-[8.5pt]">
+                <tfoot>
+                    <tr class="bg-[#1e3a8a] text-white font-black">
+                        <td class="py-2 px-3 text-right uppercase tracking-widest font-black" style="width: 75%;">
+                            TOTAL TAGIHAN
+                        </td>
+                        <td class="py-2 px-3 text-right font-mono font-black text-[10.5pt] bg-[#172554]" style="width: 25%;">
+                            Rp {{ number_format($grand_total, 0, ',', '.') }}
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
         </div>
+
+        <!-- FOOTER PEMBAYARAN & TANDA TANGAN ASLI SESUAI DOKUMEN GPA -->
+        <footer class="mt-6 flex items-start justify-between border-t border-ink pt-3 text-[8pt]">
+            <!-- Instruksi Pembayaran Bank BCA Resmi -->
+            <div class="w-7/12 leading-relaxed">
+                <p class="font-semibold text-ink">Setelah tagihan diterima, silahkan transfer ke:</p>
+                <div class="my-1 rounded border border-gray-300 bg-gray-50 p-2 font-mono">
+                    <p class="font-bold text-ink">Rekening BCA {{ $company['bank_account'] ?? '6768489174' }}</p>
+                    <p class="font-semibold text-brand">A.N {{ $company['bank_holder'] ?? 'Green Pasundan Agriculture' }}</p>
+                </div>
+                <p class="text-ink-body">Silakan kirimkan informasi jika pembayaran telah dilakukan</p>
+                <p class="font-semibold text-brand">Terima kasih atas kerjasamanya</p>
+            </div>
+
+            <!-- Tanda Tangan & Cap Stempel Bulat Koperasi GPA Asli -->
+            <div class="relative w-4/12 text-center">
+                <p class="font-semibold text-ink">Hormat Kami</p>
+                <p class="text-[7.5pt] font-medium text-ink-body">Koperasi Produsen Green Pasundan Agriculture</p>
+
+                <!-- Stamp Bulat Koperasi GPA Asli -->
+                <div class="relative my-1 flex items-center justify-center">
+                    <svg class="h-24 w-24 text-blue-700/85 stamp-rotate" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="100" cy="100" r="95" stroke="currentColor" stroke-width="3" stroke-dasharray="6 3"/>
+                        <circle cx="100" cy="100" r="88" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="100" cy="100" r="58" stroke="currentColor" stroke-width="1.5"/>
+                        <path id="stamp-top-p" d="M 24,100 A 76,76 0 1,1 176,100" fill="none"/>
+                        <path id="stamp-bot-p" d="M 176,100 A 76,76 0 0,1 24,100" fill="none"/>
+                        <text fill="currentColor" font-size="9" font-weight="bold" letter-spacing="2">
+                            <textPath href="#stamp-top-p" startOffset="50%" text-anchor="middle">
+                                KOPERASI PRODUSEN GREEN PASUNDAN
+                            </textPath>
+                        </text>
+                        <text fill="currentColor" font-size="8.5" font-weight="bold" letter-spacing="3">
+                            <textPath href="#stamp-bot-p" startOffset="50%" text-anchor="middle">
+                                CIWIDEY BANDUNG
+                            </textPath>
+                        </text>
+                        <polygon points="100,72 103,82 114,82 105,89 108,99 100,93 92,99 95,89 86,82 97,82" fill="currentColor"/>
+                        <text x="100" y="118" text-anchor="middle" fill="currentColor" font-size="11" font-weight="bold" letter-spacing="1">GPA</text>
+                        <text x="100" y="130" text-anchor="middle" fill="currentColor" font-size="6.5" font-weight="semibold">RESMI</text>
+                    </svg>
+                </div>
+
+                <p class="font-extrabold uppercase tracking-wider text-ink underline text-[9pt]">
+                    {{ $company['signer_name'] ?? 'AGUS DIKI PERMANA' }}
+                </p>
+                <p class="text-[7pt] text-ink-muted">Ketua Pengurus Koperasi GPA</p>
+            </div>
+        </footer>
     </main>
 </body>
 

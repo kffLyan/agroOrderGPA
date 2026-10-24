@@ -26,8 +26,9 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
         run(title, message, tone = 'info') {
             if (typeof this.$dispatch === 'function') {
                 this.$dispatch('gpa:toast', { title, message, tone });
+            } else {
+                window.dispatchEvent(new CustomEvent('gpa:toast', { detail: { title, message, tone } }));
             }
-            window.dispatchEvent(new CustomEvent('gpa:toast', { detail: { title, message, tone } }));
         },
 
         get client() {
@@ -160,7 +161,7 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
         generate() {
             if (! this.selectedDocuments.length) {
                 this.run(
-                    'Faktur Ditolak (Rule 05)',
+                    'Faktur Ditolak',
                     'Tidak ada Surat Jalan sah yang dipilih. Faktur hanya dapat diterbitkan dari SJ "Selesai" berserta POD & bobot netto sah.',
                     'danger'
                 );
@@ -234,25 +235,19 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
         },
 
         exportLedger() {
-            this.run(
-                'Ekspor Ledger CSV',
-                `${this.visibleRows().length} baris ledger diekspor dengan filter TOP aktif (${this.statusLabel()}). Arsip lampiran: Rule 14 & 05.`
-            );
+            window.location.href = '/sekretaris/faktur/export';
         },
 
         manualInvoice() {
-            this.run(
-                'Faktur Manual Baru',
-                'Formulir faktur manual dibuka. Nomor faktur, NPWP klien, dan bukti POD wajib dilampirkan sebelum penerbitan.'
-            );
+            window.location.href = '/sekretaris/pesanan-manual';
         },
 
         viewInvoice(row) {
-            this.run('Detail Faktur', `${row.id} — ${row.client} • ${row.total_label} • ${row.terms_label} • jatuh tempo ${row.due}.`);
+            this.run('Detail Faktur', `${row.id} — ${row.client} • ${row.total_label} • ${row.terms_label} • jatuh tempo ${row.due}.`, 'info');
         },
 
         printInvoice(row) {
-            this.run('Cetak Faktur', `Berkas ${row.id} dikirim ke printer sekretariat (salinan klien + arsip penagihan).`);
+            window.print();
         },
 
         followUp(row) {
@@ -262,7 +257,7 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
                 row.status_key === 'blocked' ? 'Auto-Freeze Dikonfirmasi' : 'Follow-up Terjadwal',
                 row.status_key === 'blocked'
                     ? `${row.id}: auto-freeze klien ${row.client} diperpanjang. PO baru ditolak sampai pelunasan.`
-                    : `${row.id}: pengingat tagihan dikirim ke PIC ${row.client} (H-3 jatuh tempo ${row.due}).`,
+                    : `${row.id}: pengingat tagihan diteruskan ke PIC ${row.client} (jatuh tempo ${row.due}).`,
                 tone
             );
         },

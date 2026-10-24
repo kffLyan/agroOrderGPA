@@ -25,6 +25,7 @@ export default function directorApproval(rows = [], labels = {}) {
         totalLabel: String(copy.shown_label ?? ''),
         rows: (Array.isArray(rows) ? rows : []).map((row) => ({
             ...row,
+            id: row.id,
             contract: String(row.contract ?? ''),
             filter_key: String(row.filter_key ?? ''),
             client: String(row.client ?? ''),
@@ -88,7 +89,7 @@ export default function directorApproval(rows = [], labels = {}) {
         },
 
         selectedRows() {
-            return this.visibleRows().filter((row) => this.selected.includes(row.contract));
+            return this.visibleRows().filter((row) => this.selected.includes(row.id));
         },
 
         selectedValue() {
@@ -104,66 +105,162 @@ export default function directorApproval(rows = [], labels = {}) {
         },
 
         selectAll() {
-            this.selected = this.visibleRows().map((row) => row.contract);
+            if (this.selected.length === this.visibleRows().length) {
+                this.selected = [];
+            } else {
+                this.selected = this.visibleRows().map((row) => row.id);
+            }
         },
 
         /* ---------- row actions ---------- */
 
-        detail(contract) {
-            this.run('Detail Pengajuan', `Simpan draft telah dibuka untuk ${contract}.`, 'info');
+        detail(id) {
+            window.location.href = `/direktur/contracts/${id}`;
         },
 
-        approve(contract) {
-            const row = this.rows.find((item) => item.contract === contract);
+        async approve(id) {
+            const row = this.rows.find((item) => item.id === id || item.contract === id);
+            const targetId = row ? row.id : id;
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-            this.selected = this.selected.filter((item) => item !== contract);
-            this.run(
-                'Kontrak Disetujui',
-                row
-                    ? `${row.client} (${row.contract}) disetujui senilai ${rupiah(row.value)}.`
-                    : `${contract} disetujui.`,
-                'success',
-            );
+            try {
+                const response = await fetch(`/direktur/contracts/${targetId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                });
+
+                if (response.ok) {
+                    this.rows = this.rows.filter((item) => item.id !== targetId);
+                    this.selected = this.selected.filter((item) => item !== targetId);
+                    this.totalRows = this.rows.length;
+                    this.run('Kontrak Disetujui', `Kontrak ${row?.contract || targetId} berhasil disetujui & disahkan oleh Direktur.`, 'success');
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    this.run('Gagal Otorisasi', data.message || 'Terjadi kesalahan saat menyetujui kontrak.', 'danger');
+                }
+            } catch (err) {
+                this.run('Kesalahan Jaringan', 'Tidak dapat menghubungi server: ' + err.message, 'danger');
+            }
         },
 
-        approveSelected() {
-            const rows = this.selectedRows();
-
-            if (rows.length === 0) {
+        async approveSelected() {
+            if (this.selected.length === 0) {
+                this.run('Pilih Kontrak', 'Centang minimal satu kontrak untuk batch approval.', 'warning');
                 return;
             }
 
-            const value = rows.reduce((total, row) => total + row.value, 0);
-            this.selected = [];
-            this.run(
-                'Batch Otorisasi Diproses',
-                `${rows.length} kontrak senilai ${rupiah(value)} disetujui asparagus.`,
-                'success',
-            );
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            try {
+                const response = await fetch('/direktur/contracts/batch-approve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    body: JSON.stringify({ selected_ids: this.selected }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    this.run('Batch Otorisasi Berhasil', data.message || 'Batch kontrak berhasil disetujui.', 'success');
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    this.run('Gagal Batch Otorisasi', data.message || 'Gagal memproses batch approval.', 'danger');
+                }
+            } catch (err) {
+                this.run('Kesalahan Jaringan', 'Tidak dapat menghubungi server: ' + err.message, 'danger');
+            }
         },
 
-        revise(contract) {
-            const row = this.rows.find((item) => item.contract === contract);
+        async revise(id) {
+            const row = this.rows.find((item) => item.id === id || item.contract === id);
+            const targetId = row ? row.id : id;
+            const notes = await window.$prompt({
+                title: 'Revisi Klausul Kontrak',
+                message: 'Masukkan catatan instruksi revisi klausul untuk Tim Legal & Sales:',
+                defaultValue: 'Harap sesuaikan tenor TOP menjadi maksimal 30 hari.',
+                placeholder: 'Catatan revisi...',
+                icon: 'edit',
+                tone: 'warning',
+                confirmText: 'Kirim Revisi',
+                cancelText: 'Batal',
+            });
 
-            this.selected = this.selected.filter((item) => item !== contract);
-            this.run(
-                'Revisi Diminta',
-                row
-                    ? `${row.client} dikembalikan ke ${row.submitted_by} untuk revisi margin.`
-                    : `${contract} dikembalikan untuk revisi.`,
-                'warning',
-            );
+            if (!notes) return;
+
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            try {
+                const response = await fetch(`/direktur/contracts/${targetId}/revision`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    body: JSON.stringify({ revision_notes: notes }),
+                });
+
+                if (response.ok) {
+                    this.run('Revisi Terkirim', `Catatan revisi untuk kontrak ${row?.contract || targetId} telah dikirim ke Tim Sales.`, 'warning');
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    this.run('Gagal Minta Revisi', data.message || 'Gagal mengirim permintaan revisi.', 'danger');
+                }
+            } catch (err) {
+                this.run('Kesalahan Jaringan', 'Tidak dapat menghubungi server: ' + err.message, 'danger');
+            }
         },
 
-        reject(contract) {
-            const row = this.rows.find((item) => item.contract === contract);
+        async reject(id) {
+            const row = this.rows.find((item) => item.id === id || item.contract === id);
+            const targetId = row ? row.id : id;
+            const reason = await window.$prompt({
+                title: 'Tolak Pengesahan Kontrak',
+                message: 'Masukkan alasan penolakan kontrak untuk catatan arsip audit:',
+                defaultValue: 'Margin di bawah threshold atau plafon risiko kredit terlampaui.',
+                placeholder: 'Alasan penolakan...',
+                icon: 'danger',
+                tone: 'danger',
+                confirmText: 'Tolak Kontrak',
+                cancelText: 'Batal',
+            });
 
-            this.selected = this.selected.filter((item) => item !== contract);
-            this.run(
-                'Kontrak Ditolak',
-                row ? `${row.client} (${row.contract}) ditolak.` : `${contract} ditolak.`,
-                'danger',
-            );
+            if (!reason) return;
+
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+            try {
+                const response = await fetch(`/direktur/contracts/${targetId}/reject`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    body: JSON.stringify({ rejection_reason: reason }),
+                });
+
+                if (response.ok) {
+                    this.rows = this.rows.filter((item) => item.id !== targetId);
+                    this.run('Kontrak Ditolak', `Kontrak ${row?.contract || targetId} resmi ditolak. Alasan tercatat di audit log.`, 'danger');
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    this.run('Gagal Menolak', data.message || 'Gagal menolak kontrak.', 'danger');
+                }
+            } catch (err) {
+                this.run('Kesalahan Jaringan', 'Tidak dapat menghubungi server: ' + err.message, 'danger');
+            }
         },
 
         /* ---------- page actions ---------- */

@@ -49,7 +49,7 @@
                 <a href="{{ route('direktur.products.create') }}"
                     class="inline-flex items-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-ink text-accent shadow-sub">
                     <x-gpa.icon name="plus" class="h-3.5 w-3.5 shrink-0" />
-                    + Tambah Komoditas Baru
+                    Tambah Komoditas Baru
                 </a>
             </div>
         </header>
@@ -271,7 +271,10 @@
                                     </a>
 
                                     <form action="{{ route('direktur.products.destroy', $prod->id) }}" method="POST" class="inline"
-                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus atau menonaktifkan komoditas {{ addslashes($prod->name) }}?')">
+                                        data-gpa-confirm="Apakah Anda yakin ingin menghapus atau menonaktifkan komoditas {{ addslashes($prod->name) }}?"
+                                        data-gpa-title="Hapus Komoditas"
+                                        data-gpa-tone="danger"
+                                        data-gpa-ok="Hapus Komoditas">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"

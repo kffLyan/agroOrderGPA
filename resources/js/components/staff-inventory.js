@@ -1,4 +1,4 @@
-const normalize = (value) => String(value ?? '').toLowerCase();
+    const normalize = (value) => String(value ?? '').toLowerCase();
 
 const toNumber = (value) => {
     const parsed = parseInt(String(value ?? '').replace(/[^0-9]/g, ''), 10);
@@ -24,8 +24,9 @@ export default function secretaryInventory(rows = [], totals = {}) {
         run(title, message, tone = 'info') {
             if (typeof this.$dispatch === 'function') {
                 this.$dispatch('gpa:toast', { title, message, tone });
+            } else {
+                window.dispatchEvent(new CustomEvent('gpa:toast', { detail: { title, message, tone } }));
             }
-            window.dispatchEvent(new CustomEvent('gpa:toast', { detail: { title, message, tone } }));
         },
 
         isCommodityMatch(row) {
@@ -101,6 +102,20 @@ export default function secretaryInventory(rows = [], totals = {}) {
         },
 
         handleAction(action) {
+            const label = String(action?.label || '');
+            if (label.includes('Sinkron') || label.includes('Segarkan')) {
+                window.location.reload();
+                return;
+            }
+            if (label.includes('Unduh') || label.includes('CSV')) {
+                window.location.href = '/sekretaris/laporan/export';
+                return;
+            }
+            if (label.includes('Kritis')) {
+                this.criticalOnly = !this.criticalOnly;
+                this.toggleCritical();
+                return;
+            }
             this.run(action.label, action.message);
         },
 
@@ -120,19 +135,11 @@ export default function secretaryInventory(rows = [], totals = {}) {
             );
         },
 
-        bulkLock() {
-            const visible = this.visibleRows();
-
-            this.run(
-                'Kunci Kuota Massal Dijalankan',
-                `Rule 02 mengunci ${visible.length} komoditas (${this.visibleAtpTotal()} ATP tersisa).`
-            );
-        },
-
         detail(row) {
             this.run(
-                `Neraca ${row.name}`,
-                `${row.sku} • Total ${row.total_value} • Terkunci ${row.locked_value} • ATP ${row.atp_value}`
+                `Pemantauan ${row.name}`,
+                `Total: ${row.total_value} • Terkunci di Pesanan: ${row.locked_value} • Siap Dipesan (ATP): ${row.atp_value}`,
+                'info'
             );
         },
 

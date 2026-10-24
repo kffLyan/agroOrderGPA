@@ -39,12 +39,12 @@ class ReportController extends Controller
         ];
 
         // 1. Metrik omzet riil
-        $totalRevenue = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI'])
-            ->sum(DB::raw('COALESCE(grand_total, estimated_total)'));
+        $totalRevenue = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS'])
+            ->sum('grand_total');
 
         $totalTonnageKg = (float) OrderItem::whereHas('order', function ($q) {
-            $q->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI']);
-        })->sum(DB::raw('COALESCE(actual_net_weight, ordered_qty)'));
+            $q->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS']);
+        })->sum('ordered_qty');
 
         $cashInflow = (float) Invoice::where('status', 'PAID')->sum('grand_total');
         $openReceivables = (float) Invoice::whereIn('status', ['UNPAID', 'OVERDUE'])->sum('grand_total');
@@ -60,7 +60,7 @@ class ReportController extends Controller
         foreach ($products->take(5) as $p) {
             $items = OrderItem::where('product_id', $p->id)->get();
             $poKg = (float) $items->sum('ordered_qty');
-            $teraKg = (float) $items->sum(fn ($i) => $i->actual_net_weight ?: $i->ordered_qty);
+            $teraKg = $poKg;
             $price = (float) $p->base_price;
             $margin = 25.0; // standard margin
             $commodityList[] = [
@@ -77,8 +77,8 @@ class ReportController extends Controller
         foreach ($clients as $client) {
             $clientOrders = $client->orders->whereNotIn('status', ['BATAL']);
             $poCount = $clientOrders->count();
-            $volumeKg = (float) $clientOrders->sum(fn ($o) => $o->orderItems->sum(fn ($i) => $i->actual_net_weight ?: $i->ordered_qty));
-            $gross = (float) $clientOrders->sum(fn ($o) => (float) ($o->grand_total ?: $o->estimated_total));
+            $volumeKg = (float) $clientOrders->sum(fn ($o) => $o->orderItems->sum('ordered_qty'));
+            $gross = (float) $clientOrders->sum('grand_total');
             $settled = (float) $client->invoices->where('status', 'PAID')->sum('grand_total');
             $contract = $client->contracts->first();
             $termDays = $contract ? (int) $contract->top_days : 30;
@@ -166,15 +166,15 @@ class ReportController extends Controller
 
         $orders = $query->orderBy('created_at', 'desc')->get();
 
-        $totalRevenue = (float) $orders->sum(fn ($o) => (float) ($o->grand_total ?? $o->estimated_total));
+        $totalRevenue = (float) $orders->sum('grand_total');
         $totalTonnageKg = (float) OrderItem::whereIn('order_id', $orders->pluck('id'))
-            ->sum(DB::raw('COALESCE(actual_net_weight, ordered_qty)'));
+            ->sum('ordered_qty');
 
         $commoditySummary = OrderItem::whereIn('order_id', $orders->pluck('id'))
             ->select(
                 'product_id',
-                DB::raw('SUM(COALESCE(actual_net_weight, ordered_qty)) as total_weight'),
-                DB::raw('SUM(COALESCE(subtotal_final, ordered_qty * unit_price)) as total_sales')
+                DB::raw('SUM(ordered_qty) as total_weight'),
+                DB::raw('SUM(subtotal) as total_sales')
             )
             ->groupBy('product_id')
             ->with('product')
@@ -222,8 +222,8 @@ class ReportController extends Controller
             foreach ($clients as $client) {
                 $clientOrders = $client->orders->whereNotIn('status', ['BATAL']);
                 $poCount = $clientOrders->count();
-                $volumeKg = (float) $clientOrders->sum(fn ($o) => $o->orderItems->sum(fn ($i) => $i->actual_net_weight ?: $i->ordered_qty));
-                $gross = (float) $clientOrders->sum(fn ($o) => (float) ($o->grand_total ?: $o->estimated_total));
+                $volumeKg = (float) $clientOrders->sum(fn ($o) => $o->orderItems->sum('ordered_qty'));
+                $gross = (float) $clientOrders->sum('grand_total');
                 $settled = (float) $client->invoices->where('status', 'PAID')->sum('grand_total');
                 $outstanding = max(0, $gross - $settled);
                 $contract = $client->contracts->first();

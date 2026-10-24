@@ -12,8 +12,7 @@ class OrderItem extends Model
 
     protected $fillable = [
         'order_id', 'product_id', 'ordered_qty', 'unit_price',
-        'actual_net_weight', 'subtotal_final', 'weighed_by',
-        'weighed_at', 'returned_weight', 'return_reason',
+        'subtotal', 'returned_weight', 'return_reason',
     ];
 
     protected function casts(): array
@@ -21,10 +20,8 @@ class OrderItem extends Model
         return [
             'ordered_qty' => 'decimal:2',
             'unit_price' => 'decimal:2',
-            'actual_net_weight' => 'decimal:2',
-            'subtotal_final' => 'decimal:2',
+            'subtotal' => 'decimal:2',
             'returned_weight' => 'decimal:2',
-            'weighed_at' => 'datetime',
         ];
     }
 
@@ -36,10 +33,5 @@ class OrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
-    }
-
-    public function weigher(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'weighed_by');
     }
 }

@@ -86,7 +86,7 @@
             {{-- Card 2: Sumber Pasokan --}}
             <article class="flex h-full flex-col justify-between gap-3 overflow-hidden rounded-2xl bg-surface p-5 shadow-card">
                 <header class="flex items-start justify-between gap-2">
-                    <h2 class="gpa-micro-bold uppercase text-success-deep">SUMBER PASOKAN (RULE 02)</h2>
+                    <h2 class="gpa-micro-bold uppercase text-success-deep">SUMBER PASOKAN PANEN</h2>
                     <span class="inline-flex shrink-0 items-center justify-center rounded-md px-1.5 py-3 bg-accent/40 text-ink-strong">
                         <x-gpa.icon name="leaf" class="h-4 w-4" />
                     </span>
@@ -150,7 +150,7 @@
             {{-- Card 4: Safety Stock Buffer --}}
             <article class="flex h-full flex-col justify-between gap-3 overflow-hidden rounded-2xl bg-surface p-5 shadow-card">
                 <header class="flex items-start justify-between gap-2">
-                    <h2 class="gpa-micro-bold uppercase text-success-deep">SAFETY STOCK BUFFER (RULE 03)</h2>
+                    <h2 class="gpa-micro-bold uppercase text-success-deep">SAFETY STOCK BUFFER CADANGAN</h2>
                     <span class="inline-flex shrink-0 items-center justify-center rounded-md px-1.5 py-3 bg-accent/40 text-ink-strong">
                         <x-gpa.icon name="shield" class="h-4 w-4" />
                     </span>

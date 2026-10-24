@@ -54,7 +54,7 @@
             Lewati ke konten utama
         </a>
 
-        <header class="sticky top-0 z-40 border-b border-ink bg-brand text-white">
+        <header class="sticky top-0 z-40 w-full border-b border-ink bg-brand text-white shadow-sub">
             <div class="mx-auto flex h-[68px] w-full max-w-shell items-center justify-between gap-4 px-4 sm:px-6">
                 <div class="flex min-w-0 items-center gap-3">
                     <button type="button" @click="sidebarOpen = true" aria-label="Buka menu navigasi"
@@ -92,17 +92,17 @@
                     <span class="hidden h-6 w-px bg-success lg:block" aria-hidden="true"></span>
 
                     <div class="flex items-center gap-2">
-                        <button type="button" @click="run('Notifikasi', '3 pengajuan kontrak tier-1 menunggu tanda tangan Anda.')"
+                        <a href="{{ route('direktur.contracts.approval') }}"
                             class="relative hidden h-8 w-8 items-center justify-center rounded-lg text-surface-disabled transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"
                             aria-label="Notifikasi">
                             <x-gpa.icon name="bell" class="h-4 w-4" />
                             <span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" @click="run('Pesan Direksi', 'Tidak ada pesan baru dari sekretaris dan tim operasional.')"
+                        </a>
+                        <a href="{{ route('direktur.governance.index') }}"
                             class="hidden h-8 w-8 items-center justify-center rounded-lg text-surface-disabled transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"
                             aria-label="Pesan">
                             <x-gpa.icon name="mail" class="h-4 w-4" />
-                        </button>
+                        </a>
                         <span
                             class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-disabled text-[16px] font-bold text-ink ring-1 ring-inset ring-ink-body">
                             {{ $operatorInitials }}
@@ -120,7 +120,7 @@
             </div>
         </header>
 
-        <div class="mx-auto flex w-full max-w-shell items-start">
+        <div class="mx-auto flex w-full max-w-shell items-start flex-1 min-w-0">
             <div x-cloak x-show="sidebarOpen" @click="sidebarOpen = false" aria-hidden="true"
                 class="fixed inset-0 z-30 bg-ink/40 lg:hidden"></div>
 
@@ -139,11 +139,11 @@
                         </span>
                     </div>
 
-                    <button type="button" @click="auditLog()"
+                    <a href="{{ route('direktur.governance.export-audit') }}"
                         class="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-ink shadow-sub transition-colors hover:bg-accent-deep">
                         <x-gpa.icon name="clipboard" class="h-3.5 w-3.5 shrink-0 text-ink" />
                         <span class="text-[11px] font-bold tracking-[0.88px] text-ink gpa-meta">Audit Log</span>
-                    </button>
+                    </a>
 
                     <nav class="flex flex-col gap-1 pt-4" aria-label="Navigasi direktur">
                         @foreach ($navigation as $item)
@@ -174,11 +174,11 @@
                 </div>
 
                 <div class="flex flex-col gap-1 border-t border-line-hair pt-4">
-                    <button type="button" @click="run('Pengaturan', 'Modul pengaturan tata kelola sedang disiapkan.')"
+                    <a href="{{ route('profile.edit') }}"
                         class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left gpa-body text-ink-quiet transition-colors hover:bg-surface-shell hover:text-ink">
                         <x-gpa.icon name="settings" class="h-3.5 w-3.5 shrink-0" />
                         Pengaturan
-                    </button>
+                    </a>
                     @auth
                         <form method="POST" action="{{ route('logout') }}" id="logout-form">
                             @csrf
@@ -198,7 +198,7 @@
                 </div>
             </aside>
 
-            <main id="main-content" class="min-w-0 flex-1 px-4 py-6 lg:px-6">
+            <main id="main-content" class="min-w-0 flex-1 px-4 py-6 lg:px-6 w-full max-w-full">
                 @if (isset($header) && (is_string($header) || $header instanceof \Illuminate\View\ComponentSlot || $header instanceof \Illuminate\Contracts\Support\Htmlable))
                     <div class="mb-6">
                         <h1 class="text-2xl font-bold tracking-tight text-ink">
@@ -212,6 +212,8 @@
         </div>
 
         <x-gpa.toast />
+        <x-gpa.notifications />
+        <x-gpa.dialog />
     </div>
 </body>
 

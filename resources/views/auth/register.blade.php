@@ -119,19 +119,19 @@
 
                             <div>
                                 <label class="mb-1.5 block font-mono text-[11px] font-medium uppercase tracking-wider text-ink">
-                                    Tipe Kemitraan Klien *
+                                    Status Kemitraan Awal
                                 </label>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <label class="flex cursor-pointer items-center gap-2 rounded-sm border border-line-strong bg-surface p-2.5 hover:bg-surface-muted">
-                                        <input type="radio" name="client_type" value="REGULER" {{ old('client_type', 'REGULER') === 'REGULER' ? 'checked' : '' }}
-                                            class="h-3.5 w-3.5 border-line-strong text-brand focus:ring-0">
-                                        <span class="font-mono text-xs font-semibold text-ink">Reguler</span>
-                                    </label>
-                                    <label class="flex cursor-pointer items-center gap-2 rounded-sm border border-line-strong bg-surface p-2.5 hover:bg-surface-muted">
-                                        <input type="radio" name="client_type" value="B2B_KONTRAK" {{ old('client_type') === 'B2B_KONTRAK' ? 'checked' : '' }}
-                                            class="h-3.5 w-3.5 border-line-strong text-brand focus:ring-0">
-                                        <span class="font-mono text-xs font-semibold text-ink">Kontrak B2B</span>
-                                    </label>
+                                <div class="rounded-sm border border-line-strong bg-surface-shell/50 p-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-accent px-2 py-0.5 font-mono text-[10px] font-bold text-success-ink">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-success-deep"></span>
+                                            KLIEN REGULER (DEFAULT)
+                                        </span>
+                                        <span class="font-mono text-[11px] text-ink-body">Pembayaran di Muka</span>
+                                    </div>
+                                    <p class="mt-2 font-sans text-[11px] leading-relaxed text-ink-body">
+                                        Seluruh pendaftaran akun baru bermula sebagai <strong>Klien Reguler</strong>. Fasilitas <strong>Kemitraan Kontrak B2B</strong> (Harga Terkunci &amp; TOP Tempo 14–30 Hari) dapat diajukan secara resmi melalui Dasbor Klien setelah akun aktif untuk disahkan Direktur Utama GPA.
+                                    </p>
                                 </div>
                             </div>
 
@@ -393,19 +393,19 @@
 
                             <div>
                                 <label class="mb-1.5 block font-mono text-[11px] font-medium uppercase tracking-wider text-ink">
-                                    Tipe Kemitraan Klien *
+                                    Status Kemitraan Awal
                                 </label>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <label class="flex cursor-pointer items-center gap-2 rounded-sm border border-line-strong bg-surface p-2.5 hover:bg-surface-muted">
-                                        <input type="radio" name="client_type" value="REGULER" {{ old('client_type', 'REGULER') === 'REGULER' ? 'checked' : '' }}
-                                            class="h-3.5 w-3.5 border-line-strong text-brand focus:ring-0">
-                                        <span class="font-mono text-xs font-semibold text-ink">Reguler (Spot Market)</span>
-                                    </label>
-                                    <label class="flex cursor-pointer items-center gap-2 rounded-sm border border-line-strong bg-surface p-2.5 hover:bg-surface-muted">
-                                        <input type="radio" name="client_type" value="B2B_KONTRAK" {{ old('client_type') === 'B2B_KONTRAK' ? 'checked' : '' }}
-                                            class="h-3.5 w-3.5 border-line-strong text-brand focus:ring-0">
-                                        <span class="font-mono text-xs font-semibold text-ink">Kontrak B2B Rutin</span>
-                                    </label>
+                                <div class="rounded-sm border border-line-strong bg-surface-shell/50 p-3">
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-accent px-2 py-0.5 font-mono text-[10px] font-bold text-success-ink">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-success-deep"></span>
+                                            KLIEN REGULER (DEFAULT)
+                                        </span>
+                                        <span class="font-mono text-[11px] text-ink-body">Pembayaran di Muka</span>
+                                    </div>
+                                    <p class="mt-2 font-sans text-[11px] leading-relaxed text-ink-body">
+                                        Seluruh pendaftaran akun baru bermula sebagai <strong>Klien Reguler</strong>. Fasilitas <strong>Kemitraan Kontrak B2B</strong> (Harga Terkunci &amp; TOP Tempo 14–30 Hari) dapat diajukan secara resmi melalui Dasbor Klien setelah akun aktif untuk disahkan Direktur Utama GPA.
+                                    </p>
                                 </div>
                             </div>
 

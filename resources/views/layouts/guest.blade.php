@@ -27,5 +27,6 @@
                 {{ $slot }}
             </div>
         </div>
+        <x-gpa.notifications />
     </body>
 </html>

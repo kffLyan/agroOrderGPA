@@ -76,7 +76,7 @@ export default {
                     ink: '#2a1700',
                     border: '#f7bb71',
                     // Palet "stok terbatas / alokasi kritis" pada design Katalog
-                    // Komoditas dan ringkasan Rule 04 di halaman Keranjang.
+                    // Komoditas dan ringkasan pengiriman di halaman Keranjang.
                     caution: '#704602',
                     cream: '#f5f0e3',
                     row: '#fdf3e4',

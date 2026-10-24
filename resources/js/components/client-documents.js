@@ -13,9 +13,9 @@ export default function clientDocuments(defaults = {}) {
         page: 1,
         lastPage: defaults.pagination?.last_page ?? 1,
         total: defaults.pagination?.total ?? 0,
-        defaultPeriod: defaults.periods?.[0]?.value ?? '2026-q4',
-        tab: 'faktur',
-        period: defaults.periods?.[0]?.value ?? '2026-q4',
+        defaultPeriod: defaults.periods?.[0]?.value ?? 'all',
+        tab: defaults.tabs?.[0]?.value ?? 'all',
+        period: defaults.periods?.[0]?.value ?? 'all',
         search: '',
         selected: defaults.invoices?.[0]?.po ?? null,
         proofMenuOpen: false,
@@ -50,6 +50,10 @@ export default function clientDocuments(defaults = {}) {
         },
 
         archiveLabel() {
+            if (! this.tab || this.tab === 'all') {
+                return 'Faktur Konsolidasi TOP (Faktur Bulanan)';
+            }
+
             return this.tabs.find((item) => item.value === this.tab)?.label
                 ?? 'Faktur Konsolidasi TOP (Faktur Bulanan)';
         },

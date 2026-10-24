@@ -64,12 +64,12 @@ class CatalogController extends Controller
             });
         }
         $unpaidTotal = (float) Order::where('user_id', $user->id)
-            ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'TERVERIFIKASI', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])
+            ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])
             ->sum('grand_total');
 
         // Order aktif terakhir untuk pengiriman
         $lastActiveOrder = Order::where('user_id', $user->id)
-            ->whereIn('status', ['TERVERIFIKASI', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])
+            ->whereIn('status', ['MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])
             ->orderBy('id', 'desc')
             ->first();
 

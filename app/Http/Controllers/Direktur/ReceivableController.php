@@ -175,7 +175,12 @@ class ReceivableController extends Controller
         $name = $client ? ($client->company_name ?: $client->name) : 'Klien B2B #' . $id;
         $phone = $client?->phone ?: '—';
 
-        return back()->with('success', "Surat Pengingat Jatuh Tempo (Notice Tagihan) berhasil diteruskan ke kontak PIC {$name}" . ($phone !== '—' ? " ({$phone})." : "."));
+        $msg = "Surat Pengingat Jatuh Tempo (Notice Tagihan) berhasil diteruskan ke kontak PIC {$name}" . ($phone !== '—' ? " ({$phone})." : ".");
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => $msg]);
+        }
+
+        return back()->with('success', $msg);
     }
 
     /**
@@ -192,10 +197,12 @@ class ReceivableController extends Controller
             unset($frozenClients[$id]);
             $msg = "Status pembekuan PO untuk {$name} berhasil dicabut (Dispensasi Direktur).";
             $status = 'UNFREEZE';
+            $isLocked = false;
         } else {
             $frozenClients[$id] = true;
             $msg = "Plafon kredit {$name} berhasil dikunci permanen. Penerbitan Surat Jalan baru ditolak otomatis.";
             $status = 'LOCKED';
+            $isLocked = true;
         }
 
         session(['frozen_clients' => $frozenClients]);
@@ -208,6 +215,10 @@ class ReceivableController extends Controller
             'DIR-01 [CLEARANCE L4]',
             'SEALED'
         );
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => $msg, 'locked' => $isLocked]);
+        }
 
         return back()->with('success', $msg);
     }
@@ -257,6 +268,10 @@ class ReceivableController extends Controller
             'DIR-01 [CLEARANCE L4]',
             'SEALED'
         );
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => $msg]);
+        }
 
         return back()->with('success', $msg);
     }

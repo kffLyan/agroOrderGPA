@@ -25,10 +25,10 @@ class SalesMonitoringController extends Controller
         $selectedPeriod = $request->query('period', 'MTD');
 
         // 1. Perhitungan Omzet & Metrik Finansial dari database
-        $totalRevenue = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI'])
-            ->sum(DB::raw('COALESCE(grand_total, estimated_total)'));
+        $totalRevenue = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS'])
+            ->sum('grand_total');
 
-        $totalTonnage = (float) OrderItem::sum(DB::raw('COALESCE(actual_net_weight, ordered_qty)'));
+        $totalTonnage = (float) OrderItem::sum('ordered_qty');
         $totalBilling = (float) Invoice::sum('grand_total');
         $totalPaid = (float) Invoice::where('status', 'PAID')->sum('grand_total');
         $totalOutstanding = (float) Invoice::whereIn('status', ['UNPAID', 'OVERDUE'])->sum('grand_total');
@@ -45,7 +45,7 @@ class SalesMonitoringController extends Controller
 
         foreach ($products->take(5) as $idx => $prod) {
             $items = OrderItem::where('product_id', $prod->id)->get();
-            $vol = (float) $items->sum(fn ($i) => $i->actual_net_weight ?: $i->ordered_qty);
+            $vol = (float) $items->sum('ordered_qty');
             $rev = (float) $items->sum('subtotal');
             $costPerKg = (float) ($prod->base_price * 0.75); // standar margin Koperasi 25%
             $cost = $vol * $costPerKg;
@@ -108,23 +108,23 @@ class SalesMonitoringController extends Controller
         $marginPct = $grossMarginPercent > 0 ? $grossMarginPercent : 20.0;
         $settledPct = $totalBilling > 0 ? round(($totalPaid / $totalBilling) * 100, 1) : 100.0;
 
-        $wtdOrders = Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI'])
+        $wtdOrders = Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS'])
             ->where('created_at', '>=', (clone $now)->startOfWeek())
             ->get();
-        $wtdRevenue = (float) $wtdOrders->sum(fn ($o) => $o->grand_total ?: $o->estimated_total);
+        $wtdRevenue = (float) $wtdOrders->sum('grand_total');
         $wtdBilling = (float) Invoice::where('created_at', '>=', (clone $now)->startOfWeek())->sum('grand_total');
         $wtdOutstanding = (float) Invoice::whereIn('status', ['UNPAID', 'OVERDUE'])->where('created_at', '>=', (clone $now)->startOfWeek())->sum('grand_total');
-        $wtdTonnage = (float) OrderItem::whereIn('order_id', $wtdOrders->pluck('id'))->sum(DB::raw('COALESCE(actual_net_weight, ordered_qty)'));
+        $wtdTonnage = (float) OrderItem::whereIn('order_id', $wtdOrders->pluck('id'))->sum('ordered_qty');
         $wtdSettledCount = $wtdOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count();
         $wtdAov = $wtdSettledCount > 0 ? round($wtdRevenue / $wtdSettledCount) : 0;
 
-        $ytdOrders = Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI'])
+        $ytdOrders = Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS'])
             ->where('created_at', '>=', (clone $now)->startOfYear())
             ->get();
-        $ytdRevenue = (float) $ytdOrders->sum(fn ($o) => $o->grand_total ?: $o->estimated_total);
+        $ytdRevenue = (float) $ytdOrders->sum('grand_total');
         $ytdBilling = (float) Invoice::where('created_at', '>=', (clone $now)->startOfYear())->sum('grand_total');
         $ytdOutstanding = (float) Invoice::whereIn('status', ['UNPAID', 'OVERDUE'])->where('created_at', '>=', (clone $now)->startOfYear())->sum('grand_total');
-        $ytdTonnage = (float) OrderItem::whereIn('order_id', $ytdOrders->pluck('id'))->sum(DB::raw('COALESCE(actual_net_weight, ordered_qty)'));
+        $ytdTonnage = (float) OrderItem::whereIn('order_id', $ytdOrders->pluck('id'))->sum('ordered_qty');
         $ytdSettledCount = $ytdOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count();
         $ytdAov = $ytdSettledCount > 0 ? round($ytdRevenue / $ytdSettledCount) : 0;
 
@@ -193,9 +193,9 @@ class SalesMonitoringController extends Controller
             $wStart = (clone $wDate)->startOfWeek();
             $wEnd = (clone $wDate)->endOfWeek();
             $wLabel = 'W' . $wStart->format('W');
-            $wRev = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI'])
+            $wRev = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS'])
                 ->whereBetween('created_at', [$wStart, $wEnd])
-                ->sum(DB::raw('COALESCE(grand_total, estimated_total)'));
+                ->sum('grand_total');
 
             $status = $w === 0 ? 'running' : 'closed';
             $trendRows[] = [
@@ -223,11 +223,11 @@ class SalesMonitoringController extends Controller
 
         // 4. Komposisi Kanal Penjualan
         $b2bRev = (float) Order::whereHas('user', fn ($q) => $q->where('client_type', 'B2B_KONTRAK'))
-            ->sum(DB::raw('COALESCE(grand_total, estimated_total)'));
+            ->sum('grand_total');
         $ritelRev = (float) Order::whereHas('user', fn ($q) => $q->where('client_type', 'REGULER'))
-            ->sum(DB::raw('COALESCE(grand_total, estimated_total)'));
+            ->sum('grand_total');
         $manualRev = (float) Order::where('order_source', 'MANUAL_SEKRETARIS')
-            ->sum(DB::raw('COALESCE(grand_total, estimated_total)'));
+            ->sum('grand_total');
 
         $totCh = $b2bRev + $ritelRev + $manualRev;
         $channelRows = [
@@ -365,9 +365,9 @@ class SalesMonitoringController extends Controller
             $no = 1;
             foreach ($orders as $order) {
                 $orderedKg = (float) $order->orderItems->sum('ordered_qty');
-                $actualKg = $order->orderItems->sum(fn ($i) => $i->actual_net_weight ? (float) $i->actual_net_weight : null);
-                $hasWeighed = $actualKg !== null && $order->orderItems->every(fn($i) => $i->actual_net_weight !== null);
-                $amount = (float) ($order->grand_total ?: $order->estimated_total);
+                $actualKg = $orderedKg;
+                $hasWeighed = true;
+                $amount = (float) $order->grand_total;
 
                 fputcsv($handle, [
                     $no++,

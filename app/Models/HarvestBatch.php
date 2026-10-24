@@ -12,7 +12,8 @@ class HarvestBatch extends Model
 
     protected $fillable = [
         'product_id', 'source_type', 'supplier_name',
-        'batch_date', 'initial_quantity', 'available_quantity', 'inputted_by',
+        'batch_date', 'initial_quantity', 'grade', 'qc_notes',
+        'available_quantity', 'inputted_by',
     ];
 
     protected function casts(): array

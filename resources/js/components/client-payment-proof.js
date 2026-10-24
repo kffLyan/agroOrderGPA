@@ -11,11 +11,13 @@ export default function clientPaymentProof(defaults = {}) {
     return {
         invoices: defaults.invoices ?? [],
         account: defaults.account ?? {},
+        channels: defaults.channels ?? [],
+        selectedChannelId: defaults.channels?.[0]?.id ?? 'bca',
         fileRules: defaults.fileRules ?? {},
         compliance: defaults.compliance ?? {},
         selected: defaults.selected ?? null,
         form: {
-            senderBank: defaults.form?.sender_bank ?? '',
+            senderBank: defaults.form?.sender_bank ?? (defaults.channels?.[0]?.name ?? 'Bank BCA'),
             senderAccount: defaults.form?.sender_account ?? '',
             amount: '',
             transferAt: defaults.form?.transfer_at ?? '',
@@ -30,10 +32,40 @@ export default function clientPaymentProof(defaults = {}) {
         submitted: false,
         draftSaved: false,
         error: null,
+        fullQrisModal: null,
 
         init() {
             this.selected = defaults.selected ?? this.invoices[0]?.po ?? null;
             this.form.amount = this.payableDigits;
+            if (this.channels.length > 0) {
+                this.selectedChannelId = this.channels[0].id;
+                if (!defaults.form?.sender_bank) {
+                    this.form.senderBank = this.channels[0].name;
+                }
+            }
+        },
+
+        get selectedChannel() {
+            return this.channels.find((c) => c.id === this.selectedChannelId) ?? this.channels[0] ?? {
+                id: 'bca',
+                type: 'BANK',
+                name: 'Bank BCA',
+                account_number: '8210-992-3841',
+                account_name: 'PT Guntur Pandu Agro (Divisi Keuangan B2B)',
+                instructions: 'Sertakan nomor faktur di berita transfer.',
+            };
+        },
+
+        selectChannel(id) {
+            this.selectedChannelId = id;
+            if (this.selectedChannel) {
+                this.form.senderBank = this.selectedChannel.name;
+                this.$dispatch('gpa:toast', {
+                    title: 'Metode Pembayaran Dipilih',
+                    message: `${this.selectedChannel.name}: ${this.selectedChannel.account_number} (a.n. ${this.selectedChannel.account_name})`,
+                    tone: 'info',
+                });
+            }
         },
 
         get current() {
@@ -182,7 +214,9 @@ export default function clientPaymentProof(defaults = {}) {
         },
 
         copyAccount() {
-            this.copy(this.account.number ?? '', 'Nominal Rekening GPA');
+            const acc = this.selectedChannel?.account_number ?? this.account.number ?? '';
+            const name = this.selectedChannel?.name ?? 'GPA';
+            this.copy(acc, `Nomor Rekening / NMID ${name}`);
         },
 
         copyAmount() {
@@ -271,7 +305,8 @@ export default function clientPaymentProof(defaults = {}) {
                 const formData = new FormData();
                 formData.append('invoice_po', this.current?.po ?? '');
                 formData.append('amount', this.amountValue);
-                formData.append('sender_bank', this.form.senderBank || 'BCA');
+                formData.append('payment_method', this.selectedChannel?.type === 'QRIS' ? 'QRIS' : 'TRANSFER_BANK');
+                formData.append('sender_bank', this.form.senderBank || this.selectedChannel?.name || 'BCA');
                 formData.append('sender_account', this.form.senderAccount || '-');
                 formData.append('reference', this.form.reference || '');
                 formData.append('transfer_at', this.form.transferAt || '');

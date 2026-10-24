@@ -11,6 +11,7 @@ use App\Services\StockService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OrderController extends Controller
@@ -32,7 +33,7 @@ class OrderController extends Controller
         $userId = Auth::guard('web')->id();
 
         $rawOrders = Order::where('user_id', $userId)
-            ->with(['orderItems.product', 'driver', 'verifier', 'invoice'])
+            ->with(['orderItems.product', 'driver', 'verifier', 'invoice', 'payments'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -48,28 +49,81 @@ class OrderController extends Controller
     }
 
     /**
-     * Menyimpan transaksi pesanan baru dalam siklus ACID
+     * Menyimpan transaksi pesanan baru dalam siklus ACID dengan proteksi idempotency & anti-duplikasi
      */
     public function store(StoreOrderRequest $request)
     {
-        try {
-            $user = Auth::guard('web')->user();
-            $proofPath = null;
+        $user = Auth::guard('web')->user();
+        $submissionToken = $request->input('submission_token');
 
+        // 1. Pemeriksaan Idempotency Token via Cache (mencegah klik ganda / browser resubmit)
+        if ($submissionToken) {
+            $tokenCacheKey = "order_submission_token_{$user->id}_{$submissionToken}";
+            if (Cache::has($tokenCacheKey)) {
+                $existingOrderId = Cache::get($tokenCacheKey);
+                $existingOrder = Order::where('user_id', $user->id)->find($existingOrderId);
+                if ($existingOrder) {
+                    return redirect()->route('klien.orders.show', $existingOrder->id)
+                        ->with('info', "Pesanan {$existingOrder->order_number} telah berhasil diajukan sebelumnya.");
+                }
+            }
+        }
+
+        // 2. Kunci Atomic Per-User untuk mencegah balapan konkurensi (rapid multiple clicks)
+        $lockKey = "order_create_lock_user_{$user->id}";
+        $lock = Cache::lock($lockKey, 10);
+
+        if (! $lock->get()) {
+            sleep(1);
+            $recentOrder = Order::where('user_id', $user->id)
+                ->where('created_at', '>=', now()->subSeconds(30))
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($recentOrder) {
+                return redirect()->route('klien.orders.show', $recentOrder->id)
+                    ->with('success', "Pesanan {$recentOrder->order_number} berhasil diajukan.");
+            }
+
+            return redirect()->route('klien.orders.index')
+                ->with('info', 'Pengajuan pesanan Anda sedang diproses. Silakan periksa daftar riwayat pesanan.');
+        }
+
+        try {
+            $validatedData = $request->validated();
+
+            // 3. Deteksi duplikasi pesanan identik dalam kurun waktu 90 detik terakhir
+            $recentOrder = $this->orderService->findRecentDuplicateOrder($user, $validatedData);
+            if ($recentOrder) {
+                if ($submissionToken) {
+                    Cache::put("order_submission_token_{$user->id}_{$submissionToken}", $recentOrder->id, now()->addMinutes(15));
+                }
+
+                return redirect()->route('klien.orders.show', $recentOrder->id)
+                    ->with('info', "Pesanan {$recentOrder->order_number} sudah berhasil diajukan sebelumnya (menghindari duplikasi).");
+            }
+
+            $proofPath = null;
             if ($request->hasFile('payment_proof')) {
                 $proofPath = $request->file('payment_proof')->store('payments', 'public');
             }
 
             $order = $this->orderService->createOrder(
                 $user,
-                $request->validated(),
+                $validatedData,
                 $proofPath
             );
+
+            if ($submissionToken) {
+                Cache::put("order_submission_token_{$user->id}_{$submissionToken}", $order->id, now()->addMinutes(15));
+            }
 
             return redirect()->route('klien.orders.show', $order->id)
                 ->with('success', "Pesanan {$order->order_number} berhasil diajukan dan sedang masuk antrean verifikasi Sekretaris.");
         } catch (Exception $e) {
             return back()->withInput()->withErrors(['error' => $e->getMessage()]);
+        } finally {
+            $lock->release();
         }
     }
 
@@ -102,7 +156,9 @@ class OrderController extends Controller
         if ($statusFilter !== 'all' && !empty($statusFilter)) {
             $stageMap = [
                 'verifikasi' => ['MENUNGGU_VERIFIKASI'],
-                'timbang'    => ['TERVERIFIKASI', 'SIAP_KIRIM'],
+                'bayar'      => ['MENUNGGU_PEMBAYARAN'],
+                'lunas'      => ['LUNAS'],
+                'kemas'      => ['SIAP_KIRIM'],
                 'kirim'      => ['DALAM_PENGIRIMAN'],
                 'selesai'    => ['SELESAI', 'SELESAI_CATATAN'],
                 'batal'      => ['BATAL'],
@@ -116,8 +172,8 @@ class OrderController extends Controller
         $orders = $query->get();
 
         $totalKgOrder = (float) $orders->sum(fn ($o) => $o->orderItems->sum('ordered_qty'));
-        $totalKgActual = (float) $orders->sum(fn ($o) => $o->orderItems->sum(fn ($i) => $i->actual_net_weight ?? 0));
-        $totalValue = (float) $orders->sum(fn ($o) => (float) ($o->grand_total ?: $o->estimated_total));
+        $totalKgActual = $totalKgOrder;
+        $totalValue = (float) $orders->sum('grand_total');
         $countOrders = $orders->count();
 
         $docNumber = 'DOC/GPA-REKAP/' . now()->format('Ym') . '/' . str_pad($user->id, 4, '0', STR_PAD_LEFT);
@@ -156,7 +212,9 @@ class OrderController extends Controller
         if ($statusFilter !== 'all' && !empty($statusFilter)) {
             $stageMap = [
                 'verifikasi' => ['MENUNGGU_VERIFIKASI'],
-                'timbang'    => ['TERVERIFIKASI', 'SIAP_KIRIM'],
+                'bayar'      => ['MENUNGGU_PEMBAYARAN'],
+                'lunas'      => ['LUNAS'],
+                'kemas'      => ['SIAP_KIRIM'],
                 'kirim'      => ['DALAM_PENGIRIMAN'],
                 'selesai'    => ['SELESAI', 'SELESAI_CATATAN'],
                 'batal'      => ['BATAL'],
@@ -197,15 +255,15 @@ class OrderController extends Controller
             $no = 1;
             foreach ($orders as $order) {
                 $orderedKg = (float) $order->orderItems->sum('ordered_qty');
-                $actualKg = $order->orderItems->sum(fn ($i) => $i->actual_net_weight ? (float) $i->actual_net_weight : null);
-                $hasWeighed = $actualKg !== null && $order->orderItems->every(fn($i) => $i->actual_net_weight !== null);
-                $amount = (float) ($order->grand_total ?: $order->estimated_total);
+                $actualKg = $orderedKg;
+                $hasWeighed = true;
+                $amount = (float) $order->grand_total;
 
                 $commoditiesList = $order->orderItems->map(function ($item) {
                     return ($item->product->name ?? 'Komoditas') . ' (' . number_format($item->ordered_qty, 0, ',', '.') . ' kg)';
                 })->join(', ');
 
-                $diffPct = ($hasWeighed && $orderedKg > 0) ? round((($actualKg - $orderedKg) / $orderedKg) * 100, 2) : 0;
+                $diffPct = 0;
 
                 fputcsv($handle, [
                     $no++,

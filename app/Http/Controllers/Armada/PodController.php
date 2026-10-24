@@ -60,6 +60,9 @@ class PodController extends Controller
             'received_by_name' => 'nullable|string',
             'manifest_photo'   => 'nullable|image|max:10240',
             'dock_photo'       => 'nullable|image|max:10240',
+            'returns'          => 'nullable|array',
+            'returns.*.returned_weight' => 'nullable|numeric|min:0',
+            'returns.*.return_reason'   => 'nullable|string|max:255',
         ]);
 
         $condition = $request->input('condition', 'clear');
@@ -78,8 +81,24 @@ class PodController extends Controller
             $podPath = 'uploads/pod/' . $filename;
         }
 
+        $hasReturn = false;
+        if ($request->has('returns') && is_array($request->input('returns'))) {
+            foreach ($request->input('returns') as $itemId => $returnData) {
+                $returnedWeight = (float) ($returnData['returned_weight'] ?? 0);
+                $returnReason = $returnData['return_reason'] ?? null;
+
+                if ($returnedWeight > 0) {
+                    $hasReturn = true;
+                    $order->orderItems()->where('id', $itemId)->update([
+                        'returned_weight' => $returnedWeight,
+                        'return_reason'   => $returnReason,
+                    ]);
+                }
+            }
+        }
+
         // Simpan perubahan ke pesanan
-        $order->status = ($condition === 'discrepancy') ? 'SELESAI_CATATAN' : 'SELESAI';
+        $order->status = ($condition === 'discrepancy' || $hasReturn) ? 'SELESAI_CATATAN' : 'SELESAI';
         $order->arrival_time = now();
         if ($receiverName) {
             $order->received_by_name = $receiverName;

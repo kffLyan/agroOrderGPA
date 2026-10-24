@@ -9,7 +9,8 @@
     $counts = [
         'all'        => $rawOrders->count(),
         'verifikasi' => $rawOrders->where('status', 'MENUNGGU_VERIFIKASI')->count(),
-        'timbang'    => $rawOrders->whereIn('status', ['TERVERIFIKASI', 'SIAP_KIRIM'])->count(),
+        'bayar'      => $rawOrders->whereIn('status', ['MENUNGGU_PEMBAYARAN', 'LUNAS'])->count(),
+        'kemas'      => $rawOrders->where('status', 'SIAP_KIRIM')->count(),
         'kirim'      => $rawOrders->where('status', 'DALAM_PENGIRIMAN')->count(),
         'selesai'    => $rawOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count(),
         'batal'      => $rawOrders->where('status', 'BATAL')->count(),
@@ -18,7 +19,8 @@
     $statusTabs = [
         ['label' => 'Semua Pesanan', 'value' => 'all', 'count' => $counts['all']],
         ['label' => 'Menunggu Verifikasi', 'value' => 'verifikasi', 'count' => $counts['verifikasi']],
-        ['label' => 'Sortasi & Timbang', 'value' => 'timbang', 'count' => $counts['timbang']],
+        ['label' => 'Faktur & Pembayaran', 'value' => 'bayar', 'count' => $counts['bayar']],
+        ['label' => 'Siap Kirim', 'value' => 'kemas', 'count' => $counts['kemas']],
         ['label' => 'Dalam Armada Chiller', 'value' => 'kirim', 'count' => $counts['kirim']],
         ['label' => 'Selesai & Sah Diterima', 'value' => 'selesai', 'count' => $counts['selesai']],
         ['label' => 'Dibatalkan', 'value' => 'batal', 'count' => $counts['batal']],
@@ -26,17 +28,18 @@
 
     $orders = $rawOrders->map(function ($order) {
         $totalOrderedQty = (float) ($order->orderItems ? $order->orderItems->sum('ordered_qty') : 0);
-        $totalActualWeight = $order->orderItems ? $order->orderItems->sum(function ($item) {
-            return $item->actual_net_weight ? (float) $item->actual_net_weight : null;
-        }) : null;
+        $totalActualWeight = $totalOrderedQty;
+        $hasWeighed = true;
+        $deviationKg = 0;
+        $deviationPercent = 0;
 
-        $hasWeighed = $totalActualWeight !== null && $order->orderItems && $order->orderItems->every(fn($i) => $i->actual_net_weight !== null);
-        $deviationKg = $hasWeighed ? round($totalActualWeight - $totalOrderedQty, 2) : 0;
-        $deviationPercent = ($hasWeighed && $totalOrderedQty > 0) ? round(abs($deviationKg / $totalOrderedQty) * 100, 2) : 0;
+        $hasPendingProof = ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_pending_proof);
+        $hasRejectedProof = ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_rejected_proof);
 
         $stage = match ($order->status) {
             'MENUNGGU_VERIFIKASI'                      => 'verifikasi',
-            'TERVERIFIKASI', 'SIAP_KIRIM'              => 'timbang',
+            'MENUNGGU_PEMBAYARAN', 'LUNAS'             => 'bayar',
+            'SIAP_KIRIM'                               => 'kemas',
             'DALAM_PENGIRIMAN'                         => 'kirim',
             'SELESAI', 'SELESAI_CATATAN'               => 'selesai',
             'BATAL'                                    => 'batal',
@@ -45,7 +48,8 @@
 
         $statusTone = match ($order->status) {
             'MENUNGGU_VERIFIKASI'        => 'warning',
-            'TERVERIFIKASI'              => 'accent',
+            'MENUNGGU_PEMBAYARAN'        => $hasRejectedProof ? 'danger' : ($hasPendingProof ? 'warning' : 'brand'),
+            'LUNAS'                      => 'accent',
             'SIAP_KIRIM'                 => 'accent',
             'DALAM_PENGIRIMAN'           => 'brand',
             'SELESAI', 'SELESAI_CATATAN' => 'pill',
@@ -55,8 +59,9 @@
 
         $statusText = match ($order->status) {
             'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi',
-            'TERVERIFIKASI'       => 'Diverifikasi Sekretaris',
-            'SIAP_KIRIM'          => 'Siap Kirim (Penimbangan Sah)',
+            'MENUNGGU_PEMBAYARAN' => $hasRejectedProof ? 'Bukti Bayar Ditolak' : ($hasPendingProof ? 'Menunggu Verifikasi Pembayaran' : 'Menunggu Pembayaran'),
+            'LUNAS'               => 'Lunas Terverifikasi',
+            'SIAP_KIRIM'          => 'Surat Jalan Terbit',
             'DALAM_PENGIRIMAN'    => 'Armada Menuju Dock',
             'SELESAI'             => 'Selesai Diterima Dock',
             'SELESAI_CATATAN'     => 'Selesai (Ada Catatan Retur)',
@@ -105,9 +110,19 @@
             'status'              => $statusText,
             'status_tone'         => $statusTone,
             'status_meta'         => 'Order ' . ($order->order_source === 'WEB_PORTAL' ? 'Web Portal' : 'Routine'),
-            'status_note'         => $order->status === 'MENUNGGU_VERIFIKASI' ? 'SLA Verifikasi < 2 Jam' : 'Proses Operasional Berjalan',
-            'total'               => (float) ($order->grand_total ?: $order->estimated_total),
-            'total_note'          => $hasWeighed ? 'Total Final Tagihan Sah' : 'Estimasi Nilai PO',
+            'status_note'         => $order->status === 'BATAL'
+                ? ('Alasan: ' . ($order->rejection_reason ?: 'Ditolak Verifikasi Sekretariat'))
+                : ($hasRejectedProof 
+                    ? ('Ditolak: ' . ($order->rejected_proof_payment?->verification_note ?: 'Bukti transfer tidak valid/ditolak. Silakan unggah ulang.'))
+                    : ($hasPendingProof 
+                        ? 'Bukti bayar terkirim ke Sekretaris • Menunggu verifikasi'
+                        : ($order->status === 'MENUNGGU_VERIFIKASI' 
+                            ? 'SLA Verifikasi < 2 Jam' 
+                            : ($order->status === 'MENUNGGU_PEMBAYARAN' 
+                                ? 'Menunggu unggah bukti transfer' 
+                                : 'Proses Operasional Berjalan')))),
+            'total'               => (float) $order->grand_total,
+            'total_note'          => 'Total Nilai Tagihan',
             'total_chip'          => $order->invoice_id ? 'Faktur Terbit' : 'Belum Ditagihkan',
             'total_chip_tone'     => $order->invoice_id ? 'success' : 'default',
             'payment'             => 'tempo',
@@ -123,7 +138,7 @@
     ];
 
     $totalKgOrder = (float) $rawOrders->sum(fn($o) => $o->orderItems ? $o->orderItems->sum('ordered_qty') : 0);
-    $totalKgActual = (float) $rawOrders->sum(fn($o) => $o->orderItems ? $o->orderItems->sum(fn($i) => $i->actual_net_weight ?? 0) : 0);
+    $totalKgActual = $totalKgOrder;
 
     $rupiah = fn ($value) => 'Rp '.number_format($value, 0, ',', '.');
 
@@ -131,6 +146,7 @@
         'accent' => 'bg-accent text-ink ring-accent-edge',
         'brand' => 'bg-accent text-success-ink',
         'warning' => 'bg-warning-soft text-warning-deep ring-warning/40',
+        'danger' => 'bg-danger-soft text-danger ring-danger/40',
         'pill' => 'bg-surface-pill text-ink-body ring-line-board',
         'track' => 'bg-surface-pill text-ink-body ring-line-board/60',
     ];
@@ -139,6 +155,7 @@
         'accent' => 'bg-ink',
         'brand' => 'bg-accent',
         'warning' => 'bg-warning-deep',
+        'danger' => 'bg-danger',
         'pill' => 'bg-success-deep',
         'track' => 'bg-ink-quiet',
     ];
@@ -504,9 +521,7 @@
             </div>
         </section>
 
-        {{-- ------------------------------------------------------------------ --}}
-        {{-- Banner integritas Rule 04 & 05 --}}
-        {{-- ------------------------------------------------------------------ --}}
+        {{-- Banner integritas Penimbangan Netto & Pengiriman --}}
         <section class="gpa-card flex flex-col gap-3 bg-brand p-4 ring-1 ring-inset ring-accent/30 lg:flex-row lg:items-center lg:justify-between">
             <div class="flex items-start gap-2">
                 <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-accent">
@@ -601,4 +616,17 @@
             </article>
         </section>
     </div>
+
+    @if (session('success') || session('info'))
+        <script>
+            try {
+                localStorage.removeItem('gpa.draft.po');
+                localStorage.setItem('gpa.cart.emptied', '1');
+                localStorage.setItem('gpa.cart.submitted', '1');
+                localStorage.removeItem('gpa_client_po_draft');
+                localStorage.setItem('gpa_client_cart_emptied', 'true');
+                window.dispatchEvent(new CustomEvent('gpa:draft-synced'));
+            } catch (e) {}
+        </script>
+    @endif
 @endsection

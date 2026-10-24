@@ -214,9 +214,9 @@
                     @forelse ($orders as $idx => $order)
                         @php
                             $orderedKg = (float) $order->orderItems->sum('ordered_qty');
-                            $actualKg = $order->orderItems->sum(fn ($i) => $i->actual_net_weight ? (float) $i->actual_net_weight : null);
-                            $hasWeighed = $actualKg !== null && $order->orderItems->every(fn($i) => $i->actual_net_weight !== null);
-                            $amount = (float) ($order->grand_total ?: $order->estimated_total);
+                            $actualKg = $orderedKg;
+                            $hasWeighed = true;
+                            $amount = (float) $order->grand_total;
 
                             $commoditiesList = $order->orderItems->map(function ($item) {
                                 return ($item->product->name ?? 'Komoditas') . ' (' . number_format($item->ordered_qty, 0, ',', '.') . ' kg)';
@@ -224,8 +224,9 @@
 
                             $statusLabel = match ($order->status) {
                                 'MENUNGGU_VERIFIKASI' => 'MENUNGGU VERIFIKASI',
-                                'TERVERIFIKASI'       => 'TERVERIFIKASI SEKRE',
-                                'SIAP_KIRIM'          => 'SIAP KIRIM (NETTO SAH)',
+                                'MENUNGGU_PEMBAYARAN' => 'MENUNGGU PEMBAYARAN',
+                                'LUNAS'               => 'LUNAS TERVERIFIKASI',
+                                'SIAP_KIRIM'          => 'SURAT JALAN TERBIT',
                                 'DALAM_PENGIRIMAN'    => 'DALAM PENGIRIMAN',
                                 'SELESAI'             => 'SELESAI DITERIMA',
                                 'SELESAI_CATATAN'     => 'SELESAI (CATATAN)',

@@ -1,4 +1,15 @@
-<div id="gpa-loader-overlay" aria-live="polite" aria-busy="true">
+<script>
+  (function () {
+    try {
+      if (sessionStorage.getItem('gpa_page_transition') === '1') {
+        sessionStorage.removeItem('gpa_page_transition');
+        document.documentElement.classList.add('gpa-trans-in');
+      }
+    } catch (e) {}
+  })();
+</script>
+
+<div id="gpa-loader-overlay" aria-live="polite" aria-busy="false" onclick="window.hideGpaLoader()">
 <style>
   #gpa-loader-overlay {
     --bg: #f8faf3;
@@ -11,21 +22,56 @@
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
     font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
     background: var(--bg);
     color: var(--fg);
     box-sizing: border-box;
     padding-top: env(safe-area-inset-top, 0px);
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    opacity: 1;
-    pointer-events: auto;
-    transition: opacity 0.3s ease-out;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.22s ease-out, visibility 0.22s ease-out;
+    cursor: pointer;
   }
+  #gpa-loader-overlay.is-active {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  /* Transisi Halus (Dissolve Out) Saat Baru Tiba di Halaman Baru */
+  html.gpa-trans-in #gpa-loader-overlay {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: none;
+    animation: gpaDissolveOut 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes gpaDissolveOut {
+    0% {
+      opacity: 1;
+      visibility: visible;
+    }
+    100% {
+      opacity: 0;
+      visibility: hidden;
+    }
+  }
+  html.gpa-trans-in #gpa-loader-overlay .leaf {
+    clip-path: inset(0 0 0 0) !important;
+    animation: none !important;
+  }
+  html.gpa-trans-in #gpa-loader-overlay svg {
+    animation: none !important;
+  }
+
   #gpa-loader-overlay svg {
     width: min(38vw, 180px);
     height: auto;
     overflow: visible;
+  }
+  #gpa-loader-overlay.is-active svg {
     animation: fade 4.2s ease-in-out infinite;
   }
   #gpa-loader-overlay .ghost {
@@ -34,13 +80,13 @@
   #gpa-loader-overlay .leaf {
     clip-path: inset(0 100% 0 0);
   }
-  #gpa-loader-overlay .l1 {
+  #gpa-loader-overlay.is-active .l1 {
     animation: w1 4.2s cubic-bezier(.45, 0, .25, 1) infinite;
   }
-  #gpa-loader-overlay .l2 {
+  #gpa-loader-overlay.is-active .l2 {
     animation: w2 4.2s cubic-bezier(.45, 0, .25, 1) infinite;
   }
-  #gpa-loader-overlay .l3 {
+  #gpa-loader-overlay.is-active .l3 {
     animation: w3 4.2s cubic-bezier(.45, 0, .25, 1) infinite;
   }
   @keyframes w1 {
@@ -65,16 +111,25 @@
     letter-spacing: .12em;
     text-transform: uppercase;
     opacity: .7;
+    font-weight: 600;
   }
-  #gpa-loader-overlay.fade-out {
-    opacity: 0;
-    pointer-events: none;
+  #gpa-loader-overlay .subtext {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: normal;
+    text-transform: none;
+    opacity: .55;
+    text-align: center;
+    max-width: 320px;
+    line-height: 1.4;
   }
   @media (prefers-reduced-motion: reduce) {
     #gpa-loader-overlay .leaf,
-    #gpa-loader-overlay svg {
-      animation: none;
-      clip-path: none;
+    #gpa-loader-overlay svg,
+    html.gpa-trans-in #gpa-loader-overlay {
+      animation: none !important;
+      clip-path: none !important;
     }
   }
 </style>
@@ -93,79 +148,145 @@
   <use class="leaf l2" href="#pT" fill="url(#gT)"/>
   <use class="leaf l3" href="#pR" fill="url(#gR)"/>
 </svg>
-<p>Memuat</p>
+<p id="gpa-loader-text">Memuat</p>
+<p id="gpa-loader-subtext" class="subtext" style="display: none;"></p>
 </div>
 
 <script>
   (function () {
     const overlay = document.getElementById('gpa-loader-overlay');
+    const textEl = document.getElementById('gpa-loader-text');
+    const subtextEl = document.getElementById('gpa-loader-subtext');
+    let navTimer = null;
+    let safetyTimer = null;
+
     if (!overlay) return;
 
+    // Bersihkan penanda transisi masuk setelah animasi selesai
+    setTimeout(function () {
+      document.documentElement.classList.remove('gpa-trans-in');
+    }, 300);
+
+    // Sembunyikan loading screen
     window.hideGpaLoader = function () {
+      clearTimeout(navTimer);
+      clearTimeout(safetyTimer);
+      try {
+        sessionStorage.removeItem('gpa_page_transition');
+        document.documentElement.classList.remove('gpa-trans-in');
+      } catch (e) {}
       if (!overlay) return;
-      overlay.classList.add('fade-out');
-      setTimeout(function () {
-        overlay.style.display = 'none';
-        overlay.classList.remove('fade-out');
-      }, 320);
+      overlay.classList.remove('is-active');
+      overlay.setAttribute('aria-busy', 'false');
     };
 
-    window.showGpaLoader = function () {
+    // Tampilkan loading screen di akhir saat mau berpindah halaman / proses aksi
+    window.showGpaLoader = function (customText, customSubtext) {
+      clearTimeout(navTimer);
+      clearTimeout(safetyTimer);
       if (!overlay) return;
-      overlay.style.display = 'flex';
-      overlay.classList.remove('fade-out');
+
+      if (textEl) {
+        textEl.textContent = customText || 'Memuat';
+      }
+      if (subtextEl) {
+        if (customSubtext) {
+          subtextEl.textContent = customSubtext;
+          subtextEl.style.display = 'block';
+        } else {
+          subtextEl.textContent = '';
+          subtextEl.style.display = 'none';
+        }
+      }
+
+      overlay.classList.add('is-active');
+      overlay.setAttribute('aria-busy', 'true');
+
+      // Failsafe 4 detik: jika navigasi batal atau server lambat, overlay tidak membeku
+      safetyTimer = setTimeout(window.hideGpaLoader, 4000);
     };
 
-    function dismissLoader() {
-      setTimeout(window.hideGpaLoader, 50);
-    }
-
-    if (document.readyState === 'interactive' || document.readyState === 'complete') {
-      dismissLoader();
-    } else {
-      document.addEventListener('DOMContentLoaded', dismissLoader);
-      window.addEventListener('load', dismissLoader);
-    }
-
-    // Safety timeout maksimal 3 detik agar tidak pernah menggantung
-    setTimeout(window.hideGpaLoader, 3000);
-
-    let navTimer = null;
+    // 1. Tangani Klik Navigasi Link Antar Halaman (Aktif hanya saat mau berpindah)
     document.addEventListener('click', function (e) {
       const anchor = e.target.closest('a');
       if (!anchor) return;
+
       const href = anchor.getAttribute('href');
       const target = anchor.getAttribute('target');
       const download = anchor.getAttribute('download');
 
+      // Abaikan jika bukan navigasi biasa (link hash internal, javascript, download, tab baru, tel, mailto, dll)
       if (
         !href ||
         href.startsWith('#') ||
         href.startsWith('javascript:') ||
         href.startsWith('tel:') ||
         href.startsWith('mailto:') ||
-        target === '_blank' ||
+        (target && target !== '_self') ||
         download !== null ||
         anchor.hasAttribute('data-no-loader') ||
-        e.ctrlKey || e.metaKey || e.shiftKey
+        e.defaultPrevented ||
+        e.ctrlKey || e.metaKey || e.shiftKey || e.altKey
       ) {
         return;
       }
 
       try {
         const url = new URL(href, window.location.origin);
-        if (url.origin === window.location.origin && url.pathname !== window.location.pathname) {
+        // Hanya untuk navigasi internal ke URL / halaman lain
+        if (url.origin === window.location.origin && (url.pathname !== window.location.pathname || url.search !== window.location.search)) {
           clearTimeout(navTimer);
+          try {
+            sessionStorage.setItem('gpa_page_transition', '1');
+          } catch (err) {}
+          // Berikan jeda sangat singkat (80ms): responsif dan tidak berkedip jika navigasi instan
           navTimer = setTimeout(function () {
-            window.showGpaLoader();
-          }, 150);
-          setTimeout(window.hideGpaLoader, 4000);
+            window.showGpaLoader('Memuat');
+          }, 80);
         }
       } catch (err) {}
     });
 
-    window.addEventListener('pageshow', function (event) {
-      if (event.persisted) {
+    // 2. Tangani Form Submission (Aktif saat form dikirim untuk berpindah / memproses data)
+    document.addEventListener('submit', function (e) {
+      const form = e.target;
+      if (!form || form.hasAttribute('data-no-loader') || e.defaultPrevented) return;
+
+      if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+        return;
+      }
+
+      const target = form.getAttribute('target');
+      if (target && target !== '_self') return;
+
+      clearTimeout(navTimer);
+      try {
+        sessionStorage.setItem('gpa_page_transition', '1');
+      } catch (err) {}
+      navTimer = setTimeout(function () {
+        window.showGpaLoader('Memproses...');
+      }, 50);
+    });
+
+    // 3. Pastikan loader selalu nonaktif saat halaman ditampilkan (termasuk BFCache browser / Back / Forward)
+    window.addEventListener('pageshow', function () {
+      try {
+        sessionStorage.removeItem('gpa_page_transition');
+        document.documentElement.classList.remove('gpa-trans-in');
+      } catch (e) {}
+      window.hideGpaLoader();
+    });
+    window.addEventListener('popstate', function () {
+      try {
+        sessionStorage.removeItem('gpa_page_transition');
+        document.documentElement.classList.remove('gpa-trans-in');
+      } catch (e) {}
+      window.hideGpaLoader();
+    });
+
+    // 4. Tekan tombol ESC atau klik overlay untuk membatalkan jika diinginkan
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
         window.hideGpaLoader();
       }
     });

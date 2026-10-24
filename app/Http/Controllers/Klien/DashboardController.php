@@ -7,6 +7,7 @@ use App\Models\Contract;
 use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Payment;
 use App\Models\Product;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -22,10 +23,16 @@ class DashboardController extends Controller
         $user = auth()->user();
         $isContractClient = ($user->client_type === 'B2B_KONTRAK');
 
-        // 1. Data Kontrak Aktif Klien
+        // 1. Data Kontrak Aktif Klien & Pengajuan Pending
         $contract = Contract::with('product')
             ->where('user_id', $user->id)
             ->where('status', 'ACTIVE')
+            ->first();
+
+        $pendingContract = Contract::with('product')
+            ->where('user_id', $user->id)
+            ->whereIn('status', ['PENDING', 'PENDING_APPROVAL'])
+            ->latest()
             ->first();
 
         // 2. Plafon Kredit & Tempo (Top 30D)
@@ -49,13 +56,14 @@ class DashboardController extends Controller
             ->get();
 
         $pipelineCount = $activeOrders->count();
-        $pipelineValue = (float) $activeOrders->sum(fn ($o) => (float) ($o->grand_total ?: $o->estimated_total));
+        $pipelineValue = (float) $activeOrders->sum('grand_total');
 
         $stagesCount = [
             'verifikasi' => $activeOrders->where('status', 'MENUNGGU_VERIFIKASI')->count(),
-            'panen' => $activeOrders->where('status', 'TERVERIFIKASI')->count(),
-            'kemas' => $activeOrders->where('status', 'SIAP_KIRIM')->count(),
-            'kirim' => $activeOrders->where('status', 'DALAM_PENGIRIMAN')->count(),
+            'bayar'      => $activeOrders->where('status', 'MENUNGGU_PEMBAYARAN')->count(),
+            'lunas'      => $activeOrders->where('status', 'LUNAS')->count(),
+            'kemas'      => $activeOrders->where('status', 'SIAP_KIRIM')->count(),
+            'kirim'      => $activeOrders->where('status', 'DALAM_PENGIRIMAN')->count(),
         ];
 
         // 4. Serapan Kuota Panen (Bulan Ini)
@@ -71,7 +79,7 @@ class DashboardController extends Controller
 
         foreach ($deliveredOrders as $order) {
             foreach ($order->items as $item) {
-                $qty = (float) ($item->actual_net_weight ?: $item->ordered_qty);
+                $qty = (float) $item->ordered_qty;
                 $totalKgHarvest += $qty;
                 $pName = $item->product?->name ?: 'Komoditas';
                 $commodityBreakdown[$pName] = ($commodityBreakdown[$pName] ?? 0) + $qty;
@@ -107,25 +115,56 @@ class DashboardController extends Controller
 
         // 8. Quick Reorder Komoditas (Kontrak B2B)
         $products = Product::where('is_active', true)->take(4)->get();
+        $allAvailableProducts = Product::where('is_active', true)->orderBy('name')->get();
+
+        // 9. Bukti Pembayaran Ditolak yang Membutuhkan Tindakan Klien
+        $rejectedPayment = Payment::with(['invoice', 'order', 'verifier'])
+            ->where(function ($query) use ($user) {
+                $query->whereHas('invoice', fn ($q) => $q->where('user_id', $user->id))
+                    ->orWhereHas('order', fn ($q) => $q->where('user_id', $user->id));
+            })
+            ->whereIn('status', ['DITOLAK', 'REJECTED'])
+            ->latest('id')
+            ->first();
+
+        if ($rejectedPayment) {
+            $hasSuccessor = Payment::where(function ($q) use ($rejectedPayment) {
+                if ($rejectedPayment->invoice_id) {
+                    $q->where('invoice_id', $rejectedPayment->invoice_id);
+                } elseif ($rejectedPayment->order_id) {
+                    $q->where('order_id', $rejectedPayment->order_id);
+                }
+            })
+            ->where('id', '>', $rejectedPayment->id)
+            ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'LUNAS', 'PAID'])
+            ->exists();
+
+            if ($hasSuccessor) {
+                $rejectedPayment = null;
+            }
+        }
 
         return view('klien.dashboard', [
-            'isContractClient'   => $isContractClient,
-            'contract'           => $contract,
-            'syncedAt'           => Carbon::now(),
-            'creditLimit'        => $creditLimit,
-            'availableCredit'    => $availableCredit,
-            'creditPercent'      => $creditPercent,
-            'pipelineCount'      => $pipelineCount,
-            'pipelineValue'      => $pipelineValue,
-            'stagesCount'        => $stagesCount,
-            'totalKgHarvest'     => $totalKgHarvest,
-            'targetKg'           => $targetKg,
-            'harvestPercent'     => $harvestPercent,
-            'commodityBreakdown' => $commodityBreakdown,
-            'latestInvoice'      => $latestInvoice,
-            'inTransitOrder'     => $inTransitOrder,
-            'recentOrders'       => $recentOrders,
-            'products'           => $products,
+            'isContractClient'     => $isContractClient,
+            'contract'             => $contract,
+            'pendingContract'      => $pendingContract,
+            'syncedAt'             => Carbon::now(),
+            'creditLimit'          => $creditLimit,
+            'availableCredit'      => $availableCredit,
+            'creditPercent'        => $creditPercent,
+            'pipelineCount'        => $pipelineCount,
+            'pipelineValue'        => $pipelineValue,
+            'stagesCount'          => $stagesCount,
+            'totalKgHarvest'       => $totalKgHarvest,
+            'targetKg'             => $targetKg,
+            'harvestPercent'       => $harvestPercent,
+            'commodityBreakdown'   => $commodityBreakdown,
+            'latestInvoice'        => $latestInvoice,
+            'inTransitOrder'       => $inTransitOrder,
+            'recentOrders'         => $recentOrders,
+            'products'             => $products,
+            'allAvailableProducts' => $allAvailableProducts,
+            'rejectedPayment'      => $rejectedPayment,
         ]);
     }
 }

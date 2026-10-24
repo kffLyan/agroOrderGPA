@@ -33,5 +33,8 @@
                 {{ $slot }}
             </main>
         </div>
+        <x-gpa.toast />
+        <x-gpa.notifications />
+        <x-gpa.dialog />
     </body>
 </html>

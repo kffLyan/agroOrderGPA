@@ -173,7 +173,7 @@
                         <div class="flex items-center justify-between gap-2">
                             <h3 class="gpa-micro-bold text-ink-body">LOG PELANGGARAN HAK AKSES</h3>
                             <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-ink text-accent">
-                                RULE 08 ENFORCED
+                                SECURITY ENFORCED
                             </span>
                         </div>
                         <p class="gpa-figure text-[22px] leading-7 text-ink">0 INSIDEN</p>
@@ -181,7 +181,7 @@
                     </div>
 
                     <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
-                        <span class="gpa-note text-ink-body">Rule 08 Enforcement</span>
+                        <span class="gpa-note text-ink-body">Otorisasi &amp; Hak Akses Ketat</span>
                         <span class="gpa-note font-bold text-success-deep">TAMPER-PROOF</span>
                     </div>
                 </article>
@@ -279,7 +279,7 @@
                         {{-- Row 3: Surat Jalan --}}
                         <tr class="transition-colors hover:bg-surface-shell/50">
                             <th scope="row" class="px-3 py-4 text-left align-top font-normal">
-                                <p class="text-[12px] leading-5 text-ink font-semibold">Terbitkan Surat Jalan (Rule 05)</p>
+                                <p class="text-[12px] leading-5 text-ink font-semibold">Terbitkan Surat Jalan</p>
                                 <p class="mt-0.5 text-[10px] leading-4 text-ink-body">Dokumen Predicate legalitas pengiriman kargo</p>
                             </th>
                             <td class="px-3 py-4 text-center align-top">
@@ -507,7 +507,10 @@
                                             Edit
                                         </a>
                                         <form action="{{ $row['reset_pwd_url'] }}" method="POST" class="inline"
-                                            onsubmit="return confirm('Reset kata sandi pengguna ini?')">
+                                            data-gpa-confirm="Apakah Anda yakin ingin mereset kata sandi pengguna ini ke default (password123)?"
+                                            data-gpa-title="Reset Kata Sandi"
+                                            data-gpa-tone="warning"
+                                            data-gpa-ok="Reset Sandi">
                                             @csrf
                                             <button type="submit"
                                                 title="Reset Sandi ke password123"
@@ -518,7 +521,10 @@
                                         </form>
                                         @if ($row['id'] !== auth()->id())
                                             <form action="{{ $row['delete_url'] }}" method="POST" class="inline"
-                                                onsubmit="return confirm('Hapus akun pengguna {{ addslashes($row['name']) }}?')">
+                                                data-gpa-confirm="Apakah Anda yakin ingin menghapus akun pengguna {{ addslashes($row['name']) }} secara permanen?"
+                                                data-gpa-title="Hapus Akun Pengguna"
+                                                data-gpa-tone="danger"
+                                                data-gpa-ok="Hapus Pengguna">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit"

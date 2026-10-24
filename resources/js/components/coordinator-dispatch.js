@@ -239,41 +239,37 @@ export default function coordinatorDispatch(queue = [], manifestRows = [], filte
             }
 
             if (row.action === 'reprint') {
-                this.run('Rangkap Dicetak Ulang', `3 rangkap ${row.id} dicetak ulang dan barcode diverifikasi ulang oleh driver ${row.driver}.`);
-
+                window.print();
                 return;
             }
 
-            this.run('Pelacakan GPS Aktif', `${row.driver} · ${row.plate} · ${row.vehicle} — ${row.slot}, ${this.kg(row.net)} KG menuju lokasi penerima.`);
+            window.location.href = '/koordinator/monitoring';
         },
 
         act(key) {
             if (key === 'log') {
-                this.run('Log Dispatch Terbit', `${this.docCount()} dokumen sah · ${this.kg(this.tonase())} KG netto sah · ${this.pendingCount()} antrean cetak menunggu.`);
-
+                window.location.href = '/koordinator/monitoring';
                 return;
             }
 
             if (key === 'thermal') {
-                this.run('Antrean Cetak Thermal', `${this.thermal} dokumen menunggu cetak thermal · Zebra Driver Link online 203 DPI.`);
+                window.print();
             }
         },
 
         batch(key) {
             if (key === 'export') {
-                this.run('Manifest Harian Diekspor', `${this.rows.length} baris manifest · ${this.kg(this.tonase())} KG netto sah · 3 rangkap + QR per dokumen (.CSV).`);
-
+                window.location.href = '/koordinator/monitoring';
                 return;
             }
 
             if (key === 'audit-gate') {
-                this.run('Audit Gate Keluar Gudang', `${this.docCount()} dokumen lolos barcode verification. Gate dikunci dengan audit token SEC-GATE-${this.thermal}.`, 'warning');
-
+                this.run('Audit Gate Keluar Gudang', `${this.docCount()} dokumen lolos barcode verification. Gate diverifikasi.`, 'success');
                 return;
             }
 
             if (key === 'print-all') {
-                this.issueAll();
+                window.print();
             }
         },
 

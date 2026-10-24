@@ -18,12 +18,13 @@ return new class extends Migration
             $table->string('supplier_name', 100);
             $table->date('batch_date');
             $table->decimal('initial_quantity', 10, 2);
+            $table->string('grade', 30)->default('Grade A'); 
+            $table->text('qc_notes')->nullable();
             $table->decimal('available_quantity', 10, 2);
             $table->foreignId('inputted_by')->constrained('users')->onDelete('restrict')->onUpdate('cascade');
             $table->timestamps();
 
-            $table->index(['product_id', 'batch_date', 'available_quantity'], 'idx_batches_product_date');
-        });
+            $table->index(['product_id', 'batch_date', 'available_quantity'], 'idx_batches_product_date');});
     }
 
     /**

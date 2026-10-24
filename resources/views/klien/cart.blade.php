@@ -105,7 +105,7 @@
         </div>
 
         {{-- ---------------------------------------------------------------- --}}
-        {{-- Peringatan Rule 04 --}}
+        {{-- Peringatan Standar Operasional Pengiriman --}}
         {{-- ---------------------------------------------------------------- --}}
         <section
             class="flex flex-col gap-3 rounded-xl border-l-4 border-warning-caution bg-warning-cream py-4 pl-4 pr-4 shadow-sub sm:flex-row sm:items-start sm:gap-3 sm:pl-6 sm:pr-6">
@@ -114,7 +114,7 @@
             <div class="flex min-w-0 flex-col gap-1">
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="rounded bg-warning-caution px-1.5 py-0.5 gpa-micro-bold text-white">
-                        Rule 04 Operasional
+                        Standar Operasional Pengiriman
                     </span>
                     <h2 class="font-sans text-[15px] font-bold leading-5 text-warning-caution">
                         Pemberitahuan Cut-Off Panen &amp; Distribusi Subuh
@@ -313,74 +313,156 @@
                     </div>
 
                     <div class="flex flex-col gap-3">
-                        <p class="gpa-label">Titik Gudang / Receiving Dock</p>
-
-                        <div class="grid gap-3 md:grid-cols-2">
-                            @foreach ($docks as $dock)
-                                <button type="button" @click="selectDock(@js($dock['key']), @js($dock['address']))" role="radio"
-                                    :aria-checked="dock === @js($dock['key'])"
-                                    class="flex flex-col items-start gap-3 rounded-xl p-3.5 text-left transition-colors"
-                                    :class="dock === @js($dock['key'])
-                                        ? 'bg-surface-muted shadow-sub outline outline-2 outline-ink'
-                                        : 'bg-surface outline outline-1 outline-line-hair hover:outline-brand'">
-                                    <span class="flex items-start gap-3">
-                                        <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
-                                            :class="dock === @js($dock['key']) ? 'bg-ink' : 'bg-surface-pill'">
-                                            <span class="h-1.5 w-1.5 rounded-full bg-white"
-                                                :class="dock === @js($dock['key']) ? '' : 'opacity-0'"></span>
-                                        </span>
-
-                                        <span class="flex min-w-0 flex-col gap-1.5">
-                                            <span class="w-fit rounded bg-ink px-1.5 gpa-micro-bold text-white"
-                                                x-show="dock === @js($dock['key'])">{{ $dock['chip'] }}</span>
-                                            <span class="w-fit rounded bg-surface-pill px-1.5 gpa-micro-bold text-ink-quiet"
-                                                x-show="dock !== @js($dock['key'])" x-cloak>{{ $dock['chip'] }}</span>
-
-                                            <span class="font-inter text-sm font-bold leading-5 text-ink">{{ $dock['name'] }}</span>
-                                            <span class="font-inter text-xs leading-4 text-ink-body">{{ $dock['address'] }}</span>
-                                            <span class="gpa-micro text-ink-quiet">{{ $dock['access'] }}</span>
-                                        </span>
-                                    </span>
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <p class="gpa-label">Titik Gudang / Receiving Dock</p>
+                            <div class="flex items-center gap-1 rounded-lg border border-line-hair bg-surface-shell p-1">
+                                <button type="button" @click="dockMode = 'preset'"
+                                    :class="dockMode === 'preset' ? 'bg-surface font-bold text-ink shadow-sm' : 'text-ink-quiet hover:text-ink'"
+                                    class="rounded-md px-2.5 py-1 text-xs transition">
+                                    Alamat Terdaftar
                                 </button>
-                            @endforeach
+                                <button type="button" @click="dockMode = 'custom'"
+                                    :class="dockMode === 'custom' ? 'bg-surface font-bold text-ink shadow-sm' : 'text-ink-quiet hover:text-ink'"
+                                    class="rounded-md px-2.5 py-1 text-xs transition">
+                                    + Titik / Alamat Kustom
+                                </button>
+                            </div>
+                        </div>
+
+                        {{-- Mode Alamat Profil / Preset --}}
+                        <div x-show="dockMode === 'preset'" class="flex flex-col gap-3">
+                            <div class="grid gap-3 md:grid-cols-2">
+                                @foreach ($docks as $dock)
+                                    <button type="button" @click="selectDock(@js($dock['key']), @js($dock['address']))" role="radio"
+                                        :aria-checked="dock === @js($dock['key'])"
+                                        class="flex flex-col items-start gap-3 rounded-xl p-3.5 text-left transition-colors"
+                                        :class="dock === @js($dock['key'])
+                                            ? 'bg-surface-muted shadow-sub outline outline-2 outline-ink'
+                                            : 'bg-surface outline outline-1 outline-line-hair hover:outline-brand'">
+                                        <span class="flex items-start gap-3">
+                                            <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
+                                                :class="dock === @js($dock['key']) ? 'bg-ink' : 'bg-surface-pill'">
+                                                <span class="h-1.5 w-1.5 rounded-full bg-white"
+                                                    :class="dock === @js($dock['key']) ? '' : 'opacity-0'"></span>
+                                            </span>
+
+                                            <span class="flex min-w-0 flex-col gap-1.5">
+                                                <span class="w-fit rounded bg-ink px-1.5 gpa-micro-bold text-white"
+                                                    x-show="dock === @js($dock['key'])">{{ $dock['chip'] }}</span>
+                                                <span class="w-fit rounded bg-surface-pill px-1.5 gpa-micro-bold text-ink-quiet"
+                                                    x-show="dock !== @js($dock['key'])" x-cloak>{{ $dock['chip'] }}</span>
+
+                                                <span class="font-inter text-sm font-bold leading-5 text-ink">{{ $dock['name'] }}</span>
+                                                <span class="font-inter text-xs leading-4 text-ink-body">{{ $dock['address'] }}</span>
+                                                <span class="gpa-micro text-ink-quiet">{{ $dock['access'] }}</span>
+                                            </span>
+                                        </span>
+                                    </button>
+                                @endforeach
+                            </div>
+
+                            <div>
+                                <label class="gpa-hint mb-1 block font-medium text-ink-body">Rincian / Penyesuaian Alamat Pengiriman:</label>
+                                <textarea x-model="deliveryAddress" rows="2"
+                                    placeholder="Rincian jalan, nomor gedung, atau patokan bongkar muat..."
+                                    class="w-full rounded-lg border border-line-strong bg-surface p-2.5 text-xs text-ink focus:border-brand focus:ring-0"></textarea>
+                            </div>
+                        </div>
+
+                        {{-- Mode Alamat / Titik Gudang Kustom Baru --}}
+                        <div x-show="dockMode === 'custom'" x-cloak class="flex flex-col gap-3 rounded-xl border border-line-hair bg-surface-shell/60 p-4">
+                            <div>
+                                <label class="gpa-label mb-1 block">Nama Titik Gudang / Cabang Tujuan *</label>
+                                <input type="text" x-model="customDockName" placeholder="Contoh: Gudang Cabang Dago / Resto Kitchen Pasteur"
+                                    class="h-10 w-full rounded-lg border border-line-strong bg-surface px-3 text-xs text-ink focus:border-brand focus:ring-0">
+                            </div>
+                            <div>
+                                <label class="gpa-label mb-1 block">Alamat Lengkap Titik Bongkar Muat *</label>
+                                <textarea x-model="customDockAddress" rows="2"
+                                    placeholder="Jl. Raya No. XX, Kelurahan, Kecamatan, Kota / Patokan Pintu Masuk Truk..."
+                                    class="w-full rounded-lg border border-line-strong bg-surface p-2.5 text-xs text-ink focus:border-brand focus:ring-0"></textarea>
+                            </div>
                         </div>
                     </div>
 
+                    {{-- PIC Penerimaan Barang --}}
                     <div class="relative flex flex-col gap-3 rounded-xl border border-line-hair bg-surface-shell p-3.5 sm:flex-row sm:items-center sm:justify-between">
-                        <div class="flex items-start gap-3">
-                            <span
-                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand">
+                        <div class="flex min-w-0 items-start gap-3">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand">
                                 <x-gpa.icon name="user" class="h-4 w-4 text-accent" />
                             </span>
                             <div class="flex min-w-0 flex-col">
-                                <p class="gpa-micro text-ink-quiet">PIC Penerimaan Barang Terverifikasi</p>
-                                <p class="mt-0.5 font-inter text-sm font-bold leading-5 text-ink">
-                                    <span x-text="@js($receivingRoster)[pic]?.name"></span>
-                                    (<span x-text="@js($receivingRoster)[pic]?.role"></span>)
+                                <p class="gpa-micro text-ink-quiet">
+                                    <span x-show="picMode === 'preset'">PIC Penerimaan Terdaftar</span>
+                                    <span x-show="picMode === 'custom'" class="font-bold text-brand">PIC Kustom (Pesanan Ini)</span>
+                                </p>
+                                <p class="mt-0.5 truncate font-inter text-sm font-bold leading-5 text-ink">
+                                    <template x-if="picMode === 'preset'">
+                                        <span>
+                                            <span x-text="@js($receivingRoster)[pic]?.name"></span>
+                                            (<span x-text="@js($receivingRoster)[pic]?.role"></span>)
+                                        </span>
+                                    </template>
+                                    <template x-if="picMode === 'custom'">
+                                        <span x-text="customPicName ? customPicName + ' (PIC Khusus)' : 'Belum diisi (Klik Ganti/Kustom)'"></span>
+                                    </template>
                                 </p>
                                 <p class="gpa-meta text-ink-quiet">
                                     Kontak Operasional:
-                                    <span class="text-ink-body" x-text="@js($receivingRoster)[pic]?.phone"></span>
+                                    <span class="font-semibold text-ink-body"
+                                        x-text="picMode === 'preset' ? @js($receivingRoster)[pic]?.phone : (customPicPhone || '—')"></span>
                                     • Handover Digital Sign Off Ready
                                 </p>
                             </div>
                         </div>
 
-                        <button type="button" @click="togglePic()"
-                            class="shrink-0 self-end rounded-lg border border-line-hair bg-surface px-3 py-2 gpa-meta-lg font-bold text-ink transition-colors hover:border-brand sm:self-auto">
-                            Ganti PIC
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button type="button" @click="togglePic()"
+                                class="shrink-0 self-end rounded-lg border border-line-hair bg-surface px-3 py-2 gpa-meta-lg font-bold text-ink transition-colors hover:border-brand sm:self-auto">
+                                <span x-text="picMode === 'custom' ? 'Ubah PIC Kustom' : 'Ganti / Kustom PIC'"></span>
+                            </button>
+                        </div>
 
                         <div x-show="picOpen" x-cloak @click.outside="picOpen = false"
-                            class="absolute right-3 top-full z-20 mt-1 flex w-[16rem] flex-col gap-1 rounded-xl border border-line-hair bg-surface p-1.5 shadow-pop">
-                            @foreach ($receivingRoster as $index => $person)
-                                <button type="button" @click="changePic(@js($index))"
-                                    class="flex flex-col items-start rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-surface-shell">
-                                    <span class="font-inter text-xs font-bold text-ink">{{ $person['name'] }}</span>
-                                    <span class="gpa-micro text-ink-quiet">{{ $person['role'] }}</span>
-                                    <span class="gpa-meta text-ink-body">{{ $person['phone'] }}</span>
+                            class="absolute right-3 top-full z-30 mt-1 flex w-80 flex-col gap-2 rounded-xl border border-line-hair bg-surface p-3 shadow-2xl">
+                            <div class="border-b border-line-hair pb-2">
+                                <p class="text-xs font-bold text-ink">Pilih atau Kustom PIC Penerima</p>
+                                <p class="text-[10px] text-ink-quiet">Petugas yang menerima dan menandatangani surat jalan pengiriman.</p>
+                            </div>
+
+                            <div class="flex flex-col gap-1">
+                                <span class="text-[10px] font-bold uppercase text-ink-quiet">PIC Terdaftar di Profil:</span>
+                                @foreach ($receivingRoster as $index => $person)
+                                    <button type="button" @click="changePic(@js($index))"
+                                        class="flex flex-col items-start rounded-lg border border-transparent p-2 text-left transition-colors hover:border-line-hair hover:bg-surface-shell"
+                                        :class="picMode === 'preset' && pic === @js($index) ? 'bg-surface-muted border-line-hair' : ''">
+                                        <span class="font-inter text-xs font-bold text-ink">{{ $person['name'] }}</span>
+                                        <span class="gpa-micro text-ink-quiet">{{ $person['role'] }}</span>
+                                        <span class="gpa-meta text-ink-body">{{ $person['phone'] }}</span>
+                                    </button>
+                                @endforeach
+                            </div>
+
+                            <div class="flex flex-col gap-2 border-t border-line-hair pt-2">
+                                <span class="text-[10px] font-bold uppercase text-brand">Atau Masukkan PIC Kustom / Baru:</span>
+                                <div>
+                                    <label class="mb-0.5 block text-[10px] text-ink-quiet">Nama Lengkap PIC</label>
+                                    <input type="text" x-model="customPicName" placeholder="Contoh: Bpk. Rudi Hermawan"
+                                        @input="picMode = 'custom'"
+                                        class="h-8 w-full rounded border border-line-strong bg-surface px-2.5 text-xs text-ink focus:border-brand focus:ring-0">
+                                </div>
+                                <div>
+                                    <label class="mb-0.5 block text-[10px] text-ink-quiet">Nomor Telepon / WhatsApp PIC</label>
+                                    <input type="text" x-model="customPicPhone" placeholder="Contoh: 0812-3456-7890"
+                                        @input="picMode = 'custom'"
+                                        class="h-8 w-full rounded border border-line-strong bg-surface px-2.5 text-xs text-ink focus:border-brand focus:ring-0">
+                                </div>
+                                <button type="button" @click="picMode = 'custom'; picOpen = false"
+                                    :disabled="!customPicName"
+                                    class="w-full rounded bg-ink py-1.5 text-xs font-bold text-white hover:bg-brand-deep disabled:opacity-50">
+                                    Terapkan PIC Kustom Ini
                                 </button>
-                            @endforeach
+                            </div>
                         </div>
                     </div>
 
@@ -456,127 +538,62 @@
                         <p class="gpa-body text-ink-body">*Nilai tagihan final dihitung berdasarkan bobot netto riil pada timbangan digital packing house.</p>
                     </div>
 
+                    {{-- Informasi Alur Pembayaran GPA (Sesuai SOP Verifikasi Sekretaris) --}}
                     <div class="flex flex-col gap-3">
                         <div class="flex items-center justify-between gap-3">
-                            <p class="gpa-micro-bold uppercase text-ink">Pilihan Metode Pembayaran</p>
-                            <span class="rounded bg-ink px-1.5 gpa-micro-bold text-white">{{ $isB2b ? 'Fasilitas Kontrak' : 'Reguler' }}</span>
+                            <p class="gpa-micro-bold uppercase text-ink">Alur &amp; Skema Pembayaran GPA</p>
+                            <span class="rounded bg-ink px-1.5 gpa-micro-bold text-white">{{ $isB2b ? 'Fasilitas Kontrak B2B' : 'Klien Reguler' }}</span>
                         </div>
 
-                        <div class="flex flex-col gap-2" role="radiogroup" aria-label="Pilihan Metode Pembayaran">
-                            @if ($isB2b)
-                                <button type="button" role="radio" @click="payment = 'TEMPO_TOP'"
-                                    :aria-checked="payment === 'TEMPO_TOP'"
-                                    class="flex items-start gap-2.5 rounded-lg p-2.5 text-left transition-colors"
-                                    :class="payment === 'TEMPO_TOP'
-                                        ? 'bg-surface-muted outline outline-2 outline-ink'
-                                        : 'bg-surface outline outline-1 outline-line-hair hover:outline-brand'">
-                                    <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
-                                        :class="payment === 'TEMPO_TOP' ? 'bg-ink' : 'bg-surface-pill'">
-                                        <span class="h-1.5 w-1.5 rounded-full bg-white"
-                                            :class="payment === 'TEMPO_TOP' ? '' : 'opacity-0'"></span>
+                        @if ($isB2b)
+                            <div class="flex flex-col gap-2 rounded-xl border border-line-hair bg-surface-shell/80 p-3.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success/20 text-success-deep">
+                                        <x-gpa.icon name="shield-check" class="h-3.5 w-3.5" />
                                     </span>
-
-                                    <span class="flex min-w-0 flex-col gap-1">
-                                        <span class="flex flex-wrap items-center gap-2">
-                                            <span class="gpa-meta-lg font-bold text-ink">Term of Payment (Tempo 30 Hari B2B)</span>
-                                            <span x-show="payment === 'TEMPO_TOP'"
-                                                x-cloak class="rounded bg-accent px-1.5 gpa-micro-bold text-ink">
-                                                Rekomendasi B2B
-                                            </span>
-                                        </span>
-                                        <span class="gpa-hint leading-3 font-semibold text-success-ink">
-                                            Tagihan diagregasi ke faktur konsolidasi akhir bulan.
-                                        </span>
+                                    <p class="gpa-meta-lg font-bold text-ink">Term of Payment (Tempo 30 Hari)</p>
+                                </div>
+                                <p class="text-xs leading-relaxed text-ink-body">
+                                    Sebagai mitra B2B Kontrak, pesanan akan langsung dialokasikan ke gudang packing dan armada pengiriman segera setelah diverifikasi oleh Sekretaris Operasional. Seluruh tagihan diagregasi ke faktur konsolidasi bulanan.
+                                </p>
+                            </div>
+                        @else
+                            <div class="flex flex-col gap-3 rounded-xl border border-line-hair bg-surface-shell/80 p-3.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/20 text-brand">
+                                        <x-gpa.icon name="info" class="h-3.5 w-3.5" />
                                     </span>
-                                </button>
-                            @endif
-
-                            <button type="button" role="radio" @click="payment = 'TRANSFER_BANK'"
-                                :aria-checked="payment === 'TRANSFER_BANK'"
-                                class="flex items-start gap-2.5 rounded-lg p-2.5 text-left transition-colors"
-                                :class="payment === 'TRANSFER_BANK'
-                                    ? 'bg-surface-muted outline outline-2 outline-ink'
-                                    : 'bg-surface outline outline-1 outline-line-hair hover:outline-brand'">
-                                <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
-                                    :class="payment === 'TRANSFER_BANK' ? 'bg-ink' : 'bg-surface-pill'">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-white"
-                                        :class="payment === 'TRANSFER_BANK' ? '' : 'opacity-0'"></span>
-                                </span>
-
-                                <span class="flex min-w-0 flex-col gap-1">
-                                    <span class="flex flex-wrap items-center gap-2">
-                                        <span class="gpa-meta-lg font-bold text-ink">Transfer Bank BCA / Mandiri (H+0)</span>
-                                        <span x-show="payment === 'TRANSFER_BANK'"
-                                            x-cloak class="rounded bg-accent px-1.5 gpa-micro-bold text-ink">
-                                            Langsung
-                                        </span>
-                                    </span>
-                                    <span class="gpa-hint leading-3 text-ink-quiet">
-                                        Unggah bukti transfer pembayaran langsung pada sistem.
-                                    </span>
-                                </span>
-                            </button>
-
-                            <button type="button" role="radio" @click="payment = 'QRIS'"
-                                :aria-checked="payment === 'QRIS'"
-                                class="flex items-start gap-2.5 rounded-lg p-2.5 text-left transition-colors"
-                                :class="payment === 'QRIS'
-                                    ? 'bg-surface-muted outline outline-2 outline-ink'
-                                    : 'bg-surface outline outline-1 outline-line-hair hover:outline-brand'">
-                                <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
-                                    :class="payment === 'QRIS' ? 'bg-ink' : 'bg-surface-pill'">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-white"
-                                        :class="payment === 'QRIS' ? '' : 'opacity-0'"></span>
-                                </span>
-
-                                <span class="flex min-w-0 flex-col gap-1">
-                                    <span class="flex flex-wrap items-center gap-2">
-                                        <span class="gpa-meta-lg font-bold text-ink">QRIS Dinamis GPA (Instant Settlement)</span>
-                                        <span x-show="payment === 'QRIS'"
-                                            x-cloak class="rounded bg-accent px-1.5 gpa-micro-bold text-ink">
-                                            Otomatis
-                                        </span>
-                                    </span>
-                                    <span class="gpa-hint leading-3 text-ink-quiet">
-                                        Konfirmasi verifikasi otomatis setelah scan barcode.
-                                    </span>
-                                </span>
-                            </button>
-
-                            <button type="button" role="radio" @click="payment = 'COD'"
-                                :aria-checked="payment === 'COD'"
-                                class="flex items-start gap-2.5 rounded-lg p-2.5 text-left transition-colors"
-                                :class="payment === 'COD'
-                                    ? 'bg-surface-muted outline outline-2 outline-ink'
-                                    : 'bg-surface outline outline-1 outline-line-hair hover:outline-brand'">
-                                <span class="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
-                                    :class="payment === 'COD' ? 'bg-ink' : 'bg-surface-pill'">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-white"
-                                        :class="payment === 'COD' ? '' : 'opacity-0'"></span>
-                                </span>
-
-                                <span class="flex min-w-0 flex-col gap-1">
-                                    <span class="flex flex-wrap items-center gap-2">
-                                        <span class="gpa-meta-lg font-bold text-ink">Cash on Delivery (Bayar Saat Timbang Dock)</span>
-                                        <span x-show="payment === 'COD'"
-                                            x-cloak class="rounded bg-accent px-1.5 gpa-micro-bold text-ink">
-                                            Tunai
-                                        </span>
-                                    </span>
-                                    <span class="gpa-hint leading-3 text-ink-quiet">
-                                        Hanya berlaku untuk pengiriman reguler dengan serah terima fisik.
-                                    </span>
-                                </span>
-                            </button>
-                        </div>
+                                    <p class="gpa-meta-lg font-bold text-ink">Verifikasi Kuota Panen &amp; Pembayaran</p>
+                                </div>
+                                <div class="space-y-1.5 text-xs">
+                                    <div class="flex items-start gap-2">
+                                        <span class="rounded bg-success/20 px-1 font-mono text-[10px] font-bold text-success-deep">01</span>
+                                        <p class="text-ink-body"><strong>Pengajuan Draf PO:</strong> Anda mengirimkan draf kebutuhan komoditas.</p>
+                                    </div>
+                                    <div class="flex items-start gap-2">
+                                        <span class="rounded bg-warning/30 px-1 font-mono text-[10px] font-bold text-warning-deep">02</span>
+                                        <p class="text-ink-body"><strong>Verifikasi Sekretaris:</strong> Admin memeriksa kuota panen riil kebun (&lt; 2 jam kerja).</p>
+                                    </div>
+                                    <div class="flex items-start gap-2">
+                                        <span class="rounded bg-brand/20 px-1 font-mono text-[10px] font-bold text-brand">03</span>
+                                        <p class="text-ink-body"><strong>Penerbitan Invoice &amp; Pembayaran:</strong> Setelah disetujui, nomor Faktur/Invoice resmi terbit. Anda kemudian melakukan transfer dan mengunggah bukti bayar pada menu <em>Dokumen &amp; Faktur</em>.</p>
+                                    </div>
+                                </div>
+                                <p class="border-t border-line-hair pt-2 text-[11px] text-ink-quiet">
+                                    *Pembayaran dilakukan setelah Sekretaris memverifikasi ketersediaan pasokan panen.
+                                </p>
+                            </div>
+                        @endif
                     </div>
 
                     {{-- Form Nyata Pengiriman Order ke Server --}}
-                    <form id="order-submit-form" action="{{ route('klien.orders.store') }}" method="POST" enctype="multipart/form-data" class="pt-2">
+                    <form id="order-submit-form" action="{{ route('klien.orders.store') }}" method="POST" class="pt-2"
+                        @submit="handleOrderSubmit($event)">
                         @csrf
+                        <input type="hidden" name="submission_token" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
                         <input type="hidden" name="target_delivery_date" :value="deliveryDate" value="{{ $defaultDeliveryDate }}">
-                        <input type="hidden" name="delivery_address" x-model="deliveryAddress" :value="deliveryAddress" value="{{ $defaultAddress }}">
-                        <input type="hidden" name="payment_method" :value="payment" value="{{ $isB2b ? 'TEMPO_TOP' : 'TRANSFER_BANK' }}">
+                        <input type="hidden" name="delivery_address" :value="getFinalDeliveryAddress()">
+                        <input type="hidden" name="payment_method" value="{{ $isB2b ? 'TEMPO_TOP' : 'TRANSFER_BANK' }}">
 
                         {{-- Hidden inputs untuk items --}}
                         <template x-for="(line, idx) in lines" :key="`input-${line.key}`">
@@ -586,25 +603,32 @@
                             </div>
                         </template>
 
-                        {{-- File input untuk bukti transfer jika bayar via transfer/qris --}}
-                        <div x-show="payment === 'TRANSFER_BANK'" x-cloak class="mb-3 flex flex-col gap-1 rounded-lg border border-line-soft bg-surface-shell p-3">
-                            <label class="gpa-micro-bold text-ink" for="payment_proof">Unggah Bukti Transfer (Opsional saat PO):</label>
-                            <input type="file" id="payment_proof" name="payment_proof" accept="image/*,application/pdf"
-                                class="text-xs file:mr-2 file:rounded file:border-0 file:bg-ink file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-white hover:file:bg-brand-deep">
-                            <span class="gpa-hint">Format JPG/PNG/PDF maks 5 MB. Bukti dapat diunggah belakangan di menu Dokumen.</span>
-                        </div>
-
                         <div class="flex flex-col gap-2">
-                            <button type="submit" :disabled="empty()"
+                            <button type="submit" :disabled="empty() || isSubmitting"
                                 class="inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-4 py-3 shadow-pop transition-colors hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50">
-                                <x-gpa.icon name="send" class="h-4 w-4 text-white" />
-                                <span class="font-sans text-sm font-bold uppercase tracking-tight text-white">
-                                    Ajukan PO ke Admin
-                                </span>
+                                <template x-if="!isSubmitting">
+                                    <span class="inline-flex items-center gap-2">
+                                        <x-gpa.icon name="send" class="h-4 w-4 text-white" />
+                                        <span class="font-sans text-sm font-bold uppercase tracking-tight text-white">
+                                            Ajukan PO ke Admin
+                                        </span>
+                                    </span>
+                                </template>
+                                <template x-if="isSubmitting">
+                                    <span class="inline-flex items-center gap-2">
+                                        <svg class="h-4 w-4 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        <span class="font-sans text-sm font-bold uppercase tracking-tight text-white">
+                                            Mengajukan PO ke Admin...
+                                        </span>
+                                    </span>
+                                </template>
                             </button>
 
-                            <button type="button" @click="saveDraft()"
-                                class="inline-flex items-center justify-center gap-2 rounded-lg bg-surface-pill px-4 py-2.5 text-ink-body transition-colors hover:bg-surface-disabled hover:text-ink">
+                            <button type="button" @click="saveDraft()" :disabled="isSubmitting"
+                                class="inline-flex items-center justify-center gap-2 rounded-lg bg-surface-pill px-4 py-2.5 text-ink-body transition-colors hover:bg-surface-disabled hover:text-ink disabled:opacity-50">
                                 <x-gpa.icon name="save" class="h-3 w-3.5 text-ink-quiet" />
                                 <span class="gpa-meta-lg font-bold uppercase text-ink">Simpan Draf Pesanan</span>
                             </button>

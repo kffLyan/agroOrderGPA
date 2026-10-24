@@ -163,7 +163,7 @@
                 </div>
                 <div class="pt-4">
                     <div class="flex flex-col gap-2 border-t border-line-board/60 pt-3">
-                        <a href="{{ route('director.approval') }}"
+                        <a href="{{ route('direktur.contracts.approval') }}"
                             class="inline-flex items-center justify-center gap-1 rounded bg-brand px-3 py-1.5 gpa-meta font-bold text-accent transition-colors hover:bg-brand-hover">
                             Tinjau Pengajuan ({{ $pendingCount }})
                             <x-gpa.icon name="arrow-right" class="h-2.5 w-2.5 shrink-0" />
@@ -380,7 +380,7 @@
                                 <span class="text-ink-quiet block text-[11px]">{{ $order->user?->company_name ?? $order->user?->name ?? 'Klien' }}</span>
                             </div>
                             <div class="text-right">
-                                <span class="font-semibold text-ink">Rp {{ number_format($order->grand_total ?: $order->estimated_total, 0, ',', '.') }}</span>
+                                <span class="font-semibold text-ink">Rp {{ number_format($order->grand_total, 0, ',', '.') }}</span>
                                 <span class="block text-[10px] text-accent-deep font-bold">{{ $order->status }}</span>
                             </div>
                         </div>

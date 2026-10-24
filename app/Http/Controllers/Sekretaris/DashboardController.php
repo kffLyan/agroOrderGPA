@@ -27,13 +27,18 @@ class DashboardController extends Controller
             ->get();
 
         $pendingOrders = $allOrders->where('status', 'MENUNGGU_VERIFIKASI');
-        $verifiedOrders = $allOrders->where('status', 'TERVERIFIKASI');
+        $waitingPaymentOrders = $allOrders->where('status', 'MENUNGGU_PEMBAYARAN');
+        $paidOrders = $allOrders->where('status', 'LUNAS');
+        $verifiedOrders = $allOrders->whereIn('status', ['MENUNGGU_PEMBAYARAN', 'LUNAS']);
         $readyOrders = $allOrders->where('status', 'SIAP_KIRIM');
         $shippingOrders = $allOrders->where('status', 'DALAM_PENGIRIMAN');
         $completedOrders = $allOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN']);
 
-        // 2. Pembayaran menunggu verifikasi
-        $pendingPaymentsCount = Payment::whereIn('status', ['MENUNGGU_VERIFIKASI', 'PENDING'])->count();
+        // 2. Pembayaran menunggu verifikasi (hanya yang sudah upload bukti)
+        $pendingPaymentsCount = Payment::whereIn('status', ['MENUNGGU_VERIFIKASI', 'PENDING'])
+            ->whereNotNull('proof_url')
+            ->where('proof_url', '!=', '')
+            ->count();
 
         $totalTodayCount = $allOrders->where('created_at', '>=', $today)->count();
 
@@ -54,7 +59,7 @@ class DashboardController extends Controller
                     ];
                 })->all();
 
-                $estTotal = (float) ($ord->grand_total ?: $ord->estimated_total);
+                $estTotal = (float) $ord->grand_total;
 
                 $queueRows[] = [
                     'id'          => $ord->id,
@@ -72,21 +77,28 @@ class DashboardController extends Controller
                     'estimate'    => 'Rp ' . number_format($estTotal, 0, ',', '.'),
                     'status'      => [
                         'label' => match ($ord->status) {
-                            'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi',
-                            'TERVERIFIKASI'       => 'Telah Diverifikasi',
-                            'SIAP_KIRIM'          => 'Siap Kirim',
-                            'DALAM_PENGIRIMAN'    => 'Dalam Armada',
-                            default               => $ord->status,
+                            'MENUNGGU_VERIFIKASI'  => 'Menunggu Verifikasi',
+                            'MENUNGGU_PEMBAYARAN'  => 'Menunggu Pembayaran',
+                            'LUNAS'                => 'Lunas',
+                            'SIAP_KIRIM'           => 'Siap Kirim',
+                            'DALAM_PENGIRIMAN'     => 'Dalam Armada',
+                            'SELESAI'              => 'Selesai',
+                            'SELESAI_CATATAN'      => 'Selesai Berita Acara',
+                            default                => $ord->status,
                         },
                         'class' => match ($ord->status) {
-                            'MENUNGGU_VERIFIKASI' => 'border-warning/40 bg-warning-wash font-bold text-warning-deep',
-                            'TERVERIFIKASI'       => 'border-accent bg-accent/30 font-bold text-success-deep',
-                            default               => 'border-line-soft bg-surface-pill text-ink',
+                            'MENUNGGU_VERIFIKASI'  => 'border-warning/40 bg-warning-wash font-bold text-warning-deep',
+                            'MENUNGGU_PEMBAYARAN'  => 'border-brand/40 bg-brand-light font-bold text-brand',
+                            'LUNAS'                => 'border-accent bg-accent/30 font-bold text-success-deep',
+                            'SIAP_KIRIM'           => 'border-accent bg-accent font-bold text-ink',
+                            default                => 'border-line-soft bg-surface-pill text-ink',
                         },
                         'icon'  => match ($ord->status) {
-                            'MENUNGGU_VERIFIKASI' => 'clock',
-                            'TERVERIFIKASI'       => 'check',
-                            default               => 'package',
+                            'MENUNGGU_VERIFIKASI'  => 'clock',
+                            'MENUNGGU_PEMBAYARAN'  => 'file-text',
+                            'LUNAS'                => 'check',
+                            'SIAP_KIRIM'           => 'truck',
+                            default                => 'package',
                         },
                     ],
                     'status_note' => [
@@ -152,14 +164,16 @@ class DashboardController extends Controller
         return view('sekretaris.dashboard', [
             'queueRows'            => $queueRows,
             'stockRows'            => $stockRows,
-            'allOrdersCount'       => $allOrders->count(),
-            'pendingOrdersCount'   => $pendingOrders->count(),
-            'verifiedOrdersCount'  => $verifiedOrders->count(),
-            'readyOrdersCount'     => $readyOrders->count(),
-            'shippingOrdersCount'  => $shippingOrders->count(),
-            'completedOrdersCount' => $completedOrders->count(),
-            'totalTodayCount'      => $totalTodayCount,
-            'pendingPaymentsCount' => $pendingPaymentsCount,
+            'allOrdersCount'            => $allOrders->count(),
+            'pendingOrdersCount'        => $pendingOrders->count(),
+            'waitingPaymentOrdersCount' => $waitingPaymentOrders->count(),
+            'paidOrdersCount'           => $paidOrders->count(),
+            'verifiedOrdersCount'       => $verifiedOrders->count(),
+            'readyOrdersCount'          => $readyOrders->count(),
+            'shippingOrdersCount'       => $shippingOrders->count(),
+            'completedOrdersCount'      => $completedOrders->count(),
+            'totalTodayCount'           => $totalTodayCount,
+            'pendingPaymentsCount'      => $pendingPaymentsCount,
         ]);
     }
 }

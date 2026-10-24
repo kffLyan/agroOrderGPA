@@ -9,16 +9,15 @@
   :root { --bg:#f8faf3; --fg:#2f4a12; color-scheme:light; box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px); }
   html, body { height:100%; margin:0; }
   body { background:var(--bg); color:var(--fg); display:flex; align-items:center; justify-content:center; flex-direction:column; gap:20px; font-family:system-ui,-apple-system,"Segoe UI",sans-serif; }
-  svg { width:min(38vw,180px); height:auto; overflow:visible; animation:fade 4.2s ease-in-out infinite; }
+  svg { width:min(38vw,180px); height:auto; overflow:visible; }
   .ghost { opacity:.09; }
   .leaf { clip-path:inset(0 100% 0 0); }
-  .l1 { animation:w1 4.2s cubic-bezier(.45,0,.25,1) infinite; }
-  .l2 { animation:w2 4.2s cubic-bezier(.45,0,.25,1) infinite; }
-  .l3 { animation:w3 4.2s cubic-bezier(.45,0,.25,1) infinite; }
-  @keyframes w1 { 0%{clip-path:inset(0 100% 0 0)} 22%,100%{clip-path:inset(0 0 0 0)} }
-  @keyframes w2 { 0%,22%{clip-path:inset(0 100% 0 0)} 44%,100%{clip-path:inset(0 0 0 0)} }
-  @keyframes w3 { 0%,44%{clip-path:inset(0 100% 0 0)} 66%,100%{clip-path:inset(0 0 0 0)} }
-  @keyframes fade { 0%,84%{opacity:1} 96%,100%{opacity:0} }
+  .l1 { animation:w1 1.2s cubic-bezier(.45,0,.25,1) forwards; }
+  .l2 { animation:w2 1.2s cubic-bezier(.45,0,.25,1) forwards; }
+  .l3 { animation:w3 1.2s cubic-bezier(.45,0,.25,1) forwards; }
+  @keyframes w1 { 0%{clip-path:inset(0 100% 0 0)} 33%,100%{clip-path:inset(0 0 0 0)} }
+  @keyframes w2 { 0%,25%{clip-path:inset(0 100% 0 0)} 66%,100%{clip-path:inset(0 0 0 0)} }
+  @keyframes w3 { 0%,55%{clip-path:inset(0 100% 0 0)} 100%{clip-path:inset(0 0 0 0)} }
   p { margin:0; font-size:14px; letter-spacing:.12em; text-transform:uppercase; opacity:.7; }
   @media (prefers-reduced-motion: reduce) { .leaf, svg { animation:none; clip-path:none; } }
 </style>

@@ -28,13 +28,9 @@
         $operatorInitials = $user ? strtoupper(substr($user->name, 0, 2)) : ($operator['initials'] ?? 'KL');
 
         $navigation = [
-            ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('koordinator.dashboard'), 'active' => request()->routeIs('*dashboard*')],
-            ['label' => 'Rencana Panen', 'icon' => 'calendar', 'href' => route('koordinator.harvest'), 'active' => request()->routeIs('*harvest*')],
-            ['label' => 'Timbangan & Sortir', 'icon' => 'scale', 'href' => route('koordinator.weighing'), 'active' => request()->routeIs('*weighing*')],
-            ['label' => 'Manajemen Stok', 'icon' => 'package', 'href' => route('koordinator.stock'), 'active' => request()->routeIs('*stock*')],
-            ['label' => 'Surat Jalan & Logistik', 'icon' => 'truck', 'href' => route('koordinator.dispatch'), 'active' => request()->routeIs('*dispatch*')],
-            ['label' => 'Monitoring', 'icon' => 'chart', 'href' => route('koordinator.monitoring'), 'active' => request()->routeIs('*monitoring*')],
-            ['label' => 'Laporan Retur', 'icon' => 'refresh', 'href' => null],
+            ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('koordinator.dashboard'), 'active' => request()->routeIs('koordinator.dashboard*')],
+            ['label' => 'Manajemen Komoditas (CRUD)', 'icon' => 'grid', 'href' => route('koordinator.products.index'), 'active' => request()->routeIs('koordinator.products*')],
+            ['label' => 'Suplai Stok Panen', 'icon' => 'package', 'href' => route('koordinator.stock'), 'active' => request()->routeIs('koordinator.stock*')],
         ];
     @endphp
 
@@ -140,10 +136,10 @@
                         </span>
                     </div>
 
-                    <a href="{{ route('koordinator.weighing') }}"
+                    <a href="{{ route('koordinator.stock') }}"
                         class="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-ink shadow-sub transition-colors hover:bg-accent-deep">
                         <x-gpa.icon name="plus" class="h-4 w-4 shrink-0 text-ink" />
-                        <span class="text-[11px] font-bold tracking-[0.88px] text-ink gpa-meta">Input Timbangan Cepat</span>
+                        <span class="text-[11px] font-bold tracking-[0.88px] text-ink gpa-meta">Input Stok Panen</span>
                     </a>
 
                     <nav class="flex flex-col gap-1 pt-4" aria-label="Navigasi koordinator">
@@ -200,6 +196,27 @@
             </aside>
 
             <main id="main-content" class="min-w-0 flex-1 px-4 py-6 lg:px-8">
+                @if (session('success'))
+                    <div class="mb-5 rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-xs font-medium text-emerald-800">
+                        <strong>Sukses:</strong> {{ session('success') }}
+                    </div>
+                @endif
+                @if (session('error'))
+                    <div class="mb-5 rounded-lg border border-rose-300 bg-rose-50 p-4 text-xs font-medium text-rose-800">
+                        <strong>Error:</strong> {{ session('error') }}
+                    </div>
+                @endif
+                @if ($errors->any())
+                    <div class="mb-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-xs font-medium text-amber-900">
+                        <strong class="block mb-1">Periksa kembali data formulir:</strong>
+                        <ul class="list-disc pl-4 space-y-0.5">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 @yield('content')
             </main>
         </div>

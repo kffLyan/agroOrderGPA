@@ -40,16 +40,29 @@ class PaymentProofController extends Controller
             ->sum('grand_total');
 
         // Riwayat Pembayaran (History)
-        $dbPayments = Payment::with(['invoice', 'verifier'])
+        $dbPayments = Payment::with(['invoice', 'order', 'verifier'])
             ->where(function ($query) use ($user) {
                 $query->whereHas('invoice', fn ($q) => $q->where('user_id', $user->id))
                     ->orWhereHas('order', fn ($q) => $q->where('user_id', $user->id));
             })
-            ->latest('paid_at')
-            ->take(10)
+            ->latest('id')
+            ->take(15)
             ->get();
 
         $tagihanParam = $request->query('tagihan');
+        $orderIdParam = $request->query('order_id');
+
+        // Jika tagihan kosong atau diberikan order_id, cari invoice terkait pesanan tersebut
+        if ($orderIdParam) {
+            $relatedOrder = \App\Models\Order::with('invoice')->where('user_id', $user->id)->find($orderIdParam);
+            if ($relatedOrder && $relatedOrder->invoice) {
+                $tagihanParam = $relatedOrder->invoice->invoice_number;
+            }
+        }
+
+        // Ambil kanal pembayaran resmi yang telah disetel oleh Direktur
+        $governanceService = app(\App\Services\GovernanceService::class);
+        $paymentChannels = $governanceService->getActivePaymentChannels();
 
         return view('klien.payment-proof', compact(
             'dbInvoices',
@@ -57,7 +70,8 @@ class PaymentProofController extends Controller
             'outstandingTotal',
             'dbPayments',
             'user',
-            'tagihanParam'
+            'tagihanParam',
+            'paymentChannels'
         ));
     }
 
@@ -99,11 +113,16 @@ class PaymentProofController extends Controller
 
         DB::beginTransaction();
         try {
+            $paymentMethod = $request->input('payment_method');
+            if (empty($paymentMethod)) {
+                $paymentMethod = str_contains(strtoupper($validated['sender_bank']), 'QRIS') ? 'QRIS' : 'TRANSFER_BANK';
+            }
+
             $payment = Payment::create([
                 'invoice_id' => $invoice?->id,
                 'order_id' => $invoice?->orders()->first()?->id,
                 'payment_reference' => $validated['reference'] ?: 'PAY-' . strtoupper(Str::random(8)),
-                'payment_method' => 'TRANSFER_BANK',
+                'payment_method' => $paymentMethod,
                 'amount' => $validated['amount'],
                 'proof_url' => $proofPath,
                 'status' => 'MENUNGGU_VERIFIKASI',

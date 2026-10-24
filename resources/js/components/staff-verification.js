@@ -15,8 +15,9 @@ export default function secretaryVerification(orders = [], checklistTotal = 0) {
         run(title, message, tone = 'info') {
             if (typeof this.$dispatch === 'function') {
                 this.$dispatch('gpa:toast', { title, message, tone });
+            } else {
+                window.dispatchEvent(new CustomEvent('gpa:toast', { detail: { title, message, tone } }));
             }
-            window.dispatchEvent(new CustomEvent('gpa:toast', { detail: { title, message, tone } }));
         },
 
         get selected() {
@@ -82,17 +83,49 @@ export default function secretaryVerification(orders = [], checklistTotal = 0) {
                 : 'text-ink-body hover:text-ink';
         },
 
-        select(id) {
-            if (this.isSelected(id)) {
-                return;
+        init() {
+            // Cek parameter URL atau hash jika diarahkan ke PO tertentu
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetPo = urlParams.get('po') || urlParams.get('order') || window.location.hash.replace('#', '');
+            if (targetPo) {
+                const found = this.orders.find((o) => o.id === targetPo || String(o.order_id) === String(targetPo));
+                if (found) {
+                    this.selectedId = found.id;
+                    this.$nextTick(() => {
+                        this.scrollToInspection();
+                    });
+                }
             }
+        },
 
+        select(id) {
             this.selectedId = id;
             this.checked = [];
 
             this.$nextTick(() => {
-                document.getElementById('order-inspection')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                this.scrollToInspection();
             });
+        },
+
+        scrollToInspection() {
+            const el = document.getElementById('order-inspection');
+            if (el) {
+                const header = document.querySelector('header');
+                const headerHeight = header ? header.offsetHeight : 70;
+                const elementPosition = el.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - (headerHeight + 20);
+
+                window.scrollTo({
+                    top: Math.max(0, offsetPosition),
+                    behavior: 'smooth'
+                });
+
+                // Efek visual highlight border halus agar perhatian langsung tertuju ke card ini
+                el.classList.add('ring-2', 'ring-accent', 'transition-all');
+                setTimeout(() => {
+                    el.classList.remove('ring-2', 'ring-accent');
+                }, 1400);
+            }
         },
 
         nextPending(excludeId) {
@@ -112,7 +145,7 @@ export default function secretaryVerification(orders = [], checklistTotal = 0) {
             this.run(step.label, step.message);
         },
 
-        reject() {
+        async reject() {
             const order = this.selected;
 
             if (! order) {
@@ -120,53 +153,68 @@ export default function secretaryVerification(orders = [], checklistTotal = 0) {
             }
 
             if (order.order_id) {
-                const reason = prompt('Masukkan alasan penolakan pesanan:', 'Kapasitas armada / kuota stok panen tidak mencukupi');
+                const reason = await window.$prompt({
+                    title: 'Tolak Verifikasi Pesanan',
+                    message: 'Masukkan alasan penolakan pesanan ini untuk diteruskan ke Klien:',
+                    defaultValue: 'Kapasitas armada / kuota stok panen tidak mencukupi',
+                    placeholder: 'Alasan penolakan...',
+                    icon: 'danger',
+                    tone: 'danger',
+                    confirmText: 'Tolak Pesanan',
+                    cancelText: 'Batal',
+                });
                 if (!reason) {
                     return;
                 }
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `/sekretaris/orders/${order.order_id}/reject`;
-                const csrf = document.createElement('input');
-                csrf.type = 'hidden';
-                csrf.name = '_token';
-                csrf.value = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-                form.appendChild(csrf);
-                const reasonInput = document.createElement('input');
-                reasonInput.type = 'hidden';
-                reasonInput.name = 'rejection_reason';
-                reasonInput.value = reason;
-                form.appendChild(reasonInput);
-                document.body.appendChild(form);
-                form.submit();
+
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                    || document.querySelector('input[name="_token"]')?.value
+                    || '';
+
+                try {
+                    const response = await fetch(`/sekretaris/orders/${order.order_id}/reject`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ rejection_reason: reason }),
+                    });
+
+                    const data = await response.json().catch(() => ({}));
+
+                    if (! response.ok || data.success === false) {
+                        throw new Error(data.message || 'Gagal menolak pesanan.');
+                    }
+
+                    this.run(
+                        `Pesanan ${order.id}: Ditolak`,
+                        data.message || `Pesanan ${order.id} telah ditolak dan dihapus dari antrean verifikasi.`,
+                        'danger'
+                    );
+
+                    this.resolved.push(order.id);
+                    this.orders = this.orders.filter((o) => o.id !== order.id);
+                    this.nextPending(order.id);
+                } catch (err) {
+                    this.run('Penolakan Gagal', err.message || 'Terjadi kesalahan sistem saat menolak pesanan.', 'danger');
+                }
                 return;
             }
 
             this.run(
                 `${order.id}: Tolak Pesanan`,
-                'PO ditolak dan diteruskan ke PIC klien untuk revisi.',
+                'Pesanan ditolak dan status pesanan dibatalkan (BATAL).',
                 'danger'
             );
 
             this.resolved.push(order.id);
+            this.orders = this.orders.filter((o) => o.id !== order.id);
             this.nextPending(order.id);
         },
 
-        revise() {
-            const order = this.selected;
-
-            if (! order) {
-                return;
-            }
-
-            this.run(
-                `${order.id}: Minta Revisi Klien`,
-                `Permintaan revisi ${order.id} dikirim ke PIC ${order.client} melalui kanal resmi.`,
-                'warning'
-            );
-        },
-
-        verify() {
+        async verify() {
             const order = this.selected;
 
             if (! order) {
@@ -184,55 +232,51 @@ export default function secretaryVerification(orders = [], checklistTotal = 0) {
             }
 
             if (order.order_id) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `/sekretaris/orders/${order.order_id}/approve`;
-                const csrf = document.createElement('input');
-                csrf.type = 'hidden';
-                csrf.name = '_token';
-                csrf.value = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-                form.appendChild(csrf);
-                document.body.appendChild(form);
-                form.submit();
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                    || document.querySelector('input[name="_token"]')?.value
+                    || '';
+
+                try {
+                    const response = await fetch(`/sekretaris/orders/${order.order_id}/approve`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrf,
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                    });
+
+                    const data = await response.json().catch(() => ({}));
+
+                    if (! response.ok || data.success === false) {
+                        throw new Error(data.message || 'Gagal menyetujui pesanan.');
+                    }
+
+                    this.run(
+                        `Pesanan ${order.id}: Disetujui!`,
+                        data.message || `Pesanan ${order.id} berhasil disetujui. Kuota panen dikunci & Invoice tagihan diterbitkan.`,
+                        'success'
+                    );
+
+                    // Hilangkan pesanan yang sudah diverifikasi dari antrean seketika
+                    this.resolved.push(order.id);
+                    this.orders = this.orders.filter((o) => o.id !== order.id);
+                    this.nextPending(order.id);
+                } catch (err) {
+                    this.run('Verifikasi Gagal', err.message || 'Terjadi kesalahan sistem saat menyetujui pesanan.', 'danger');
+                }
                 return;
             }
 
             this.run(
-                `${order.id}: Diverifikasi`,
-                `PO ${order.id} diteruskan ke Koordinator Lapangan. Surat Jalan tetap terkunci hingga timbangan riil disubmit.`,
+                `${order.id}: Disetujui`,
+                `Pesanan ${order.id} berhasil disetujui. Invoice Tagihan diterbitkan dan menunggu pembayaran lunas dari klien.`,
                 'success'
             );
 
             this.resolved.push(order.id);
+            this.orders = this.orders.filter((o) => o.id !== order.id);
             this.nextPending(order.id);
-        },
-
-        draftInvoice() {
-            const order = this.selected;
-
-            if (! order) {
-                return;
-            }
-
-            const count = order.deliveries?.length ?? 0;
-            this.run(
-                'Cetak Draft Tagihan',
-                `Draft tagihan ${order.client} (${count} dokumen SJ) disiapkan untuk ditinjau.`
-            );
-        },
-
-        issueInvoice() {
-            const order = this.selected;
-
-            if (! order) {
-                return;
-            }
-
-            this.run(
-                'Terbitkan Invoice Tempo (TOP 30)',
-                `Invoice tempo ${order.deliveries_total} untuk ${order.client} masuk antrean penerbitan Finance.`,
-                'success'
-            );
         },
 
         restore() {

@@ -42,8 +42,9 @@ export default function secretaryDashboard() {
         run(title, message, tone = 'info') {
             if (typeof this.$dispatch === 'function') {
                 this.$dispatch('gpa:toast', { title, message, tone });
+            } else {
+                window.dispatchEvent(new CustomEvent('gpa:toast', { detail: { title, message, tone } }));
             }
-            window.dispatchEvent(new CustomEvent('gpa:toast', { detail: { title, message, tone } }));
         },
 
         isResolved(po) {

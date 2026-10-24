@@ -7,7 +7,7 @@
         $totalNetto = 0;
         if ($currentOrder) {
             foreach ($currentOrder->orderItems as $item) {
-                $totalNetto += (float) ($item->actual_net_weight ?: $item->ordered_qty ?: 0);
+                $totalNetto += (float) ($item->ordered_qty ?: 0);
             }
         }
 
@@ -88,8 +88,7 @@
             <form id="pod-submit-form" method="POST" action="{{ route('armada.pod.store', $currentOrder->id) }}" enctype="multipart/form-data" class="hidden">
                 @csrf
                 <input type="hidden" name="condition" id="hidden-condition" x-model="condition">
-                <input type="hidden" name="signature" id="hidden-signature" x-model="signature">
-                <input type="hidden" name="received_by_name" :value="signature || '{{ $picName }}'">
+                <input type="hidden" name="received_by_name" value="{{ $picName }}">
                 <input type="file" name="manifest_photo" id="photo-input-manifest" accept="image/*" @change="handlePhotoUpload($event, 'manifest')">
                 <input type="file" name="dock_photo" id="photo-input-dock" accept="image/*" @change="handlePhotoUpload($event, 'dock')">
             </form>
@@ -234,49 +233,6 @@
             </button>
         </section>
 
-        {{-- LANGKAH 3: Tanda Tangan & Konfirmasi Penerima --}}
-        <section class="flex flex-col gap-3 rounded-2xl bg-surface p-4 shadow-card scroll-mt-16" id="pod-step-signature" x-ref="step-signature">
-            <header class="flex items-center justify-between gap-3 border-b border-surface-shell pb-2.5">
-                <div class="flex items-center gap-2">
-                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink text-white font-mono text-xs font-bold">3</span>
-                    <h2 class="text-base font-bold text-ink">Tanda Tangan &amp; Konfirmasi Penerima</h2>
-                </div>
-                <span class="shrink-0 rounded px-2 py-0.5 text-[9px] font-bold bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">
-                    OTORISASI KLIEN
-                </span>
-            </header>
-
-            <div class="flex flex-col gap-2 rounded-xl bg-surface-shell p-3 outline outline-2 -outline-offset-2 outline-line-board">
-                <div class="flex items-center justify-between text-[10px] font-mono">
-                    <span class="text-ink-quiet">PAD KONFIRMASI TANDA TANGAN PENERIMA</span>
-                    <button type="button" @click="clearSignature()" class="flex items-center gap-1 text-danger font-bold">
-                        <x-gpa.icon name="refresh" class="h-3 w-3" />
-                        <span>BERSIHKAN</span>
-                    </button>
-                </div>
-
-                <div class="relative flex h-24 w-full items-center justify-center rounded-lg border-2 border-dashed border-line-board bg-white p-2">
-                    <p x-show="!signed()" class="text-center text-xs text-ink-quiet font-medium">
-                        Klik tombol di bawah untuk membubuhkan konfirmasi tanda tangan penerima
-                    </p>
-                    <p x-show="signed()" x-cloak class="font-serif text-2xl italic font-bold text-brand" x-text="signature"></p>
-                </div>
-            </div>
-
-            <div class="flex flex-col gap-1 rounded-xl bg-surface-shell p-3 outline outline-1 -outline-offset-1 outline-line-board/60">
-                <p class="gpa-micro-bold text-ink-quiet text-[10px]">PENANGGUNG JAWAB PENERIMA (PIC RESMI):</p>
-                <p class="text-sm font-bold text-ink">{{ $picName }}</p>
-                <p class="text-xs text-ink-body">Kepala Gudang Penerima Klien</p>
-
-                <button type="button" @click="sign('{{ $picName }}')"
-                    :class="signed() ? 'bg-accent text-ink font-bold shadow-sub' : 'bg-brand text-accent font-bold shadow-sub'"
-                    class="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-lg text-xs uppercase transition-transform active:scale-[0.98]">
-                    <x-gpa.icon name="check" class="h-4 w-4" />
-                    <span x-text="signed() ? 'Tanda Tangan Dikonfirmasi' : 'Bubuhkan Tanda Tangan Penerima'"></span>
-                </button>
-            </div>
-        </section>
-
         {{-- Status kondisi muatan & retur --}}
         <section class="flex flex-col gap-3.5 rounded-2xl bg-surface p-4 shadow-card">
             <header class="flex items-center gap-2 border-b border-surface-shell pb-2">
@@ -323,6 +279,31 @@
                         <span class="text-[10px] text-ink-body">Terdapat krat/sayur yang rusak saat jalan atau tidak lolos sortir penerimaan klien.</span>
                     </div>
                 </label>
+            </div>
+
+            {{-- Form input item retur jika ada selisih --}}
+            <div x-show="condition === 'discrepancy'" x-cloak class="flex flex-col gap-3 rounded-xl bg-warning-cream/30 p-3.5 border border-warning-caution/40">
+                <p class="text-xs font-bold text-ink">Rincian Komoditas Rusak / Retur (kg):</p>
+                @if ($currentOrder)
+                    @foreach ($currentOrder->orderItems as $item)
+                        <div class="flex flex-col gap-1.5 rounded-lg bg-surface p-2.5 border border-line-board/60 text-xs">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-ink">{{ $item->product->name }}</span>
+                                <span class="text-[11px] text-ink-body">Muatan: <strong>{{ number_format($item->ordered_qty, 0) }} kg</strong></span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 mt-1">
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-ink-body mb-0.5">Berat Retur (kg)</label>
+                                    <input type="number" step="0.1" min="0" max="{{ $item->ordered_qty }}" name="returns[{{ $item->id }}][returned_weight]" form="pod-submit-form" placeholder="0" class="w-full rounded border border-line-board px-2 py-1 text-xs">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-semibold text-ink-body mb-0.5">Alasan Retur</label>
+                                    <input type="text" name="returns[{{ $item->id }}][return_reason]" form="pod-submit-form" placeholder="Contoh: Sayur layu/busuk" class="w-full rounded border border-line-board px-2 py-1 text-xs">
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                @endif
             </div>
 
             <footer class="flex items-center justify-between border-t border-surface-shell pt-2.5">

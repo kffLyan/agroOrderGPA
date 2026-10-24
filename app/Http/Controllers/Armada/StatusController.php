@@ -35,7 +35,7 @@ class StatusController extends Controller
         $totalTonaseKg = 0.0;
         foreach ($orders as $order) {
             foreach ($order->orderItems as $item) {
-                $totalTonaseKg += (float) ($item->actual_net_weight ?: $item->ordered_qty ?: 0);
+                $totalTonaseKg += (float) ($item->ordered_qty ?: 0);
             }
         }
 

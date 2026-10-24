@@ -108,7 +108,7 @@
         </section>
 
         {{-- ---------------------------------------------------------------- --}}
-        {{-- Empat kartu ringkasan kuota / kredit / dispatch / rulebook --}}
+        {{-- Empat kartu ringkasan kuota / kredit / dispatch / panduan --}}
         {{-- ---------------------------------------------------------------- --}}
         <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <article class="gpa-card flex flex-col justify-between gap-4 p-5">
@@ -187,21 +187,21 @@
                         <li class="flex items-start gap-2">
                             <x-gpa.icon name="check" class="mt-0.5 h-3 w-3 shrink-0 text-accent" />
                             <p class="gpa-body text-white/90">
-                                <span class="gpa-micro-bold text-accent">Rule 01:</span>
+                                <span class="gpa-micro-bold text-accent">Ketentuan 1:</span>
                                 Order cut-off pukul 16:00 WIB untuk pengiriman H+1 subuh.
                             </p>
                         </li>
                         <li class="flex items-start gap-2">
                             <x-gpa.icon name="check" class="mt-0.5 h-3 w-3 shrink-0 text-accent" />
                             <p class="gpa-body text-white/90">
-                                <span class="gpa-micro-bold text-accent">Rule 02:</span>
+                                <span class="gpa-micro-bold text-accent">Ketentuan 2:</span>
                                 Harga kontrak terkunci mengikat tanpa fluktuasi harian.
                             </p>
                         </li>
                         <li class="flex items-start gap-2">
                             <x-gpa.icon name="check" class="mt-0.5 h-3 w-3 shrink-0 text-accent" />
                             <p class="gpa-body text-white/90">
-                                <span class="gpa-micro-bold text-accent">Rule 03:</span>
+                                <span class="gpa-micro-bold text-accent">Ketentuan 3:</span>
                                 Penimbangan neto sah dilakukan di packing house dengan bukti timbang digital.
                             </p>
                         </li>
@@ -440,38 +440,63 @@
 
 
         {{-- ---------------------------------------------------------------- --}}
-        {{-- Ringkasan draft PO (mengikuti badge Keranjang di sidebar) --}}
+        {{-- Ringkasan draft PO (Floating Dock Modern & Rapi) --}}
         {{-- ---------------------------------------------------------------- --}}
         <section id="quick-reorder" x-show="draftCount() > 0" x-cloak
-            class="sticky bottom-4 z-30 flex flex-col gap-3 rounded-2xl border border-brand-line bg-surface/95 p-4 shadow-2xl ring-1 ring-black/5 outline outline-1 outline-line-board backdrop-blur-md scroll-mt-24 lg:flex-row lg:items-center lg:justify-between">
-            <div class="flex min-w-0 flex-col gap-1">
-                <p class="gpa-micro-bold text-success-deep">
-                    Draft PO aktif · <span x-text="draftCount()"></span> item
-                </p>
-                <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <p class="gpa-figure text-ink"><span x-text="draftWeight()"></span> kg</p>
-                    <p class="gpa-meta-lg font-bold text-ink">
-                        Total <span x-text="money(draftTotal())"></span>
-                    </p>
+            x-transition:enter="transition ease-out duration-300 transform"
+            x-transition:enter-start="opacity-0 translate-y-6 scale-98"
+            x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+            x-transition:leave="transition ease-in duration-200 transform"
+            x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+            x-transition:leave-end="opacity-0 translate-y-6 scale-98"
+            class="sticky bottom-4 z-30 flex flex-col gap-3 rounded-2xl border border-line-hair/80 bg-white/95 px-4 py-3 sm:px-5 sm:py-3.5 shadow-[0_16px_40px_-12px_rgba(20,58,0,0.22)] backdrop-blur-lg scroll-mt-24 lg:flex-row lg:items-center lg:justify-between transition-all duration-300">
+            
+            {{-- Sisi Kiri: Ringkasan Total & Bobot (Solid, Bebas Macet/Wrap) --}}
+            <div class="flex shrink-0 items-center gap-3.5">
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand text-accent shadow-sm">
+                    <x-gpa.icon name="cart" class="h-5 w-5" />
+                </div>
+                <div class="flex flex-col min-w-fit">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-accent/30 px-2.5 py-0.5 text-[10px] font-bold text-brand uppercase tracking-wider">
+                            <span class="h-1.5 w-1.5 rounded-full bg-brand animate-pulse"></span>
+                            Draft PO Aktif · <span x-text="draftCount()"></span> Komoditas
+                        </span>
+                    </div>
+                    <div class="flex items-baseline gap-2 mt-0.5 whitespace-nowrap">
+                        <span class="font-sans text-xl font-extrabold text-ink leading-tight tabular-nums">
+                            <span x-text="draftWeight()"></span> kg
+                        </span>
+                        <span class="text-ink-quiet/50 text-xs font-semibold">·</span>
+                        <span class="font-sans text-sm font-bold text-success-deep leading-tight tabular-nums">
+                            Total <span x-text="money(draftTotal())"></span>
+                        </span>
+                    </div>
                 </div>
             </div>
 
-            <div class="flex shrink-0 flex-wrap items-center gap-2">
+            {{-- Sisi Tengah: Chip Preview Komoditas (Scrollable Horizontal & Rapi) --}}
+            <div class="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <template x-for="line in draft" :key="`draft-${line.key}`">
                     <span
-                        class="inline-flex items-center gap-1.5 rounded-md border border-line-hair bg-surface-shell px-2 py-1 gpa-micro-bold text-ink-body">
-                        <span x-text="`${line.name} · ${line.qty} kg`"></span>
+                        class="inline-flex shrink-0 items-center gap-2 rounded-full border border-line-hair bg-canvas px-3 py-1.5 text-xs text-ink shadow-xs transition-colors hover:border-line-strong hover:bg-white">
+                        <span class="max-w-[140px] truncate font-medium text-ink sm:max-w-[180px]" x-text="line.name"></span>
+                        <span class="rounded-full bg-accent/40 px-2 py-0.5 font-mono text-[10px] font-bold text-brand tabular-nums" x-text="`${line.qty} kg`"></span>
                         <button type="button" @click="removeFromDraft(line.key)" aria-label="Hapus dari draft"
-                            class="text-ink-quiet transition-colors hover:text-danger">
+                            class="-mr-1 flex h-4 w-4 items-center justify-center rounded-full text-ink-quiet transition-colors hover:bg-danger/10 hover:text-danger">
                             <x-gpa.icon name="x" class="h-3 w-3" />
                         </button>
                     </span>
                 </template>
+            </div>
 
+            {{-- Sisi Kanan: Tombol Aksi Lanjut ke Keranjang --}}
+            <div class="flex shrink-0 items-center justify-end">
                 <a href="{{ route('klien.cart') }}"
-                    class="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2.5 shadow-sub transition-colors hover:bg-brand-deep">
-                    <x-gpa.icon name="cart" class="h-3.5 w-3.5 text-white" />
-                    <span class="gpa-meta-lg font-bold text-white">Lanjut ke Keranjang PO</span>
+                    class="group inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl bg-brand px-5 py-3 text-xs font-bold text-white shadow-md transition-all hover:bg-brand-hover hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0">
+                    <x-gpa.icon name="cart" class="h-4 w-4 text-accent transition-transform group-hover:scale-110" />
+                    <span class="font-sans font-bold text-white">Lanjut ke Keranjang PO</span>
+                    <x-gpa.icon name="arrow-right" class="h-3.5 w-3.5 text-white/70 transition-transform group-hover:translate-x-0.5" />
                 </a>
             </div>
         </section>

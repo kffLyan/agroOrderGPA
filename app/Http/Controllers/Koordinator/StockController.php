@@ -24,9 +24,9 @@ class StockController extends Controller
         $totalBinaan = (float) HarvestBatch::where('source_type', 'PETANI_BINAAN')->sum('available_quantity');
         $totalBuffer = (float) HarvestBatch::where('source_type', 'BUFFER_LUAR')->sum('available_quantity');
         $totalStock = $totalBinaan + $totalBuffer;
-        $totalReserved = (float) OrderItem::whereHas('order', fn($q) => $q->whereIn('status', ['TERVERIFIKASI', 'SIAP_KIRIM']))->sum('ordered_qty');
+        $totalReserved = (float) OrderItem::whereHas('order', fn($q) => $q->whereIn('status', ['MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN']))->sum('ordered_qty');
         $freeStock = max(0, $totalStock - $totalReserved);
-        $activePoCount = Order::whereIn('status', ['TERVERIFIKASI', 'SIAP_KIRIM'])->count();
+        $activePoCount = Order::whereIn('status', ['MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])->count();
 
         $commodities = $products->map(function ($product) {
             $slug = $product->slug ?: Str::slug($product->name);
@@ -44,7 +44,7 @@ class StockController extends Controller
             $total = $binaan + $buffer;
 
             $po = (float) OrderItem::where('product_id', $product->id)
-                ->whereHas('order', fn($q) => $q->whereIn('status', ['TERVERIFIKASI', 'SIAP_KIRIM']))
+                ->whereHas('order', fn($q) => $q->whereIn('status', ['MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN']))
                 ->sum('ordered_qty');
 
             $rtp = $total - $po;
@@ -148,6 +148,8 @@ class StockController extends Controller
         $supplierName = $request->input('supplier_name', $request->input('vendor', 'Petani Binaan'));
         $batchDate = $request->input('batch_date', $request->input('date', now()->toDateString()));
         $initialQuantity = (float) $request->input('initial_quantity', $request->input('quantity', 0));
+        $grade = $request->input('grade', 'Grade A');
+        $qcNotes = $request->input('qc_notes', $request->input('notes', 'Lolos sortir manual, mutu terverifikasi'));
 
         // Validasi
         $validated = validator([
@@ -156,12 +158,16 @@ class StockController extends Controller
             'supplier_name' => $supplierName,
             'batch_date' => $batchDate,
             'initial_quantity' => $initialQuantity,
+            'grade' => $grade,
+            'qc_notes' => $qcNotes,
         ], [
             'product_id' => 'required|exists:products,id',
             'source_type' => 'required|in:PETANI_BINAAN,BUFFER_LUAR',
             'supplier_name' => 'required|string|max:100',
             'batch_date' => 'required|date',
             'initial_quantity' => 'required|numeric|min:0.01',
+            'grade' => 'nullable|string|max:50',
+            'qc_notes' => 'nullable|string|max:255',
         ])->validate();
 
         $batch = HarvestBatch::create([
@@ -171,6 +177,8 @@ class StockController extends Controller
             'batch_date' => $validated['batch_date'],
             'initial_quantity' => $validated['initial_quantity'],
             'available_quantity' => $validated['initial_quantity'],
+            'grade' => $validated['grade'] ?? 'Grade A',
+            'qc_notes' => $validated['qc_notes'] ?? null,
             'inputted_by' => $request->user()?->id ?? 1,
         ]);
 

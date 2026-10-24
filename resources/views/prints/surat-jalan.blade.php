@@ -1,304 +1,312 @@
-@props([
-    'brand' => 'KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)',
-    'emblem' => null,
-    'doc' => [
-        'number' => 'SJ-GPA-202610-0115',
-        'po' => '#ORD-GPA-202610-0042',
-        'date' => date('d F Y'),
-        'time' => date('H:i') . ' WIB',
-    ],
-    'sender' => [
-        'title' => 'KOPERASI PRODUSEN AGRO GREEN PASUNDAN',
-        'lines' => [
-            'Sentra Agribisnis Sayuran Segar Dataran Tinggi',
-            'Desa Panundaan, Kec. Ciwidey, Kab. Bandung - Jawa Barat 40973',
-            'Telp: (022) 592-8011 | Email: logistik@agroorder.co.id',
-        ],
-    ],
-    'recipient' => [
-        'title' => 'TUJUAN PENGIRIMAN / PENERIMA',
-        'name' => 'PT KULINER PRIMA NUSANTARA',
-        'lines' => [
-            'Central Kitchen Ciracas Hub',
-            'Jl. Raya Bogor KM 28, Jakarta Timur',
-            'PIC: Hendra Gunawan | HP: 0812-3456-7890',
-        ],
-    ],
-    'transporter' => [
-        'title' => 'DETAIL PENGANGKUTAN / EKSPEDISI',
-        'lines' => [
-            'Armada: D 8921 GPA | Type: Reefer 4 Ton Suhu Terkontrol',
-            'Supir: Budi Santoso | SIM: B 12345678',
-            'Sopir HP: 0812-1111-2222',
-        ],
-    ],
-    'items' => [
-        [
-            'code' => 'GPA-ROM-01',
-            'name' => 'Selada Romaine Super',
-            'qty' => 497.0,
-            'price' => 15500,
-            'amount' => 7703500,
-        ],
-    ],
-    'totals' => [
-        'qty' => 497.0,
-        'amount' => 7703500,
-    ],
-    'signatures' => [
-        [
-            'label' => 'Diserahkan Oleh',
-            'role' => 'Koordinator Gudang GPA',
-            'name' => 'Bambang Sugiarto',
-            'date' => date('d/m/Y'),
-        ],
-        [
-            'label' => 'Pengangkut / Supir',
-            'role' => 'Driver Logistik',
-            'name' => 'Budi Santoso',
-            'date' => date('d/m/Y'),
-        ],
-        [
-            'label' => 'Diterima Lengkap Oleh',
-            'role' => 'Penerima Barang',
-            'name' => '________________________',
-            'date' => '____/____/____',
-        ],
-    ],
-    'footer' => 'Dokumen ini sah diterbitkan oleh Koperasi Produsen Agro Green Pasundan (GPA). Distribusi Rantai Pasok Segar Agrikultur.',
-    'showSheet' => true,
-    'sheetLabel' => 'LEMBAR 1 / 3 (ASLI)',
-])
-
 <!DOCTYPE html>
 <html lang="id">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Surat Jalan {{ $doc['number'] }} &middot; GPA</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <title>Surat Jalan {{ $doc['number'] ?? 'SJ-GPA' }} &middot; Green Pasundan Agriculture</title>
+    @vite(['resources/css/app.css'])
     <style>
         @page {
-            size: A4 portrait;
-            margin: 10mm 12mm;
+            size: A5 portrait;
+            margin: 6mm 8mm;
         }
 
         @media print {
             body {
                 background: #ffffff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             .no-print {
                 display: none !important;
             }
 
-            .a4-canvas {
-                margin: 0 auto;
-                box-shadow: none;
-                page-break-after: auto;
+            .surat-canvas {
+                margin: 0 auto !important;
+                box-shadow: none !important;
+                border: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                background: transparent !important;
             }
         }
 
         @media screen {
             body {
-                background: #f8faf3;
+                background: #ecefe6;
+            }
+
+            .surat-canvas {
+                width: 148mm; /* Ukuran Resmi Nota NCR / Half-Folio A5 */
+                min-height: 210mm;
+                margin: 20px auto;
+                background: #fbf8ea; /* Warna Khas Kertas Nota NCR Asli di Foto */
+                box-shadow: 0 12px 36px -12px rgba(20, 58, 0, 0.35);
+                border: 1px solid #e5e0c5;
+            }
+
+            .surat-canvas.mode-white {
+                background: #ffffff !important;
+                border: 1px solid #d1d5db;
             }
         }
 
-        .a4-canvas {
-            width: 210mm;
-            min-height: 297mm;
-            margin: 16px auto;
-            background: #ffffff;
-            box-shadow: 0 10px 30px -20px rgba(12, 36, 1, 0.9);
-            font-family: 'Inter', 'Helvetica', 'Arial', sans-serif;
-            font-size: 9pt;
-            line-height: 1.6;
+        .surat-canvas {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 8.5pt;
+            line-height: 1.35;
             color: #191c18;
+            padding: 16px 20px;
+            box-sizing: border-box;
+        }
+
+        /* Zebra Striping Sesuai Format Nota Fisik Asli */
+        .zebra-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid #1f2937;
+        }
+
+        .zebra-table th {
+            background-color: #27272a;
+            color: #ffffff;
+            border: 1px solid #1f2937;
+            padding: 5px 8px;
+            font-size: 8.5pt;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .zebra-table td {
+            border: 1px solid #9ca3af;
+            padding: 6px 10px;
+            font-size: 9pt;
+            height: 25px;
+        }
+
+        .zebra-table tr:nth-child(even) td {
+            background-color: #e5e7eb; /* Abu-abu striping */
+        }
+
+        .zebra-table tr:nth-child(odd) td {
+            background-color: #fefce8; /* Krem/kuning muda striping */
         }
     </style>
 </head>
 
-<body>
-    <div class="no-print sticky top-0 z-20 border-b border-line-board bg-surface/95 backdrop-blur">
-        <div class="mx-auto flex max-w-[210mm] items-center justify-between gap-3 px-4 py-2">
+<body x-data="{ paperMode: 'ncr' }">
+    <!-- Floating Toolbar (No Print) -->
+    <div class="no-print sticky top-0 z-30 border-b border-line bg-surface/95 shadow-sm backdrop-blur">
+        <div class="mx-auto flex max-w-[210mm] items-center justify-between gap-3 px-4 py-2.5">
             <div class="flex items-center gap-2">
                 <a href="{{ url()->previous() }}"
-                    class="inline-flex items-center gap-1.5 rounded-md border border-line-board bg-surface px-2.5 py-1 text-[11px] font-medium text-ink transition-colors hover:bg-surface-shell">
-                    <x-gpa.icon name="arrow-left" class="h-3 w-3" />
+                    class="inline-flex items-center gap-1.5 rounded border border-line-strong bg-white px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-sunken">
+                    <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5" />
                     Kembali
                 </a>
-                @if ($showSheet)
-                    <span class="rounded bg-surface-pill px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-widest text-ink-muted">
-                        {{ $sheetLabel }}
-                    </span>
-                @endif
+                <span class="rounded bg-brand/10 px-2.5 py-1 text-xs font-bold text-brand">
+                    SURAT JALAN PENGIRIMAN
+                </span>
             </div>
-            <button type="button"
-                onclick="window.print()"
-                class="inline-flex items-center gap-1.5 rounded-md bg-brand px-3 py-1 text-[11px] font-semibold text-white shadow-sub transition-colors hover:bg-brand-deep">
-                <x-gpa.icon name="printer" class="h-3 w-3" />
-                Cetak Surat Jalan (Ctrl+P)
-            </button>
+
+            <div class="flex items-center gap-2">
+                <!-- Toggle Tampilan Kertas -->
+                <button type="button" @click="paperMode = (paperMode === 'ncr' ? 'white' : 'ncr')"
+                    class="rounded border border-line bg-white px-3 py-1.5 text-xs font-medium text-ink hover:bg-surface-sunken">
+                    Mode: <span class="font-bold" x-text="paperMode === 'ncr' ? 'Kertas Nota NCR Asli (Kuning)' : 'Kertas Putih Standar'"></span>
+                </button>
+
+                <button type="button" onclick="window.print()"
+                    class="inline-flex items-center gap-1.5 rounded bg-brand px-4 py-1.5 text-xs font-bold text-white shadow transition-all hover:bg-brand-strong">
+                    <x-gpa.icon name="printer" class="h-3.5 w-3.5" />
+                    Cetak Surat Jalan (Ctrl+P)
+                </button>
+            </div>
         </div>
     </div>
 
-    <main class="a4-canvas">
-        <div class="flex h-full flex-col px-8 py-6">
-            <header class="flex items-start justify-between gap-6 border-b-2 border-brand pb-4">
-                <div class="flex items-start gap-3">
-                    <div class="flex h-12 w-12 items-center justify-center rounded-lg border border-line-hair bg-surface-shell">
-                        <img src="{{ asset('gpaleaves.png') }}" alt="Logo GPA" class="h-8 w-8 object-contain">
-                    </div>
-                    <div>
-                        <p class="text-sm font-extrabold uppercase tracking-widest text-ink">
-                            {{ $brand }}
-                        </p>
-                        <p class="mt-0.5 text-[8pt] leading-relaxed text-ink-body">
-                            @foreach ($sender['lines'] as $line)
-                                {{ $line }}<br>
-                            @endforeach
-                        </p>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <p class="text-[10pt] font-bold uppercase tracking-widest text-brand">
-                        SURAT JALAN PENGIRIMAN
-                    </p>
-                    <dl class="mt-1 space-y-0.5 text-[8pt]">
-                        <div class="flex items-baseline justify-end gap-2">
-                            <dt class="text-ink-quiet">No. SJ:</dt>
-                            <dd class="font-mono font-semibold text-ink">{{ $doc['number'] }}</dd>
-                        </div>
-                        <div class="flex items-baseline justify-end gap-2">
-                            <dt class="text-ink-quiet">No. PO:</dt>
-                            <dd class="font-mono font-semibold text-ink">{{ $doc['po'] }}</dd>
-                        </div>
-                        <div class="flex items-baseline justify-end gap-2">
-                            <dt class="text-ink-quiet">Tgl. Kirim:</dt>
-                            <dd class="text-ink-body">{{ $doc['date'] }} | {{ $doc['time'] }}</dd>
-                        </div>
-                    </dl>
-                </div>
-            </header>
+    <main class="surat-canvas" :class="{ 'mode-white': paperMode === 'white' }">
+        <!-- KOP SURAT ASLI GREEN PASUNDAN AGRICULTURE DARI FOTO RESMI -->
+        <header class="flex items-start justify-between border-b-2 border-ink pb-2.5">
+            <div class="flex items-center gap-3">
+                <img src="{{ asset('gpaleaves.png') }}" alt="Logo GPA" class="h-14 w-14 shrink-0 object-contain">
+            </div>
 
-            <section class="mt-4 grid gap-4 md:grid-cols-2">
-                <div class="border border-line-hair bg-surface">
-                    <div class="border-b border-line-hair bg-brand px-3 py-1.5">
-                        <p class="text-[9pt] font-bold uppercase tracking-widest text-white">
-                            {{ $recipient['title'] }}
-                        </p>
-                    </div>
-                    <div class="space-y-1 px-3 py-2 text-[8pt]">
-                        <p class="font-semibold text-ink">{{ $recipient['name'] }}</p>
-                        @foreach ($recipient['lines'] as $line)
-                            <p class="text-ink-body">{{ $line }}</p>
-                        @endforeach
-                    </div>
+            <div class="flex-1 text-center px-2">
+                <p class="text-[8pt] font-extrabold uppercase tracking-widest text-ink">
+                    {{ $brand ?? 'KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)' }}
+                </p>
+                <h1 class="text-[13pt] font-black uppercase tracking-wider text-ink -mt-0.5">
+                    GREEN PASUNDAN AGRICULTURE
+                </h1>
+                <p class="text-[7.5pt] font-semibold text-ink leading-tight">
+                    {{ $company['legal_number'] ?? 'Badan Hukum : Nomor AHU-0004853.AH.01.29.TH 2024' }}
+                </p>
+                <p class="text-[7.5pt] font-medium text-ink leading-tight">
+                    {{ $company['address'] ?? 'Kp. Batukasur RT. 001 RW. 019 Desa Panundaan Kec. Ciwidey' }}
+                </p>
+                <p class="text-[7.5pt] font-medium text-ink leading-tight">
+                    {{ $company['regency'] ?? 'Kabupaten Bandung (40973)' }} Tlp/ Whatsapp : {{ $company['phone'] ?? '0812-2323-9133 / 0813-2142-2231' }}
+                </p>
+            </div>
+
+            <!-- Lambang Koperasi Indonesia di Kanan -->
+            <div class="flex items-center justify-end">
+                <svg class="h-14 w-14 text-yellow-600 shrink-0" viewBox="0 0 100 100" fill="currentColor">
+                    <circle cx="50" cy="50" r="46" fill="#fef08a" stroke="#ca8a04" stroke-width="3"/>
+                    <circle cx="50" cy="50" r="35" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+                    <path d="M50 18 L59 36 L79 36 L63 49 L69 69 L50 57 L31 69 L37 49 L21 36 L41 36 Z" fill="#ca8a04"/>
+                    <circle cx="50" cy="50" r="9" fill="#dc2626"/>
+                </svg>
+            </div>
+        </header>
+
+        <!-- Garis Pemisah Ganda Khas Surat Jalan -->
+        <div class="border-b border-ink mt-0.5 mb-3"></div>
+
+        <!-- Metadata Surat Jalan Sesuai Format Dokumen Asli -->
+        <section class="flex items-start justify-between text-[9pt]">
+            <div class="w-7/12 space-y-1">
+                <div class="flex items-baseline gap-2">
+                    <span class="text-base font-black tracking-wider text-ink">SURAT JALAN</span>
+                    <span class="text-ink font-semibold">No:</span>
+                    <span class="font-mono font-bold text-ink underline decoration-dotted underline-offset-4">
+                        {{ $doc['number'] ?? '-' }}
+                    </span>
                 </div>
-                <div class="border border-line-hair bg-surface">
-                    <div class="border-b border-line-hair bg-brand px-3 py-1.5">
-                        <p class="text-[9pt] font-bold uppercase tracking-widest text-white">
-                            {{ $transporter['title'] }}
-                        </p>
-                    </div>
-                    <div class="space-y-1 px-3 py-2 text-[8pt]">
-                        @foreach ($transporter['lines'] as $line)
-                            <p class="text-ink-body">{{ $line }}</p>
-                        @endforeach
-                    </div>
+                <div class="flex items-baseline gap-2 pt-1">
+                    <span class="w-24 text-ink font-semibold">Kepada Yth</span>
+                    <span class="text-ink">:</span>
+                    <span class="font-bold text-ink text-[10.5pt]">
+                        {{ $doc['to'] ?? 'Mitra Klien GPA' }}
+                    </span>
                 </div>
-            </section>
-
-            <section class="mt-4 flex-1">
-                <div class="overflow-hidden border border-line-hair">
-                    <table class="w-full border-collapse text-[8pt]">
-                        <thead>
-                            <tr class="bg-brand text-white">
-                                <th class="w-10 px-2 py-1.5 text-center font-semibold uppercase tracking-widest">
-                                    NO
-                                </th>
-                                <th class="px-2 py-1.5 text-left font-semibold uppercase tracking-widest">
-                                    KODE SKU
-                                </th>
-                                <th class="px-2 py-1.5 text-left font-semibold uppercase tracking-widest">
-                                    NAMA KOMODITAS
-                                </th>
-                                <th class="w-24 px-2 py-1.5 text-right font-semibold uppercase tracking-widest">
-                                    NETTO TERA (KG)
-                                </th>
-                                <th class="w-28 px-2 py-1.5 text-right font-semibold uppercase tracking-widest">
-                                    HARGA SATUAN (RP)
-                                </th>
-                                <th class="w-32 px-2 py-1.5 text-right font-semibold uppercase tracking-widest">
-                                    NILAI TOTAL (RP)
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($items as $index => $item)
-                                <tr class="border-b border-line-hair">
-                                    <td class="px-2 py-1.5 text-center text-ink-body">{{ $index + 1 }}</td>
-                                    <td class="px-2 py-1.5 font-mono text-ink-body">{{ $item['code'] ?? '-' }}</td>
-                                    <td class="px-2 py-1.5 text-ink-body font-medium">{{ $item['name'] }}</td>
-                                    <td class="px-2 py-1.5 text-right font-mono font-semibold text-ink">
-                                        {{ number_format($item['qty'], 1, ',', '.') }}
-                                    </td>
-                                    <td class="px-2 py-1.5 text-right font-mono text-ink-body">
-                                        Rp {{ number_format($item['price'] ?? 0, 0, ',', '.') }}
-                                    </td>
-                                    <td class="px-2 py-1.5 text-right font-mono font-semibold text-ink">
-                                        Rp {{ number_format($item['amount'] ?? ($item['qty'] * ($item['price'] ?? 0)), 0, ',', '.') }}
-                                    </td>
-                                </tr>
-                            @empty
-                                <tr class="border-b border-line-hair">
-                                    <td colspan="6" class="px-2 py-3 text-center text-ink-muted">Tidak ada rincian muatan</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                        <tfoot>
-                            <tr class="bg-brand text-white">
-                                <th colspan="3" class="px-2 py-1.5 text-left font-semibold uppercase tracking-widest">
-                                    TOTAL MUATAN BERSIH TERA &amp; VALUASI
-                                </th>
-                                <th class="px-2 py-1.5 text-right font-mono font-semibold">
-                                    {{ number_format($totals['qty'], 1, ',', '.') }} kg
-                                </th>
-                                <th class="px-2 py-1.5 text-right">&nbsp;</th>
-                                <th class="px-2 py-1.5 text-right font-mono font-semibold">
-                                    Rp {{ number_format($totals['amount'], 0, ',', '.') }}
-                                </th>
-                            </tr>
-                        </tfoot>
-                    </table>
+                <div class="flex items-baseline gap-2">
+                    <span class="w-24 text-ink font-semibold">Alamat</span>
+                    <span class="text-ink">:</span>
+                    <span class="text-ink font-medium">
+                        {{ $doc['address'] ?? 'Alamat Tujuan Pengiriman' }}
+                    </span>
                 </div>
-            </section>
-
-            <section class="mt-8 grid gap-4 md:grid-cols-3">
-                @foreach ($signatures as $signature)
-                    <div class="flex flex-col border border-line-hair bg-surface">
-                        <div class="border-b border-line-hair bg-surface-shell px-3 py-1.5 text-center">
-                            <p class="text-[9pt] font-semibold text-ink">{{ $signature['label'] }}</p>
-                            <p class="text-[8pt] text-ink-quiet">{{ $signature['role'] ?? '' }}</p>
-                        </div>
-                        <div class="flex flex-1 flex-col items-center justify-end px-3 py-4 text-center">
-                            <div class="h-16 w-full border-b border-dashed border-line-board"></div>
-                            <p class="mt-2 text-[8pt] font-semibold text-ink underline">
-                                {{ $signature['name'] }}
-                            </p>
-                            <p class="text-[8pt] text-ink-quiet">Tgl: {{ $signature['date'] ?? '-' }}</p>
-                        </div>
+                @if (isset($doc['vehicle']))
+                    <div class="flex items-baseline gap-2">
+                        <span class="w-24 text-ink-muted text-[8pt]">Armada/Nopol</span>
+                        <span class="text-ink-muted text-[8pt]">:</span>
+                        <span class="text-ink-muted font-mono text-[8pt]">
+                            {{ $doc['vehicle'] }}
+                        </span>
                     </div>
-                @endforeach
-            </section>
+                @endif
+            </div>
 
-            <footer class="mt-8 border-t border-line-hair pt-3 text-center text-[7.5pt] text-ink-quiet">
-                <p>{{ $footer }}</p>
-            </footer>
+            <!-- Tanggal Pengiriman di Kanan Sejajar Format Asli -->
+            <div class="w-5/12 text-right">
+                <div class="inline-flex items-baseline gap-2">
+                    <span class="text-ink font-semibold">Tanggal :</span>
+                    <span class="font-bold text-[10.5pt] border-b border-ink px-2 font-mono">
+                        {{ $doc['date'] ?? date('d-m-Y') }}
+                    </span>
+                </div>
+                @if (isset($doc['po']))
+                    <p class="text-[7.5pt] text-ink-muted mt-1 font-mono">Ref PO: {{ $doc['po'] }}</p>
+                @endif
+            </div>
+        </section>
 
-        </div>
+        <!-- TABEL MUATAN ZEBRA 3 KOLOM SESUAI BENTUK SURAT JALAN ASLI -->
+        <section class="mt-4">
+            <table class="zebra-table">
+                <thead>
+                    <tr>
+                        <th style="width: 8%;" class="text-center">No</th>
+                        <th style="width: 72%;" class="text-left">Nama Barang</th>
+                        <th style="width: 20%;" class="text-center">Qty (Kg)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @php
+                        $itemsList = $items ?? [];
+                        $maxRows = max(10, count($itemsList)); // 10 baris nota NCR standar
+                    @endphp
+
+                    @for ($i = 0; $i < $maxRows; $i++)
+                        @php $item = $itemsList[$i] ?? null; @endphp
+                        <tr>
+                            <td class="text-center font-semibold text-ink">
+                                {{ $item ? ($item['no'] ?? ($i + 1)) : '' }}
+                            </td>
+                            <td class="font-medium text-ink">
+                                @if ($item)
+                                    <span class="font-semibold text-ink text-[9pt]">{{ $item['name'] }}</span>
+                                @else
+                                    &nbsp;
+                                @endif
+                            </td>
+                            <td class="text-center font-bold text-ink">
+                                @if ($item)
+                                    <span class="font-mono text-[9.5pt]">{{ number_format($item['qty'], 1, ',', '.') }}</span>
+                                @else
+                                    &nbsp;
+                                @endif
+                            </td>
+                        </tr>
+                    @endfor
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 3 KOLOM TANDA TANGAN (Tanda Terima, Co Driver, Driver) -->
+        <section class="mt-4 flex items-start justify-between border-t border-line-hair pt-2">
+            <!-- Kolom 1: Tanda Terima -->
+            <div class="w-3/12 text-center">
+                <p class="text-[8.5pt] font-bold text-ink">{{ $signatures['receiver']['label'] ?? 'Tanda Terima' }}</p>
+                <div class="relative mt-1 h-14 flex flex-col items-center justify-end">
+                    <span class="text-[8pt] text-ink-muted mb-0.5 font-mono">
+                        Tgl: {{ $signatures['receiver']['date'] ?? date('d/m/y') }}
+                    </span>
+                    <div class="w-full border-b border-ink mt-1"></div>
+                </div>
+                <p class="mt-1 text-[7.5pt] font-semibold text-ink">
+                    {{ $signatures['receiver']['name'] ?? 'Penerima Barang' }}
+                </p>
+                <p class="text-[6.5pt] text-ink-muted">Nama &amp; Cap Toko/Klien</p>
+            </div>
+
+            <!-- Kolom 2: Co Driver -->
+            <div class="w-3/12 text-center">
+                <p class="text-[8.5pt] font-bold text-ink">{{ $signatures['co_driver']['label'] ?? 'Co Driver' }}</p>
+                <div class="mt-1 h-14 flex flex-col items-center justify-end">
+                    <div class="w-full border-b border-ink"></div>
+                </div>
+                <p class="mt-1 text-[7.5pt] font-semibold text-ink">
+                    {{ $signatures['co_driver']['name'] ?? 'Kernet Logistik' }}
+                </p>
+                <p class="text-[6.5pt] text-ink-muted">(Pembantu Pengemudi)</p>
+            </div>
+
+            <!-- Kolom 3: Driver -->
+            <div class="w-3/12 text-center">
+                <p class="text-[8.5pt] font-bold text-ink">{{ $signatures['driver']['label'] ?? 'Driver' }}</p>
+                <div class="relative mt-1 h-14 flex flex-col items-center justify-end">
+                    <div class="w-full border-b border-ink mt-1"></div>
+                </div>
+                <p class="mt-1 text-[7.5pt] font-semibold text-ink">
+                    {{ $signatures['driver']['name'] ?? 'Supir Ekspedisi GPA' }}
+                </p>
+                <p class="text-[6.5pt] text-ink-muted">(Pengemudi Armada GPA)</p>
+            </div>
+        </section>
+
+        <!-- FOOTER CATATAN KAKI DARI DOKUMEN RESMI -->
+        <footer class="mt-4 border-t border-dashed border-gray-400 pt-1.5 text-center">
+            <p class="text-[7.5pt] italic font-semibold text-ink-body">
+                "{{ $footer ?? 'Terimakasih atas kepercayaan anda, semoga tetap menjadi pelanggan setia' }}"
+            </p>
+        </footer>
     </main>
 </body>
 

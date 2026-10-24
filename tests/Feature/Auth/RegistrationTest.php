@@ -22,13 +22,13 @@ class RegistrationTest extends TestCase
             'name'                  => 'Test User',
             'email'                 => 'test@example.com',
             'phone'                 => '081234567890',
-            'client_type'           => 'REGULER',
             'address'               => 'Jl. Perkebunan Sayur No. 1, Ciwidey',
             'password'              => 'password',
             'password_confirmation' => 'password',
         ]);
 
         $this->assertAuthenticated();
+        $this->assertEquals('REGULER', auth()->user()->client_type);
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 }

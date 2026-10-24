@@ -17,7 +17,8 @@
                         'SELESAI' => 'bg-emerald-100 text-emerald-800 border-emerald-300',
                         'SELESAI_CATATAN' => 'bg-teal-100 text-teal-800 border-teal-300',
                         'DALAM_PENGIRIMAN', 'SIAP_KIRIM' => 'bg-blue-100 text-blue-800 border-blue-300',
-                        'TERVERIFIKASI' => 'bg-indigo-100 text-indigo-800 border-indigo-300',
+                        'LUNAS' => 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                        'MENUNGGU_PEMBAYARAN' => 'bg-indigo-100 text-indigo-800 border-indigo-300',
                         'MENUNGGU_VERIFIKASI' => 'bg-amber-100 text-amber-800 border-amber-300',
                         'BATAL' => 'bg-red-100 text-red-800 border-red-300',
                         default => 'bg-gray-100 text-gray-700 border-gray-300',
@@ -83,7 +84,7 @@
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-2">
                 <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">4. STATUS FAKTUR / PEMBAYARAN</span>
                 <div class="font-bold text-emerald-800 text-sm">
-                    Rp {{ number_format($order->grand_total ?? $order->estimated_total, 0, ',', '.') }}
+                    Rp {{ number_format($order->grand_total, 0, ',', '.') }}
                 </div>
                 <div class="text-gray-600">
                     Faktur: <span class="font-mono">{{ $order->invoice->invoice_number ?? 'Belum terbit' }}</span><br>
@@ -100,9 +101,9 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="p-4 border-b border-gray-100">
                 <h3 class="font-bold text-sm text-gray-900 flex items-center gap-2">
-                    Verifikasi Hasil Timbangan Riil Komoditas (Packing House)
+                    Rincian Komoditas &amp; Harga Upfront
                 </h3>
-                <p class="text-xs text-gray-500">Perbandingan antara estimasi pemesanan dengan penimbangan fisik subuh</p>
+                <p class="text-xs text-gray-500">Harga dan kuantitas disepakati secara pasti pada pemesanan</p>
             </div>
 
             <div class="overflow-x-auto">
@@ -112,9 +113,8 @@
                             <th class="p-3">Komoditas Sayuran</th>
                             <th class="p-3">Grade</th>
                             <th class="p-3 text-right">Qty Pesan</th>
-                            <th class="p-3 text-right">Bobot Riil Timbang</th>
                             <th class="p-3 text-right">Harga Satuan</th>
-                            <th class="p-3 text-right">Subtotal Final</th>
+                            <th class="p-3 text-right">Subtotal</th>
                             <th class="p-3">Catatan / Retur</th>
                         </tr>
                     </thead>
@@ -131,18 +131,11 @@
                                 <td class="p-3 text-right font-medium text-gray-700">
                                     {{ number_format($item->ordered_qty, 1) }} Kg
                                 </td>
-                                <td class="p-3 text-right font-bold text-emerald-800">
-                                    @if($item->actual_net_weight)
-                                        {{ number_format($item->actual_net_weight, 1) }} Kg
-                                    @else
-                                        <span class="text-gray-400 italic">Belum ditimbang</span>
-                                    @endif
-                                </td>
                                 <td class="p-3 text-right text-gray-800">
                                     Rp {{ number_format($item->unit_price, 0, ',', '.') }}/Kg
                                 </td>
                                 <td class="p-3 text-right font-bold text-emerald-700 text-sm">
-                                    Rp {{ number_format($item->subtotal_final ?? ($item->unit_price * $item->ordered_qty), 0, ',', '.') }}
+                                    Rp {{ number_format($item->subtotal ?: ($item->unit_price * $item->ordered_qty), 0, ',', '.') }}
                                 </td>
                                 <td class="p-3 text-[11px]">
                                     @if($item->returned_weight > 0)
@@ -158,9 +151,9 @@
                     </tbody>
                     <tfoot>
                         <tr class="bg-gray-50 font-bold text-gray-900 border-t border-gray-200">
-                            <td colspan="5" class="p-3 text-right">TOTAL NILAI AKHIR TRANSAKSI:</td>
+                            <td colspan="4" class="p-3 text-right">TOTAL NILAI TRANSAKSI (UPFRONT):</td>
                             <td class="p-3 text-right text-emerald-800 text-base">
-                                Rp {{ number_format($order->grand_total ?? $order->estimated_total, 0, ',', '.') }}
+                                Rp {{ number_format($order->grand_total, 0, ',', '.') }}
                             </td>
                             <td></td>
                         </tr>

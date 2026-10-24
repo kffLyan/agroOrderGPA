@@ -310,7 +310,7 @@
                 </div>
             </section>
 
-            <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card outline outline-2 outline-success">
+            <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card outline outline-2 outline-success min-w-0 overflow-hidden">
                 <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft pb-4">
                     <div class="flex min-w-0 items-center gap-2">
                         <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-accent-deep" aria-hidden="true"></span>
@@ -350,77 +350,96 @@
                     </div>
                 </div>
 
-                <div class="grid gap-3 sm:grid-cols-2">
-                    <div class="flex flex-col gap-3 rounded-xl bg-surface p-3 outline outline-1 outline-line-hair">
-                        <div class="flex items-center justify-between gap-2">
+                <div class="grid gap-3 sm:grid-cols-2 min-w-0">
+                    <div class="flex flex-col gap-3 rounded-xl bg-surface p-3 outline outline-1 outline-line-hair min-w-0 overflow-hidden">
+                        <div class="flex items-center justify-between gap-2 min-w-0">
                             <div class="flex min-w-0 items-center gap-2">
                                 <x-gpa.icon name="file-text" class="h-4 w-4 shrink-0 text-ink" />
-                                <p class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink">Foto Bukti Transfer Klien</p>
+                                <p class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink truncate">Foto Bukti Transfer Klien</p>
                             </div>
                             <span class="shrink-0 rounded bg-surface-track px-2 py-1 gpa-micro-bold tracking-[1.08px] text-ink-body"
                                 x-text="field(selected, 'evidence_type')">{{ $default['evidence_type'] ?? '' }}</span>
                         </div>
 
-                        <div class="flex flex-col items-center gap-2 rounded-lg bg-brand-deep p-3 text-center outline outline-1 outline-success">
-                            <x-gpa.icon name="receipt" class="h-6 w-6 shrink-0 text-accent" />
-                            <p class="font-mono text-2xs font-bold tracking-[0.88px] text-accent" x-text="field(selected, 'evidence_file')">{{ $default['evidence_file'] ?? '' }}</p>
+                        <div class="flex flex-col items-center gap-2.5 rounded-lg bg-brand-deep p-3 text-center outline outline-1 outline-success min-w-0 w-full overflow-hidden">
+                            {{-- Pratinjau gambar jika berkas tersedia --}}
+                            <template x-if="selected && (selected.evidence_url || selected.proof_url) && selected.is_image">
+                                <div class="group relative flex w-full cursor-pointer justify-center py-0.5" @click="openProof(selected)" title="Klik untuk perbesar layar penuh">
+                                    <img :src="selected.evidence_url || selected.proof_url" alt="Pratinjau Bukti Transfer"
+                                        class="h-28 w-auto max-w-full rounded-md border border-accent/30 bg-black/50 object-contain shadow-sm transition-transform duration-150 group-hover:scale-105" />
+                                    <div class="absolute inset-0 flex items-center justify-center rounded-md bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                                        <span class="flex items-center gap-1 rounded bg-surface/90 px-2 py-1 text-2xs font-bold text-ink shadow">
+                                            <x-gpa.icon name="eye" class="h-3 w-3 text-brand" /> Perbesar
+                                        </span>
+                                    </div>
+                                </div>
+                            </template>
+                            <template x-if="!selected || !(selected.evidence_url || selected.proof_url) || !selected.is_image">
+                                <x-gpa.icon name="receipt" class="h-6 w-6 shrink-0 text-accent" />
+                            </template>
 
-                            <dl class="w-full space-y-0.5 text-left font-mono text-[10px] leading-4 text-white/80">
-                                <div>
+                            <div class="w-full min-w-0 px-1">
+                                <p class="block w-full min-w-0 truncate text-center font-mono text-2xs font-bold tracking-[0.88px] text-accent"
+                                    :title="field(selected, 'evidence_file')"
+                                    x-text="field(selected, 'evidence_file')">{{ $default['evidence_file'] ?? '' }}</p>
+                            </div>
+
+                            <dl class="w-full space-y-0.5 text-left font-mono text-[10px] leading-4 text-white/80 min-w-0">
+                                <div class="truncate">
                                     <dt class="inline text-white/50">Pengirim: </dt>
-                                    <dd class="inline" x-text="field(selected, 'slip_sender')">{{ $default['slip_sender'] ?? '' }}</dd>
+                                    <dd class="inline text-white font-medium" x-text="field(selected, 'slip_sender')">{{ $default['slip_sender'] ?? '' }}</dd>
                                 </div>
-                                <div>
+                                <div class="truncate">
                                     <dt class="inline text-white/50">Rek Asal: </dt>
-                                    <dd class="inline" x-text="field(selected, 'slip_account')">{{ $default['slip_account'] ?? '' }}</dd>
+                                    <dd class="inline text-white font-medium" x-text="field(selected, 'slip_account')">{{ $default['slip_account'] ?? '' }}</dd>
                                 </div>
-                                <div>
+                                <div class="truncate">
                                     <dt class="inline text-white/50">Nominal: </dt>
-                                    <dd class="inline" x-text="field(selected, 'slip_nominal')">{{ $default['slip_nominal'] ?? '' }}</dd>
+                                    <dd class="inline font-bold text-accent" x-text="field(selected, 'slip_nominal')">{{ $default['slip_nominal'] ?? '' }}</dd>
                                 </div>
-                                <div>
+                                <div class="truncate">
                                     <dt class="inline text-white/50">Stempel: </dt>
-                                    <dd class="inline" x-text="field(selected, 'slip_stamp')">{{ $default['slip_stamp'] ?? '' }}</dd>
+                                    <dd class="inline text-white/90" x-text="field(selected, 'slip_stamp')">{{ $default['slip_stamp'] ?? '' }}</dd>
                                 </div>
                             </dl>
                         </div>
 
-                        <div class="flex items-center justify-between gap-2">
-                            <p class="gpa-micro-bold uppercase tracking-[1.08px] text-success-deep"
+                        <div class="flex items-center justify-between gap-2 pt-1 min-w-0">
+                            <p class="gpa-micro-bold uppercase tracking-[1.08px] text-success-deep truncate"
                                 x-text="field(selected, 'evidence_note')">{{ $default['evidence_note'] ?? '' }}</p>
                             <button type="button" @click="openProof(selected)"
-                                class="shrink-0 font-sans text-xs font-bold text-success-deep underline decoration-success-deep/40 underline-offset-2">
+                                class="shrink-0 font-sans text-xs font-bold text-success-deep underline decoration-success-deep/40 underline-offset-2 hover:text-brand cursor-pointer">
                                 Lihat Ukuran Penuh
                             </button>
                         </div>
                     </div>
 
-                    <div class="flex flex-col gap-3 rounded-xl bg-success-soft/40 p-3 outline outline-1 outline-success">
-                        <div class="flex items-center justify-between gap-2">
+                    <div class="flex flex-col gap-3 rounded-xl bg-success-soft/40 p-3 outline outline-1 outline-success min-w-0 overflow-hidden">
+                        <div class="flex items-center justify-between gap-2 min-w-0">
                             <div class="flex min-w-0 items-center gap-2">
                                 <x-gpa.icon name="check-circle" class="h-4 w-4 shrink-0 text-success-deep" />
-                                <p class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-success-deep">Catatan Mutasi Rekening Bank (Langsung)</p>
+                                <p class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-success-deep truncate">Catatan Mutasi Rekening Bank (Langsung)</p>
                             </div>
                             <span class="shrink-0 rounded bg-accent px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-success-deep outline outline-1 outline-accent-deep"
                                 x-text="mutationChip">Cocok 100%</span>
                         </div>
 
-                        <dl class="flex flex-col gap-2 rounded-lg bg-surface p-3">
-                            <div class="flex items-center justify-between gap-2">
-                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Rekening Tujuan</dt>
-                                <dd class="font-mono text-2xs font-bold tracking-[0.88px] text-ink" x-text="field(selected, 'giro_account')">{{ $default['giro_account'] ?? '' }}</dd>
+                        <dl class="flex flex-col gap-2 rounded-lg bg-surface p-3 min-w-0">
+                            <div class="flex items-center justify-between gap-2 min-w-0">
+                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet shrink-0">Rekening Tujuan</dt>
+                                <dd class="font-mono text-2xs font-bold tracking-[0.88px] text-ink truncate text-right" x-text="field(selected, 'giro_account')">{{ $default['giro_account'] ?? '' }}</dd>
                             </div>
-                            <div class="flex items-center justify-between gap-2">
-                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Waktu Transfer</dt>
-                                <dd class="font-mono text-2xs font-bold tracking-[0.88px] text-ink" x-text="field(selected, 'giro_time')">{{ $default['giro_time'] ?? '' }}</dd>
+                            <div class="flex items-center justify-between gap-2 min-w-0">
+                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet shrink-0">Waktu Transfer</dt>
+                                <dd class="font-mono text-2xs font-bold tracking-[0.88px] text-ink truncate text-right" x-text="field(selected, 'giro_time')">{{ $default['giro_time'] ?? '' }}</dd>
                             </div>
-                            <div class="flex items-center justify-between gap-2">
-                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Jenis Dana</dt>
-                                <dd class="gpa-micro-bold uppercase tracking-[1.08px] text-success-deep" x-text="field(selected, 'giro_entry')">{{ $default['giro_entry'] ?? '' }}</dd>
+                            <div class="flex items-center justify-between gap-2 min-w-0">
+                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet shrink-0">Jenis Dana</dt>
+                                <dd class="gpa-micro-bold uppercase tracking-[1.08px] text-success-deep truncate text-right" x-text="field(selected, 'giro_entry')">{{ $default['giro_entry'] ?? '' }}</dd>
                             </div>
-                            <div class="flex items-center justify-between gap-2 border-t border-line-soft pt-2">
-                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Nominal Masuk</dt>
-                                <dd class="font-mono text-sm font-bold tracking-[0.88px] text-brand" x-text="field(selected, 'giro_nominal')">{{ $default['giro_nominal'] ?? '' }}</dd>
+                            <div class="flex items-center justify-between gap-2 border-t border-line-soft pt-2 min-w-0">
+                                <dt class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet shrink-0">Nominal Masuk</dt>
+                                <dd class="font-mono text-sm font-bold tracking-[0.88px] text-brand truncate text-right" x-text="field(selected, 'giro_nominal')">{{ $default['giro_nominal'] ?? '' }}</dd>
                             </div>
                         </dl>
 
@@ -615,5 +634,103 @@
                 </div>
             </div>
         </section>
+
+        {{-- Modal Pratinjau Bukti Pembayaran / Transfer Ukuran Penuh --}}
+        <div x-cloak x-show="proofModalOpen"
+            @keydown.escape.window="proofModalOpen = false"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+            role="dialog" aria-modal="true">
+
+            {{-- Backdrop --}}
+            <div class="fixed inset-0 bg-ink/75 backdrop-blur-xs transition-opacity"
+                @click="proofModalOpen = false"></div>
+
+            <div class="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-surface shadow-pop ring-1 ring-ink/10"
+                x-show="proofModalOpen"
+                x-transition:enter="ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="ease-in duration-150"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95">
+
+                {{-- Modal Header --}}
+                <div class="flex items-center justify-between border-b border-line-hair bg-surface-shell px-5 py-3.5">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent text-ink">
+                            <x-gpa.icon name="receipt" class="h-4 w-4" />
+                        </span>
+                        <div class="flex flex-col min-w-0">
+                            <h3 class="font-sans text-sm font-bold text-ink truncate" x-text="proofModalTitle">
+                                Bukti Transfer Klien
+                            </h3>
+                            <p class="text-[11px] text-ink-body truncate">
+                                <span x-text="proofModalSubtitle"></span> &bull; Nominal: <strong class="text-brand font-mono" x-text="proofModalNominal"></strong>
+                            </p>
+                        </div>
+                    </div>
+                    <button type="button" @click="proofModalOpen = false"
+                        class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-body transition-colors hover:bg-surface-muted hover:text-ink cursor-pointer">
+                        <x-gpa.icon name="x" class="h-4 w-4" />
+                    </button>
+                </div>
+
+                {{-- Modal Body Image Container --}}
+                <div class="flex max-h-[70vh] min-h-[300px] items-center justify-center overflow-auto bg-black/95 p-4">
+                    <template x-if="proofModalUrl && proofModalIsImage">
+                        <img :src="proofModalUrl" alt="Foto Fisik Bukti Transfer"
+                            class="max-h-[65vh] w-auto max-w-full rounded-lg object-contain shadow-2xl">
+                    </template>
+                    <template x-if="proofModalUrl && !proofModalIsImage">
+                        <div class="flex flex-col items-center gap-3 p-8 text-center text-white">
+                            <x-gpa.icon name="file-text" class="h-16 w-16 text-accent" />
+                            <p class="font-bold text-sm" x-text="proofModalFileName">Dokumen PDF Bukti Transfer</p>
+                            <p class="text-xs text-white/70">Format dokumen non-gambar. Silakan buka dokumen di tab baru untuk menelaah.</p>
+                            <a :href="proofModalUrl" target="_blank"
+                                class="mt-2 inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-xs font-bold text-ink hover:bg-accent-deep">
+                                <x-gpa.icon name="eye" class="h-4 w-4 text-ink" />
+                                Buka Dokumen PDF di Tab Baru
+                            </a>
+                        </div>
+                    </template>
+                    <template x-if="!proofModalUrl">
+                        <div class="flex flex-col items-center gap-2 p-8 text-center text-white/80">
+                            <x-gpa.icon name="alert-triangle" class="h-12 w-12 text-warning-caution" />
+                            <p class="font-bold text-sm">Pratinjau Berkas Belum Tersedia</p>
+                            <p class="text-xs text-white/60">Klien belum melampirkan berkas foto fisik transfer atau file tidak ditemukan di server.</p>
+                        </div>
+                    </template>
+                </div>
+
+                {{-- Modal Footer Metadata & Aksi --}}
+                <div class="flex flex-col gap-3 border-t border-line-hair bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex flex-col text-xs text-ink-body min-w-0">
+                        <span class="truncate">Pengirim: <strong class="text-ink" x-text="proofModalSender"></strong> (Rek: <span x-text="proofModalAccount"></span>)</span>
+                        <span class="truncate">Waktu Upload: <strong class="text-ink" x-text="proofModalStamp"></strong> &bull; Berkas: <span class="font-mono text-2xs" x-text="proofModalFileName"></span></span>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 shrink-0">
+                        <template x-if="proofModalUrl">
+                            <div class="flex items-center gap-2">
+                                <a :href="proofModalUrl" target="_blank"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-line-soft bg-surface px-3 py-2 text-xs font-bold text-ink shadow-xs transition-colors hover:bg-surface-muted">
+                                    <x-gpa.icon name="eye" class="h-3.5 w-3.5 text-ink-body" />
+                                    <span>Buka Tab Baru</span>
+                                </a>
+                                <a :href="proofModalUrl" :download="proofModalFileName"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-line-soft bg-surface px-3 py-2 text-xs font-bold text-ink shadow-xs transition-colors hover:bg-surface-muted">
+                                    <x-gpa.icon name="download" class="h-3.5 w-3.5 text-ink-body" />
+                                    <span>Unduh</span>
+                                </a>
+                            </div>
+                        </template>
+                        <button type="button" @click="proofModalOpen = false"
+                            class="inline-flex items-center rounded-lg bg-ink px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-brand-deep cursor-pointer">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection

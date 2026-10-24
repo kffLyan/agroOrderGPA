@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Koordinator;
 use App\Http\Controllers\Controller;
 use App\Models\HarvestBatch;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -13,26 +12,31 @@ use Illuminate\Http\Request;
 class DashboardController extends Controller
 {
     /**
-     * Tampilkan Konsol Operasional & Kesiapan Panen Koordinator Lapangan.
+     * Tampilkan Konsol Operasional Pasokan, Persediaan & Intake Koordinator Lapangan.
      */
     public function index(Request $request): View
     {
-        // Metrik Dinamis dari Database
+        // Metrik Pasokan & Persediaan dari Database
         $totalStock = (float) HarvestBatch::sum('available_quantity');
         $binaanStock = (float) HarvestBatch::where('source_type', 'PETANI_BINAAN')->sum('available_quantity');
         $bufferStock = (float) HarvestBatch::where('source_type', 'BUFFER_LUAR')->sum('available_quantity');
-        $readyOrdersCount = Order::where('status', 'TERVERIFIKASI')->count();
-        $weighedOrdersCount = Order::where('status', 'SIAP_KIRIM')->count();
-        $totalOrderQty = (float) OrderItem::whereHas('order', fn($q) => $q->whereIn('status', ['TERVERIFIKASI', 'SIAP_KIRIM']))->sum('ordered_qty');
+        $activeProductsCount = Product::where('is_active', true)->count();
+        $totalIntakeBatches = HarvestBatch::count();
+        $totalIntakeQty = (float) HarvestBatch::sum('initial_quantity');
+
+        // Antrean Pesanan Masuk Klien untuk acuan kuota panen (Pantau Antrean Pesanan Masuk)
+        $incomingOrders = Order::with(['user', 'orderItems.product'])
+            ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM'])
+            ->latest()
+            ->take(8)
+            ->get();
 
         // Stok Pasokan Komoditas (Supply Rows)
         $products = Product::where('is_active', true)->with('harvestBatches')->get();
         $supplyRows = $products->map(function ($product) {
-            $pOrderQty = (float) OrderItem::where('product_id', $product->id)
-                ->whereHas('order', fn($q) => $q->whereIn('status', ['TERVERIFIKASI', 'SIAP_KIRIM']))
-                ->sum('ordered_qty');
             $pBinaan = (float) $product->harvestBatches->where('source_type', 'PETANI_BINAAN')->sum('available_quantity');
             $pBuffer = (float) $product->harvestBatches->where('source_type', 'BUFFER_LUAR')->sum('available_quantity');
+            $pTotal = $pBinaan + $pBuffer;
             $supplierName = $product->harvestBatches->first()?->supplier_name ?: 'Kelompok Tani Mitra';
 
             return [
@@ -40,39 +44,40 @@ class DashboardController extends Controller
                 'name' => $product->name,
                 'batch' => 'LOT-' . strtoupper(substr($product->name, 0, 3)) . '-' . date('md'),
                 'grade' => $product->grade ?: 'Grade A',
-                'order' => $pOrderQty,
+                'order' => $pTotal,
                 'supply' => $pBinaan,
                 'buffer' => $pBuffer,
+                'total_stock' => $pTotal,
                 'group' => $supplierName,
                 'partner' => 'Mitra Binaan Terverifikasi',
-                'zone' => 'Sentra Panen',
+                'zone' => 'Sentra Panen Ciwidey',
                 'bar' => 5,
                 'accent' => false,
             ];
         })->values()->all();
 
-        // Persiapan Pesanan & Packing (Packing Orders)
-        $activeOrders = Order::with(['orderItems.product', 'user'])
-            ->whereIn('status', ['TERVERIFIKASI', 'SIAP_KIRIM'])
+        // Staging Pasokan Masuk Petani (Incoming Harvest Batches)
+        $recentBatchesForStaging = HarvestBatch::with('product')
             ->latest()
-            ->take(10)
+            ->take(8)
             ->get();
 
-        $packingOrders = $activeOrders->map(function ($order, $index) {
-            $isWeighed = $order->status === 'SIAP_KIRIM';
-            $totalQty = (float) $order->orderItems->sum('ordered_qty');
-            $clientName = $order->user?->company_name ?: ($order->user?->name ?? 'Klien');
-            $targetDate = $order->target_delivery_date ? $order->target_delivery_date->format('d M') : date('d M');
+        $packingOrders = $recentBatchesForStaging->map(function ($batch, $index) {
+            $prodName = $batch->product?->name ?? 'Komoditas Sayur';
+            $supplier = $batch->supplier_name ?: 'Kelompok Tani Binaan';
+            $batchCode = 'LOT-' . strtoupper(substr($prodName, 0, 3)) . '-' . str_pad($batch->id, 4, '0', STR_PAD_LEFT);
+            $qty = (float) $batch->available_quantity;
+            $timeStr = $batch->created_at ? $batch->created_at->format('d M H:i') : date('d M H:i');
 
             return [
-                'po' => $order->order_number,
-                'client' => $clientName,
-                'dispatch' => $targetDate . ' 04:30 WIB',
-                'dispatch_tone' => $isWeighed ? 'ink' : 'accent',
-                'allocation' => number_format($totalQty, 0, ',', '.') . ' KG',
-                'bay' => 'DOCK-BAY-0' . (($index % 4) + 1),
-                'status' => $isWeighed ? 'Siap Kirim (Netto Sah)' : 'Sortir & Timbang',
-                'percent' => $isWeighed ? 100 : 65,
+                'po' => $batchCode,
+                'client' => $supplier,
+                'dispatch' => $timeStr . ' WIB',
+                'dispatch_tone' => 'ink',
+                'allocation' => number_format($qty, 0, ',', '.') . ' KG',
+                'bay' => 'STG-BAY-0' . (($index % 4) + 1),
+                'status' => 'Lolos QC & Siap Pakai',
+                'percent' => 100,
             ];
         })->values()->all();
 
@@ -85,7 +90,7 @@ class DashboardController extends Controller
             return [
                 'ticket' => 'TKT-' . date('Y') . '-' . str_pad($batch->id, 4, '0', STR_PAD_LEFT),
                 'time' => $batch->created_at ? $batch->created_at->format('H:i') . ' WIB' : date('H:i') . ' WIB',
-                'name' => $batch->supplier_name,
+                'name' => $batch->supplier_name ?: 'Mitra Tani Binaan',
                 'commodity' => $batch->product?->name ?? '—',
                 'gross' => $gross,
                 'tare' => 20.0,
@@ -98,15 +103,19 @@ class DashboardController extends Controller
         $viewName = view()->exists('koordinator.dashboard') ? 'koordinator.dashboard' : 'coordinator.dashboard';
 
         return view($viewName, [
-            'totalStock'         => $totalStock,
-            'binaanStock'        => $binaanStock,
-            'bufferStock'        => $bufferStock,
-            'readyOrdersCount'   => $readyOrdersCount,
-            'weighedOrdersCount' => $weighedOrdersCount,
-            'totalOrderQty'      => $totalOrderQty,
-            'supplyRows'         => $supplyRows,
-            'packingOrders'      => $packingOrders,
-            'gateLogs'           => $gateLogs,
+            'totalStock'          => $totalStock,
+            'binaanStock'         => $binaanStock,
+            'bufferStock'         => $bufferStock,
+            'activeProductsCount' => $activeProductsCount,
+            'totalIntakeBatches'  => $totalIntakeBatches,
+            'totalIntakeQty'      => $totalIntakeQty,
+            'readyOrdersCount'    => $totalIntakeBatches,
+            'weighedOrdersCount'  => count($gateLogs),
+            'totalOrderQty'       => $totalStock,
+            'supplyRows'          => $supplyRows,
+            'packingOrders'       => $packingOrders,
+            'gateLogs'            => $gateLogs,
+            'incomingOrders'      => $incomingOrders,
         ]);
     }
 }

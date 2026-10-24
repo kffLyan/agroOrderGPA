@@ -27,10 +27,10 @@ class TaskController extends Controller
             ->latest()
             ->get();
 
-        // Jika belum ada pesanan aktif sama sekali, ambil pesanan terverifikasi terbaru untuk ditampilkan
+        // Jika belum ada pesanan aktif sama sekali, ambil pesanan terverifikasi/lunas terbaru untuk ditampilkan
         if ($orders->isEmpty()) {
             $orders = Order::with(['orderItems.product', 'user', 'driver'])
-                ->whereIn('status', ['TERVERIFIKASI', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI'])
+                ->whereIn('status', ['LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI'])
                 ->latest()
                 ->take(5)
                 ->get();
@@ -46,7 +46,7 @@ class TaskController extends Controller
         $totalWeightKg = 0;
         foreach ($orders as $order) {
             foreach ($order->orderItems as $item) {
-                $totalWeightKg += (float) ($item->actual_net_weight ?: $item->ordered_qty ?: 0);
+                $totalWeightKg += (float) ($item->ordered_qty ?: 0);
             }
         }
 

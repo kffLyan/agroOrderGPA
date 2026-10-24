@@ -546,7 +546,7 @@
                                 <td class="py-2.5 px-3 font-mono font-bold text-ink">{{ $ord->order_number }}</td>
                                 <td class="py-2.5 px-3 text-ink">{{ $ord->user?->company_name ?? $ord->user?->name ?? 'Klien' }}</td>
                                 <td class="py-2.5 px-3 text-ink-body">{{ $ord->target_delivery_date ? date('d M Y', strtotime($ord->target_delivery_date)) : '-' }}</td>
-                                <td class="py-2.5 px-3 text-right font-semibold text-ink">Rp {{ number_format($ord->grand_total ?: $ord->estimated_total, 0, ',', '.') }}</td>
+                                <td class="py-2.5 px-3 text-right font-semibold text-ink">Rp {{ number_format($ord->grand_total, 0, ',', '.') }}</td>
                                 <td class="py-2.5 px-3 text-center">
                                     <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-accent/40 text-success-deep">{{ $ord->status }}</span>
                                 </td>
@@ -558,77 +558,77 @@
         </section>
         @endif
 
-        {{-- ---------- Audit trail & sertifikat ---------- --}}
-        <section class="grid grid-cols-1 gap-4 xl:grid-cols-5">
-            <article class="flex flex-col gap-3 rounded-xl border border-line-hair bg-surface p-4 shadow-sub xl:col-span-2">
-                <div class="flex items-start gap-3">
-                    <span
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent text-ink-strong ring-1 ring-inset ring-accent-deep">
+        {{-- ---------- Lembar Pengesahan Digital Direksi & Sertifikat Audit ---------- --}}
+        <section class="rounded-2xl border border-line bg-surface p-5 sm:p-6 shadow-card">
+            <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-brand/20 bg-brand-soft text-brand-deep">
                         <x-gpa.icon name="qrcode" class="h-5 w-5" />
                     </span>
-                    <div class="min-w-0">
-                        <h2 class="text-[13px] font-bold leading-5 text-ink">Lembar Pengesahan Digital Direksi &amp; Sertifikat Audit</h2>
-                        <p class="text-[10px] leading-4 text-success-deep gpa-meta">GPA-AUDIT-CERT-2026-Q4</p>
+                    <div>
+                        <h2 class="text-sm sm:text-base font-bold text-ink">Lembar Pengesahan Digital Direksi &amp; Sertifikat Audit</h2>
+                        <p class="text-xs font-semibold text-brand-line">Nomor Sertifikasi: GPA-AUDIT-CERT-2026-Q4</p>
                     </div>
                 </div>
 
-                <dl class="flex flex-col gap-2 text-[11px] leading-5">
-                    <div class="flex flex-col gap-0.5">
-                        <dt class="text-[9px] font-bold uppercase tracking-[0.88px] text-ink-subtle gpa-micro-bold">
-                            PENANDATANGAN UTAMA:
-                        </dt>
-                        <dd class="font-semibold text-ink">{{ $lockedBy }}</dd>
-                        <dd class="text-ink-quiet">Direktur Utama Green Pasundan Agriculture</dd>
-                    </div>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800">
+                        <x-gpa.icon name="shield" class="h-3.5 w-3.5 text-emerald-600" />
+                        Periode Terkunci Permanen // Audit Sah
+                    </span>
+                </div>
+            </header>
 
-                    <div class="flex flex-col gap-0.5">
-                        <dt class="text-[9px] font-bold uppercase tracking-[0.88px] text-ink-subtle gpa-micro-bold">
-                            WAKTU PENGUNCIAN:
-                        </dt>
-                        <dd class="text-ink-body {{ $ledgerFont }}">{{ $lockedAt }}</dd>
+            <div class="mt-5 grid grid-cols-1 gap-6 md:grid-cols-3 lg:grid-cols-12 lg:gap-8 items-start">
+                {{-- Kolom 1: Otoritas & Penandatangan --}}
+                <div class="space-y-3 lg:col-span-4">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">Penandatangan Utama</span>
+                        <p class="mt-0.5 text-sm font-bold text-ink">{{ $lockedBy }}</p>
+                        <p class="text-xs text-ink-muted">Direktur Utama Green Pasundan Agriculture</p>
                     </div>
-
-                    <div class="flex flex-col gap-0.5">
-                        <dt class="text-[9px] font-bold uppercase tracking-[0.88px] text-ink-subtle gpa-micro-bold">
-                            SERTIFIKASI ENKRIPSI:
-                        </dt>
-                        <dd class="text-ink-body">X.509 v3 / RSA 4096-bit</dd>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">Waktu Penguncian Buku</span>
+                        <p class="mt-0.5 text-xs font-semibold text-ink {{ $ledgerFont }}">{{ $lockedAt }}</p>
                     </div>
+                </div>
 
-                    <div class="flex flex-col gap-0.5">
-                        <dt class="text-[9px] font-bold uppercase tracking-[0.88px] text-ink-subtle gpa-micro-bold">
-                            HASH KRIPTOGRAFIS KONSOLIDASI:
-                        </dt>
-                        <dd class="flex items-start gap-2">
-                            <span class="min-w-0 flex-1 break-all rounded-md bg-brand-deep px-2 py-1.5 text-[10px] text-accent {{ $ledgerFont }}">
+                {{-- Kolom 2: Integritas Kriptografis --}}
+                <div class="space-y-3 lg:col-span-5">
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">Sertifikasi &amp; Standar Enkripsi</span>
+                        <p class="mt-0.5 text-xs font-semibold text-ink">X.509 v3 / RSA 4096-bit (SHA-256 Digest)</p>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">Hash Kriptografis Konsolidasi</span>
+                        <div class="mt-1 flex items-center gap-2">
+                            <span class="min-w-0 flex-1 truncate rounded-xl border border-line bg-surface-muted/60 px-3 py-2 text-xs font-mono font-semibold text-ink-strong" title="{{ $sha256Hash }}">
                                 {{ $sha256Hash }}
                             </span>
                             <button type="button" @click="copyHash()"
-                                class="shrink-0 rounded-md bg-surface-track p-2 text-ink-body transition-colors hover:bg-surface-raised hover:text-ink"
-                                aria-label="Salin hash SHA-256">
-                                <x-gpa.icon name="copy" class="h-3.5 w-3.5" />
+                                class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line bg-surface text-ink-subtle hover:bg-surface-muted hover:text-ink transition-colors"
+                                title="Salin Hash SHA-256">
+                                <x-gpa.icon name="copy" class="h-4 w-4" />
                             </button>
-                        </dd>
+                        </div>
                     </div>
-                </dl>
+                </div>
 
-                <div class="mt-auto flex flex-col gap-2 pt-1">
+                {{-- Kolom 3: Aksi Unduh & Cetak --}}
+                <div class="flex flex-col gap-2.5 lg:col-span-3">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">Ekspor &amp; Cetak Arsip</span>
                     <button type="button" @click="exportWorkbook()"
-                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-[11px] font-bold tracking-[0.88px] text-ink shadow-sub transition-colors hover:bg-accent-deep gpa-meta">
-                        <x-gpa.icon name="download" class="h-3.5 w-3.5" />
-                        DOWNLOAD BUKU BESAR EXCEL (.XLSX)
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-bold text-ink hover:bg-surface-muted transition-colors shadow-sm">
+                        <x-gpa.icon name="download" class="h-3.5 w-3.5 text-ink-subtle" />
+                        Download Excel (.xlsx)
                     </button>
                     <button type="button" @click="printSeal()"
-                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-[11px] font-bold tracking-[0.88px] text-accent shadow-sub transition-colors hover:bg-brand-hover gpa-meta">
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand hover:bg-brand-hover px-4 py-2.5 text-xs font-bold text-surface transition-colors shadow-sm">
                         <x-gpa.icon name="printer" class="h-3.5 w-3.5" />
-                        CETAK DOKUMEN PENGESAHAN (.PDF)
+                        Cetak Pengesahan (.pdf)
                     </button>
-                    <p class="flex items-center justify-center gap-1.5 text-center text-[9px] font-bold tracking-[0.88px] text-success-deep gpa-micro-bold">
-                        <x-gpa.icon name="shield" class="h-3 w-3" />
-                        STATUS: PERIODE TELAH DIKUNCI PERMANEN
-                    </p>
                 </div>
-            </article>
+            </div>
         </section>
     </div>
 @endsection

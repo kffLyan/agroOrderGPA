@@ -33,8 +33,9 @@ export default function secretaryReports(rows = [], filters = [], tabs = [], tot
         run(title, message, tone = 'info') {
             if (typeof this.$dispatch === 'function') {
                 this.$dispatch('gpa:toast', { title, message, tone });
+            } else {
+                window.dispatchEvent(new CustomEvent('gpa:toast', { detail: { title, message, tone } }));
             }
-            window.dispatchEvent(new CustomEvent('gpa:toast', { detail: { title, message, tone } }));
         },
 
         get activeTab() {
@@ -157,25 +158,27 @@ export default function secretaryReports(rows = [], filters = [], tabs = [], tot
         },
 
         act(key) {
-            const messages = {
-                sync: 'Sinkronisasi Audit Selesai',
-                export: 'Ekspor Rekapitulasi Diproses',
-                print: 'Cetak PDF Resmi Diproses',
-                download: 'Unduh Excel Lengkap Diproses',
-                pdf: 'Cetak Laporan Resmi Diproses',
-                send: 'Rekapitulasi Terkirim ke Direktur',
-            };
+            if (key === 'export' || key === 'download') {
+                window.location.href = '/sekretaris/laporan/export';
+                return;
+            }
 
-            const details = {
-                sync: 'Audit 64 transaksi terakhir tersinkron pada stasiun timbangan pusat pukul 04:00 WIB.',
-                export: 'Rekapitulasi .csv / .xlsx untuk periode berjalan sedang disusun dari buku besar aktual.',
-                print: 'Dokumen Sah laporan PDF resmi disiapkan dengan stempel hash SHA-256 untuk tanda tangan Direktur Utama.',
-                download: 'File rekapitulasi lengkap (.xlsx) dengan sheet jurnal, deviasi, dan aging piutang disiapkan.',
-                pdf: 'Dokumen Sah PT Guna Panen Agro dicetak pada kertas kop resmi.',
-                send: 'Rekapitulasi terkirim ke Konsol Direktur Utama dan tercatat pada audit log sekretariat.',
-            };
+            if (key === 'print' || key === 'pdf') {
+                window.open('/sekretaris/laporan/print', '_blank');
+                return;
+            }
 
-            this.run(messages[key] ?? 'Aksi Rekapitulasi', details[key] ?? 'Permintaan dicatat pada audit trail.');
+            if (key === 'sync') {
+                window.location.reload();
+                return;
+            }
+
+            if (key === 'send') {
+                this.run('Rekapitulasi Terkirim', 'Rekapitulasi terkirim ke Konsol Direktur Utama dan tercatat pada audit log sekretariat.', 'success');
+                return;
+            }
+
+            window.print();
         },
     };
 }

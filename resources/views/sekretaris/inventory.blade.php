@@ -19,11 +19,24 @@
             </p>
         </section>
 
+        {{-- Banner Pemberitahuan Mode Pemantauan (Sesuai Desain d:\UKK\notifcations) --}}
+        <x-gpa.notification-banner
+            title="Hak Akses Pemantauan Stok (Read-Only)"
+            description="Halaman ini dikhususkan bagi Sekretaris untuk memantau ketersediaan sayur (ATP), pasokan kebun, cadangan mitra, dan alokasi pesanan secara real-time. Pencatatan hasil panen dan penambahan fisik stok dikelola oleh Koordinator Lapangan."
+            time="SOP Operasional"
+            class="shadow-sm"
+        >
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 font-mono text-xs font-bold text-brand uppercase tracking-wider">
+                <span class="h-2 w-2 rounded-full bg-brand"></span>
+                Hanya Pantau
+            </span>
+        </x-gpa.notification-banner>
+
         <div class="flex flex-wrap gap-2">
-            <button type="button" @click="handleAction({label: 'Sinkronkan Data Panen', tone: 'primary', message: 'Data hasil panen terbaru dari kebun telah disegarkan.'})"
+            <button type="button" @click="handleAction({label: 'Segarkan Data Pemantauan', tone: 'primary', message: 'Data hasil panen dan alokasi pesanan terbaru telah disegarkan.'})"
                 class="inline-flex h-10 items-center gap-1.5 rounded-lg px-4 shadow-sub transition-colors gpa-meta-lg font-bold tracking-[0.88px] bg-brand text-accent outline outline-1 outline-accent/50 hover:bg-brand-hover">
                 <span class="h-3 w-3 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
-                Sinkronkan Data Panen
+                Segarkan Data Pemantauan
             </button>
             <button type="button" @click="handleAction({label: 'Unduh Laporan Stok (CSV)', tone: 'neutral', message: 'Laporan stok komoditas berhasil diunduh.'})"
                 class="inline-flex h-10 items-center gap-1.5 rounded-lg px-4 shadow-sub transition-colors gpa-meta-lg font-bold tracking-[0.88px] bg-surface text-ink outline outline-1 outline-line-board hover:bg-surface-shell">
@@ -199,11 +212,10 @@
                 </label>
             </div>
 
-            <button type="button" @click="bulkLock()"
-                class="inline-flex h-11 shrink-0 items-center gap-2 rounded-lg bg-ink px-4 text-accent shadow-sub outline outline-1 outline-accent/40 transition-colors hover:bg-brand-hover gpa-meta-lg font-bold tracking-[0.88px]">
-                <x-gpa.icon name="lock" class="h-3.5 w-3.5 shrink-0" />
-                Kunci Kuota Massal
-            </button>
+            <div class="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-surface-shell px-3.5 text-ink-body outline outline-1 outline-line-board gpa-micro-bold uppercase tracking-[0.88px]">
+                <x-gpa.icon name="shield" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
+                Mode Pemantauan Aktif
+            </div>
         </section>
 
         <section class="gpa-panel overflow-hidden rounded-xl">
@@ -232,7 +244,7 @@
                             <th scope="col" class="px-4 py-3 gpa-micro-bold uppercase tracking-[0.88px] text-ink">Total Pasokan</th>
                             <th scope="col" class="px-4 py-3 gpa-micro-bold uppercase tracking-[0.88px] text-ink text-right">Terkunci Pesanan</th>
                             <th scope="col" class="px-4 py-3 gpa-micro-bold uppercase tracking-[0.88px] text-ink text-right">Sisa Bebas Dipesan</th>
-                            <th scope="col" class="px-4 py-3 gpa-micro-bold uppercase tracking-[0.88px] text-ink">Status &amp; Tindakan</th>
+                            <th scope="col" class="px-4 py-3 gpa-micro-bold uppercase tracking-[0.88px] text-ink">Status Ketersediaan</th>
                         </tr>
                     </thead>
 
@@ -297,17 +309,12 @@
                                         {{ $row['status']['label'] }}
                                     </span>
 
-                                    <div class="mt-2 flex flex-wrap gap-1.5">
+                                    <div class="mt-2">
                                         <button type="button" @click="detail(@js($row))"
-                                            class="inline-flex h-7 items-center gap-1 rounded bg-surface-track px-2 text-ink outline outline-1 outline-line-board transition-colors hover:bg-surface-shell gpa-micro-bold uppercase tracking-[0.88px]">
+                                            class="inline-flex h-7 items-center gap-1 rounded bg-surface-track px-2.5 text-ink outline outline-1 outline-line-board transition-colors hover:bg-surface-shell gpa-micro-bold uppercase tracking-[0.88px]">
                                             <x-gpa.icon name="eye" class="h-3 w-3 shrink-0" />
-                                            Detail
+                                            Pantau Detail
                                         </button>
-                                        <button type="button" @click="rowAction(@js($row))"
-                                            @class([
-                                                'inline-flex h-7 items-center gap-1 rounded px-2 transition-colors gpa-micro-bold uppercase tracking-[0.88px]',
-                                                $row['action']['class'],
-                                            ])>{{ $row['action']['label'] }}</button>
                                     </div>
                                 </td>
                             </tr>
@@ -357,7 +364,7 @@
                             <div class="flex flex-wrap items-center gap-1.5">
                                 <h3 class="gpa-meta-lg font-bold tracking-[0.28px] text-ink">Penguncian Stok Pesanan Masuk</h3>
                                 <span class="shrink-0 rounded bg-surface-pill px-1.5 py-0.5 gpa-micro-bold text-ink">
-                                    PO-TERVERIFIKASI
+                                    PO-TERKUNCI
                                 </span>
                             </div>
                             <p class="mt-1 text-xs leading-5 text-ink-body">Stok sayur berhasil dialokasikan dari kebun untuk pemenuhan pesanan.</p>
@@ -443,14 +450,14 @@
                     </li>
 
                     <li>
-                        <button type="button" @click="readinessCheck({title: 'Kesiapan Surat Jalan', note: 'Surat jalan siap dicetak begitu timbangan gudang dikunci.', badge: {label: 'Siap Cetak', class: 'bg-accent text-success-ink'}})"
+                        <button type="button" @click="readinessCheck({title: 'Kesiapan Surat Jalan', note: 'Surat jalan siap diterbitkan setelah pembayaran diverifikasi lunas.', badge: {label: 'Siap Cetak', class: 'bg-accent text-success-ink'}})"
                             class="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-surface-shell/60">
                             <x-gpa.icon name="file-text" class="h-4 w-4 shrink-0 text-success-deep" />
                             <span class="min-w-0 flex-1">
                                 <span class="block font-sans text-sm font-semibold leading-5 text-ink">
                                     Kesiapan Surat Jalan
                                 </span>
-                                <span class="mt-0.5 block text-xs leading-5 text-ink-body">Surat jalan siap dicetak begitu timbangan gudang dikunci.</span>
+                                <span class="mt-0.5 block text-xs leading-5 text-ink-body">Surat jalan siap diterbitkan setelah pembayaran diverifikasi lunas.</span>
                             </span>
                             <span class="shrink-0 rounded px-2 py-0.5 gpa-micro-bold uppercase tracking-[1.08px] bg-accent text-success-ink">
                                 Siap Cetak
@@ -460,11 +467,11 @@
                 </ul>
 
                 <div class="border-t border-line-soft px-4 py-4">
-                    <button type="button" @click="releaseDo()"
+                    <a href="{{ route('sekretaris.dispatch') }}"
                         class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-ink px-4 text-accent shadow-sub outline outline-1 outline-accent/40 transition-colors hover:bg-brand-hover gpa-meta-lg font-bold tracking-[0.88px]">
                         Ke Menu Surat Jalan
                         <x-gpa.icon name="arrow-right" class="h-3.5 w-3.5 shrink-0" />
-                    </button>
+                    </a>
                 </div>
             </section>
         </div>

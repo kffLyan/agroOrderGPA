@@ -17,6 +17,7 @@ use App\Http\Controllers\Klien\DashboardController as KlienDashboardController;
 use App\Http\Controllers\Klien\DocumentController as KlienDocumentController;
 use App\Http\Controllers\Klien\OrderController as KlienOrderController;
 use App\Http\Controllers\Klien\PaymentProofController as KlienPaymentProofController;
+use App\Http\Controllers\Klien\ContractProposalController as KlienContractProposalController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Public\AboutController as PublicAboutController;
 use App\Http\Controllers\Public\CatalogController as PublicCatalogController;
@@ -32,13 +33,11 @@ use App\Http\Controllers\Sekretaris\InvoiceController as SekretarisInvoiceContro
 use App\Http\Controllers\Sekretaris\ManualOrderController as SekretarisManualOrderController;
 use App\Http\Controllers\Sekretaris\OrderVerificationController as SekretarisOrderVerificationController;
 use App\Http\Controllers\Sekretaris\PaymentController as SekretarisPaymentController;
+use App\Http\Controllers\Sekretaris\PodMonitoringController as SekretarisPodMonitoringController;
 use App\Http\Controllers\Sekretaris\ReportController as SekretarisReportController;
 use App\Http\Controllers\Koordinator\DashboardController as KoordinatorDashboardController;
-use App\Http\Controllers\Koordinator\HarvestPlanController as KoordinatorHarvestPlanController;
-use App\Http\Controllers\Koordinator\WeighingController as KoordinatorWeighingController;
+use App\Http\Controllers\Koordinator\ProductController as KoordinatorProductController;
 use App\Http\Controllers\Koordinator\StockController as KoordinatorStockController;
-use App\Http\Controllers\Koordinator\DispatchController as KoordinatorDispatchController;
-use App\Http\Controllers\Koordinator\MonitoringController as KoordinatorMonitoringController;
 use App\Http\Controllers\Armada\TaskController as ArmadaTaskController;
 use App\Http\Controllers\Armada\DispatchController as ArmadaDispatchController;
 use App\Http\Controllers\Armada\PodController as ArmadaPodController;
@@ -75,6 +74,9 @@ Route::get('/kontak', PublicKontakController::class)
 
 Route::get('/loading', fn() => view('loading'))
     ->name('loading');
+
+Route::get('/notifikasi', fn() => view('demo-notifikasi'))
+    ->name('notifikasi.demo');
 
 // Rute pengujian seluruh halaman error
 Route::get('/errors/{code}', function ($code) {
@@ -133,6 +135,16 @@ Route::middleware(['auth', 'role:KLIEN'])->prefix('klien')->name('klien.')->grou
     Route::get('/documents/export', [KlienDocumentController::class, 'exportCsv'])->name('documents.export');
     Route::get('/payment-proof', [KlienPaymentProofController::class, 'index'])->name('payment-proof');
     Route::post('/payment-proof', [KlienPaymentProofController::class, 'store'])->name('payment-proof.store');
+
+    // Alias Rute Bahasa Indonesia
+    Route::get('/bukti-pembayaran', fn() => redirect()->route('klien.payment-proof', request()->query()));
+    Route::get('/bukti-bayar', fn() => redirect()->route('klien.payment-proof', request()->query()));
+    Route::get('/dokumen', fn() => redirect()->route('klien.documents', request()->query()));
+    Route::get('/pesanan', fn() => redirect()->route('klien.orders.index', request()->query()));
+    Route::get('/pesanan/{id}', fn($id) => redirect()->route('klien.orders.show', array_merge(['id' => $id], request()->query())));
+
+    // Pengajuan Kontrak Kemitraan B2B (Khusus Klien Reguler ke Direktur)
+    Route::post('/contracts/propose', [KlienContractProposalController::class, 'store'])->name('contracts.propose');
 });
 
 // 2. SEKRETARIS
@@ -149,8 +161,10 @@ Route::middleware(['auth', 'role:SEKRETARIS'])->prefix('sekretaris')->name('sekr
     // 3. Kesiapan Buffer Stock & Monitoring Stok Gudang
     Route::get('/stok', [SekretarisInventoryController::class, 'index'])->name('inventory');
 
-    // 4. Surat Jalan & Dispatch Armada Logistik
+    // 4. Surat Jalan & Dispatch Armada Logistik (SOP 1.2: Hanya pesanan LUNAS)
     Route::get('/surat-jalan', [SekretarisDispatchController::class, 'index'])->name('dispatch');
+    Route::post('/surat-jalan/{id}/terbitkan', [SekretarisDispatchController::class, 'issue'])->name('dispatch.issue');
+    Route::post('/surat-jalan/{id}/assign-driver', [SekretarisDispatchController::class, 'assignDriver'])->name('dispatch.assign-driver');
 
     // 5. Faktur Konsolidasi & Penagihan Tempo B2B
     Route::get('/faktur', [SekretarisInvoiceController::class, 'index'])->name('invoices');
@@ -158,39 +172,48 @@ Route::middleware(['auth', 'role:SEKRETARIS'])->prefix('sekretaris')->name('sekr
 
     // 6. Verifikasi Pembayaran & Pencocokan Rekening Giro
     Route::get('/pembayaran', [SekretarisPaymentController::class, 'index'])->name('payments');
+    Route::post('/pembayaran/{id}/approve', [SekretarisPaymentController::class, 'approve'])->name('payments.approve');
+    Route::post('/pembayaran/{id}/reject', [SekretarisPaymentController::class, 'reject'])->name('payments.reject');
 
     // 7. Rekap Laporan & Jurnal Harian Operasional
     Route::get('/laporan', [SekretarisReportController::class, 'index'])->name('reports');
     Route::get('/laporan/export', [SekretarisReportController::class, 'exportCsv'])->name('reports.export');
     Route::get('/laporan/print', [SekretarisReportController::class, 'printReport'])->name('reports.print');
 
-    // 8. Input Pesanan Manual / Darurat Telepon & WA
+    // 8. Pemantauan Bukti Serah Terima (Proof of Delivery / PoD Armada)
+    Route::get('/monitoring-pod', [SekretarisPodMonitoringController::class, 'index'])->name('pod.index');
+
     Route::get('/pesanan-manual', [SekretarisManualOrderController::class, 'index'])->name('manual-order');
     Route::post('/pesanan-manual', [SekretarisManualOrderController::class, 'store'])->name('manual-order.store');
 });
 
-// 3. KOORDINATOR LAPANGAN
+// Alias rute langsung untuk input pesanan manual (menghindari error URL prefix)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/pesanan-manual', [SekretarisManualOrderController::class, 'index']);
+    Route::post('/pesanan-manual', [SekretarisManualOrderController::class, 'store']);
+});
+
+// 3. KOORDINATOR LAPANGAN (Supply & Inventory Management per docs/MODELING_SUMMARY.md)
 Route::middleware(['auth', 'role:KOORDINATOR'])->prefix('koordinator')->name('koordinator.')->group(function () {
-    // 1. Dashboard Operasional Pasokan & Kesiapan Panen
+    // 1. Dashboard Operasional Pasokan, Persediaan & Pantau Antrean Pesanan Masuk
     Route::get('/dashboard', [KoordinatorDashboardController::class, 'index'])->name('dashboard');
 
-    // 2. Rencana Panen, Sortir, Sanitasi Krat & Pre-Cooling
-    Route::get('/rencana-panen', [KoordinatorHarvestPlanController::class, 'index'])->name('harvest');
+    // 2. Manajemen Master Komoditas Hasil Tani (CRUD Products & Terupdate ke Katalog Publik)
+    Route::prefix('products')->name('products.')->group(function () {
+        Route::get('/', [KoordinatorProductController::class, 'index'])->name('index');
+        Route::get('/create', [KoordinatorProductController::class, 'create'])->name('create');
+        Route::post('/', [KoordinatorProductController::class, 'store'])->name('store');
+        Route::get('/{product}', [KoordinatorProductController::class, 'show'])->name('show');
+        Route::get('/{product}/edit', [KoordinatorProductController::class, 'edit'])->name('edit');
+        Route::put('/{product}', [KoordinatorProductController::class, 'update'])->name('update');
+        Route::post('/{product}/toggle-status', [KoordinatorProductController::class, 'toggleStatus'])->name('toggle-status');
+        Route::delete('/{product}', [KoordinatorProductController::class, 'destroy'])->name('destroy');
+    });
 
-    // 3. Penimbangan Aktual & Validasi Sortir Gudang (PRD Rule 04 & 05)
-    Route::get('/penimbangan', [KoordinatorWeighingController::class, 'index'])->name('weighing');
-    Route::post('/penimbangan/{order_id}', [KoordinatorWeighingController::class, 'storeWeighing'])->name('weighing.store');
-
-    // 4. Manajemen Stok Panen & Alokasi Buffer Stock Gudang
+    // 3. Suplai Pasokan Stok Panen (Quick Intake Ledger) & Neraca Gudang
     Route::get('/stok', [KoordinatorStockController::class, 'index'])->name('stock');
     Route::post('/stok', [KoordinatorStockController::class, 'storeBatch'])->name('stock.store');
-
-
-    // 5. Surat Jalan & Dispatch Armada Logistik
-    Route::get('/surat-jalan', [KoordinatorDispatchController::class, 'index'])->name('dispatch');
-
-    // 6. Monitoring & Validasi Proof of Delivery (PoD)
-    Route::get('/monitoring', [KoordinatorMonitoringController::class, 'index'])->name('monitoring');
+    Route::post('/stok/batch', [KoordinatorStockController::class, 'storeBatch'])->name('stock.batch');
 });
 
 
@@ -267,6 +290,7 @@ Route::middleware(['auth', 'role:DIREKTUR'])->prefix('direktur')->name('direktur
     Route::post('/governance/parameters', [GovernanceController::class, 'updateParameters'])->name('governance.parameters');
     Route::post('/governance/freeze', [GovernanceController::class, 'toggleMasterFreeze'])->name('governance.freeze');
     Route::post('/governance/plt', [GovernanceController::class, 'configurePlt'])->name('governance.plt');
+    Route::post('/governance/payment-channels', [GovernanceController::class, 'updatePaymentChannels'])->name('governance.payment-channels');
     Route::get('/governance/export-audit', [GovernanceController::class, 'exportAuditLog'])->name('governance.export-audit');
 
     // Governance route aliases
@@ -284,18 +308,6 @@ Route::middleware(['auth', 'role:DIREKTUR'])->prefix('direktur')->name('direktur
     Route::get('/orders/{id}', [OrderInspectionController::class, 'show'])->name('orders.show');
 });
 
-// Rute director.* untuk kompatibilitas frontend dan tautan view
-Route::middleware(['auth', 'role:DIREKTUR'])->prefix('director')->name('director.')->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/sales', [SalesMonitoringController::class, 'index'])->name('sales');
-    Route::get('/volume', [CommodityVolumeController::class, 'index'])->name('volume');
-    Route::get('/receivables', [ReceivableController::class, 'index'])->name('receivables');
-    Route::get('/approval', [ContractController::class, 'approval'])->name('approval');
-    Route::get('/report', [ReportController::class, 'index'])->name('report');
-    Route::get('/governance', [GovernanceController::class, 'index'])->name('governance');
-    Route::get('/access', [UserController::class, 'index'])->name('access');
-});
-
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -309,4 +321,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/cetak/berita-acara-retur', ReturnActController::class)->name('prints.return-act');
 });
 
+// Fallback rute untuk file bukti serah terima PoD agar tidak terblokir 403
+Route::get('/storage/uploads/pod/{filename}', function ($filename) {
+    $path = public_path('uploads/pod/' . $filename);
+    if (file_exists($path)) {
+        return response()->file($path);
+    }
+    abort(404);
+});
+
 require __DIR__.'/auth.php';
+
+

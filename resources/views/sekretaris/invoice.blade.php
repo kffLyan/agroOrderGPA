@@ -42,7 +42,7 @@
                 <button type="button" @click="manualInvoice()"
                     class="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-3 text-white shadow-sub transition-colors hover:bg-brand-deep gpa-meta-lg font-bold tracking-[0.88px]">
                     <x-gpa.icon name="plus" class="h-[15px] w-[15px] shrink-0 text-accent" />
-                    + Terbitkan Faktur Baru
+                    Terbitkan Faktur Baru
                 </button>
             </div>
         </section>

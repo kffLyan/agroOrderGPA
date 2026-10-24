@@ -19,6 +19,7 @@ class StoreOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'submission_token'     => ['nullable', 'string', 'max:100'],
             'target_delivery_date' => ['required', 'date', 'after:today'],
             'delivery_address'     => ['required', 'string', 'max:500'],
             'payment_method'       => ['required', 'in:TRANSFER_BANK,QRIS,COD,TEMPO_TOP'],
@@ -40,7 +41,7 @@ class StoreOrderRequest extends FormRequest
                     if ($product && (float) $item['quantity'] < (float) $product->minimum_order) {
                         $validator->errors()->add(
                             "items.{$index}.quantity",
-                            "Kuantitas {$product->name} minimal " . number_format($product->minimum_order, 0) . " {$product->unit} (Rule 08.1)."
+                            "Kuantitas {$product->name} minimal " . number_format($product->minimum_order, 0) . " {$product->unit}."
                         );
                     }
                 }

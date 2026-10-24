@@ -29,8 +29,9 @@
                 'driver_note' => in_array($ord->status, ['DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? ($ord->vehicle_plate_number ?: 'Chiller Truck Ready') : 'Menunggu Alokasi Supir',
                 'status' => match ($ord->status) {
                     'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi',
-                    'TERVERIFIKASI'       => 'Panen & Alokasi',
-                    'SIAP_KIRIM'          => 'Sortir & Kemas',
+                    'MENUNGGU_PEMBAYARAN' => 'Menunggu Pembayaran',
+                    'LUNAS'               => 'Lunas Terverifikasi',
+                    'SIAP_KIRIM'          => 'Surat Jalan Terbit',
                     'DALAM_PENGIRIMAN'    => 'Dalam Perjalanan',
                     'SELESAI'             => 'Tiba di Dock',
                     'SELESAI_CATATAN'     => 'Selesai (Catatan Retur)',
@@ -38,10 +39,11 @@
                     default               => $ord->status,
                 },
                 'status_tone' => match ($ord->status) {
-                    'SELESAI', 'SELESAI_CATATAN', 'DALAM_PENGIRIMAN' => 'accent',
-                    'SIAP_KIRIM', 'TERVERIFIKASI'                   => 'neutral',
-                    'BATAL'                                         => 'warning',
-                    default                                         => 'warning',
+                    'SELESAI', 'SELESAI_CATATAN', 'DALAM_PENGIRIMAN', 'LUNAS' => 'accent',
+                    'SIAP_KIRIM'                                             => 'accent',
+                    'MENUNGGU_PEMBAYARAN'                                    => 'brand',
+                    'BATAL'                                                  => 'warning',
+                    default                                                  => 'warning',
                 },
                 'url' => route('klien.orders.show', $ord->id),
             ];
@@ -79,12 +81,14 @@
 @section('content')
     <div x-data="clientDashboard(@js($reorderData))" class="flex flex-col gap-5">
         {{-- ---------------------------------------------------------------- --}}
-        {{-- Kop halaman + ringkasan kontrak --}}
+        {{-- Kop halaman  ringkasan kontrak --}}
         {{-- ---------------------------------------------------------------- --}}
         <section class="gpa-card flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:p-6">
             <div class="min-w-0 flex flex-col gap-1">
                 <div class="flex flex-wrap items-center gap-2">
-                    <h1 class="gpa-section-title text-ink">Dashboard Ringkasan &amp; Operasional Klien B2B</h1>
+                    <h1 class="gpa-section-title text-ink">
+                        {{ $isContractClient ? 'Dashboard Ringkasan & Operasional Klien B2B' : 'Dashboard Ringkasan & Operasional Klien Reguler' }}
+                    </h1>
                     <span
                         class="rounded-full bg-accent px-2.5 py-0.5 gpa-micro-bold text-success-ink">
                         {{ $isContractClient ? 'Kontrak Aktif' : 'Klien Reguler' }}
@@ -115,10 +119,117 @@
                 <a href="{{ route('klien.catalog') }}"
                     class="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2 shadow-sub transition-colors hover:bg-brand-deep">
                     <x-gpa.icon name="plus" class="h-3.5 w-3.5 text-white" />
-                    <span class="gpa-meta-lg font-bold text-white">+ Buat Pesanan Baru / PO</span>
+                    <span class="gpa-meta-lg font-bold text-white">Buat Pesanan Baru / PO</span>
                 </a>
             </div>
         </section>
+
+        @if (!empty($rejectedPayment))
+            {{-- Banner Notifikasi Bukti Pembayaran Ditolak Sekretariat --}}
+            <section class="rounded-2xl border-2 border-danger/60 bg-danger-soft/30 p-4 sm:p-5 shadow-card transition-all">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-start gap-3.5 min-w-0">
+                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-danger text-white shadow-sub">
+                            <x-gpa.icon name="alert-triangle" class="h-6 w-6 text-white" />
+                        </span>
+                        <div class="flex flex-col gap-1 min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="rounded bg-danger px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
+                                    Bukti Pembayaran Ditolak Verifikator
+                                </span>
+                                <span class="text-xs font-semibold text-danger">
+                                    Ref: {{ $rejectedPayment->payment_reference ?: ('PAY-' . $rejectedPayment->id) }}
+                                </span>
+                                <span class="text-xs text-ink-quiet">
+                                    &bull; Tagihan: <strong class="text-ink">{{ $rejectedPayment->invoice?->invoice_number ?: ($rejectedPayment->order?->order_number ?: 'Faktur Klien') }}</strong>
+                                </span>
+                            </div>
+                            <h2 class="font-sans text-base font-extrabold text-ink sm:text-lg">
+                                Bukti Pembayaran Belum Dapat Disahkan oleh Sekretariat GPA
+                            </h2>
+                            <p class="text-xs text-ink-body leading-relaxed max-w-2xl">
+                                Alasan penolakan: <strong class="text-danger">"{{ $rejectedPayment->verification_note ?: 'Bukti transfer tidak valid atau dana belum masuk rekening koran.' }}"</strong>. Silakan konfirmasi ulang transfer Anda dan unggah bukti baru agar pesanan segera diproses.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex shrink-0 items-center gap-2">
+                        <a href="{{ route('klien.payment-proof', ['tagihan' => $rejectedPayment->invoice?->invoice_number, 'order_id' => $rejectedPayment->order_id]) }}"
+                            class="inline-flex items-center gap-2 rounded-xl bg-danger px-4 py-2.5 font-sans text-xs font-bold text-white shadow-lg transition-transform hover:scale-105 hover:bg-danger/90">
+                            <x-gpa.icon name="upload" class="h-4 w-4 text-white" />
+                            <span>Unggah Ulang Bukti Bayar</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        @endif
+
+        @if (!$isContractClient)
+            {{-- ---------------------------------------------------------------- --}}
+            {{-- Banner Notifikasi Khusus Klien Reguler: Ajukan Kontrak B2B / Status Pengajuan --}}
+            {{-- ---------------------------------------------------------------- --}}
+            @if ($pendingContract)
+                {{-- Banner Status Pengajuan Sedang Ditinjau --}}
+                <section class="relative overflow-hidden rounded-2xl border border-warning/40 bg-gradient-to-r from-warning/15 via-warning/5 to-surface p-5 lg:p-6 shadow-sm">
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div class="flex items-start gap-3.5">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-warning/20 text-warning-deep">
+                                <x-gpa.icon name="clock" class="h-5 w-5 animate-pulse" />
+                            </span>
+                            <div class="flex flex-col gap-1">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="rounded-full bg-warning/30 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-warning-deep">
+                                        Menunggu Pengesahan Direktur
+                                    </span>
+                                    <span class="font-mono text-xs font-semibold text-ink">No. PKS: {{ $pendingContract->contract_number }}</span>
+                                </div>
+                                <h2 class="text-base font-bold text-ink">Pengajuan Kontrak Kemitraan B2B Sedang Ditinjau Direktur Utama</h2>
+                                <p class="max-w-3xl text-xs leading-relaxed text-ink-body">
+                                    Proposal kemitraan untuk komoditas <strong>{{ $pendingContract->product?->name }}</strong> (Komitmen <strong>{{ number_format($pendingContract->committed_volume_per_cycle, 0, ',', '.') }} kg / siklus</strong>, Termin Pembayaran <strong>TOP {{ $pendingContract->top_days }} Hari</strong>) telah terkirim pada {{ $pendingContract->created_at->format('d M Y') }} dan sedang dalam tahap evaluasi Direktur Utama GPA. Setelah disetujui, akun Anda otomatis ditingkatkan menjadi Klien Kontrak B2B.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex shrink-0 items-center gap-2">
+                            <a href="https://wa.me/6281112233445?text=Halo%20Direksi%20GPA,%20saya%20telah%20mengajukan%20kontrak%20B2B%20nomor%20{{ $pendingContract->contract_number }}" target="_blank"
+                                class="inline-flex items-center gap-2 rounded-xl bg-surface-pill px-4 py-2.5 font-sans text-xs font-bold text-ink outline outline-1 outline-line-hair transition-all hover:bg-surface-disabled">
+                                <x-gpa.icon name="message-square" class="h-4 w-4 text-success-deep" />
+                                <span>Konfirmasi via WhatsApp</span>
+                            </a>
+                        </div>
+                    </div>
+                </section>
+            @else
+                {{-- Banner Penawaran Kemitraan Kontrak B2B --}}
+                <section class="relative overflow-hidden rounded-2xl border border-brand/30 bg-gradient-to-r from-brand-deep via-brand/90 to-[#1b4306] p-5 lg:p-6 text-white shadow-card">
+                    <div class="pointer-events-none absolute -right-12 -top-12 h-44 w-44 rounded-full bg-accent/10 blur-2xl"></div>
+                    <div class="relative z-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div class="flex items-start gap-3.5">
+                            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 text-accent outline outline-1 outline-white/20">
+                                <x-gpa.icon name="file-text" class="h-6 w-6" />
+                            </span>
+                            <div class="flex flex-col gap-1.5">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="rounded-full bg-accent/20 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-accent outline outline-1 outline-accent/30">
+                                        Peluang Kemitraan Kontrak B2B
+                                    </span>
+                                    <span class="font-mono text-xs text-white/80">Status Akun: Klien Reguler (Spot Market)</span>
+                                </div>
+                                <h2 class="text-base font-bold text-white lg:text-lg">Tingkatkan Akun ke Kemitraan B2B Kontrak Resmi</h2>
+                                <p class="max-w-3xl text-xs leading-relaxed text-white/90">
+                                    Dapatkan fasilitas kemitraan prioritas: <strong>Harga Komoditas Terkunci (Bebas Fluktuasi)</strong>, <strong>Term of Payment (Tempo 14–30 Hari)</strong>, serta jaminan alokasi pasokan harian langsung dari kebun binaan GPA. Pengajuan akan ditinjau dan disahkan langsung oleh <strong>Direktur Utama GPA</strong>.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex shrink-0 items-center gap-2">
+                            <button type="button" @click="showContractModal = true"
+                                class="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2.5 font-sans text-xs font-bold text-ink shadow-lg transition-transform hover:scale-[1.02] active:scale-[0.98]">
+                                <x-gpa.icon name="plus" class="h-4 w-4" />
+                                <span>Ajukan Kontrak Kemitraan B2B</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            @endif
+        @endif
 
         {{-- ---------------------------------------------------------------- --}}
         {{-- Empat kartu ringkasan --}}
@@ -658,5 +769,88 @@
                 </div>
             </div>
         </section>
+
+        {{-- ---------------------------------------------------------------- --}}
+        {{-- Modal Pengajuan Kontrak Kemitraan B2B (Khusus Klien Reguler) --}}
+        {{-- ---------------------------------------------------------------- --}}
+        @if (!$isContractClient && !$pendingContract)
+            <div x-cloak x-show="showContractModal" 
+                class="fixed inset-0 z-50 flex min-h-full items-center justify-center overflow-y-auto bg-black/60 p-3 sm:p-6 backdrop-blur-sm"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0">
+                
+                <div @click.away="showContractModal = false"
+                    class="relative my-auto flex max-h-[90vh] w-full max-w-lg flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl outline outline-1 outline-line-board/50"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100">
+                    
+                    <header class="flex shrink-0 items-start justify-between border-b border-line-hair pb-3.5">
+                        <div class="flex flex-col gap-1">
+                            <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-success-deep">Formulir Kemitraan Resmi GPA</span>
+                            <h3 class="text-lg font-bold text-ink">Pengajuan Kontrak B2B Kemitraan</h3>
+                            <p class="text-xs text-ink-body">Pengajuan ini akan langsung ditinjau dan disahkan oleh Direktur Utama GPA.</p>
+                        </div>
+                        <button type="button" @click="showContractModal = false" class="rounded-lg p-1 text-ink-quiet hover:bg-surface-disabled hover:text-ink">
+                            <x-gpa.icon name="x" class="h-5 w-5" />
+                        </button>
+                    </header>
+
+                    <form action="{{ route('klien.contracts.propose') }}" method="POST" class="mt-3 flex flex-1 flex-col gap-3.5 overflow-y-auto pr-1 gpa-scrollbar">
+                        @csrf
+                        <div>
+                            <label class="mb-1 block font-mono text-xs font-semibold text-ink">Komoditas Utama yang Dikontrakkan *</label>
+                            <select name="product_id" required class="h-10 w-full rounded-lg border border-line-strong bg-surface px-3 text-xs text-ink focus:border-brand focus:ring-0">
+                                <option value="">-- Pilih Komoditas --</option>
+                                @foreach ($allAvailableProducts as $prod)
+                                    <option value="{{ $prod->id }}">
+                                        {{ $prod->name }} (Rp {{ number_format($prod->base_price, 0, ',', '.') }}/kg) - Min Order {{ $prod->minimum_order }} kg
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="mb-1 block font-mono text-xs font-semibold text-ink">Estimasi Komitmen Volume (Kg) *</label>
+                                <input type="number" name="committed_volume_per_cycle" min="50" step="10" required placeholder="Contoh: 500"
+                                    class="h-10 w-full rounded-lg border border-line-strong bg-surface px-3 font-mono text-xs text-ink focus:border-brand focus:ring-0">
+                                <span class="mt-1 block text-[10px] text-ink-quiet">Minimal 50 kg per siklus kirim</span>
+                            </div>
+                            <div>
+                                <label class="mb-1 block font-mono text-xs font-semibold text-ink">Term of Payment (TOP) *</label>
+                                <select name="top_days" required class="h-10 w-full rounded-lg border border-line-strong bg-surface px-3 text-xs text-ink focus:border-brand focus:ring-0">
+                                    <option value="14">TOP 14 Hari Kalender</option>
+                                    <option value="30" selected>TOP 30 Hari Kalender (Standar)</option>
+                                    <option value="45">TOP 45 Hari (Kemitraan Khusus)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="rounded-xl bg-surface-shell p-3 text-xs text-ink-body">
+                            <p class="font-medium text-ink">Ketentuan Perjanjian Kemitraan (PKS):</p>
+                            <ul class="mt-1 list-disc pl-4 space-y-0.5 text-[11px] text-ink-quiet">
+                                <li>Harga komoditas dikunci tetap selama masa perjanjian kemitraan berlangsung.</li>
+                                <li>Fasilitas plafon tempo aktif setelah diverifikasi dan disahkan Direktur Utama.</li>
+                            </ul>
+                        </div>
+
+                        <footer class="mt-2 flex shrink-0 items-center justify-end gap-2 border-t border-line-hair pt-3">
+                            <button type="button" @click="showContractModal = false" class="rounded-lg bg-surface-disabled px-4 py-2 font-mono text-xs font-semibold text-ink hover:bg-surface-muted">
+                                Batal
+                            </button>
+                            <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-ink px-4 py-2 font-mono text-xs font-bold text-accent shadow-sm hover:bg-brand-deep">
+                                <x-gpa.icon name="send" class="h-3.5 w-3.5 text-accent" />
+                                Kirim Proposal ke Direktur
+                            </button>
+                        </footer>
+                    </form>
+                </div>
+            </div>
+        @endif
     </div>
 @endsection

@@ -25,25 +25,18 @@ class OrderVerificationController extends Controller
      */
     public function index(): View
     {
-        // Ambil pesanan riil dari database
+        // Ambil hanya pesanan yang berstatus MENUNGGU_VERIFIKASI (belum diverifikasi)
         $realOrders = Order::with(['user', 'orderItems.product', 'payments'])
-            ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'TERVERIFIKASI'])
+            ->where('status', 'MENUNGGU_VERIFIKASI')
             ->latest()
             ->get();
-
-        if ($realOrders->isEmpty()) {
-            $realOrders = Order::with(['user', 'orderItems.product', 'payments'])
-                ->latest()
-                ->take(5)
-                ->get();
-        }
 
         $mappedOrders = [];
         foreach ($realOrders as $ord) {
             $clientName = $ord->user?->company_name ?: ($ord->user?->name ?: 'Mitra Klien GPA');
             $isContract = ($ord->user?->client_type === 'B2B_KONTRAK');
             $totalQty = (float) $ord->orderItems->sum('ordered_qty');
-            $totalVal = (float) ($ord->grand_total ?: $ord->estimated_total);
+            $totalVal = (float) $ord->grand_total;
 
             $itemsList = $ord->orderItems->map(function ($it) {
                 return [
@@ -97,7 +90,7 @@ class OrderVerificationController extends Controller
                 ],
                 'queue_commodity_label'    => 'Sayur Dipesan:',
                 'queue_commodities'        => $itemsList,
-                'queue_estimate_label'     => 'Perkiraan Nilai Pesanan',
+                'queue_estimate_label'     => 'Nilai Pesanan Terkunci',
                 'queue_estimate'           => 'Rp ' . number_format($totalVal, 0, ',', '.'),
                 'queue_estimate_note'      => ['label' => 'Alokasi Siap', 'class' => 'text-success-deep'],
                 'queue_status'             => ['label' => 'Stok Kebun Cukup', 'icon' => 'shield', 'class' => 'bg-accent text-success-ink'],
@@ -105,8 +98,8 @@ class OrderVerificationController extends Controller
                 'po_ref'                   => 'NO. PO: ' . $ord->order_number,
                 'order_no'                 => 'Pesanan #' . $ord->order_number,
                 'status'                   => [
-                    'label' => $ord->status === 'TERVERIFIKASI' ? 'Telah Disetujui' : 'Menunggu Persetujuan Sekretaris',
-                    'class' => $ord->status === 'TERVERIFIKASI' ? 'bg-accent text-success-ink font-bold' : 'bg-warning-soft text-warning-deep font-bold',
+                    'label' => $ord->status === 'MENUNGGU_PEMBAYARAN' ? 'Invoice Diterbitkan (Menunggu Bayar)' : 'Menunggu Persetujuan Sekretaris',
+                    'class' => $ord->status === 'MENUNGGU_PEMBAYARAN' ? 'bg-accent text-success-ink font-bold' : 'bg-warning-soft text-warning-deep font-bold',
                 ],
                 'created'                  => 'Tanggal: ' . $ord->created_at->format('d M Y, H:i') . ' WIB',
                 'identity'                 => [
@@ -132,15 +125,15 @@ class OrderVerificationController extends Controller
                         'note'       => 'Jadwal Kirim: ' . ($ord->target_delivery_date ? $ord->target_delivery_date->format('d M Y') : 'Pagi Hari (05:00 WIB)'),
                     ],
                 ],
-                'rule03_status'            => ['label' => 'Pasokan Aman', 'icon' => 'check', 'class' => 'bg-accent text-success-ink font-bold'],
+                'supply_status'            => ['label' => 'Pasokan Aman', 'icon' => 'check', 'class' => 'bg-accent text-success-ink font-bold'],
                 'allocations'              => $allocations,
                 'pricing'                  => [
                     ['label' => 'Harga Satuan per Kg', 'value' => 'Rp ' . number_format($unitPrice, 0, ',', '.'), 'suffix' => '/ kg', 'note' => null, 'highlight' => false],
-                    ['label' => 'Perkiraan Nilai Pesanan', 'value' => 'Rp ' . number_format($totalVal, 0, ',', '.'), 'suffix' => null, 'note' => null, 'highlight' => false],
+                    ['label' => 'Total Nilai Pesanan', 'value' => 'Rp ' . number_format($totalVal, 0, ',', '.'), 'suffix' => null, 'note' => null, 'highlight' => false],
                     ['label' => 'Pajak / PPN (0%)', 'value' => 'Rp 0', 'suffix' => null, 'note' => '(Bebas Pajak Produk Pertanian)', 'highlight' => false],
-                    ['label' => 'Total Estimasi Tagihan', 'value' => 'Rp ' . number_format($totalVal, 0, ',', '.'), 'suffix' => null, 'note' => null, 'highlight' => true],
+                    ['label' => 'Total Tagihan Invoice', 'value' => 'Rp ' . number_format($totalVal, 0, ',', '.'), 'suffix' => null, 'note' => null, 'highlight' => true],
                 ],
-                'rule04_qty'               => number_format($totalQty, 0, ',', '.') . ' kg',
+                'initial_qty'              => number_format($totalQty, 0, ',', '.') . ' kg',
                 'deliveries'               => [],
                 'deliveries_total'         => 'Rp ' . number_format($totalVal, 0, ',', '.'),
                 'plafon'                   => $plafonVal > 0 ? ('Rp ' . number_format($plafonVal, 0, ',', '.')) : 'Sesuai Ketentuan PO',
@@ -158,17 +151,36 @@ class OrderVerificationController extends Controller
     }
 
     /**
-     * Menyetujui pesanan & mengunci stok panen
+     * Menyetujui pesanan, mengunci kuota panen, & menerbitkan Invoice tagihan PDF
      */
-    public function approve(int $id)
+    public function approve(Request $request, int $id)
     {
         try {
             $secretaryId = Auth::guard('web')->id();
             $order = $this->orderService->approveOrder($id, $secretaryId);
 
+            $message = "Pesanan {$order->order_number} berhasil disetujui. Kuota stok panen telah dikunci, Invoice tagihan PDF telah diterbitkan, dan status pesanan kini MENUNGGU_PEMBAYARAN.";
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success'      => true,
+                    'message'      => $message,
+                    'order_id'     => $order->id,
+                    'order_number' => $order->order_number,
+                    'status'       => $order->status,
+                ]);
+            }
+
             return redirect()->route('sekretaris.verification')
-                ->with('success', "Pesanan {$order->order_number} berhasil disetujui. Jadwal panen telah dikunci dan status pesanan kini TERVERIFIKASI.");
+                ->with('success', $message);
         } catch (Exception $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
@@ -188,9 +200,27 @@ class OrderVerificationController extends Controller
             $secretaryId = Auth::guard('web')->id();
             $order = $this->orderService->rejectOrder($id, $secretaryId, $request->input('rejection_reason'));
 
+            $message = "Pesanan {$order->order_number} telah ditolak.";
+
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success'      => true,
+                    'message'      => $message,
+                    'order_id'     => $order->id,
+                    'order_number' => $order->order_number,
+                ]);
+            }
+
             return redirect()->route('sekretaris.verification')
-                ->with('success', "Pesanan {$order->order_number} telah ditolak.");
+                ->with('success', $message);
         } catch (Exception $e) {
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
             return back()->withErrors(['error' => $e->getMessage()]);
         }
     }

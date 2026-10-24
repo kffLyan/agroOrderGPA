@@ -41,13 +41,14 @@
             ['key' => 'dispatch', 'label' => 'Surat Jalan', 'icon' => 'file-text'],
             ['key' => 'pod', 'label' => 'Scan PoD', 'icon' => 'qrcode'],
             ['key' => 'fleet', 'label' => 'Armada', 'icon' => 'truck'],
-            ['key' => 'menu', 'label' => 'Menu', 'icon' => 'grid'],
+            ['key' => 'profile', 'label' => 'Profil', 'icon' => 'user'],
         ];
         $navigationRoutes = [
             'tasks' => 'armada.tasks',
             'dispatch' => 'armada.dispatch',
             'pod' => 'armada.pod',
             'fleet' => 'armada.status',
+            'profile' => 'profile.edit',
         ];
         $headerShell = $headerTone === 'light'
             ? 'sticky top-0 z-40 flex h-14 items-center gap-2.5 border-b-2 border-surface-shell bg-surface px-4 text-ink'
@@ -66,7 +67,7 @@
             : 'inline-flex h-7 w-7 items-center justify-center rounded-full bg-surface-disabled text-[11px] font-bold text-ink ring-1 ring-inset ring-accent';
     @endphp
 
-    <div x-data="{ openMenu(label) { $dispatch('gpa:toast', { title: label, message: 'Modul armada siap digunakan untuk operasional lapangan.', tone: 'info' }); } }">
+    <div x-data="{}">
         <a href="#main-content"
             class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2 focus:text-xs focus:font-semibold focus:shadow-card">
             Lewati ke konten utama
@@ -142,17 +143,19 @@
                             <span class="pt-0.5 text-center font-mono text-[11px] font-normal leading-5">{{ $item['label'] }}</span>
                         </a>
                     @else
-                        <button type="button" @click="openMenu('{{ $item['label'] }}')"
+                        <a href="{{ route('profile.edit') }}"
                             class="relative top-0.5 flex h-[62px] flex-1 flex-col items-center justify-center gap-0.5 bg-surface px-1 py-1 text-ink-body transition-colors hover:text-ink">
                             <x-gpa.icon :name="$item['icon']" class="{{ $iconSize }} shrink-0" />
                             <span class="pt-0.5 text-center font-mono text-[11px] font-normal leading-5">{{ $item['label'] }}</span>
-                        </button>
+                        </a>
                     @endif
                 @endforeach
             </div>
         </nav>
 
         <x-gpa.toast />
+        <x-gpa.notifications />
+        <x-gpa.dialog />
     </div>
 </body>
 

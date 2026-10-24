@@ -13,7 +13,7 @@ class Order extends Model
 
     protected $fillable = [
         'order_number', 'user_id', 'invoice_id', 'order_source',
-        'target_delivery_date', 'delivery_address', 'estimated_total',
+        'target_delivery_date', 'delivery_address',
         'grand_total', 'status', 'verified_by', 'surat_jalan_number',
         'driver_id', 'vehicle_plate_number', 'departure_time',
         'arrival_time', 'pod_photo_url', 'received_by_name',
@@ -25,7 +25,6 @@ class Order extends Model
             'target_delivery_date' => 'date',
             'departure_time' => 'datetime',
             'arrival_time' => 'datetime',
-            'estimated_total' => 'decimal:2',
             'grand_total' => 'decimal:2',
         ];
     }
@@ -64,4 +63,82 @@ class Order extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    /**
+     * Mengambil alasan penolakan pesanan dari catatan verifikasi pembayaran yang tersimpan
+     */
+    public function getRejectionReasonAttribute(): ?string
+    {
+        return $this->payments->where('status', 'DITOLAK')->first()?->verification_note
+            ?? $this->payments->whereNotNull('verification_note')->first()?->verification_note;
+    }
+
+    /**
+     * Memeriksa apakah pesanan ini sudah memiliki bukti pembayaran yang sedang diverifikasi
+     */
+    public function getHasPendingProofAttribute(): bool
+    {
+        return $this->payments
+            ->where('status', 'MENUNGGU_VERIFIKASI')
+            ->filter(fn ($p) => !empty($p->proof_url))
+            ->isNotEmpty();
+    }
+
+    /**
+     * Mengambil entitas pembayaran dengan bukti yang sedang menunggu verifikasi
+     */
+    public function getPendingProofPaymentAttribute(): ?Payment
+    {
+        return $this->payments
+            ->where('status', 'MENUNGGU_VERIFIKASI')
+            ->filter(fn ($p) => !empty($p->proof_url))
+            ->first();
+    }
+
+    /**
+     * Memeriksa apakah pesanan ini memiliki bukti pembayaran terakhir yang ditolak oleh verifikator
+     */
+    public function getHasRejectedProofAttribute(): bool
+    {
+        $latestPayment = $this->payments->sortByDesc('id')->first();
+
+        return $latestPayment && in_array($latestPayment->status, ['DITOLAK', 'REJECTED']);
+    }
+
+    /**
+     * Mengambil entitas pembayaran dengan bukti yang ditolak
+     */
+    public function getRejectedProofPaymentAttribute(): ?Payment
+    {
+        $latestPayment = $this->payments->sortByDesc('id')->first();
+
+        return ($latestPayment && in_array($latestPayment->status, ['DITOLAK', 'REJECTED']))
+            ? $latestPayment
+            : null;
+    }
+
+    /**
+     * Mengambil URL aset gambar bukti serah terima (PoD) yang valid dan dapat diakses publik
+     */
+    public function getPodPhotoAssetUrlAttribute(): ?string
+    {
+        if (!$this->pod_photo_url) {
+            return null;
+        }
+
+        if (str_starts_with($this->pod_photo_url, 'http://') || str_starts_with($this->pod_photo_url, 'https://')) {
+            return $this->pod_photo_url;
+        }
+
+        if (str_starts_with($this->pod_photo_url, 'uploads/') || str_starts_with($this->pod_photo_url, 'images/')) {
+            return asset($this->pod_photo_url);
+        }
+
+        if (str_starts_with($this->pod_photo_url, 'storage/')) {
+            return asset($this->pod_photo_url);
+        }
+
+        return asset('storage/' . $this->pod_photo_url);
+    }
 }
+

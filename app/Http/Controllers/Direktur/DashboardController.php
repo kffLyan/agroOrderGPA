@@ -25,8 +25,8 @@ class DashboardController extends Controller
         $user = Auth::user();
 
         // 1. Akumulasi Omzet dari pesanan sah
-        $totalRevenue = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI'])
-            ->sum(DB::raw('COALESCE(grand_total, estimated_total)'));
+        $totalRevenue = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS'])
+            ->sum('grand_total');
 
         $targetRevenue = 600000000;
         $revenuePercent = $targetRevenue > 0 ? round(($totalRevenue / $targetRevenue) * 100, 1) : 0;
@@ -36,8 +36,8 @@ class DashboardController extends Controller
 
         // 2. Volume Komoditas (Tera Sah Metrologi)
         $totalTonnageKg = (float) OrderItem::whereHas('order', function ($q) {
-            $q->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI']);
-        })->sum(DB::raw('COALESCE(actual_net_weight, ordered_qty)'));
+            $q->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS']);
+        })->sum('ordered_qty');
 
         $binaanKg = (float) HarvestBatch::where('source_type', 'PETANI_BINAAN')->sum('initial_quantity');
         $bufferKg = (float) HarvestBatch::where('source_type', 'BUFFER_LUAR')->sum('initial_quantity');
@@ -102,9 +102,9 @@ class DashboardController extends Controller
             $wStart = (clone $wDate)->startOfWeek();
             $wEnd = (clone $wDate)->endOfWeek();
             $wLabel = 'W' . $wStart->format('W');
-            $wRev = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI'])
+            $wRev = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS'])
                 ->whereBetween('created_at', [$wStart, $wEnd])
-                ->sum(DB::raw('COALESCE(grand_total, estimated_total)'));
+                ->sum('grand_total');
             $wHarvestKg = (float) HarvestBatch::whereBetween('batch_date', [$wStart->toDateString(), $wEnd->toDateString()])->sum('initial_quantity');
             $wHarvestTon = round($wHarvestKg / 1000, 1);
             $targetW = 120000000;
@@ -125,7 +125,7 @@ class DashboardController extends Controller
         $topProductsData = [];
         $palette = ['bg-ink', 'bg-brand', 'bg-success', 'bg-accent-deep', 'bg-accent-edge'];
         foreach ($allProducts->take(5) as $idx => $p) {
-            $volKg = (float) OrderItem::where('product_id', $p->id)->sum(DB::raw('COALESCE(actual_net_weight, ordered_qty)'));
+            $volKg = (float) OrderItem::where('product_id', $p->id)->sum('ordered_qty');
             $volTon = round($volKg / 1000, 2);
             $share = round(($volKg / $totalKgAll) * 100);
             $topProductsData[] = [
@@ -140,15 +140,15 @@ class DashboardController extends Controller
         $channelData = [
             'horeca' => [
                 'share' => 0,
-                'ton'   => round((float) Order::whereHas('user', fn ($q) => $q->where('client_type', 'B2B_KONTRAK'))->with('orderItems')->get()->sum(fn ($o) => $o->orderItems->sum(fn ($i) => $i->actual_net_weight ?: $i->ordered_qty)) / 1000, 2),
+                'ton'   => round((float) Order::whereHas('user', fn ($q) => $q->where('client_type', 'B2B_KONTRAK'))->with('orderItems')->get()->sum(fn ($o) => $o->orderItems->sum('ordered_qty')) / 1000, 2),
             ],
             'retail' => [
                 'share' => 0,
-                'ton'   => round((float) Order::whereHas('user', fn ($q) => $q->where('client_type', 'REGULER'))->with('orderItems')->get()->sum(fn ($o) => $o->orderItems->sum(fn ($i) => $i->actual_net_weight ?: $i->ordered_qty)) / 1000, 2),
+                'ton'   => round((float) Order::whereHas('user', fn ($q) => $q->where('client_type', 'REGULER'))->with('orderItems')->get()->sum(fn ($o) => $o->orderItems->sum('ordered_qty')) / 1000, 2),
             ],
             'manual' => [
                 'share' => 0,
-                'ton'   => round((float) Order::where('order_source', 'MANUAL_SEKRETARIS')->with('orderItems')->get()->sum(fn ($o) => $o->orderItems->sum(fn ($i) => $i->actual_net_weight ?: $i->ordered_qty)) / 1000, 2),
+                'ton'   => round((float) Order::where('order_source', 'MANUAL_SEKRETARIS')->with('orderItems')->get()->sum(fn ($o) => $o->orderItems->sum('ordered_qty')) / 1000, 2),
             ],
         ];
         $totChanTon = $channelData['horeca']['ton'] + $channelData['retail']['ton'] + $channelData['manual']['ton'];

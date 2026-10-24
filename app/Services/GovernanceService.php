@@ -12,8 +12,12 @@ class GovernanceService
 
     public function __construct()
     {
-        $this->settingsPath = storage_path('app/governance_settings.json');
-        $this->auditLogPath = storage_path('app/audit_trail.json');
+        $this->settingsPath = app()->environment('testing')
+            ? storage_path('app/governance_settings_testing.json')
+            : storage_path('app/governance_settings.json');
+        $this->auditLogPath = app()->environment('testing')
+            ? storage_path('app/audit_trail_testing.json')
+            : storage_path('app/audit_trail.json');
         $this->ensureFilesExist();
     }
 
@@ -46,6 +50,7 @@ class GovernanceService
                     'locked_by' => null,
                     'sha256_hash' => null,
                 ],
+                'payment_channels' => $this->defaultPaymentChannels(),
             ];
             File::put($this->settingsPath, json_encode($defaultSettings, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         }
@@ -192,5 +197,186 @@ class GovernanceService
         );
 
         return true;
+    }
+
+    /**
+     * Kanal pembayaran default resmi Koperasi/PT Guntur Pandu Agro (GPA)
+     */
+    public function defaultPaymentChannels(): array
+    {
+        return [
+            [
+                'id'             => 'bca',
+                'type'           => 'BANK',
+                'name'           => 'Bank BCA',
+                'bank_code'      => 'BCA',
+                'account_number' => '8210-992-3841',
+                'account_name'   => 'PT Guntur Pandu Agro (Divisi Keuangan B2B)',
+                'description'    => 'Rekening Virtual & Giro Korporat Utama',
+                'instructions'   => 'Sertakan Nomor Faktur di berita transfer untuk rekonsiliasi otomatis perbankan.',
+                'image_url'      => null,
+                'logo_url'       => '/images/payments/bca.svg',
+                'is_active'      => true,
+            ],
+            [
+                'id'             => 'mandiri',
+                'type'           => 'BANK',
+                'name'           => 'Bank Mandiri',
+                'bank_code'      => 'MANDIRI',
+                'account_number' => '137-00-1928374-1',
+                'account_name'   => 'PT Guntur Pandu Agro',
+                'description'    => 'Giro Korporat & Mandiri Cash Management (MCM)',
+                'instructions'   => 'Transfer via Mandiri Livin, Kopra by Mandiri, atau Kliring SKN/BI-FAST.',
+                'image_url'      => null,
+                'logo_url'       => '/images/payments/mandiri.svg',
+                'is_active'      => true,
+            ],
+            [
+                'id'             => 'bri',
+                'type'           => 'BANK',
+                'name'           => 'Bank BRI',
+                'bank_code'      => 'BRI',
+                'account_number' => '0341-01-001928-30-2',
+                'account_name'   => 'PT Guntur Pandu Agro',
+                'description'    => 'Rekening Operasional Agribisnis & BritAma Bisnis',
+                'instructions'   => 'Transfer via BRImo, Cash Management BRI, atau Teller BRI seluruh Indonesia.',
+                'image_url'      => null,
+                'logo_url'       => '/images/payments/bri.svg',
+                'is_active'      => true,
+            ],
+            [
+                'id'             => 'bni',
+                'type'           => 'BANK',
+                'name'           => 'Bank BNI',
+                'bank_code'      => 'BNI',
+                'account_number' => '0819-283-746',
+                'account_name'   => 'PT Guntur Pandu Agro',
+                'description'    => 'Rekening Giro Bisnis & BNI Direct',
+                'instructions'   => 'Transfer via BNI Direct, BNI Mobile Banking, atau ATM BNI.',
+                'image_url'      => null,
+                'logo_url'       => '/images/payments/bni.svg',
+                'is_active'      => true,
+            ],
+            [
+                'id'             => 'bsi',
+                'type'           => 'BANK',
+                'name'           => 'Bank Syariah Indonesia (BSI)',
+                'bank_code'      => 'BSI',
+                'account_number' => '719-283-9481',
+                'account_name'   => 'PT Guntur Pandu Agro',
+                'description'    => 'Rekening Giro Wadiah Syariah Bebas Riba',
+                'instructions'   => 'Transfer via BSI Mobile, BSI Net Banking, atau Kliring BI-FAST.',
+                'image_url'      => null,
+                'logo_url'       => '/images/payments/bsi.svg',
+                'is_active'      => true,
+            ],
+            [
+                'id'             => 'qris',
+                'type'           => 'QRIS',
+                'name'           => 'QRIS GPA (Semua E-Wallet & Mobile Banking)',
+                'bank_code'      => 'QRIS',
+                'account_number' => 'ID1020039182948',
+                'account_name'   => 'PT GUNTUR PANDU AGRO',
+                'description'    => 'Pindai QRIS via BCA Mobile, Livin, BRImo, GoPay, OVO, ShopeePay, DANA',
+                'instructions'   => 'Scan barcode QRIS resmi GPA di bawah dan simpan bukti tangkapan layar transaksi.',
+                'image_url'      => '/storage/payment-channels/qris-gpa-default.png',
+                'logo_url'       => '/images/payments/qris.svg',
+                'is_active'      => true,
+            ],
+            [
+                'id'             => 'ewallet',
+                'type'           => 'EWALLET',
+                'name'           => 'Dompet Digital Bisnis (GoPay & DANA GPA)',
+                'bank_code'      => 'EWALLET',
+                'account_number' => '0812-8888-9281',
+                'account_name'   => 'PT GUNTUR PANDU AGRO',
+                'description'    => 'Merchant Dompet Digital Resmi Terverifikasi',
+                'instructions'   => 'Transfer saldo dompet digital ke nomor merchant resmi PT Guntur Pandu Agro.',
+                'image_url'      => null,
+                'logo_url'       => '/images/payments/ewallet.svg',
+                'is_active'      => true,
+            ],
+        ];
+    }
+
+    /**
+     * Mengambil daftar seluruh kanal pembayaran (aktif & non-aktif)
+     */
+    public function getPaymentChannels(): array
+    {
+        $settings = $this->getSettings();
+        $defaults = $this->defaultPaymentChannels();
+
+        if (empty($settings['payment_channels']) || !is_array($settings['payment_channels'])) {
+            $settings['payment_channels'] = $defaults;
+            $this->updateSettings($settings);
+            return $defaults;
+        }
+
+        $existing = $settings['payment_channels'];
+
+        // Pastikan seluruh 7 metode pembayaran resmi selalu langsung ada sejak awal
+        if (!app()->environment('testing')) {
+            $existingIds = array_map('strtolower', array_column($existing, 'id'));
+            $hasMissing = false;
+            foreach ($defaults as $def) {
+                if (!in_array(strtolower($def['id']), $existingIds)) {
+                    $existing[] = $def;
+                    $hasMissing = true;
+                }
+            }
+            if ($hasMissing) {
+                $settings['payment_channels'] = $existing;
+                $this->updateSettings($settings);
+            }
+        }
+
+        $lookup = [
+            'bca'     => '/images/payments/bca.svg',
+            'mandiri' => '/images/payments/mandiri.svg',
+            'bri'     => '/images/payments/bri.svg',
+            'bni'     => '/images/payments/bni.svg',
+            'bsi'     => '/images/payments/bsi.svg',
+            'qris'    => '/images/payments/qris.svg',
+            'ewallet' => '/images/payments/ewallet.svg',
+        ];
+
+        // Pastikan setiap kanal memiliki key 'image_url' dan 'logo_url' resmi
+        $channels = array_map(function ($ch) use ($lookup) {
+            if ($ch['type'] === 'QRIS' && empty($ch['image_url'])) {
+                $ch['image_url'] = '/storage/payment-channels/qris-gpa-default.png';
+            } elseif (!array_key_exists('image_url', $ch)) {
+                $ch['image_url'] = null;
+            }
+
+            $idKey = strtolower($ch['id'] ?? '');
+            $codeKey = strtolower($ch['bank_code'] ?? '');
+            if (empty($ch['logo_url'])) {
+                $ch['logo_url'] = $lookup[$idKey] ?? ($lookup[$codeKey] ?? null);
+            }
+
+            return $ch;
+        }, $existing);
+
+        return $channels;
+    }
+
+    /**
+     * Mengambil hanya kanal pembayaran yang diaktifkan oleh Direktur
+     */
+    public function getActivePaymentChannels(): array
+    {
+        $channels = $this->getPaymentChannels();
+        return array_values(array_filter($channels, fn($c) => !empty($c['is_active'])));
+    }
+
+    /**
+     * Memperbarui konfigurasi kanal pembayaran oleh Direktur Utama
+     */
+    public function updatePaymentChannels(array $channels): bool
+    {
+        $settings = $this->getSettings();
+        $settings['payment_channels'] = $channels;
+        return $this->updateSettings($settings);
     }
 }

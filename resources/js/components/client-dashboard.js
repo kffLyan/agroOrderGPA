@@ -17,6 +17,7 @@ const clock = new Intl.DateTimeFormat('id-ID', {
 export default function clientDashboard(catalogue = []) {
     return {
         sidebarOpen: false,
+        showContractModal: false,
         syncedAt: '',
         statusFilter: 'all',
         draft: [],

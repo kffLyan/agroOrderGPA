@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Model;
 
 class Contract extends Model
 {
@@ -23,10 +23,10 @@ class Contract extends Model
     ];
 
     protected $casts = [
-        'top_days'                   => 'integer',
-        'fixed_price_per_kg'         => 'decimal:2',
+        'top_days' => 'integer',
+        'fixed_price_per_kg' => 'decimal:2',
         'committed_volume_per_cycle' => 'decimal:2',
-        'approved_at'                => 'datetime',
+        'approved_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

@@ -81,13 +81,14 @@
                 <div class="grid gap-2 p-4 pt-4">
                     @foreach ($mappedOrders ?? [] as $order)
                         <article x-show="matchesFilter(@js($order))" :class="cardClass(@js($order))"
-                            class="group relative rounded-xl p-3 transition-colors">
+                            @click="select(@js($order['id']))"
+                            class="group relative rounded-xl p-3 transition-all cursor-pointer hover:shadow-md">
                             <span x-cloak x-show="isSelected(@js($order['id']))"
-                                class="absolute -top-2 right-4 rounded bg-success-deep px-2 py-0.5 gpa-micro-bold text-white">
+                                class="absolute -top-2 right-4 rounded bg-success-deep px-2 py-0.5 gpa-micro-bold text-white shadow-sm">
                                 Terpilih Inspeksi
                             </span>
 
-                            <button type="button" @click="select(@js($order['id']))" class="w-full text-left">
+                            <button type="button" @click.stop="select(@js($order['id']))" class="w-full text-left cursor-pointer">
                                 <div class="flex items-start justify-between gap-3 pt-2">
                                     <div class="min-w-0">
                                         <p class="gpa-note text-success-deep">{{ $order['id'] }}</p>
@@ -162,7 +163,17 @@
                 </div>
         </section>
 
-        <section id="order-inspection" class="gpa-panel scroll-mt-24 p-6">
+        <section x-show="!selected" class="gpa-panel p-12 text-center">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent text-ink shadow-sub">
+                <x-gpa.icon name="check" class="h-7 w-7 text-ink" />
+            </div>
+            <h3 class="mt-4 font-sans text-xl font-bold text-ink">Antrean Verifikasi Kosong</h3>
+            <p class="mt-1.5 max-w-md mx-auto text-sm text-ink-body">
+                Semua pesanan masuk telah selesai diverifikasi atau disetujui. Pesanan yang disetujui otomatis beralih ke tahap menunggu pembayaran klien.
+            </p>
+        </section>
+
+        <section id="order-inspection" x-show="selected" class="gpa-panel scroll-mt-24 p-6 transition-all duration-300">
             <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft pb-4">
                 <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-2">
@@ -202,10 +213,10 @@
                         Kesiapan Pasokan Sayur Kebun
                     </h3>
 
-                    <span :class="selected.rule03_status.class"
+                    <span :class="selected.supply_status.class"
                         class="inline-flex items-center gap-1.5 rounded px-2.5 py-1 outline outline-1 outline-success-deep gpa-micro-bold">
                         <x-gpa.icon name="check" class="h-3 w-3 shrink-0" />
-                        <span x-text="selected.rule03_status.label"></span>
+                        <span x-text="selected.supply_status.label"></span>
                     </span>
                 </div>
 
@@ -283,7 +294,7 @@
                 </div>
 
                 <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
-                    <p class="gpa-note text-ink-quiet">Alokasi stok disinkronkan langsung dengan jadwal panen Koordinator Lapangan.</p>
+                    <p class="gpa-note text-ink-quiet">Alokasi stok disinkronkan langsung dengan data persediaan komoditas aktif.</p>
                     <p class="gpa-note text-ink-quiet">Status Pasokan: Tersedia &amp; Aman</p>
                 </div>
             </div>
@@ -295,29 +306,29 @@
                     </span>
 
                     <div class="min-w-0">
-                        <span class="rounded bg-accent px-2 py-0.5 gpa-micro-bold text-ink">Aturan Berat Bersih</span>
+                        <span class="rounded bg-accent px-2 py-0.5 gpa-micro-bold text-ink">Skema Pembayaran di Muka (Upfront Payment)</span>
                         <h4 class="mt-2 font-sans text-[0.9375rem] font-bold leading-5 text-white">
-                            Ketentuan Berat Timbangan Nyata (Netto):
+                            Ketentuan Penetapan Nilai Tagihan Pesanan:
                         </h4>
                         <p class="mt-1.5 text-sm leading-6 text-line-soft">
-                            Jumlah kilogram di pesanan awal
+                            Kuantitas pesanan awal
                             <span class="gpa-meta-lg font-bold tracking-[0.28px] text-accent"
-                                x-text="selected.rule04_qty"></span>
-                            adalah estimasi pemesanan. Tagihan resmi dan Surat Jalan
+                                x-text="selected.initial_qty"></span>
+                            menjadi dasar perhitungan total tagihan (grand total). Setelah pesanan disetujui Sekretaris,
                             <span class="font-semibold text-white underline underline-offset-2">
-                                wajib merujuk pada Berat Bersih (Netto) nyata
+                                sistem menerbitkan Invoice Tagihan resmi
                             </span>
-                            hasil timbangan di gudang setelah daun rusak dipisahkan (disortir).
+                            untuk diproses pembayarannya oleh mitra klien.
                         </p>
 
                         <ul class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
                             <li class="flex items-center gap-1.5 gpa-note text-accent">
                                 <span class="h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
-                                Surat Jalan baru dapat dicetak setelah timbangan dikunci di gudang
+                                Surat Jalan diterbitkan Sekretaris setelah pembayaran diverifikasi LUNAS
                             </li>
                             <li class="flex items-center gap-1.5 gpa-note text-accent">
                                 <span class="h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
-                                Batas toleransi susut panen maksimal 2.5%
+                                Penyesuaian komoditas hanya dilakukan melalui mekanisme retur resmi saat serah terima
                             </li>
                         </ul>
                     </div>
@@ -346,110 +357,13 @@
                         <x-gpa.icon name="x" class="h-3 w-3 shrink-0" />
                         Tolak Pesanan
                     </button>
-                    <button type="button" @click="revise()"
-                        class="inline-flex h-10 items-center gap-1.5 rounded-lg px-4 text-ink outline outline-1 outline-ink-quiet transition-colors hover:bg-surface-shell gpa-meta-lg font-semibold tracking-[0.88px]">
-                        <x-gpa.icon name="info" class="h-3 w-3 shrink-0" />
-                        Minta Revisi Klien
-                    </button>
                 </div>
 
                 <button type="button" @click="verify()"
                     class="inline-flex h-11 items-center gap-2 rounded-lg bg-accent px-6 font-sans text-sm font-extrabold tracking-[0.35px] text-ink shadow-sub transition-colors hover:bg-accent-deep">
                     <x-gpa.icon name="check" class="h-4 w-3 shrink-0" />
-                    Verifikasi &amp; Teruskan ke Koordinator Lapangan
+                    Setujui Pesanan &amp; Terbitkan Invoice Tagihan
                 </button>
-            </div>
-        </section>
-
-        <section class="gpa-panel overflow-hidden">
-            <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft px-6 py-5">
-                <div class="min-w-0">
-                    <span class="rounded bg-ink px-2 py-0.5 gpa-micro-bold text-accent">Tagihan &amp; Faktur</span>
-                    <h2 class="mt-2 font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink">
-                        Penerbitan Faktur Tagihan Sesuai Kesepakatan
-                    </h2>
-                    <p class="mt-1.5 max-w-3xl text-xs leading-5 text-ink-body">
-                        Akumulasi Delivery Order (DO) selesai kirim siap cetak faktur tagihan berkala untuk
-                        <span class="font-semibold text-ink" x-text="selected.client"></span>
-                        (Plafon Aktif: <span class="gpa-note text-success-deep" x-text="selected.plafon"></span>).
-                    </p>
-                </div>
-
-                <div class="flex shrink-0 flex-wrap items-center gap-2">
-                    <button type="button" @click="draftInvoice()"
-                        class="inline-flex h-8 items-center gap-1.5 rounded-lg px-3 text-ink outline outline-1 outline-line-board transition-colors hover:bg-surface-shell gpa-meta-lg font-semibold tracking-[0.88px]">
-                        <x-gpa.icon name="download" class="h-3 w-3 shrink-0" />
-                        Lihat Draf Tagihan
-                    </button>
-                    <button type="button" @click="issueInvoice()"
-                        class="inline-flex h-8 items-center gap-1.5 rounded-lg bg-brand px-4 text-accent transition-colors hover:bg-brand-hover gpa-meta-lg font-bold tracking-[0.88px]">
-                        <x-gpa.icon name="invoice" class="h-3 w-3 shrink-0 text-accent" />
-                        Terbitkan Faktur Tagihan
-                    </button>
-                </div>
-            </div>
-
-            <div class="gpa-scroll-x">
-                <table class="w-full min-w-[880px] border-collapse text-left">
-                    <thead class="border-b border-line-soft bg-surface-shell">
-                        <tr>
-                            <th scope="col" class="px-4 py-3 gpa-meta-lg uppercase tracking-[0.55px] text-ink-quiet">
-                                No. Surat Jalan (SJ)
-                            </th>
-                            <th scope="col" class="px-4 py-3 gpa-meta-lg uppercase tracking-[0.55px] text-ink-quiet">
-                                Tanggal Kirim / Tiba
-                            </th>
-                            <th scope="col" class="px-4 py-3 gpa-meta-lg uppercase tracking-[0.55px] text-ink-quiet">
-                                Komoditas &amp; Netto Riil (Timbangan)
-                            </th>
-                            <th scope="col" class="px-4 py-3 gpa-meta-lg uppercase tracking-[0.55px] text-ink-quiet">
-                                Tarif Kontrak
-                            </th>
-                            <th scope="col"
-                                class="px-4 py-3 text-right gpa-meta-lg uppercase tracking-[0.55px] text-ink-quiet">
-                                Subtotal Riil Tagihan
-                            </th>
-                            <th scope="col"
-                                class="px-4 py-3 text-center gpa-meta-lg uppercase tracking-[0.55px] text-ink-quiet">
-                                Status BAP Fisik
-                            </th>
-                        </tr>
-                    </thead>
-
-                    <tbody class="divide-y divide-line-faint">
-                        <template x-for="row in selected.deliveries" :key="row.sj">
-                            <tr class="transition-colors hover:bg-surface-shell/60">
-                                <td class="px-4 py-3">
-                                    <span class="gpa-note text-success-deep" x-text="row.sj"></span>
-                                </td>
-                                <td class="px-4 py-3 text-xs text-ink" x-text="row.date"></td>
-                                <td class="px-4 py-3">
-                                    <p class="text-xs font-semibold leading-5 text-ink" x-text="row.commodity"></p>
-                                    <p class="gpa-note mt-0.5 text-ink-body" x-text="row.netto"></p>
-                                </td>
-                                <td class="px-4 py-3">
-                                    <span class="gpa-note text-ink-body" x-text="row.rate"></span>
-                                </td>
-                                <td class="px-4 py-3 text-right">
-                                    <span class="gpa-note text-ink" x-text="row.subtotal"></span>
-                                </td>
-                                <td class="px-4 py-3 text-center">
-                                    <span class="inline-flex items-center gap-1 rounded bg-accent px-2 py-0.5 gpa-micro-bold text-success-ink">
-                                        <x-gpa.icon name="check" class="h-2.5 w-2.5 shrink-0" />
-                                        BAP TTD Lengkap
-                                    </span>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="flex flex-wrap items-center justify-between gap-2 border-t-2 border-brand bg-surface-track px-6 py-3">
-                <p class="gpa-note text-ink">Total Tagihan Tempo Akumulatif Siap Terbit (Rule 14)</p>
-                <p class="font-sans text-lg font-extrabold tracking-[-0.01em] text-success-deep"
-                    x-text="selected.deliveries_total"></p>
-                <p class="gpa-note text-ink-quiet" x-text="selected.deliveries_held"></p>
             </div>
         </section>
     </div>

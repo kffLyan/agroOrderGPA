@@ -136,7 +136,7 @@
                         <span class="gpa-meta font-bold text-success-deep" x-text="selectedValueLabel()">Rp 0</span>
                     </p>
                     <div class="flex items-center gap-2">
-                        <button type="button" @click="approveSelected()" :disabled="selectedCount === 0"
+                        <button type="button" @click="approveSelected()" :disabled="selected.length === 0"
                             class="inline-flex items-center gap-1.5 rounded bg-accent px-3.5 py-1.5 gpa-meta-lg font-bold text-ink shadow-sub outline outline-1 -outline-offset-1 outline-brand-deep/30 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60">
                             Approve Terpilih (Batch)
                         </button>
@@ -228,7 +228,7 @@
                             <tr class="align-top transition-colors hover:bg-surface-shell/50"
                                 x-show="matches('{{ $row['filter_key'] ?? '' }}', {{ $index }})">
                                 <td class="py-4 pr-2 align-top">
-                                    <input type="checkbox" class="gpa-check m-0" value="{{ $row['contract'] }}"
+                                    <input type="checkbox" class="gpa-check m-0" value="{{ $row['id'] }}"
                                         x-model="selected">
                                 </td>
                                 <th scope="row" class="px-3 py-4 text-left align-top font-normal">
@@ -288,12 +288,12 @@
                                 </td>
                                 <td class="px-3 py-4 text-right align-top">
                                     <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5">
-                                        <button type="button" @click="detail('{{ $row['contract'] }}')"
+                                        <a href="{{ route('direktur.contracts.show', $row['id']) }}"
                                             class="inline-flex items-center gap-1.5 rounded-md border border-line-board px-2.5 py-1.5 text-[11px] font-medium leading-4 text-ink transition-colors hover:bg-surface-muted">
                                             <x-gpa.icon name="file-text" class="h-3.5 w-3.5 shrink-0" />
                                             Detail PKS
-                                        </button>
-                                        <button type="button" @click="approve('{{ $row['contract'] }}')"
+                                        </a>
+                                        <button type="button" @click="approve({{ $row['id'] }})"
                                             class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-[11px] font-semibold leading-4 transition-opacity hover:opacity-90"
                                             @class([
                                                 'bg-ink text-white' => ($row['approve_tone'] ?? 'solid') === 'solid',
@@ -302,11 +302,11 @@
                                             <x-gpa.icon name="check" class="h-3.5 w-3.5 shrink-0" />
                                             {{ $row['approve_label'] }}
                                         </button>
-                                        <button type="button" @click="revise('{{ $row['contract'] }}')"
+                                        <button type="button" @click="revise({{ $row['id'] }})"
                                             class="text-[11px] font-medium leading-4 text-ink-body underline-offset-2 transition-colors hover:text-ink hover:underline">
                                             Minta Revisi
                                         </button>
-                                        <button type="button" @click="reject('{{ $row['contract'] }}')"
+                                        <button type="button" @click="reject({{ $row['id'] }})"
                                             class="text-[11px] font-medium leading-4 text-danger underline-offset-2 transition-colors hover:underline">
                                             Tolak
                                         </button>

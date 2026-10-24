@@ -52,7 +52,8 @@ class PaymentController extends Controller
         // Ambil data pembayaran riil dari database
         $payments = Payment::with(['order.user', 'invoice.user', 'verifier'])->latest()->get();
 
-        $pendingPayments = $payments->filter(fn ($p) => in_array($p->status, ['MENUNGGU_VERIFIKASI', 'PENDING']));
+        // Hanya tampilkan pembayaran yang berstatus menunggu DAN telah mengunggah bukti pembayaran
+        $pendingPayments = $payments->filter(fn ($p) => in_array($p->status, ['MENUNGGU_VERIFIKASI', 'PENDING']) && !empty($p->proof_url));
         $verifiedPayments = $payments->filter(fn ($p) => in_array($p->status, ['LUNAS', 'SUCCESS']));
         $rejectedPayments = $payments->filter(fn ($p) => in_array($p->status, ['DITOLAK', 'FAILED']));
 
@@ -70,6 +71,18 @@ class PaymentController extends Controller
             $invoiceNum = $pay->invoice?->invoice_number ?: ($pay->order ? $pay->order->order_number : 'INV-GPA-' . $pay->id);
             $amt = (float) $pay->amount;
 
+            $rawProof = $pay->proof_url;
+            $fullProofUrl = null;
+            if ($rawProof) {
+                if (str_starts_with($rawProof, 'http://') || str_starts_with($rawProof, 'https://')) {
+                    $fullProofUrl = $rawProof;
+                } else {
+                    $fullProofUrl = asset('storage/' . ltrim($rawProof, '/'));
+                }
+            }
+            $cleanFileName = $rawProof ? basename($rawProof) : ('BUKTI_TRANSFER_' . $pay->id . '.JPG');
+            $isImage = $rawProof ? (bool) preg_match('/\.(jpg|jpeg|png|webp|gif|svg)$/i', $rawProof) : true;
+
             $queueRows[] = [
                 'id'               => 'PAY-' . str_pad($pay->id, 4, '0', STR_PAD_LEFT),
                 'payment_id'       => $pay->id,
@@ -83,7 +96,10 @@ class PaymentController extends Controller
                 'amount_label'     => 'Rp ' . number_format($amt, 0, ',', '.'),
                 'evidence'         => 'Slip Bukti Transfer',
                 'evidence_type'    => 'Foto / Dokumen',
-                'evidence_file'    => $pay->proof_url ?: 'BUKTI_TRANSFER_' . $pay->id . '.JPG',
+                'evidence_file'    => $cleanFileName,
+                'evidence_url'     => $fullProofUrl,
+                'proof_url'        => $fullProofUrl,
+                'is_image'         => $isImage,
                 'evidence_note'    => 'Status Bukti: Terlampir',
                 'slip_sender'      => strtoupper($clientName),
                 'slip_account'     => 'Rekening Pengirim Klien',
@@ -137,5 +153,67 @@ class PaymentController extends Controller
             'verifiedTotal' => $verifiedTotal,
             'rejectedCount' => $rejectedCount,
         ]);
+    }
+
+    /**
+     * Menyetujui dan memverifikasi bukti pembayaran kas/bank
+     */
+    public function approve(Request $request, int $id)
+    {
+        $payment = Payment::findOrFail($id);
+        $note = $request->input('note', 'Mutasi rekening bank telah diverifikasi cocok dengan rekening koran.');
+
+        $payment->update([
+            'status'            => 'LUNAS',
+            'verified_by'       => Auth::id(),
+            'paid_at'           => now(),
+            'verification_note' => $note,
+        ]);
+
+        if ($payment->invoice_id && $payment->invoice) {
+            $payment->invoice->update(['status' => 'PAID']);
+            // Perbarui pesanan yang terhubung dengan invoice menjadi LUNAS
+            Order::where('invoice_id', $payment->invoice_id)
+                ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN'])
+                ->update(['status' => 'LUNAS']);
+        }
+
+        if ($payment->order_id && $payment->order && in_array($payment->order->status, ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN'])) {
+            $payment->order->update([
+                'status'      => 'LUNAS',
+                'verified_by' => Auth::id(),
+            ]);
+        }
+
+        $msg = "Pembayaran PAY-" . str_pad($payment->id, 4, '0', STR_PAD_LEFT) . " berhasil diverifikasi dan disahkan lunas.";
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => $msg]);
+        }
+
+        return back()->with('success', $msg);
+    }
+
+    /**
+     * Menolak bukti pembayaran yang tidak sesuai
+     */
+    public function reject(Request $request, int $id)
+    {
+        $payment = Payment::findOrFail($id);
+        $note = $request->input('note', 'Bukti transfer tidak valid atau dana belum masuk rekening koran.');
+
+        $payment->update([
+            'status'            => 'DITOLAK',
+            'verified_by'       => Auth::id(),
+            'verification_note' => $note,
+        ]);
+
+        $msg = "Pembayaran PAY-" . str_pad($payment->id, 4, '0', STR_PAD_LEFT) . " berhasil ditolak. Klien diminta konfirmasi ulang.";
+
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => $msg]);
+        }
+
+        return back()->with('success', $msg);
     }
 }

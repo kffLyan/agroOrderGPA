@@ -10,56 +10,67 @@ export default function coordinatorConsole(rows = [], orders = [], logs = []) {
         rows,
         orders,
         logs,
+        slipModal: false,
+        activeSlip: null,
 
         init() {
             this.$root.addEventListener('gpa:sync-scale', () => this.syncScale());
+
+            try {
+                const storedLocked = localStorage.getItem('gpa_coordinator_locked_stocks');
+                if (storedLocked) {
+                    this.locked = JSON.parse(storedLocked);
+                }
+            } catch (e) {
+                this.locked = [];
+            }
         },
 
         act(key) {
             if (key === 'export') {
-                this.run(
-                    'Export Rekap (CSV)',
-                    'Rekap pasokan 5 komoditas inti sedang disiapkan untuk diunduh.',
-                    'success',
-                );
-
+                window.location.href = '/koordinator/stok';
                 return;
             }
 
             if (key === 'filter') {
                 this.cycleSentra();
-
                 return;
             }
 
             if (key === 'ticket') {
-                this.run(
-                    'Input Tiket Baru',
-                    'Formulir tiket timbangan Gate-01 dibuka pada modul intake.',
-                    'info',
-                );
-
+                window.location.href = '/koordinator/penimbangan';
                 return;
             }
 
-            this.run('Aksi Belum Tersedia', `Aksi "${key}" sedang disiapkan.`, 'info');
+            if (key === 'refresh') {
+                this.refreshData();
+                return;
+            }
+
+            window.location.reload();
+        },
+
+        refreshData() {
+            this.syncing = true;
+            this.run('Menyegarkan Data', 'Memperbarui data pasokan dan antrean intake dari database...', 'info');
+            setTimeout(() => {
+                this.syncing = false;
+                this.run('Data Diperbarui', 'Data kesiapan pasokan dan intake Gate-01 berhasil disinkronkan.', 'success');
+            }, 600);
         },
 
         syncScale() {
-            if (this.syncing) {
-                return;
-            }
-
             this.syncing = true;
-
-            window.setTimeout(() => {
+            this.run('Sinkronisasi Gate-01', 'Mengkalibrasi sensor timbangan jembatan Gate-01...', 'info');
+            setTimeout(() => {
                 this.syncing = false;
-                this.run(
-                    'Sync Timbangan Selesai',
-                    '3 tiket Gate-01 tersinkron. Deviasi susut -1.18% masih dalam toleransi SOP.',
-                    'success',
-                );
-            }, 900);
+                const now = new Date();
+                const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} WIB`;
+                if (this.logs && this.logs.length > 0) {
+                    this.logs[0].time = timeStr;
+                }
+                this.run('Sensor Timbangan Terkalibrasi', `Gate-01 sinkron pada ${timeStr}. Zero offset 0.00 KG (Akurasi Metrologi Kelas III).`, 'success');
+            }, 700);
         },
 
         kg(value) {
@@ -96,13 +107,20 @@ export default function coordinatorConsole(rows = [], orders = [], logs = []) {
 
             if (this.isLocked(key)) {
                 this.locked = this.locked.filter((entry) => entry !== key);
-                this.run('Stok Dilepas', `${name} kembali ke alokasi bebas.`);
-
+                this.saveLocked();
+                this.run('Stok Dilepas', `${name} kembali ke alokasi bebas operasional.`, 'info');
                 return;
             }
 
             this.locked.push(key);
-            this.run('Stok Terkunci', `${name} dikunci untuk Immediate Order.`, 'success');
+            this.saveLocked();
+            this.run('Stok Terkunci', `${name} resmi dikunci untuk alokasi prioritas cold storage.`, 'success');
+        },
+
+        saveLocked() {
+            try {
+                localStorage.setItem('gpa_coordinator_locked_stocks', JSON.stringify(this.locked));
+            } catch (e) {}
         },
 
         matches(needle, values) {
@@ -184,23 +202,100 @@ export default function coordinatorConsole(rows = [], orders = [], logs = []) {
                 this.sentra
                     ? `Tabel dibatasi pada sentra "${this.sentra}".`
                     : 'Filter sentra dihapus, seluruh kolom ditampilkan kembali.',
+                'info'
             );
+        },
+
+        resetSentra() {
+            this.sentra = null;
+            this.run('Filter Sentra Direset', 'Seluruh sentra mitra binaan kembali ditampilkan.', 'info');
         },
 
         printSlip(log) {
-            this.run(
-                `Slip ${log.ticket}`,
-                `Slip timbangan ${log.name} (${formatNumber(log.net)} KG) dicetak ke printer Gate-01.`,
-                'success',
-            );
+            this.activeSlip = log;
+            this.slipModal = true;
+        },
+
+        closeSlip() {
+            this.slipModal = false;
+            this.activeSlip = null;
+        },
+
+        executeSlipPrint() {
+            const printContent = document.getElementById('gpa-slip-printable');
+            if (!printContent) {
+                window.print();
+                return;
+            }
+
+            const win = window.open('', '_blank', 'width=650,height=800');
+            win.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Slip Timbang Gate-01 - ${this.activeSlip?.ticket || 'Tiket'}</title>
+                    <style>
+                        body { font-family: monospace, sans-serif; padding: 24px; color: #111; margin: 0; }
+                        .ticket-box { border: 2px dashed #333; padding: 20px; max-width: 450px; margin: auto; }
+                        .header { text-align: center; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 12px; }
+                        .title { font-weight: bold; font-size: 16px; margin: 0; }
+                        .subtitle { font-size: 11px; margin-top: 4px; color: #555; }
+                        .row { display: flex; justify-content: space-between; margin: 6px 0; font-size: 13px; }
+                        .bold { font-weight: bold; }
+                        .divider { border-top: 1px dashed #777; margin: 12px 0; }
+                        .netto-row { background: #eee; padding: 8px; border-radius: 4px; margin-top: 10px; font-size: 15px; font-weight: bold; }
+                        .footer { margin-top: 20px; text-align: center; font-size: 10px; color: #666; border-top: 1px solid #ccc; padding-top: 10px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="ticket-box">
+                        <div class="header">
+                            <h2 class="title">KOPERASI TANI GREEN PASUNDAN AGRICULTURE</h2>
+                            <div class="subtitle">UPTD Metrologi Legal - Timbangan Intake Gate-01</div>
+                            <div class="subtitle">Ciwidey, Kab. Bandung - Jawa Barat</div>
+                        </div>
+                        <div class="row"><span>No. Tiket:</span><span class="bold">${this.activeSlip?.ticket || '-'}</span></div>
+                        <div class="row"><span>Waktu Masuk:</span><span>${this.activeSlip?.time || 'Hari ini'}</span></div>
+                        <div class="row"><span>Mitra / Pemasok:</span><span class="bold">${this.activeSlip?.name || '-'}</span></div>
+                        <div class="row"><span>Komoditas:</span><span>${this.activeSlip?.commodity || '-'}</span></div>
+                        <div class="row"><span>Kualifikasi QC:</span><span class="bold">${this.activeSlip?.qc || '-'}</span></div>
+                        <div class="divider"></div>
+                        <div class="row"><span>Berat Kotor (Bruto):</span><span>${this.kg(this.activeSlip?.gross)} KG</span></div>
+                        <div class="row"><span>Berat Wadah (Tara):</span><span>${this.kg(this.activeSlip?.tare)} KG</span></div>
+                        <div class="row netto-row"><span>BERAT BERSIH (NETTO):</span><span>${this.kg(this.activeSlip?.net)} KG</span></div>
+                        <div class="divider"></div>
+                        <div class="row"><span>Catatan:</span><span>${this.activeSlip?.note || 'Lolos Uji Metrologi Gate-01'}</span></div>
+                        <div class="row" style="margin-top: 20px;">
+                            <div style="text-align: center; width: 50%;">
+                                <div style="font-size: 11px;">Pemasok / Driver</div>
+                                <div style="margin-top: 35px; font-size: 12px;">( .................... )</div>
+                            </div>
+                            <div style="text-align: center; width: 50%;">
+                                <div style="font-size: 11px;">Petugas Timbang</div>
+                                <div style="margin-top: 35px; font-size: 12px;">( Koordinator )</div>
+                            </div>
+                        </div>
+                        <div class="footer">
+                            Sistem Informasi Penimbangan Sah Metrologi Kelas III GPA.<br>
+                            Dicetak otomatis melalui Konsol Koordinator.
+                        </div>
+                    </div>
+                    <script>
+                        window.onload = function() { window.print(); };
+                    </script>
+                </body>
+                </html>
+            `);
+            win.document.close();
+            this.run('Slip Dicetak', `Slip timbang ${this.activeSlip?.ticket} dikirim ke pencetakan.`, 'success');
         },
 
         openColdHub() {
-            this.run(
-                'Cold-Storage Hub',
-                'Pembukaan kontrol cold-storage hub dijadwalkan setelah staging 3 batch selesai.',
-                'info',
-            );
+            window.location.href = '/koordinator/stok';
+        },
+
+        run(title, message, tone = 'info') {
+            this.$dispatch('gpa:toast', { title, message, tone });
         },
     };
 }

@@ -22,14 +22,6 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $businessName = $request->input('business_name', $request->input('company_name'));
-        $clientType = strtoupper((string) ($request->input('client_type') ?: 'REGULER'));
-        if (! in_array($clientType, ['REGULER', 'B2B_KONTRAK'], true)) {
-            $clientType = 'REGULER';
-        }
-        $request->merge([
-            'client_type' => $clientType,
-        ]);
-
         if ($businessName && ! $request->has('company_name')) {
             $request->merge(['company_name' => $businessName]);
         }
@@ -38,7 +30,6 @@ class RegisteredUserController extends Controller
             'name'         => ['required', 'string', 'max:120'],
             'email'        => ['nullable', 'string', 'lowercase', 'email', 'max:120', 'unique:users,email'],
             'phone'        => ['required', 'string', 'max:25'],
-            'client_type'  => ['required', 'in:REGULER,B2B_KONTRAK'],
             'company_name' => ['nullable', 'string', 'max:150'],
             'address'      => ['required', 'string'],
             'password'     => ['required', 'confirmed', Rules\Password::defaults()],
@@ -47,7 +38,6 @@ class RegisteredUserController extends Controller
             'email.email'          => 'Format alamat email tidak valid.',
             'email.unique'         => 'Email ini sudah terdaftar di sistem GPA.',
             'phone.required'       => 'Nomor telepon / WhatsApp wajib diisi.',
-            'client_type.required' => 'Jenis kemitraan klien wajib dipilih.',
             'address.required'     => 'Alamat domisili / pengiriman wajib diisi.',
             'password.required'    => 'Kata sandi wajib diisi.',
             'password.confirmed'   => 'Konfirmasi kata sandi tidak cocok.',
@@ -65,12 +55,13 @@ class RegisteredUserController extends Controller
             }
         }
 
-        // Simpan ke database sesuai skema tabel users yang ada
+        // Seluruh pendaftaran klien baru bermula sebagai Klien Reguler (Spot Market).
+        // Peningkatan ke Kontrak B2B (TOP Tempo & Harga Terkunci) wajib diajukan melalui portal untuk disahkan Direktur Utama.
         $user = User::create([
             'name'         => $request->name,
             'email'        => $email,
             'phone'        => $request->phone,
-            'client_type'  => $request->client_type,
+            'client_type'  => 'REGULER',
             'company_name' => $request->company_name,
             'address'      => $request->address,
             'pic_name'     => $request->name,

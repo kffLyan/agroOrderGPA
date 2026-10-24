@@ -18,11 +18,24 @@ export default function secretaryPayments(queue = [], filters = [], operatorCode
         note: rows[0]?.note ?? '',
         auditPage: 1,
 
+        proofModalOpen: false,
+        proofModalUrl: null,
+        proofModalTitle: '',
+        proofModalSubtitle: '',
+        proofModalSender: '',
+        proofModalAccount: '',
+        proofModalNominal: '',
+        proofModalStamp: '',
+        proofModalNote: '',
+        proofModalFileName: '',
+        proofModalIsImage: true,
+
         run(title, message, tone = 'info') {
             if (typeof this.$dispatch === 'function') {
                 this.$dispatch('gpa:toast', { title, message, tone });
+            } else {
+                window.dispatchEvent(new CustomEvent('gpa:toast', { detail: { title, message, tone } }));
             }
-            window.dispatchEvent(new CustomEvent('gpa:toast', { detail: { title, message, tone } }));
         },
 
         get selected() {
@@ -148,13 +161,40 @@ export default function secretaryPayments(queue = [], filters = [], operatorCode
         },
 
         openProof(row) {
-            this.run(
-                'Pratinjau Bukti Bayar',
-                `${row.evidence_file} (${row.evidence_type}) atas nama ${row.client} • ${row.amount_label} dibuka pada viewer dokumen sekretariat.`
-            );
+            const target = row || this.selected;
+            if (!target) return;
+
+            let fileUrl = target.evidence_url || target.proof_url || null;
+            if (!fileUrl && target.evidence_file) {
+                const fname = String(target.evidence_file);
+                if (fname.startsWith('http://') || fname.startsWith('https://')) {
+                    fileUrl = fname;
+                } else if (fname.startsWith('payments/') || fname.startsWith('uploads/')) {
+                    fileUrl = '/storage/' + fname;
+                }
+            }
+
+            this.proofModalUrl = fileUrl;
+            this.proofModalTitle = `Bukti Transfer • ${target.id || ''}`;
+            this.proofModalSubtitle = `${target.client || 'Mitra Klien'} — ${target.invoice || ''}`;
+            this.proofModalSender = target.slip_sender || target.client || '—';
+            this.proofModalAccount = target.slip_account || '—';
+            this.proofModalNominal = target.amount_label || target.slip_nominal || '—';
+            this.proofModalStamp = target.slip_stamp || target.time || '—';
+            this.proofModalNote = target.evidence_note || 'Status Bukti: Terlampir';
+            this.proofModalFileName = target.evidence_file || 'bukti_transfer.jpg';
+
+            const urlLower = String(this.proofModalUrl || '').toLowerCase();
+            this.proofModalIsImage = urlLower.endsWith('.pdf') ? false : true;
+
+            this.proofModalOpen = true;
         },
 
-        approve() {
+        closeProof() {
+            this.proofModalOpen = false;
+        },
+
+        async approve() {
             const row = this.selected;
 
             if (! row) {
@@ -169,38 +209,85 @@ export default function secretaryPayments(queue = [], filters = [], operatorCode
 
             if (! this.checkComplete) {
                 this.run(
-                    'Persetujuan Ditolak (Rule 11)',
-                    `Checklist audit ${this.progressLabel}. Bukti ${row.id} belum boleh disetujui sampai seluruh poin Rule 11.2 terverifikasi.`,
+                    'Persetujuan Ditolak',
+                    `Checklist audit ${this.progressLabel}. Bukti ${row.id} belum boleh disetujui sampai seluruh poin verifikasi perbankan terpenuhi.`,
                     'danger'
                 );
 
                 return;
             }
 
-            this.settled.push(row.id);
-            this.note = '';
+            const targetId = row.payment_id || parseInt(String(row.id).replace(/\D/g, ''), 10);
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-            this.run(
-                'Pembayaran Disetujui & Lunas',
-                `${row.id} / ${row.invoice} • ${row.client} — ${row.amount_label} tercatat lunas pada buku kas (otorisasi ${this.operatorCode}).`
-            );
+            try {
+                const response = await fetch(`/sekretaris/pembayaran/${targetId}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    body: JSON.stringify({ note: this.note || 'Mutasi bank terverifikasi cocok.' }),
+                });
+
+                if (response.ok) {
+                    this.settled.push(row.id);
+                    this.note = '';
+
+                    this.run(
+                        'Pembayaran Disetujui & Lunas',
+                        `${row.id} / ${row.invoice} • ${row.client} — ${row.amount_label} tercatat lunas pada buku kas (otorisasi ${this.operatorCode}).`,
+                        'success'
+                    );
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    this.run('Gagal Verifikasi', data.message || 'Gagal menyetujui pembayaran.', 'danger');
+                }
+            } catch (err) {
+                this.run('Kesalahan Jaringan', err.message, 'danger');
+            }
         },
 
-        reject() {
+        async reject() {
             const row = this.selected;
 
             if (! row || this.isRejected(row)) {
                 return;
             }
 
-            this.rejected.push(row.id);
-            this.note = '';
+            const targetId = row.payment_id || parseInt(String(row.id).replace(/\D/g, ''), 10);
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-            this.run(
-                'Bukti Bayar Ditolak',
-                `${row.id} / ${row.invoice} • ${row.client} ditolak. Klien diminta konfirmasi ulang nominal; faktur tetap berstatus belum lunas.`,
-                'danger'
-            );
+            try {
+                const response = await fetch(`/sekretaris/pembayaran/${targetId}/reject`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    body: JSON.stringify({ note: this.note || 'Bukti transfer tidak valid atau dana belum masuk rekening koran.' }),
+                });
+
+                if (response.ok) {
+                    this.rejected.push(row.id);
+                    this.note = '';
+
+                    this.run(
+                        'Bukti Bayar Ditolak',
+                        `${row.id} / ${row.invoice} • ${row.client} ditolak. Klien diminta konfirmasi ulang nominal; faktur tetap berstatus belum lunas.`,
+                        'danger'
+                    );
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    const data = await response.json().catch(() => ({}));
+                    this.run('Gagal Menolak', data.message || 'Gagal menolak pembayaran.', 'danger');
+                }
+            } catch (err) {
+                this.run('Kesalahan Jaringan', err.message, 'danger');
+            }
         },
 
         saveNote() {
@@ -212,11 +299,11 @@ export default function secretaryPayments(queue = [], filters = [], operatorCode
                 return;
             }
 
-            this.run('Catatan Audit Disimpan', `${row.id}: "${this.note.trim()}" dicantumkan pada audit log ${this.operatorCode}.`);
+            this.run('Catatan Audit Disimpan', `${row.id}: "${this.note.trim()}" dicantumkan pada audit log ${this.operatorCode}.`, 'success');
         },
 
         sync() {
-            this.run('Auto-Sync Selesai', 'Sinkronisasi mutasi bank terakhir pukul 10:20 WIB. Tidak ada antrean baru masuk.');
+            window.location.reload();
         },
 
         goToPage(page) {

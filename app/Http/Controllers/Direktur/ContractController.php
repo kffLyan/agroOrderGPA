@@ -50,6 +50,7 @@ class ContractController extends Controller
                 }
 
                 $rows[] = [
+                    'id'               => $c->id,
                     'contract'         => $c->contract_number,
                     'region'           => 'BANDUNG RAYA',
                     'client'           => $clientName,
@@ -106,16 +107,20 @@ class ContractController extends Controller
 
         foreach ($contractIds as $id) {
             $contract = Contract::find($id);
-            if ($contract && $contract->status === 'PENDING_APPROVAL') {
+            if ($contract && in_array($contract->status, ['PENDING', 'PENDING_APPROVAL'])) {
                 $contract->update([
                     'status'      => 'ACTIVE',
                     'approved_by' => Auth::guard('web')->id(),
                     'approved_at' => now(),
                 ]);
 
+                if ($contract->user && $contract->user->client_type !== 'B2B_KONTRAK') {
+                    $contract->user->update(['client_type' => 'B2B_KONTRAK']);
+                }
+
                 $approvedCount++;
 
-                $clientName = $contract->user->company_name ?: $contract->user->name;
+                $clientName = $contract->user ? ($contract->user->company_name ?: $contract->user->name) : 'Klien';
                 $this->governanceService->addAuditLog(
                     'BATCH_APPROVAL_KONTRAK',
                     $contract->contract_number,
@@ -127,8 +132,13 @@ class ContractController extends Controller
             }
         }
 
+        $msg = "Sebanyak {$approvedCount} kontrak kemitraan B2B berhasil disetujui secara serentak dengan TTD Digital SHA-256.";
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => $msg, 'count' => $approvedCount]);
+        }
+
         return redirect()->route('direktur.contracts.approval')
-            ->with('success', "Sebanyak {$approvedCount} kontrak kemitraan B2B berhasil disetujui secara serentak dengan TTD Digital SHA-256.");
+            ->with('success', $msg);
     }
 
     /**
@@ -147,12 +157,17 @@ class ContractController extends Controller
             'KONTRAK_DITOLAK',
             $contract->contract_number,
             "Pengajuan kontrak {$contract->contract_number} ditolak Direktur. Alasan: {$reason}",
-            Auth::guard('web')->user()->name,
+            Auth::guard('web')->user()?->name ?: 'Direktur Utama',
             'DIR-01 [CLEARANCE L4]',
             'REJECTED'
         );
 
-        return back()->with('success', "Kontrak {$contract->contract_number} berhasil ditolak. Alasan tercatat di audit log.");
+        $msg = "Kontrak {$contract->contract_number} berhasil ditolak. Alasan tercatat di audit log.";
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => $msg]);
+        }
+
+        return back()->with('success', $msg);
     }
 
     /**
@@ -167,12 +182,17 @@ class ContractController extends Controller
             'REVISI_KONTRAK_DIMINTA',
             $contract->contract_number,
             "Direktur meminta revisi pada draf kontrak {$contract->contract_number}. Catatan: {$notes}",
-            Auth::guard('web')->user()->name,
+            Auth::guard('web')->user()?->name ?: 'Direktur Utama',
             'DIR-01 [CLEARANCE L4]',
             'PENDING_REVISION'
         );
 
-        return back()->with('success', "Permintaan revisi untuk draf {$contract->contract_number} berhasil dikirimkan ke Tim Legal & Sales B2B.");
+        $msg = "Permintaan revisi untuk draf {$contract->contract_number} berhasil dikirimkan ke Tim Legal & Sales B2B.";
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['success' => true, 'message' => $msg]);
+        }
+
+        return back()->with('success', $msg);
     }
 
     /**
@@ -253,6 +273,13 @@ class ContractController extends Controller
                 'approved_by'                => $status === 'ACTIVE' ? $directorId : null,
                 'approved_at'                => $status === 'ACTIVE' ? now() : null,
             ]);
+
+            if ($status === 'ACTIVE') {
+                $clientUser = User::find($validated['user_id']);
+                if ($clientUser && $clientUser->client_type !== 'B2B_KONTRAK') {
+                    $clientUser->update(['client_type' => 'B2B_KONTRAK']);
+                }
+            }
 
             $this->governanceService->addAuditLog(
                 'PEMBUATAN_KONTRAK',
@@ -347,6 +374,10 @@ class ContractController extends Controller
                 'approved_at' => now(),
             ]);
 
+            if ($contract->user && $contract->user->client_type !== 'B2B_KONTRAK') {
+                $contract->user->update(['client_type' => 'B2B_KONTRAK']);
+            }
+
             $this->governanceService->addAuditLog(
                 'APPROVAL_KONTRAK',
                 $contract->contract_number,
@@ -356,13 +387,21 @@ class ContractController extends Controller
                 'SEALED'
             );
 
+            $msg = "Kontrak {$contract->contract_number} resmi disetujui dan diberlakukan.";
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json(['success' => true, 'message' => $msg]);
+            }
+
             if (request()->headers->has('referer') && url()->previous() !== url()->current()) {
-                return back()->with('success', "Kontrak {$contract->contract_number} resmi disetujui dan diberlakukan.");
+                return back()->with('success', $msg);
             }
 
             return redirect()->route('direktur.contracts.index')
-                ->with('success', "Kontrak {$contract->contract_number} resmi disetujui dan diberlakukan.");
+                ->with('success', $msg);
         } catch (Exception $e) {
+            if (request()->wantsJson() || request()->ajax()) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            }
             return back()->withErrors(['error' => 'Gagal menyetujui kontrak: ' . $e->getMessage()]);
         }
     }

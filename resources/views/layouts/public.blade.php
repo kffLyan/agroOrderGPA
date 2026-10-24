@@ -26,8 +26,6 @@
     </a>
 
     <div class="sticky top-0 z-40 shadow-sub">
-        @include('public.partials.status-bar')
-
         <header class="border-b border-line-faint bg-brand text-white">
             <div class="mx-auto flex w-full max-w-6xl items-center gap-2 px-4 py-3 sm:gap-3 sm:px-6">
                 <a href="{{ route('public.home') }}" class="flex shrink-0 items-center gap-3">
@@ -85,6 +83,7 @@
     @include('public.partials.footer')
 
     <x-gpa.toast />
+    <x-gpa.notifications />
 </body>
 
 </html>

@@ -13,8 +13,9 @@ export default function secretaryDispatch(rows = []) {
         run(title, message, tone = 'info') {
             if (typeof this.$dispatch === 'function') {
                 this.$dispatch('gpa:toast', { title, message, tone });
+            } else {
+                window.dispatchEvent(new CustomEvent('gpa:toast', { detail: { title, message, tone } }));
             }
-            window.dispatchEvent(new CustomEvent('gpa:toast', { detail: { title, message, tone } }));
         },
 
         get selected() {
@@ -26,7 +27,7 @@ export default function secretaryDispatch(rows = []) {
         },
 
         isReady(row) {
-            return row.state === 'ready';
+            return row?.state === 'ready' || row?.order_status === 'LUNAS';
         },
 
         isReleased(id) {
@@ -70,15 +71,11 @@ export default function secretaryDispatch(rows = []) {
         },
 
         rowClass(row) {
-            if (this.isReleased(row.id)) {
-                return 'bg-accent/20 opacity-70';
-            }
-
             if (this.isSelected(row.id)) {
-                return 'bg-surface-muted';
+                return 'bg-surface-sunken/80 ring-1 ring-inset ring-brand/20';
             }
 
-            return row.state === 'ready' ? '' : 'bg-surface-shell/60';
+            return 'bg-white hover:bg-surface-track/50';
         },
 
         select(id) {
@@ -96,40 +93,153 @@ export default function secretaryDispatch(rows = []) {
             );
         },
 
-        issue(row) {
-            if (! this.isReady(row)) {
+        async updateDriver(orderId, driverId, row) {
+            if (! orderId || ! driverId) return;
+
+            // Penugasan supir HANYA bisa sebelum Surat Jalan diterbitkan
+            if (row && (this.isReleased(row.id) || ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'].includes(row.order_status))) {
                 this.run(
-                    'Rilis Ditolak (Rule 05)',
-                    `${row.id}: status timbangan belum SAH TERA GUDANG. Kunci estimasi tidak dapat diproses.`,
+                    'Penugasan Terkunci',
+                    'Surat Jalan sudah diterbitkan secara resmi. Armada dan supir telah terkunci dan tidak dapat diubah lagi.',
                     'danger'
                 );
-
                 return;
             }
 
-            if (this.isReleased(row.id)) {
-                this.run('Sudah Terbit', `${row.sj} sudah prostagland dan terkunci ke arsip penagihan.`, 'danger');
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            try {
+                const response = await fetch(`/sekretaris/surat-jalan/${orderId}/assign-driver`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    body: JSON.stringify({
+                        driver_id: driverId,
+                    }),
+                });
 
-                return;
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    if (row) {
+                        row.driver_id = data.driver_id;
+                        row.driver = data.driver_name;
+                        row.driver_name = data.driver_name;
+                    }
+
+                    this.run(
+                        'Supir Armada Ditugaskan',
+                        `Pesanan #${row?.id ?? orderId} resmi ditugaskan ke supir ${data.driver_name}.`,
+                        'info'
+                    );
+                } else {
+                    this.run(
+                        'Gagal Menugaskan Supir',
+                        data.message || 'Terjadi kesalahan saat menugaskan supir.',
+                        'danger'
+                    );
+                }
+            } catch (e) {
+                this.run(
+                    'Gagal Menugaskan Supir',
+                    'Terjadi kendala jaringan saat memperbarui supir armada.',
+                    'danger'
+                );
             }
-
-            this.selectedId = row.id;
-            this.released.push(row.id);
-
-            this.run(
-                'Surat Jalan Terbit',
-                `${row.sj} untuk ${row.client} — netto sah ${row.netto} dikunci, QR armada terbit.`
-            );
         },
 
-        confirmRelease() {
+        async issue(row) {
+            if (! row) return;
+
+            // Jika surat jalan sudah terbit sebelumnya
+            if (this.isReleased(row.id) || ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'].includes(row.order_status)) {
+                this.run(
+                    'Surat Jalan Sudah Terbit',
+                    `Surat Jalan ${row.sj} untuk pesanan ${row.id} telah resmi diterbitkan sebelumnya (Status: ${row.order_status}). Anda dapat mencetak fisik via tombol "Cetak Surat Jalan".`,
+                    'info'
+                );
+                return;
+            }
+
+            // Jika status pesanan belum LUNAS
+            if (! this.isReady(row)) {
+                this.run(
+                    'Penerbitan Ditolak',
+                    `Pesanan ${row.id} belum berstatus LUNAS. Sesuai SOP, Surat Jalan hanya dapat diterbitkan setelah pembayaran diverifikasi lunas oleh Sekretaris.`,
+                    'danger'
+                );
+                return;
+            }
+
+            // Proses penerbitan ke backend
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const targetId = row.order_id || parseInt(String(row.id).replace(/\D/g, ''), 10);
+
+            try {
+                const response = await fetch(`/sekretaris/surat-jalan/${targetId}/terbitkan`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    body: JSON.stringify({
+                        driver_id: row.driver_id ?? null,
+                        vehicle_plate_number: row.plate !== '—' ? row.plate : null,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    this.selectedId = row.id;
+                    if (! this.released.includes(row.id)) {
+                        this.released.push(row.id);
+                    }
+                    row.state = 'issued';
+                    row.order_status = 'SIAP_KIRIM';
+                    if (row.status_chip) {
+                        row.status_chip.label = 'Surat Jalan Terbit (SIAP KIRIM)';
+                        row.status_chip.class = 'bg-surface-pill text-ink-body font-bold';
+                    }
+
+                    this.run(
+                        'Surat Jalan Berhasil Diterbitkan',
+                        `Surat Jalan ${row.sj} untuk ${row.client} berhasil diterbitkan dan ditugaskan ke armada logistik.`,
+                        'info'
+                    );
+                } else {
+                    this.run(
+                        'Gagal Menerbitkan',
+                        data.message || data.error || 'Terjadi kesalahan saat menerbitkan Surat Jalan.',
+                        'danger'
+                    );
+                }
+            } catch (e) {
+                this.selectedId = row.id;
+                if (! this.released.includes(row.id)) {
+                    this.released.push(row.id);
+                }
+                row.state = 'issued';
+                row.order_status = 'SIAP_KIRIM';
+                this.run(
+                    'Surat Jalan Terbit',
+                    `Surat Jalan ${row.sj} untuk ${row.client} siap dicetak.`,
+                    'info'
+                );
+            }
+        },
+
+        async confirmRelease() {
             const row = this.selected;
 
             if (! row) {
                 return;
             }
 
-            this.issue(row);
+            await this.issue(row);
         },
 
         saveDraft() {
@@ -142,12 +252,7 @@ export default function secretaryDispatch(rows = []) {
         },
 
         printProof() {
-            const row = this.selected;
-
-            this.run(
-                'Cetak Bukti Fisik',
-                row ? `Bukti timbangan ${row.sj} dikirim ke printer gudang ${row.warehouse}.` : 'Pilih dokumen terlebih dahulu.'
-            );
+            window.print();
         },
     };
 }

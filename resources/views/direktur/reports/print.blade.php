@@ -259,7 +259,7 @@
                 <tbody class="divide-y divide-line-hair">
                     @forelse($orders as $index => $order)
                         @php
-                            $amount = (float) ($order->grand_total ?? $order->estimated_total);
+                            $amount = (float) $order->grand_total;
                         @endphp
                         <tr class="{{ $index % 2 === 1 ? 'bg-surface-shell/40' : '' }}">
                             <td class="py-1 px-2 text-center font-mono text-ink-muted">{{ $index + 1 }}</td>
@@ -274,7 +274,7 @@
                             </td>
                             <td class="py-1 px-2 text-ink-body">
                                 @foreach($order->orderItems as $item)
-                                    <div>{{ $item->product->name ?? 'Sayuran' }}: <span class="font-mono">{{ number_format($item->actual_net_weight ?? $item->ordered_qty, 1) }} kg</span></div>
+                                    <div>{{ $item->product->name ?? 'Sayuran' }}: <span class="font-mono">{{ number_format($item->ordered_qty, 1) }} kg</span></div>
                                 @endforeach
                             </td>
                             <td class="py-1 px-2 text-center">

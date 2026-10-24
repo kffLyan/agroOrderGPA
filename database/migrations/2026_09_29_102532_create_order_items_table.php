@@ -17,11 +17,8 @@ return new class extends Migration
             $table->foreignId('product_id')->constrained('products')->onDelete('restrict')->onUpdate('cascade');
             $table->decimal('ordered_qty', 10, 2);
             $table->decimal('unit_price', 12, 2);
-            $table->decimal('actual_net_weight', 10, 2)->nullable();
-            $table->decimal('subtotal_final', 14, 2)->nullable();
-            $table->foreignId('weighed_by')->nullable()->constrained('users')->onDelete('set null')->onUpdate('cascade');
-            $table->timestamp('weighed_at')->nullable();
-            $table->decimal('returned_weight', 10, 2)->nullable();
+            $table->decimal('subtotal', 14, 2);
+            $table->decimal('returned_weight', 10, 2)->nullable()->default(0.00);
             $table->string('return_reason', 255)->nullable();
             $table->timestamps();
 

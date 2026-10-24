@@ -47,7 +47,7 @@ class InventoryController extends Controller
 
             // Stok terkunci murni dari pesanan aktif klien yang belum selesai/batal
             $lockedQty = (float) $prod->orderItems
-                ->filter(fn ($item) => $item->order && in_array($item->order->status, ['MENUNGGU_VERIFIKASI', 'TERVERIFIKASI', 'SIAP_KIRIM']))
+                ->filter(fn ($item) => $item->order && in_array($item->order->status, ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN']))
                 ->sum('ordered_qty');
 
             // Available to Promise (ATP)
@@ -129,10 +129,10 @@ class InventoryController extends Controller
                     'class' => $statusClass,
                 ],
                 'action'          => [
-                    'label'  => '+ Tambah Stok',
-                    'class'  => 'bg-ink text-accent',
-                    'intent' => 'buffer',
-                    'icon'   => 'package',
+                    'label'  => 'Pantau Neraca',
+                    'class'  => 'bg-surface-track text-ink',
+                    'intent' => 'view',
+                    'icon'   => 'eye',
                 ],
                 'keywords'        => $keywords,
                 'sources'         => $sources,

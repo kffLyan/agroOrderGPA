@@ -227,7 +227,7 @@ class UserController extends Controller
             $matrix = [
                 ['Katalog & Buat Order B2B', 'Read / Create', 'Form WA / Manual', 'No Access', 'No Access', 'Full Monitoring (Read)'],
                 ['Timbangan Aktual & Netto Panen', 'Read-Only', 'Read Riil', 'Verify & Stock Sync', 'No Access', 'Audit Calibration (Read)'],
-                ['Terbitkan Surat Jalan (Rule 05)', 'No Access', 'Create & Sign', 'Read (Manifest)', 'Read Digital', 'Read & Invalidation'],
+                ['Terbitkan Surat Jalan', 'No Access', 'Create & Sign', 'Read (Manifest)', 'Read Digital', 'Read & Invalidation'],
                 ['Faktur, Bayar & Rekonsiliasi Kas', 'Read / Upload Bukti', 'Approve & Reconcile', 'No Access', 'No Access', 'Executive Ledger Read'],
                 ['PoD Digital, Foto & Catat Retur', 'Digital Sign PoD', 'Verify Dispute', 'No Access', 'Upload & Submit', 'Dispute Final Arbiter'],
                 ['Approval Kontrak & Kunci Audit', 'Blocked', 'Draft / Review', 'Blocked', 'Blocked', 'SOLE APPROVER / LOCK'],

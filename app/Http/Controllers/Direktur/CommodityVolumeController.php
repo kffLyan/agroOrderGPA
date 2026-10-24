@@ -34,8 +34,8 @@ class CommodityVolumeController extends Controller
 
         // Total Penjualan Riil (MTD)
         $realSoldKg = (float) OrderItem::whereHas('order', function ($q) {
-            $q->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'TERVERIFIKASI']);
-        })->sum(DB::raw('COALESCE(actual_net_weight, ordered_qty)'));
+            $q->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS']);
+        })->sum('ordered_qty');
 
         $totalSoldTon = round($realSoldKg / 1000, 2);
 

@@ -185,7 +185,11 @@
 
                                     <!-- Tombol Hentikan (Jika Aktif) -->
                                     @if($contract->status === 'ACTIVE')
-                                        <form action="{{ route('direktur.contracts.terminate', $contract->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menonaktifkan kontrak {{ $contract->contract_number }}?')">
+                                        <form action="{{ route('direktur.contracts.terminate', $contract->id) }}" method="POST" class="inline"
+                                            data-gpa-confirm="Apakah Anda yakin ingin menonaktifkan kontrak {{ $contract->contract_number }}?"
+                                            data-gpa-title="Hentikan Kontrak"
+                                            data-gpa-tone="warning"
+                                            data-gpa-ok="Hentikan Kontrak">
                                             @csrf
                                             <button type="submit" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded font-semibold text-[10px] transition" title="Hentikan Kontrak">
                                                 Hentikan
@@ -194,7 +198,11 @@
                                     @endif
 
                                     <!-- Tombol Hapus -->
-                                    <form action="{{ route('direktur.contracts.destroy', $contract->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus permanen kontrak {{ $contract->contract_number }}?')">
+                                    <form action="{{ route('direktur.contracts.destroy', $contract->id) }}" method="POST" class="inline"
+                                        data-gpa-confirm="Apakah Anda yakin ingin menghapus permanen kontrak {{ $contract->contract_number }}?"
+                                        data-gpa-title="Hapus Kontrak Permanen"
+                                        data-gpa-tone="danger"
+                                        data-gpa-ok="Hapus Permanen">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 rounded font-semibold text-[10px] transition" title="Hapus Permanen">

@@ -470,7 +470,7 @@
             <article class="flex flex-col justify-between gap-6 rounded-2xl bg-surface p-6 shadow-card">
                 <div class="flex flex-col gap-2">
                     <header class="flex items-center gap-2 pb-2">
-                        <h2 class="text-[18px] font-bold leading-6 text-ink">Protokol Verifikasi (Rule 11)</h2>
+                        <h2 class="text-[18px] font-bold leading-6 text-ink">Protokol Verifikasi Keuangan</h2>
                     </header>
 
                     <div class="flex flex-col gap-2 pt-2">
@@ -486,11 +486,11 @@
                 </div>
 
                 <div class="flex flex-col gap-2 border-t border-line-board pt-4">
-                    <button type="button" @click="openVerification()"
+                    <a href="{{ route('sekretaris.verification') }}"
                         class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-deep px-4 py-3 text-[16px] font-bold leading-6 text-ink shadow-sub transition-colors hover:bg-accent">
                         <x-gpa.icon name="clipboard" class="h-3.5 w-3.5 shrink-0" />
                         Buka Antrean Verifikasi Sekre
-                    </button>
+                    </a>
                     <p class="text-center font-mono text-[10px] leading-[15px] tracking-[0.88px] text-ink-body">
                         SLO VERIFIKASI MAKSIMAL: 1x24 JAM DARI TANGGAL MUTASI
                     </p>

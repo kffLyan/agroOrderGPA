@@ -21,28 +21,21 @@
         $dispatchDate = $currentOrder?->departure_time ? $currentOrder->departure_time->format('d M Y') : date('d M Y');
         $dispatchTime = $currentOrder?->departure_time ? $currentOrder->departure_time->format('H:i \W\I\B') : '—';
 
-        $totalEst = 0;
-        $totalNetto = 0;
+        $totalWeight = 0;
         $totalCrates = 0;
         $totalTare = 0;
 
         if ($currentOrder && $currentOrder->orderItems->isNotEmpty()) {
             foreach ($currentOrder->orderItems as $item) {
-                $estKg = (float) ($item->ordered_qty ?: $item->quantity ?: 0);
-                $nettoKg = (float) ($item->actual_net_weight ?: $item->ordered_qty ?: $item->quantity ?: 0);
-                $crates = (int) ($item->crates ?? ceil($nettoKg / 20));
-                $tare = (float) ($item->tare_weight ?? ($crates * 2.0));
+                $orderedKg = (float) $item->ordered_qty;
+                $crates = (int) ceil($orderedKg / 20);
+                $tare = (float) ($crates * 2.0);
 
-                $totalEst += $estKg;
-                $totalNetto += $nettoKg;
+                $totalWeight += $orderedKg;
                 $totalCrates += $crates;
                 $totalTare += $tare;
             }
         }
-
-        $totalDelta = $totalNetto - $totalEst;
-        $totalDeltaPercent = $totalEst > 0 ? ($totalDelta / $totalEst) * 100 : 0;
-        $totalDeltaSign = $totalDelta >= 0 ? '+' : '';
     @endphp
 
     <div class="mx-auto flex w-full max-w-[512px] flex-col gap-4 px-4 pb-24"
@@ -65,10 +58,7 @@
                 @foreach ($activeOrders as $index => $ord)
                     @php
                         $isActive = $currentOrder && $ord->id === $currentOrder->id;
-                        $ordNetWeight = 0;
-                        foreach ($ord->orderItems as $item) {
-                            $ordNetWeight += (float) ($item->net_weight ?? $item->quantity ?? 0);
-                        }
+                        $ordNetWeight = (float) $ord->orderItems->sum('ordered_qty');
                         $ordSjNum = $ord->surat_jalan_number ?: ('SJ-' . date('Ymd', strtotime($ord->created_at)) . '-' . str_pad($ord->id, 4, '0', STR_PAD_LEFT));
                     @endphp
                     <div @class([
@@ -200,59 +190,47 @@
         {{-- Rincian muatan sayur --}}
         <section class="flex flex-col gap-3 rounded-2xl bg-surface p-4 shadow-card">
             <header class="flex items-center justify-between border-b border-surface-shell pb-2">
-                <span class="font-mono text-[10px] font-bold text-ink-body uppercase">TIMBANGAN BERSIH TERA GUDANG SAH</span>
-                <span class="rounded bg-accent/40 px-2 py-0.5 font-mono text-[9px] font-bold text-ink">SAH TERA</span>
+                <span class="font-mono text-[10px] font-bold text-ink-body uppercase">RINCIAN MUATAN PESANAN (SURAT JALAN)</span>
+                <span class="rounded bg-accent/40 px-2 py-0.5 font-mono text-[9px] font-bold text-ink">TERVERIFIKASI</span>
             </header>
 
             <div class="flex flex-col gap-2.5">
                 @if ($currentOrder && $currentOrder->orderItems->isNotEmpty())
                     @foreach ($currentOrder->orderItems as $item)
                         @php
-                            $estKg = (float) $item->quantity;
-                            $nettoKg = (float) ($item->net_weight ?? $item->quantity);
-                            $deltaKg = $nettoKg - $estKg;
-                            $deltaPercent = $estKg > 0 ? ($deltaKg / $estKg) * 100 : 0;
-                            $crates = (int) ($item->crates ?? ceil($nettoKg / 20));
-                            $tare = (float) ($item->tare_weight ?? ($crates * 2.0));
-                            $deviationSign = $deltaKg >= 0 ? '+' : '';
+                            $orderedKg = (float) $item->ordered_qty;
+                            $crates = (int) ceil($orderedKg / 20);
+                            $tare = (float) ($crates * 2.0);
                         @endphp
                         <div class="flex flex-col gap-2 rounded-xl bg-canvas p-3 outline outline-1 -outline-offset-1 outline-line-board/60">
                             <div class="flex items-start justify-between gap-2">
                                 <div class="flex flex-col">
                                     <span class="w-fit rounded bg-surface px-1.5 py-0.5 font-mono text-[9px] font-bold text-ink outline outline-1 -outline-offset-1 outline-line-board">
-                                        SKU: {{ $item->product?->code ?: ('PROD-' . $item->id) }}
+                                        SKU: {{ $item->product?->sku ?: ('PROD-' . $item->product_id) }}
                                     </span>
                                     <span class="pt-1 text-sm font-bold text-ink">{{ $item->product?->name ?? 'Sayur Segar Berkualitas' }}</span>
                                     <span class="text-[10px] text-ink-body">Standar Mutu Super &bull; {{ $crates }} Krat Steril</span>
                                 </div>
 
                                 <span class="flex items-center gap-1 rounded bg-accent px-2 py-0.5 font-mono text-[9px] font-bold text-ink">
-                                    <span>LOLOS UJI</span>
+                                    <span>SIAP KIRIM</span>
                                     <x-gpa.icon name="check" class="h-2.5 w-2.5" />
                                 </span>
                             </div>
 
                             <div class="grid grid-cols-3 gap-2 rounded-lg bg-surface p-2 text-center outline outline-1 -outline-offset-1 outline-line-hair">
                                 <div class="flex flex-col">
-                                    <span class="font-mono text-[9px] text-ink-quiet">Est PO</span>
-                                    <span class="font-mono text-xs font-bold text-ink">{{ number_format($estKg, 1, ',', '.') }} kg</span>
+                                    <span class="font-mono text-[9px] text-ink-quiet">Bobot Muat</span>
+                                    <span class="font-mono text-xs font-bold text-ink">{{ number_format($orderedKg, 1, ',', '.') }} kg</span>
                                 </div>
                                 <div class="flex flex-col">
-                                    <span class="font-mono text-[9px] text-ink-quiet">Netto Sah</span>
-                                    <span class="font-mono text-xs font-bold text-success-deep">{{ number_format($nettoKg, 1, ',', '.') }} kg</span>
+                                    <span class="font-mono text-[9px] text-ink-quiet">Kemas Wadah</span>
+                                    <span class="font-mono text-xs font-bold text-success-deep">{{ $crates }} Krat</span>
                                 </div>
                                 <div class="flex flex-col">
-                                    <span class="font-mono text-[9px] text-ink-quiet">Deviasi</span>
-                                    <span class="font-mono text-xs font-bold text-success-deep">
-                                        {{ $deviationSign }}{{ number_format($deltaKg, 1, ',', '.') }} kg
-                                        <span class="text-[9px] font-normal block">({{ $deviationSign }}{{ number_format($deltaPercent, 2, ',', '.') }}%)</span>
-                                    </span>
+                                    <span class="font-mono text-[9px] text-ink-quiet">Estimasi Tara</span>
+                                    <span class="font-mono text-xs font-bold text-ink-body">{{ number_format($tare, 1, ',', '.') }} kg</span>
                                 </div>
-                            </div>
-
-                            <div class="flex items-center justify-between text-[11px] font-mono text-ink-body px-1">
-                                <span>Wadah: {{ $crates }} Krat</span>
-                                <span>Tara: {{ number_format($tare, 1, ',', '.') }} kg</span>
                             </div>
                         </div>
                     @endforeach
@@ -264,30 +242,27 @@
             {{-- Total akumulasi netto --}}
             <div class="flex flex-col gap-2.5 rounded-xl bg-brand p-3.5 text-white">
                 <div class="flex items-center justify-between">
-                    <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-accent">TOTAL AKUMULASI TIMBANG SAH</span>
+                    <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-accent">TOTAL AKUMULASI MUATAN SURAT JALAN</span>
                     <x-gpa.icon name="calculator" class="h-4 w-4 text-accent" />
                 </div>
 
                 <div class="grid grid-cols-3 gap-2 border-b border-white/20 pb-2.5 text-center">
                     <div class="flex flex-col">
-                        <span class="font-mono text-[9px] text-white/70">Est Awal</span>
-                        <span class="font-mono text-sm font-bold text-white">{{ number_format($totalEst, 1, ',', '.') }} kg</span>
+                        <span class="font-mono text-[9px] text-white/70">Total Berat Bersih</span>
+                        <span class="font-mono text-sm font-bold text-accent">{{ number_format($totalWeight, 1, ',', '.') }} kg</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="font-mono text-[9px] text-white/70">Total Netto Sah</span>
-                        <span class="font-mono text-sm font-bold text-accent">{{ number_format($totalNetto, 1, ',', '.') }} kg</span>
+                        <span class="font-mono text-[9px] text-white/70">Total Kemasan</span>
+                        <span class="font-mono text-sm font-bold text-white">{{ $totalCrates }} Krat</span>
                     </div>
                     <div class="flex flex-col">
-                        <span class="font-mono text-[9px] text-white/70">Deviasi Sah</span>
-                        <span class="font-mono text-sm font-bold text-accent">
-                            {{ $totalDeltaSign }}{{ number_format($totalDelta, 1, ',', '.') }} kg
-                            <span class="text-[9px] font-normal block">({{ $totalDeltaSign }}{{ number_format($totalDeltaPercent, 2, ',', '.') }}%)</span>
-                        </span>
+                        <span class="font-mono text-[9px] text-white/70">Total Berat Tara</span>
+                        <span class="font-mono text-sm font-bold text-white">{{ number_format($totalTare, 1, ',', '.') }} kg</span>
                     </div>
                 </div>
 
                 <div class="flex items-center justify-between text-xs font-mono text-white/90">
-                    <span>Wadah: {{ $totalCrates }} Krat ({{ number_format($totalTare, 1, ',', '.') }} kg Tara)</span>
+                    <span>Bruto Muatan: {{ number_format($totalWeight + $totalTare, 1, ',', '.') }} kg</span>
                     <span class="flex items-center gap-1 text-accent">
                         <x-gpa.icon name="thermometer" class="h-3.5 w-3.5" />
                         <span>+3.8°C (Suhu Cold Chain Optimal)</span>

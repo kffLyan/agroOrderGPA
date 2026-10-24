@@ -32,6 +32,7 @@
             ['label' => 'Verifikasi Pesanan', 'icon' => 'shield', 'href' => route('sekretaris.verification'), 'active' => request()->routeIs('sekretaris.verification*')],
             ['label' => 'Stok & Inventori', 'icon' => 'package', 'href' => route('sekretaris.inventory'), 'active' => request()->routeIs('sekretaris.inventory*')],
             ['label' => 'Surat Jalan & Armada', 'icon' => 'truck', 'href' => route('sekretaris.dispatch'), 'active' => request()->routeIs('sekretaris.dispatch*')],
+            ['label' => 'Monitoring PoD Armada', 'icon' => 'check-circle', 'href' => route('sekretaris.pod.index'), 'active' => request()->routeIs('sekretaris.pod*')],
             ['label' => 'Faktur & Tagihan', 'icon' => 'invoice', 'href' => route('sekretaris.invoices'), 'active' => request()->routeIs('sekretaris.invoices*')],
             ['label' => 'Verifikasi Pembayaran', 'icon' => 'banknote', 'href' => route('sekretaris.payments'), 'active' => request()->routeIs('sekretaris.payments*')],
             ['label' => 'Rekap Laporan', 'icon' => 'chart', 'href' => route('sekretaris.reports'), 'active' => request()->routeIs('sekretaris.reports*')],
@@ -98,21 +99,22 @@
                     <span class="hidden h-6 w-px bg-success lg:block" aria-hidden="true"></span>
 
                     <div class="flex items-center gap-2">
-                        <button type="button" @click="run('Notifikasi', '3 notifikasi antrean verifikasi baru menunggu tindakan.')"
+                        <a href="{{ route('sekretaris.verification') }}"
                             class="relative hidden h-8 w-8 items-center justify-center rounded-lg text-surface-disabled transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"
-                            aria-label="Notifikasi">
+                            title="Antrean Verifikasi Masuk" aria-label="Notifikasi">
                             <x-gpa.icon name="bell" class="h-4 w-4" />
                             <span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent" aria-hidden="true"></span>
-                        </button>
-                        <button type="button" @click="run('Pusat Bantuan', 'Hotline operasional GPA: 021-5050-0888.')"
+                        </a>
+                        <a href="{{ route('public.kontak') }}" target="_blank"
                             class="hidden h-8 w-8 items-center justify-center rounded-lg text-surface-disabled transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"
-                            aria-label="Pusat bantuan">
+                            title="Pusat Bantuan & Kontak GPA" aria-label="Pusat bantuan">
                             <x-gpa.icon name="headset" class="h-4 w-4" />
-                        </button>
-                        <span
-                            class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-disabled text-[16px] font-bold text-ink ring-1 ring-inset ring-accent">
+                        </a>
+                        <a href="{{ route('profile.edit') }}"
+                            class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-disabled text-[16px] font-bold text-ink ring-1 ring-inset ring-accent transition-transform hover:scale-105"
+                            title="Edit Profil & Akun">
                             {{ $operatorInitials }}
-                        </span>
+                        </a>
                         <span class="hidden min-w-0 flex-col sm:flex">
                             <span class="truncate text-[11px] font-semibold tracking-[0.88px] text-canvas gpa-meta">
                                 {{ $operatorName }}
@@ -177,11 +179,11 @@
                 </div>
 
                 <div class="flex flex-col gap-1 border-t border-line-hair pt-4">
-                    <button type="button" @click="run('Pengaturan', 'Modul pengaturan akun sekretaris sedang aktif.')"
+                    <a href="{{ route('profile.edit') }}"
                         class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left gpa-body text-ink-quiet transition-colors hover:bg-surface-shell hover:text-ink">
                         <x-gpa.icon name="settings" class="h-3.5 w-3.5 shrink-0" />
-                        Pengaturan
-                    </button>
+                        Pengaturan Profil
+                    </a>
                     @auth
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
@@ -207,6 +209,8 @@
         </div>
 
         <x-gpa.toast />
+        <x-gpa.notifications />
+        <x-gpa.dialog />
     </div>
 </body>
 

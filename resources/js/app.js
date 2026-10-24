@@ -1,6 +1,7 @@
 import './bootstrap';
 
 import Alpine from 'alpinejs';
+import './components/gpa-dialog';
 import gpaToast from './components/gpa-toast';
 import registrationForm from './components/registration-form';
 import clientDashboard from './components/client-dashboard';

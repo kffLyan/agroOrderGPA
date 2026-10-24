@@ -12,31 +12,27 @@
         <section class="gpa-panel overflow-hidden">
             <div class="border-b border-line-soft px-6 py-6">
                 <h1 class="max-w-4xl font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
-                    Dashboard Konsol Operasional &amp; Tata Kelola Administrasi (Sekretaris)
-                </h1>
-                <p class="mt-2 max-w-4xl text-sm leading-[1.4rem] text-ink-body">
-                    Monitoring terpusat status order masuk, rekonsiliasi pasokan harian, antrean verifikasi pembayaran manual, dan penerbitan dokumen logistik.
-                </p>
+                    Dashboard Konsol Operasional &amp; Tata Kelola Administrasi
             </div>
 
             <div class="flex flex-wrap gap-2 px-6 py-5">
-                <button type="button" @click="run('Batch Validasi ({{ $pendingOrdersCount ?? 0 }} PO Masuk)', 'Antrean pesanan menunggu pemeriksaan administrasi kuota & limit kredit.')"
+                <a href="{{ route('sekretaris.verification') }}"
                     class="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface px-3.5 shadow-sub outline outline-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="badge-check" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
                     <span class="gpa-meta-lg font-semibold tracking-[0.28px] text-ink">Batch Validasi ({{ $pendingOrdersCount ?? 0 }} PO Masuk)</span>
-                </button>
+                </a>
 
-                <button type="button" @click="run('Antrean Bukti Transfer ({{ $pendingPaymentsCount ?? 0 }} Menunggu)', 'Pencocokan mutasi bank BCA/Mandiri dengan bukti transfer manual klien.')"
+                <a href="{{ route('sekretaris.payments') }}"
                     class="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface px-3.5 shadow-sub outline outline-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="refresh" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
                     <span class="gpa-meta-lg font-semibold tracking-[0.28px] text-ink">Antrean Bukti Transfer ({{ $pendingPaymentsCount ?? 0 }} Menunggu)</span>
-                </button>
+                </a>
 
-                <button type="button" @click="run('Siap Terbit Surat Jalan ({{ $readyOrdersCount ?? 0 }} PO)', 'Pesanan dengan netto timbang sah yang siap diterbitkan Surat Jalan resmi.')"
+                <a href="{{ route('sekretaris.dispatch') }}"
                     class="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface px-3.5 shadow-sub outline outline-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="receipt" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
                     <span class="gpa-meta-lg font-semibold tracking-[0.28px] text-ink">Siap Terbit Surat Jalan ({{ $readyOrdersCount ?? 0 }} PO)</span>
-                </button>
+                </a>
             </div>
         </section>
 
@@ -176,10 +172,8 @@
                     <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft px-6 py-5">
                         <div class="min-w-0">
                             <h2 class="flex items-center gap-2 font-sans text-lg font-bold text-ink">
-                                <x-gpa.icon name="shield" class="h-4 w-4 shrink-0 text-success-deep" />
                                 Antrean Pesanan Menunggu Verifikasi Administrasi (PO Baru)
                             </h2>
-                            <p class="mt-1 text-xs text-ink-body">Pemeriksaan kuota stok, batas pagu kredit klien, dan kepatuhan jadwal panen sebelum diteruskan ke koordinator.</p>
                         </div>
                         <span class="shrink-0 rounded bg-surface-pill px-2 py-1 gpa-micro text-ink-body">
                             Prioritas SLA Hari Ini
@@ -381,7 +375,6 @@
                     <div class="flex items-start justify-between gap-3 border-b border-line-soft pb-3">
                         <div class="min-w-0">
                             <h2 class="font-sans text-lg font-bold text-ink">Status Kesiapan Buffer Stock Panen</h2>
-                            <p class="mt-1 text-xs text-ink-body">Kapasitas muat dan sisa stok bebas di packing house Lembang &amp; Ciwidey</p>
                         </div>
                         <x-gpa.icon name="package" class="h-3 w-3 shrink-0 text-ink-body" />
                     </div>
@@ -483,11 +476,10 @@
                             <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>
                             <span class="gpa-note text-ink-body">Sistem pemantauan aktif 24/7</span>
                         </p>
-                        <button type="button"
-                            @click="run('Arsip Notifikasi', 'Riwayat peringatan operasional dibuka.')"
+                        <a href="{{ route('sekretaris.reports') }}"
                             class="gpa-note text-ink underline underline-offset-2 hover:text-success-deep">
                             Arsip Notifikasi &rarr;
-                        </button>
+                        </a>
                     </div>
                 </section>
             </div>

@@ -20,7 +20,14 @@ export default function clientCart(commodities = [], demoLines = [], defaults = 
         payment: defaults.payment ?? 'TEMPO_TOP',
         pic: defaults.pic ?? 0,
         picOpen: false,
+        dockMode: 'preset',
+        customDockName: '',
+        customDockAddress: '',
+        picMode: 'preset',
+        customPicName: '',
+        customPicPhone: '',
         submitted: false,
+        isSubmitting: false,
         statusLabel: defaults.status ?? 'Drafting',
 
         init() {
@@ -34,6 +41,11 @@ export default function clientCart(commodities = [], demoLines = [], defaults = 
             this.syncStatus();
             this.loadLines();
 
+            this.pageshowHandler = () => {
+                this.isSubmitting = false;
+            };
+            window.addEventListener('pageshow', this.pageshowHandler);
+
             this.stopDraftSync = onDraftSynced(() => {
                 if (this.lines.length > 0) {
                     return;
@@ -45,6 +57,9 @@ export default function clientCart(commodities = [], demoLines = [], defaults = 
 
         destroy() {
             this.stopDraftSync?.();
+            if (this.pageshowHandler) {
+                window.removeEventListener('pageshow', this.pageshowHandler);
+            }
         },
 
         syncStatus() {
@@ -264,12 +279,79 @@ export default function clientCart(commodities = [], demoLines = [], defaults = 
         },
 
         changePic(index) {
+            this.picMode = 'preset';
             this.pic = index;
             this.picOpen = false;
         },
 
         togglePic() {
             this.picOpen = !this.picOpen;
+        },
+
+        getFinalDeliveryAddress() {
+            let addr = '';
+            if (this.dockMode === 'custom') {
+                const namePart = this.customDockName ? `[${this.customDockName}] ` : '';
+                addr = `${namePart}${this.customDockAddress || ''}`.trim();
+            } else {
+                addr = this.deliveryAddress || '';
+            }
+
+            if (this.picMode === 'custom' && this.customPicName) {
+                const phonePart = this.customPicPhone ? ` - Telp: ${this.customPicPhone}` : '';
+                addr = addr ? `${addr} (PIC: ${this.customPicName}${phonePart})` : `PIC: ${this.customPicName}${phonePart}`;
+            }
+
+            return addr || (defaults.default_address ?? 'Gudang Utama Klien (Dock Penerimaan)');
+        },
+
+        clearDraftStorage() {
+            try {
+                window.localStorage.removeItem('gpa.draft.po');
+                window.localStorage.setItem('gpa.cart.emptied', '1');
+                window.localStorage.setItem('gpa.cart.submitted', '1');
+                window.localStorage.removeItem('gpa_client_po_draft');
+                window.localStorage.setItem('gpa_client_cart_emptied', 'true');
+                window.dispatchEvent(new CustomEvent('gpa:draft-synced'));
+            } catch (err) {}
+        },
+
+        handleOrderSubmit(e) {
+            if (this.isSubmitting) {
+                if (e) e.preventDefault();
+                return false;
+            }
+
+            if (this.empty()) {
+                if (e) e.preventDefault();
+                this.$dispatch('gpa:toast', {
+                    title: 'Keranjang Masih Kosong',
+                    message: 'Silakan pilih komoditas dari katalog sebelum mengajukan PO.',
+                    tone: 'danger',
+                });
+                return false;
+            }
+
+            if (this.overBuffer()) {
+                if (e) e.preventDefault();
+                this.$dispatch('gpa:toast', {
+                    title: 'Volume melebihi alokasi',
+                    message: 'Satu atau lebih item melewati sisa stok buffer. Turunkan volume sebelum submit.',
+                    tone: 'danger',
+                });
+                return false;
+            }
+
+            this.isSubmitting = true;
+
+            // Segera bersihkan storage draft agar jika browser reload/kembali tidak terjadi submit ganda
+            this.clearDraftStorage();
+
+            if (typeof window.showGpaLoader === 'function') {
+                window.showGpaLoader('Mengajukan PO...', 'Sedang memproses dan mengamankan kuota pesanan ke server...');
+            }
+
+            return true;
         },
 
         submitPo() {

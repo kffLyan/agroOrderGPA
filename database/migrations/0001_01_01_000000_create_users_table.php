@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('email', 100)->unique();
             $table->string('phone', 20)->default('-');
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password', 255);
+            $table->string('password');
             $table->enum('role', ['KLIEN', 'SEKRETARIS', 'KOORDINATOR', 'ARMADA', 'DIREKTUR'])->default('KLIEN');
             $table->enum('client_type', ['REGULER', 'B2B_KONTRAK'])->nullable();
             $table->string('company_name', 150)->nullable();

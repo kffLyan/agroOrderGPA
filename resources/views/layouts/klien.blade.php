@@ -187,6 +187,20 @@
                     </div>
                 @endif
 
+                @if (session('error'))
+                    <div class="mb-4 flex items-center gap-3 rounded-xl border border-danger/30 bg-danger-soft/30 p-4 text-sm font-semibold text-danger shadow-sub">
+                        <x-gpa.icon name="alert-triangle" class="h-5 w-5 shrink-0 text-danger" />
+                        <span>{{ session('error') }}</span>
+                    </div>
+                @endif
+
+                @if (session('warning'))
+                    <div class="mb-4 flex items-center gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm font-semibold text-warning-deep shadow-sub">
+                        <x-gpa.icon name="alert-triangle" class="h-5 w-5 shrink-0 text-warning-deep" />
+                        <span>{{ session('warning') }}</span>
+                    </div>
+                @endif
+
                 @if ($errors->any())
                     <div class="mb-4 rounded-xl border border-danger/30 bg-danger/10 p-4 text-sm text-danger shadow-sub">
                         <div class="flex items-center gap-2 font-bold">
@@ -206,6 +220,8 @@
         </div>
 
         <x-gpa.toast />
+        <x-gpa.notifications />
+        <x-gpa.dialog />
     </div>
 </body>
 

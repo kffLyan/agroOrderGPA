@@ -14,6 +14,7 @@ export default function directorReceivables(rows = [], policy = {}, verification
         topFilter: 'all',
         activeContracts: numberOf(activeContracts),
         rows: (Array.isArray(rows) ? rows : []).map((row) => ({
+            id: row.id,
             name: String(row.name ?? ''),
             client_code: String(row.client_code ?? ''),
             sj_label: String(row.sj_label ?? ''),
@@ -111,56 +112,114 @@ export default function directorReceivables(rows = [], policy = {}, verification
                 row.status_tone === 'danger' ? 'danger' : 'info',
             );
         },
-        toggleFreeze(row) {
-            if (!row.locked) {
-                this.notify(
-                    'Kunci Plafon',
-                    `Plafon kredit ${row.client_code} akan dikunci setelah otorisasi biometrik Direktur.`,
-                    'info',
-                );
+        async toggleFreeze(row) {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            try {
+                const response = await fetch(`/direktur/receivables/${row.id}/toggle-freeze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                });
 
-                return;
+                if (response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    row.locked = Boolean(data.locked);
+                    this.notify(
+                        row.locked ? 'Plafon Dikunci' : 'Lockdown Dicabut',
+                        data.message || `Status plafon ${row.client_code} berhasil diperbarui.`,
+                        row.locked ? 'danger' : 'success'
+                    );
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    this.notify('Gagal Memperbarui', 'Gagal mengubah status pembekuan kredit klien.', 'danger');
+                }
+            } catch (err) {
+                this.notify('Kesalahan Jaringan', err.message, 'danger');
             }
+        },
+        async sendReminder(row) {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            try {
+                const response = await fetch(`/direktur/receivables/${row.id}/reminder`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                });
 
-            this.notify(
-                'Lepas Freeze',
-                `PO ${row.client_code} hanya dapat dilepas setelah restrukturisasi tagihan disetujui Direksi.`,
-                'danger',
-            );
+                if (response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    this.notify(
+                        'Reminder Terkirim',
+                        data.message || `Surat penagihan tempo berhasil diteruskan ke PIC ${row.name}.`,
+                        'success'
+                    );
+                } else {
+                    this.notify('Gagal Mengirim', 'Gagal mengirimkan pengingat tagihan.', 'danger');
+                }
+            } catch (err) {
+                this.notify('Kesalahan Jaringan', err.message, 'danger');
+            }
         },
-        sendReminder(row) {
-            this.notify(
-                'Reminder WA Terkirim',
-                `Secretary akan menerima pengingat konfirmasi kliring untuk ${row.client_code} senilai ${row.outstanding_label}.`,
-                'info',
-            );
-        },
-        restructure(row) {
-            this.notify(
-                'Restrukturisasi Tagihan',
-                `Jadwal baru untuk ${row.client_code} harus disusun dan disahkan Direksi sebelum PO berikutnya dilepas.`,
-                'danger',
-            );
+        async restructure(row) {
+            const days = await window.$prompt({
+                title: 'Restrukturisasi Tenor TOP',
+                message: `Masukkan jumlah hari perpanjangan tenor TOP untuk ${row.name}:`,
+                defaultValue: '14',
+                placeholder: 'Contoh: 14',
+                inputType: 'number',
+                icon: 'calendar',
+                confirmText: 'Sahkan Tenor Baru',
+                cancelText: 'Batal',
+                tone: 'brand',
+            });
+            if (!days) return;
+
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            try {
+                const response = await fetch(`/direktur/receivables/${row.id}/restructure`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    body: JSON.stringify({ extended_days: parseInt(days, 10) }),
+                });
+
+                if (response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    this.notify(
+                        'Restrukturisasi Disahkan',
+                        data.message || `Jadwal baru disahkan. Tenor TOP diperpanjang +${days} hari.`,
+                        'success'
+                    );
+                    setTimeout(() => window.location.reload(), 1200);
+                } else {
+                    this.notify('Gagal Restrukturisasi', 'Gagal memproses restrukturisasi kredit.', 'danger');
+                }
+            } catch (err) {
+                this.notify('Kesalahan Jaringan', err.message, 'danger');
+            }
         },
         openVerification() {
-            this.notify(
-                'Antrean Verifikasi Finance',
-                `${this.verification.queue_value} menunggu pencocokan dua arah dengan total kliring ${this.verification.clearing_value}.`,
-                'success',
-            );
+            window.location.href = '/sekretaris/verifikasi';
         },
         openBypassLog() {
-            this.notify(
-                'Log Otorisasi Bypass',
-                'Semua bypass pembekuan memerlukan biometrik atau PIN Direktur Operasional.',
-                'info',
-            );
+            window.location.href = '/direktur/governance';
         },
         filterTopOnly() {
-            this.topFilter = 'all';
+            const cycle = ['all', '14', '30', '45'];
+            const currentIndex = cycle.indexOf(this.topFilter);
+            this.topFilter = cycle[(currentIndex + 1) % cycle.length];
             this.notify(
-                'Filter TOP',
-                'Menampilkan seluruh termin pembayaran dalam buku besar tempo.',
+                'Filter TOP Diperbarui',
+                this.topFilter === 'all' ? 'Menampilkan seluruh termin pembayaran.' : `Menampilkan faktur dengan tenor TOP ${this.topFilter} hari.`,
                 'info',
             );
         },

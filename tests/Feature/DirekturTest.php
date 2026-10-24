@@ -85,7 +85,6 @@ class DirekturTest extends TestCase
             'user_id'              => $this->client->id,
             'target_delivery_date' => now()->toDateString(),
             'delivery_address'     => 'Loading Dock AEON',
-            'estimated_total'      => 7000000.00,
             'grand_total'          => 7000000.00,
             'status'               => 'SELESAI',
         ]);
@@ -95,8 +94,7 @@ class DirekturTest extends TestCase
             'product_id'        => $this->product->id,
             'ordered_qty'       => 500.00,
             'unit_price'        => 14000.00,
-            'actual_net_weight' => 500.00,
-            'subtotal_final'    => 7000000.00,
+            'subtotal'          => 7000000.00,
         ]);
 
         $response = $this->actingAs($this->director)->get(route('direktur.dashboard'));
@@ -329,7 +327,6 @@ class DirekturTest extends TestCase
             'user_id'              => $this->client->id,
             'target_delivery_date' => now()->toDateString(),
             'delivery_address'     => 'Loading Dock AEON',
-            'estimated_total'      => 5000000.00,
             'grand_total'          => 5000000.00,
             'status'               => 'SELESAI',
         ]);
@@ -339,8 +336,7 @@ class DirekturTest extends TestCase
             'product_id'        => $this->product->id,
             'ordered_qty'       => 300.00,
             'unit_price'        => 15000.00,
-            'actual_net_weight' => 300.00,
-            'subtotal_final'    => 4500000.00,
+            'subtotal'          => 4500000.00,
         ]);
 
         $response = $this->actingAs($this->director)->get(route('direktur.reports.index'));
@@ -374,7 +370,6 @@ class DirekturTest extends TestCase
             'user_id'              => $this->client->id,
             'target_delivery_date' => now()->toDateString(),
             'delivery_address'     => 'Loading Dock AEON',
-            'estimated_total'      => 4500000.00,
             'grand_total'          => 4500000.00,
             'status'               => 'SELESAI',
         ]);
@@ -384,8 +379,7 @@ class DirekturTest extends TestCase
             'product_id'        => $this->product->id,
             'ordered_qty'       => 300.00,
             'unit_price'        => 15000.00,
-            'actual_net_weight' => 300.00,
-            'subtotal_final'    => 4500000.00,
+            'subtotal'          => 4500000.00,
         ]);
 
         $response = $this->actingAs($this->director)->get(route('direktur.orders.show', $order->id));

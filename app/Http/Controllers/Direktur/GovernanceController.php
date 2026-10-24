@@ -25,15 +25,17 @@ class GovernanceController extends Controller
     {
         $settings = $this->governanceService->getSettings();
         $storedLogs = $this->governanceService->getAuditLogs();
+        $paymentChannels = $this->governanceService->getPaymentChannels();
 
         return view('direktur.governance', compact(
             'settings',
-            'storedLogs'
+            'storedLogs',
+            'paymentChannels'
         ));
     }
 
     /**
-     * Perbarui Parameter Kebijakan Bisnis & Rule Engine
+     * Perbarui Parameter Kebijakan Bisnis
      */
     public function updateParameters(Request $request)
     {
@@ -57,7 +59,7 @@ class GovernanceController extends Controller
             'SEALED'
         );
 
-        return back()->with('success', 'Konfigurasi parameter bisnis dan rule engine berhasil diperbarui.');
+        return back()->with('success', 'Konfigurasi parameter dan kebijakan bisnis berhasil diperbarui.');
     }
 
     /**
@@ -161,5 +163,94 @@ class GovernanceController extends Controller
 
             fclose($handle);
         }, 200, $headers);
+    }
+
+    /**
+     * Memperbarui Kanal Pembayaran Resmi GPA (Bank & QRIS) oleh Direktur
+     */
+    public function updatePaymentChannels(Request $request)
+    {
+        $validated = $request->validate([
+            'channels'                  => ['required', 'array', 'min:1'],
+            'channels.*.id'             => ['required', 'string'],
+            'channels.*.type'           => ['required', 'string', 'in:BANK,QRIS,EWALLET'],
+            'channels.*.name'           => ['required', 'string', 'max:100'],
+            'channels.*.bank_code'      => ['nullable', 'string', 'max:50'],
+            'channels.*.account_number' => ['required', 'string', 'max:100'],
+            'channels.*.account_name'   => ['required', 'string', 'max:150'],
+            'channels.*.description'    => ['nullable', 'string', 'max:255'],
+            'channels.*.instructions'   => ['nullable', 'string', 'max:500'],
+            'channels.*.image_url'      => ['nullable', 'string', 'max:500'],
+            'channels.*.logo_url'       => ['nullable', 'string', 'max:500'],
+            'channels.*.image'          => ['nullable', 'file', 'image', 'max:10240'],
+            'channels.*.is_active'      => ['nullable'],
+        ]);
+
+        $channels = [];
+        foreach ($validated['channels'] as $idx => $ch) {
+            $imageUrl = $ch['image_url'] ?? null;
+
+            // Jika Direktur mengunggah gambar/foto baru untuk kanal ini (misal QRIS barcode foto atau logo)
+            if ($request->hasFile("channels.{$idx}.image")) {
+                $file = $request->file("channels.{$idx}.image");
+                if ($file->isValid()) {
+                    $ext = $file->getClientOriginalExtension() ?: 'png';
+                    $safeId = preg_replace('/[^a-zA-Z0-9_-]/', '_', $ch['id']);
+                    $filename = "channel_{$safeId}_" . time() . "_{$idx}.{$ext}";
+                    $path = $file->storeAs('payment-channels', $filename, 'public');
+                    $imageUrl = '/storage/' . $path;
+                }
+            }
+
+            // Fallback default image untuk QRIS jika belum ada foto khusus
+            if ($ch['type'] === 'QRIS' && empty($imageUrl)) {
+                $imageUrl = '/storage/payment-channels/qris-gpa-default.png';
+            }
+
+            $logoUrl = $ch['logo_url'] ?? null;
+            if (empty($logoUrl)) {
+                $candidate = '/images/payments/' . strtolower($ch['id']) . '.svg';
+                if (file_exists(public_path(ltrim($candidate, '/')))) {
+                    $logoUrl = $candidate;
+                }
+            }
+
+            $channels[] = [
+                'id'             => $ch['id'],
+                'type'           => $ch['type'],
+                'name'           => $ch['name'],
+                'bank_code'      => $ch['bank_code'] ?? strtoupper($ch['id']),
+                'account_number' => $ch['account_number'],
+                'account_name'   => $ch['account_name'],
+                'description'    => $ch['description'] ?? '',
+                'instructions'   => $ch['instructions'] ?? '',
+                'image_url'      => $imageUrl,
+                'logo_url'       => $logoUrl,
+                'is_active'      => !empty($ch['is_active']),
+            ];
+        }
+
+        $this->governanceService->updatePaymentChannels($channels);
+
+        $directorName = Auth::user()?->name ?: 'Direktur Utama';
+        $activeCount = count(array_filter($channels, fn($c) => $c['is_active']));
+        $this->governanceService->addAuditLog(
+            'PAYMENT_CHANNELS_UPDATE',
+            'CFG-PAYMENT-GATEWAY',
+            "Direktur memperbarui konfigurasi kanal pembayaran resmi ({$activeCount} kanal aktif: Bank, QRIS, & Dompet Digital GPA).",
+            $directorName,
+            'DIR-01 [ROOT-ACCESS]',
+            'SEALED'
+        );
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Konfigurasi kanal pembayaran resmi berhasil disimpan.',
+                'channels' => $channels,
+            ]);
+        }
+
+        return back()->with('success', 'Konfigurasi kanal pembayaran GPA (Bank, QRIS, & Dompet Digital) berhasil disimpan oleh Direktur.');
     }
 }

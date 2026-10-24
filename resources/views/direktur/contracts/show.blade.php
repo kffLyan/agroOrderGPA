@@ -20,7 +20,11 @@
                         </button>
                     </form>
                 @elseif($contract->status === 'ACTIVE')
-                    <form action="{{ route('direktur.contracts.terminate', $contract->id) }}" method="POST" class="inline" onsubmit="return confirm('Apakah Anda yakin ingin menonaktifkan kontrak ini?')">
+                    <form action="{{ route('direktur.contracts.terminate', $contract->id) }}" method="POST" class="inline"
+                        data-gpa-confirm="Apakah Anda yakin ingin menonaktifkan kontrak ini?"
+                        data-gpa-title="Hentikan Kontrak"
+                        data-gpa-tone="warning"
+                        data-gpa-ok="Hentikan Kontrak">
                         @csrf
                         <button type="submit" class="px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition">
                             Hentikan Kontrak
@@ -258,15 +262,12 @@
                                 <td class="p-3">
                                     @if($item)
                                         {{ number_format($item->ordered_qty, 1) }} Kg
-                                        @if($item->actual_net_weight)
-                                            <span class="font-bold text-emerald-700">(Riil: {{ number_format($item->actual_net_weight, 1) }} Kg)</span>
-                                        @endif
                                     @else
                                         -
                                     @endif
                                 </td>
                                 <td class="p-3 font-semibold text-emerald-700">
-                                    Rp {{ number_format($order->grand_total ?? $order->estimated_total, 0, ',', '.') }}
+                                    Rp {{ number_format($order->grand_total, 0, ',', '.') }}
                                 </td>
                                 <td class="p-3 text-center">
                                     <a href="{{ route('direktur.orders.show', $order->id) }}" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded font-semibold text-[10px] transition">

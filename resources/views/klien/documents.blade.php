@@ -25,11 +25,14 @@
 
     $invoices = $rawInvoices->map(function ($inv, $idx) {
         $totalNetto = (float) ($inv->orders ? $inv->orders->sum(function ($o) {
-            return $o->orderItems ? $o->orderItems->sum(fn($i) => $i->actual_net_weight ?? $i->ordered_qty) : 0;
+            return $o->orderItems ? $o->orderItems->sum('ordered_qty') : 0;
         }) : 0);
 
+        $hasPendingProof = $inv->has_pending_proof;
+        $hasRejectedProof = $inv->has_rejected_proof;
+
         $statusText = match ($inv->status) {
-            'UNPAID'   => 'Menunggu Pembayaran',
+            'UNPAID'   => $hasRejectedProof ? 'Bukti Bayar Ditolak' : ($hasPendingProof ? 'Menunggu Verifikasi Pembayaran' : 'Menunggu Pembayaran'),
             'PARTIAL'  => 'Dibayar Sebagian',
             'PAID'     => 'Lunas Terverifikasi',
             'OVERDUE'  => 'Melewati Jatuh Tempo',
@@ -37,7 +40,7 @@
         };
 
         $statusTone = match ($inv->status) {
-            'UNPAID'   => 'warning',
+            'UNPAID'   => $hasRejectedProof ? 'danger' : 'warning',
             'PARTIAL'  => 'warning',
             'PAID'     => 'accent',
             'OVERDUE'  => 'warning',
@@ -48,7 +51,7 @@
 
         $attachments = $inv->orders ? $inv->orders->map(function ($ord, $oIdx) {
             $itemNames = $ord->orderItems ? $ord->orderItems->map(fn($i) => $i->product->name ?? 'Komoditas')->join(', ') : '';
-            $kg = (float) ($ord->orderItems ? $ord->orderItems->sum(fn($i) => $i->actual_net_weight ?? $i->ordered_qty) : 0);
+            $kg = (float) ($ord->orderItems ? $ord->orderItems->sum('ordered_qty') : 0);
 
             return [
                 'no'           => str_pad($oIdx + 1, 2, '0', STR_PAD_LEFT),
@@ -57,7 +60,7 @@
                 'hub'          => 'Sentra Lembang',
                 'commodity'    => $itemNames ?: 'Sayuran Segar Pasundan',
                 'weight_label' => number_format($kg, 1, ',', '.') . ' kg',
-                'amount_label' => 'Rp ' . number_format($ord->grand_total ?: $ord->estimated_total, 0, ',', '.'),
+                'amount_label' => 'Rp ' . number_format($ord->grand_total, 0, ',', '.'),
                 'pod_chip'     => $ord->pod_photo_url ? 'POD Valid' : 'BA Sah',
                 'ttd'          => $ord->received_by_name ?: 'Staff Receiving',
             ];
@@ -66,6 +69,7 @@
         return [
             'no'                => str_pad($idx + 1, 2, '0', STR_PAD_LEFT),
             'po'                => $inv->invoice_number,
+            'period'            => $inv->created_at ? ($inv->created_at->isCurrentMonth() ? 'current' : 'last-month') : 'current',
             'printed'           => $inv->created_at ? $inv->created_at->format('d M Y') : '-',
             'period_label'      => ($inv->period_start ? $inv->period_start->format('d M') : '-') . ' - ' . ($inv->period_end ? $inv->period_end->format('d M Y') : '-'),
             'sj_chip'           => ($inv->orders ? $inv->orders->count() : 0) . ' Surat Jalan',
@@ -95,12 +99,14 @@
             'credit_value'      => '- Rp 0',
             'grand_total_label' => 'Rp ' . number_format($inv->grand_total, 0, ',', '.'),
             'attachments'       => $attachments,
+            'has_rejected_proof'=> $hasRejectedProof,
+            'rejected_note'     => $inv->rejected_proof_payment?->verification_note,
             'actions'           => [
                 [
                     'shape'   => 'label',
-                    'label'   => $isPaid ? 'Lihat Bukti' : 'Bayar Sekarang',
-                    'variant' => 'solid',
-                    'icon'    => 'upload',
+                    'label'   => $isPaid ? 'Lihat Bukti' : ($hasRejectedProof ? 'Unggah Ulang Bukti' : ($hasPendingProof ? 'Bukti Terkirim' : 'Bayar Sekarang')),
+                    'variant' => $hasRejectedProof ? 'danger' : 'solid',
+                    'icon'    => $hasRejectedProof ? 'alert-triangle' : ($hasPendingProof ? 'check-circle' : 'upload'),
                     'href'    => route('klien.payment-proof', ['tagihan' => $inv->invoice_number]),
                 ],
             ],
@@ -433,11 +439,14 @@
                                 <td class="px-4 py-4">
                                     <span @class([
                                         'inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-bold uppercase leading-4 tracking-[0.5px] ring-1 ring-inset',
+                                        'bg-danger-soft text-danger ring-danger/40' => $invoice['status_tone'] === 'danger',
                                         'bg-accent text-success-ink ring-accent' => $invoice['status_tone'] === 'accent',
                                         'bg-warning-soft text-warning-deep ring-warning/40' => $invoice['status_tone'] === 'warning',
                                         'bg-surface-pill text-ink-quiet ring-line-board' => $invoice['status_tone'] === 'muted',
                                     ])>
-                                        @if ($invoice['status_kind'] === 'dot')
+                                        @if ($invoice['status_tone'] === 'danger')
+                                            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-danger" aria-hidden="true"></span>
+                                        @elseif ($invoice['status_kind'] === 'dot')
                                             <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-warning-deep" aria-hidden="true"></span>
                                         @elseif ($invoice['status_kind'] === 'check')
                                             <x-gpa.icon name="check" class="h-2.5 w-2.5 shrink-0" />
@@ -451,7 +460,11 @@
                                         @foreach ($invoice['actions'] as $action)
                                             <a href="{{ $action['href'] ?? route('klien.payment-proof', ['tagihan' => $invoice['po']]) }}"
                                                 @click.stop
-                                                class="inline-block rounded bg-ink px-2.5 py-1 text-[10px] font-bold uppercase leading-4 text-white transition-colors hover:bg-brand-deep">
+                                                @class([
+                                                    'inline-block rounded px-2.5 py-1 text-[10px] font-bold uppercase leading-4 text-white transition-colors',
+                                                    'bg-danger hover:bg-danger/90' => ($action['variant'] ?? '') === 'danger',
+                                                    'bg-ink hover:bg-brand-deep' => ($action['variant'] ?? '') !== 'danger',
+                                                ])>
                                                 {{ $action['label'] }}
                                             </a>
                                         @endforeach
@@ -533,6 +546,29 @@
                         </a>
                     </div>
                 </div>
+
+                @if (! empty($invoice['has_rejected_proof']))
+                    <div class="border-b border-danger/30 bg-danger-soft/30 p-4">
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="flex items-start gap-3">
+                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-danger text-white">
+                                    <x-gpa.icon name="alert-triangle" class="h-4 w-4" />
+                                </span>
+                                <div class="flex min-w-0 flex-col">
+                                    <p class="text-xs font-bold uppercase tracking-wider text-danger">Bukti Pembayaran Ditolak Verifikator</p>
+                                    <p class="mt-0.5 text-xs text-ink-body">
+                                        Catatan Verifikator: <span class="font-semibold text-danger">{{ $invoice['rejected_note'] ?: 'Bukti pembayaran tidak sesuai atau tidak terbaca. Mohon unggah ulang.' }}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <a href="{{ route('klien.payment-proof', ['tagihan' => $invoice['po']]) }}"
+                                class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-danger px-3 py-1.5 text-2xs font-bold uppercase text-white shadow-sub transition hover:bg-danger/90">
+                                <x-gpa.icon name="upload" class="h-3 w-3" />
+                                <span>Unggah Ulang Bukti Bayar</span>
+                            </a>
+                        </div>
+                    </div>
+                @endif
 
                 <div class="flex flex-col gap-2 border-b border-line-soft bg-surface-pill px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
                     <p class="text-xs font-medium leading-4 text-ink-body">

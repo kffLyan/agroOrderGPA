@@ -19,12 +19,11 @@ return new class extends Migration
             $table->enum('order_source', ['WEB_PORTAL', 'WHATSAPP_ADMIN', 'ROUTINE_SCHEDULE'])->default('WEB_PORTAL');
             $table->date('target_delivery_date');
             $table->text('delivery_address');
-            $table->decimal('estimated_total', 14, 2)->default(0.00);
-            $table->decimal('grand_total', 14, 2)->nullable();
+            $table->decimal('grand_total', 14, 2)->default(0.00); // Total pasti yang dikunci di awal
             $table->enum('status', [
-                'DRAFT',
                 'MENUNGGU_VERIFIKASI',
-                'TERVERIFIKASI',
+                'MENUNGGU_PEMBAYARAN',
+                'LUNAS',
                 'SIAP_KIRIM',
                 'DALAM_PENGIRIMAN',
                 'SELESAI',

@@ -27,6 +27,13 @@ export default function coordinatorHarvestPlan(rows = [], stages = {}, station =
         qc: qc && typeof qc === 'object' ? qc : {},
         meta: meta && typeof meta === 'object' ? meta : {},
         selected: '',
+        labelModal: false,
+        afkirModal: false,
+        afkirReason: 'Daun luar layu / kelebihan kadar air',
+        afkirPercent: 2.4,
+        sampleModal: false,
+        selectedSample: null,
+        transferModal: false,
         rows: (Array.isArray(rows) ? rows : []).map((row) => ({
             ...row,
             stage: Math.min(4, Math.max(1, Math.round(numberOf(row.stage) || 1))),
@@ -39,6 +46,27 @@ export default function coordinatorHarvestPlan(rows = [], stages = {}, station =
 
         init() {
             this.selected = this.rows[0]?.po ?? '';
+
+            try {
+                const storedTransfers = localStorage.getItem('gpa_harvest_transfers');
+                if (storedTransfers) {
+                    const transferredPos = JSON.parse(storedTransfers);
+                    this.rows.forEach(r => {
+                        if (transferredPos.includes(r.po)) r.stage = 4;
+                    });
+                }
+
+                const storedAfkir = localStorage.getItem('gpa_harvest_afkir');
+                if (storedAfkir) {
+                    const afkirMap = JSON.parse(storedAfkir);
+                    this.rows.forEach(r => {
+                        if (afkirMap[r.po]) {
+                            r.afkir_flagged = true;
+                            r.afkir = afkirMap[r.po];
+                        }
+                    });
+                }
+            } catch (e) {}
         },
 
         /* ---------- queue ---------- */
@@ -118,12 +146,13 @@ export default function coordinatorHarvestPlan(rows = [], stages = {}, station =
             this.selected = po;
             this.run(
                 'Workstation Diprioritaskan',
-                `${row.buyer} \u{2022} ${row.bay} \u{2022} ${this.stageLabel(po)} \u{2022} ${this.kg(row.est_kg)} KG estimasi packing.`,
+                `${row.buyer} • ${row.bay} • ${this.stageLabel(po)} • ${this.kg(row.est_kg)} KG estimasi packing.`,
+                'info'
             );
         },
 
         refreshQueue() {
-            this.run('Antrean Packing Disegarkan', `${this.rows.length} dari ${this.meta.totalBatches} batch operasional tampil pada staging zone aktif.`);
+            this.run('Antrean Packing Disegarkan', `${this.rows.length} dari ${this.meta.totalBatches} batch operasional tampil pada staging zone aktif.`, 'success');
         },
 
         /* ---------- active workstation ---------- */
@@ -161,7 +190,7 @@ export default function coordinatorHarvestPlan(rows = [], stages = {}, station =
             const row = this.selectedRow();
             const suffix = String(row?.po ?? '').slice(-4);
 
-            return `${this.station.barcode_prefix ?? ''}-${suffix}-[01..${row?.krat_total ?? 0}]`;
+            return `${this.station.barcode_prefix ?? 'BAR-LOT'}-${suffix}-[01..${row?.krat_total ?? 0}]`;
         },
 
         palletCount() {
@@ -238,31 +267,81 @@ export default function coordinatorHarvestPlan(rows = [], stages = {}, station =
 
         printLabel() {
             const row = this.selectedRow();
+            if (!row) return;
+            this.labelModal = true;
+        },
 
-            if (!row) {
-                return;
-            }
+        closeLabelModal() {
+            this.labelModal = false;
+        },
 
-            this.run(
-                'Label Krat Dicetak',
-                `${this.barcodePrefix()} \u{2022} ${row.krat_total} label termal food-grade \u{2022} printer Zebra di ${row.station}.`,
-            );
+        executeThermalLabelPrint() {
+            const row = this.selectedRow();
+            if (!row) return;
+
+            const win = window.open('', '_blank', 'width=550,height=600');
+            win.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Thermal Label - ${row.po}</title>
+                    <style>
+                        body { font-family: monospace, sans-serif; padding: 16px; margin: 0; }
+                        .label { border: 2px solid #000; padding: 14px; width: 340px; margin: 10px auto; border-radius: 6px; }
+                        .h1 { font-size: 14px; font-weight: bold; margin: 0; }
+                        .bar { font-size: 22px; font-weight: 900; letter-spacing: 3px; margin: 10px 0; border: 1px solid #000; padding: 6px; text-align: center; background: #eee; }
+                        .row { display: flex; justify-content: space-between; font-size: 11px; margin: 4px 0; }
+                    </style>
+                </head>
+                <body>
+                    <div class="label">
+                        <div class="h1">GREEN PASUNDAN AGRICULTURE</div>
+                        <div style="font-size: 10px; margin-bottom: 8px;">Cold-Chain Staging • Ciwidey Packhouse</div>
+                        <div class="bar">||| ${row.po} |||</div>
+                        <div class="row"><span>Komoditas:</span><b>${this.commodityLabel(row.po)}</b></div>
+                        <div class="row"><span>Staging:</span><b>${row.bay} (${row.station})</b></div>
+                        <div class="row"><span>Buyer:</span><b>${row.buyer}</b></div>
+                        <div class="row"><span>Total Krat:</span><b>${row.krat_total} Krat (${this.kg(row.est_kg)} KG)</b></div>
+                        <div class="row"><span>Standard:</span><b>Food-Grade +4°C Cold Chain</b></div>
+                    </div>
+                    <script>window.onload = function() { window.print(); };</script>
+                </body>
+                </html>
+            `);
+            win.document.close();
+            this.run('Label Termal Dicetak', `${row.krat_total} label barcode termal siap ditempel pada krat.`, 'success');
+            this.closeLabelModal();
         },
 
         flagAfkir() {
             const row = this.selectedRow();
+            if (!row) return;
+            this.afkirModal = true;
+        },
 
-            if (!row) {
-                return;
-            }
+        closeAfkirModal() {
+            this.afkirModal = false;
+        },
+
+        submitAfkir() {
+            const row = this.selectedRow();
+            if (!row) return;
 
             row.afkir_flagged = true;
-            row.afkir = '2.4% (Review)';
+            row.afkir = `${this.afkirPercent}% (${this.afkirReason})`;
+
+            try {
+                const storedAfkir = JSON.parse(localStorage.getItem('gpa_harvest_afkir') || '{}');
+                storedAfkir[row.po] = row.afkir;
+                localStorage.setItem('gpa_harvest_afkir', JSON.stringify(storedAfkir));
+            } catch (e) {}
+
             this.run(
                 'Afkir Tinggi Ditandai',
-                `${row.po} afkir 2.4% melampaui SOP 2.0% \u{2022} sortasi ulang wajib sebelum transfer ke timbangan (PRD Rule 04).`,
+                `${row.po} afkir ${this.afkirPercent}% tercatat: "${this.afkirReason}". Diwajibkan sortasi ulang.`,
                 'danger',
             );
+            this.closeAfkirModal();
         },
 
         canTransfer() {
@@ -275,26 +354,50 @@ export default function coordinatorHarvestPlan(rows = [], stages = {}, station =
 
         transfer() {
             const row = this.selectedRow();
-
-            if (!row) {
-                return;
-            }
+            if (!row) return;
 
             if (!this.canTransfer()) {
                 this.run(
-                    'Transfer Ditolak \u{2022} Hard Gate Packing',
-                    `${row.po} masih pada tahap ${this.stageLabel(row.po)}. Wadah wajib steril dan pra-isi +4\u{00B0}C sebelum masuk antrean timbangan.`,
+                    'Transfer Ditolak',
+                    `${row.po} masih pada tahap ${this.stageLabel(row.po)}. Selesaikan tahap pra-pendinginan sebelum masuk antrean timbangan.`,
                     'danger',
                 );
                 return;
             }
 
+            this.transferModal = true;
+        },
+
+        closeTransferModal() {
+            this.transferModal = false;
+        },
+
+        confirmTransfer() {
+            const row = this.selectedRow();
+            if (!row) return;
+
             row.stage = 4;
+
+            try {
+                const storedTransfers = JSON.parse(localStorage.getItem('gpa_harvest_transfers') || '[]');
+                if (!storedTransfers.includes(row.po)) {
+                    storedTransfers.push(row.po);
+                    localStorage.setItem('gpa_harvest_transfers', JSON.stringify(storedTransfers));
+                }
+            } catch (e) {}
+
             this.run(
                 'Batch Diteruskan ke Timbangan',
-                `${row.po} \u{2022} ${this.kg(row.est_kg)} KG gross ${row.krat_total} krat \u{2022} ke ${row.station} timbangan netto. \u{2022} ${this.doneLabel()}.`,
+                `${row.po} (${this.kg(row.est_kg)} KG, ${row.krat_total} krat) sukses dialihkan ke Meja Timbangan Netto.`,
                 'success',
             );
+            this.closeTransferModal();
+        },
+
+        goToWeighing() {
+            const row = this.selectedRow();
+            this.confirmTransfer();
+            window.location.href = `/koordinator/penimbangan?po=${row ? row.po : ''}`;
         },
 
         /* ---------- QC log ---------- */
@@ -321,7 +424,26 @@ export default function coordinatorHarvestPlan(rows = [], stages = {}, station =
         },
 
         inspectSample(krat) {
-            this.run('Uji Petik Terverifikasi', `${krat} \u{2022} berdasar sensor calibrated \u{2022} trimming ${this.avgTrim()} di bawah toleransi SOP 2.00%.`);
+            const samples = Array.isArray(this.qc.samples) ? this.qc.samples : [];
+            const found = samples.find(s => s.krat === krat) || {
+                krat,
+                trim_percent: '1.20%',
+                gross_kg: '25.40',
+                tare_kg: '2.00',
+                net_kg: '23.40'
+            };
+            this.selectedSample = found;
+            this.sampleModal = true;
+        },
+
+        closeSampleModal() {
+            this.sampleModal = false;
+            this.selectedSample = null;
+        },
+
+        confirmSampleQc() {
+            this.run('Uji Petik Terverifikasi', `${this.selectedSample?.krat} lolos inspeksi QC trimming dan standar kesegaran cold-chain.`, 'success');
+            this.closeSampleModal();
         },
 
         kg(value) {

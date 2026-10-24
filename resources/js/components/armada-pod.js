@@ -2,7 +2,6 @@ export default function armadaPod(steps = []) {
     return {
         activeStep: 1,
         condition: 'clear',
-        signature: '',
         receiverName: '',
         captured: {
             manifest: false,
@@ -23,31 +22,23 @@ export default function armadaPod(steps = []) {
             return Boolean(this.captured.dock);
         },
 
-        signed() {
-            return this.signature.trim().length > 0;
-        },
-
         checklistDone(index) {
             return this.manifestCaptured() || index === 0;
         },
 
         canLock() {
-            return this.manifestCaptured() && this.dockCaptured() && this.signed();
+            return this.manifestCaptured() && this.dockCaptured();
         },
 
         blockers() {
             const missing = [];
 
             if (!this.manifestCaptured()) {
-                missing.push('Foto Surat Jalan');
+                missing.push('Foto Fisik Surat Jalan (Cap & Tanda Tangan)');
             }
 
             if (!this.dockCaptured()) {
                 missing.push('Foto Serah Terima / Muatan Dock');
-            }
-
-            if (!this.signed()) {
-                missing.push('Tanda Tangan / Konfirmasi Penerima');
             }
 
             return missing;
@@ -103,31 +94,6 @@ export default function armadaPod(steps = []) {
                     : 'Catatan selisih/retur dipilih. Keterangan fisik akan dicatat pada berita acara.',
                 this.condition === 'clear' ? 'success' : 'warning',
             );
-        },
-
-        sign(name) {
-            this.signature = String(name ?? 'Hendra Kurniawan');
-            const hiddenSig = document.getElementById('hidden-signature');
-            if (hiddenSig) {
-                hiddenSig.value = this.signature;
-            }
-
-            this.run(
-                'Tanda Tangan Digital',
-                this.signed()
-                    ? 'Tanda tangan digital penerima berhasil disimpan.'
-                    : 'Tanda tangan dibersihkan.',
-                this.signed() ? 'success' : 'warning',
-            );
-        },
-
-        clearSignature() {
-            this.signature = '';
-            const hiddenSig = document.getElementById('hidden-signature');
-            if (hiddenSig) {
-                hiddenSig.value = '';
-            }
-            this.run('Hapus Tanda Tangan', 'Area tanda tangan dikosongkan.', 'info');
         },
 
         lockPod() {

@@ -53,8 +53,8 @@ class InvoiceController extends Controller
         foreach ($clientsQuery as $c) {
             $docs = [];
             foreach ($c->orders as $ord) {
-                $netWeight = (float) $ord->orderItems->sum(fn($it) => $it->actual_net_weight ?: $it->ordered_qty);
-                $val = (float) ($ord->grand_total ?: $ord->estimated_total);
+                $netWeight = (float) $ord->orderItems->sum(fn($it) => $it->ordered_qty);
+                $val = (float) $ord->grand_total;
                 $commodity = $ord->orderItems->first()?->product?->name ?: 'Sayur Segar Grade A';
                 $sjNum = $ord->surat_jalan_number ?: ('SJ-' . date('Ym') . '-' . str_pad($ord->id, 4, '0', STR_PAD_LEFT));
 
@@ -73,7 +73,7 @@ class InvoiceController extends Controller
             $contractObj = method_exists($c, 'contracts') ? $c->contracts()->where('status', 'ACTIVE')->first() : null;
             $topDays = $contractObj?->top_days ?: 30;
             $plafon = $contractObj ? (float) ($contractObj->fixed_price_per_kg * $contractObj->committed_volume_per_cycle * 2) : 0;
-            $usedPlafon = (float) $c->orders()->whereIn('status', ['MENUNGGU_VERIFIKASI', 'TERVERIFIKASI', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])->sum('grand_total');
+            $usedPlafon = (float) $c->orders()->whereIn('status', ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])->sum('grand_total');
 
             $clients[] = [
                 'id'          => (string) $c->id,

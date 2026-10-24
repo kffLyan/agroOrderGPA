@@ -38,7 +38,7 @@ class ReportController extends Controller
             $unitPrice = $firstItem ? (float) $firstItem->unit_price : 0;
 
             $est = (float) $ord->orderItems->sum('ordered_qty');
-            $net = (float) $ord->orderItems->sum(fn($it) => $it->actual_net_weight ?: $it->ordered_qty);
+            $net = $est;
 
             $val = (float) ($ord->grand_total ?: ($net * $unitPrice));
             $diffKg = $net - $est;
@@ -131,7 +131,7 @@ class ReportController extends Controller
                 $unitPrice = $firstItem ? (float) $firstItem->unit_price : 0;
 
                 $est = (float) $ord->orderItems->sum('ordered_qty');
-                $net = (float) $ord->orderItems->sum(fn($it) => $it->actual_net_weight ?: $it->ordered_qty);
+                $net = $est;
                 $val = (float) ($ord->grand_total ?: ($net * $unitPrice));
                 $diffKg = $net - $est;
                 $diffPct = $est > 0 ? round(($diffKg / $est) * 100, 2) : 0;
@@ -177,7 +177,7 @@ class ReportController extends Controller
             $unitPrice = $firstItem ? (float) $firstItem->unit_price : 0;
 
             $est = (float) $ord->orderItems->sum('ordered_qty');
-            $net = (float) $ord->orderItems->sum(fn($it) => $it->actual_net_weight ?: $it->ordered_qty);
+            $net = $est;
             $val = (float) ($ord->grand_total ?: ($net * $unitPrice));
             $diffKg = $net - $est;
             $diffPct = $est > 0 ? round(($diffKg / $est) * 100, 2) : 0;

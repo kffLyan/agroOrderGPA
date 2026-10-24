@@ -414,7 +414,7 @@ export default function coordinatorMonitoring(rows = [], dossier = {}, meta = {}
             }
 
             if (key === 'open-retur') {
-                this.run('Laporan Retur Dibuka', `Selisih ${this.kg(this.gapKg(sj))} KG pada ${sj} wajib disahkan lewat BA Retur Seketika (PRD Rule 12).`, 'warning');
+                this.run('Laporan Retur Dibuka', `Selisih ${this.kg(this.gapKg(sj))} KG pada ${sj} wajib disahkan lewat BA Retur Seketika.`, 'warning');
                 return;
             }
 

@@ -215,7 +215,7 @@
                     @forelse ($invoices as $idx => $inv)
                         @php
                             $invNetto = (float) $inv->orders->sum(function ($o) {
-                                return $o->orderItems->sum(fn($i) => $i->actual_net_weight ?? $i->ordered_qty);
+                                return $o->orderItems->sum('ordered_qty');
                             });
                             $sjCount = $inv->orders->count();
                             $periodStr = ($inv->period_start ? $inv->period_start->format('d/m/Y') : '-') . ' - ' . ($inv->period_end ? $inv->period_end->format('d/m/Y') : '-');

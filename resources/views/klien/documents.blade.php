@@ -370,7 +370,7 @@
             </div>
 
             <div class="gpa-scroll-x">
-                <table class="w-full min-w-[68rem] border-collapse">
+                <table class="w-full border-collapse">
                     <caption class="sr-only">Daftar faktur konsolidasi tempo bulanan beserta netto riil, jatuh tempo, dan status pembayaran</caption>
                     <thead>
                         <tr class="border-b border-line-soft bg-surface-pill">

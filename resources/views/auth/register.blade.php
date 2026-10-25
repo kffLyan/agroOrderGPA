@@ -17,6 +17,7 @@
         rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <style>[x-cloak] { display: none !important; }</style>
 </head>
 
 <body class="min-h-screen bg-canvas font-sans text-ink antialiased selection:bg-surface-raised">
@@ -61,7 +62,7 @@
                             </div>
                         @endif
 
-                        <form method="POST" action="{{ route('register') }}" class="space-y-4">
+                        <form method="POST" action="{{ route('register') }}" class="space-y-4" x-data="registrationOtp('{{ old('email') }}')" @submit="submitCheck($event)">
                             @csrf
 
                             <div>
@@ -78,13 +79,97 @@
                             </div>
 
                             <div>
-                                <label for="email-mobile"
-                                    class="mb-1.5 block font-mono text-[11px] font-medium uppercase tracking-wider text-ink">
-                                    Alamat Email *
-                                </label>
+                                <div class="mb-1.5 flex items-center justify-between">
+                                    <label for="email-mobile"
+                                        class="font-mono text-[11px] font-medium uppercase tracking-wider text-ink">
+                                        Alamat Email *
+                                    </label>
+                                    <template x-if="otpState === 'idle'">
+                                        <button type="button" @click="sendOtp()"
+                                            class="inline-flex items-center gap-1 font-mono text-[11px] font-semibold text-brand hover:text-brand-hover hover:underline transition-colors">
+                                            <span class="material-symbols-outlined text-[13px]">send</span>
+                                            <span>Kirim Kode OTP</span>
+                                        </button>
+                                    </template>
+                                    <template x-if="otpState === 'sending'">
+                                        <span class="inline-flex items-center gap-1 font-mono text-[11px] text-ink-subtle">
+                                            <svg class="h-3 w-3 animate-spin text-brand" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                            </svg>
+                                            <span>Mengirim OTP...</span>
+                                        </span>
+                                    </template>
+                                    <template x-if="otpState === 'sent' || otpState === 'verifying'">
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" @click="sendOtp(true)" :disabled="countdown > 0"
+                                                class="font-mono text-[11px] font-semibold transition-colors"
+                                                :class="countdown > 0 ? 'text-ink-subtle cursor-not-allowed' : 'text-brand hover:underline'">
+                                                <span x-show="countdown > 0">Kirim Ulang (<span x-text="countdown"></span>s)</span>
+                                                <span x-show="countdown <= 0">Kirim Ulang Kode</span>
+                                            </button>
+                                        </div>
+                                    </template>
+                                    <template x-if="otpState === 'verified'">
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 font-mono text-[10px] font-bold text-success-ink border border-success/30">
+                                            <span class="material-symbols-outlined text-[12px] text-success">verified</span>
+                                            TERVERIFIKASI
+                                        </span>
+                                    </template>
+                                </div>
                                 <input id="email-mobile" name="email" type="email" autocomplete="email" required
-                                    value="{{ old('email') }}" placeholder="nama@perusahaan.co.id"
+                                    x-model="email"
+                                    :readonly="otpState === 'verified'"
+                                    :class="otpState === 'verified' ? 'bg-surface-raised cursor-not-allowed text-ink font-semibold' : ''"
+                                    placeholder="nama@perusahaan.co.id"
                                     class="h-10 w-full rounded-sm border-line-strong bg-surface px-3 font-mono text-xs text-ink placeholder:font-mono placeholder:text-[11px] placeholder:text-ink-subtle focus:border-brand focus:ring-0">
+
+                                <!-- Inline OTP Input Box (Muncul ketika OTP terkirim/verifikasi) -->
+                                <div x-show="otpState === 'sent' || otpState === 'verifying'" x-cloak x-transition
+                                    class="mt-2.5 rounded-sm border border-brand/30 bg-[#F1F6EC] p-3 text-ink">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center gap-1.5 font-mono text-[11px] font-semibold text-brand">
+                                            <span class="material-symbols-outlined text-[15px]">mark_email_read</span>
+                                            <span>Masukkan 6 Digit Kode OTP</span>
+                                        </div>
+                                        <span class="font-mono text-[10px] text-ink-subtle">Cek Inbox / Spam</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <input type="text" x-model="otpCode" maxlength="6" inputmode="numeric"
+                                            placeholder="000000"
+                                            @keyup.enter="verifyOtp()"
+                                            class="h-9 w-32 rounded-sm border-line-strong bg-white px-2.5 text-center font-mono text-sm tracking-widest text-ink placeholder:tracking-normal focus:border-brand focus:ring-0">
+                                        <button type="button" @click="verifyOtp()" :disabled="otpState === 'verifying'"
+                                            class="flex h-9 items-center justify-center gap-1 rounded-sm bg-brand px-3.5 font-mono text-xs font-semibold text-white transition-colors hover:bg-brand-hover active:translate-y-px disabled:opacity-60">
+                                            <svg x-show="otpState === 'verifying'" class="h-3.5 w-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                            </svg>
+                                            <span x-text="otpState === 'verifying' ? 'Memverifikasi...' : 'Verifikasi'"></span>
+                                        </button>
+                                    </div>
+                                    <p x-show="error" x-text="error" class="mt-2 font-mono text-[11px] text-danger"></p>
+                                    <p x-show="success && otpState !== 'verified'" x-text="success" class="mt-1.5 font-mono text-[10px] text-brand"></p>
+                                </div>
+
+                                <!-- Notifikasi Status Sukses Terverifikasi -->
+                                <div x-show="otpState === 'verified'" x-cloak x-transition
+                                    class="mt-2 flex items-center justify-between rounded-sm border border-success/30 bg-success-soft px-3 py-2 text-xs text-success-ink">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="material-symbols-outlined text-sm text-success">check_circle</span>
+                                        <span class="font-mono text-[11px]">Email terverifikasi resmi oleh GPA.</span>
+                                    </div>
+                                    <button type="button" @click="resetVerification()"
+                                        class="font-mono text-[10px] text-ink-subtle underline hover:text-ink">
+                                        Ganti Email
+                                    </button>
+                                </div>
+
+                                <!-- Error Alert jika validasi gagal -->
+                                <div x-show="error && otpState !== 'sent' && otpState !== 'verifying'" x-cloak class="mt-1.5">
+                                    <p x-text="error" class="font-mono text-[11px] text-danger"></p>
+                                </div>
+
                                 @error('email')
                                     <p class="mt-1.5 text-[11px] text-danger">{{ $message }}</p>
                                 @enderror
@@ -117,23 +202,6 @@
                                 @enderror
                             </div>
 
-                            <div>
-                                <label class="mb-1.5 block font-mono text-[11px] font-medium uppercase tracking-wider text-ink">
-                                    Status Kemitraan Awal
-                                </label>
-                                <div class="rounded-sm border border-line-strong bg-surface-shell/50 p-3">
-                                    <div class="flex items-center gap-2">
-                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-accent px-2 py-0.5 font-mono text-[10px] font-bold text-success-ink">
-                                            <span class="h-1.5 w-1.5 rounded-full bg-success-deep"></span>
-                                            KLIEN REGULER (DEFAULT)
-                                        </span>
-                                        <span class="font-mono text-[11px] text-ink-body">Pembayaran di Muka</span>
-                                    </div>
-                                    <p class="mt-2 font-sans text-[11px] leading-relaxed text-ink-body">
-                                        Seluruh pendaftaran akun baru bermula sebagai <strong>Klien Reguler</strong>. Fasilitas <strong>Kemitraan Kontrak B2B</strong> (Harga Terkunci &amp; TOP Tempo 14–30 Hari) dapat diajukan secara resmi melalui Dasbor Klien setelah akun aktif untuk disahkan Direktur Utama GPA.
-                                    </p>
-                                </div>
-                            </div>
 
                             <div>
                                 <label for="address-mobile"
@@ -335,7 +403,7 @@
                             </div>
                         @endif
 
-                        <form method="POST" action="{{ route('register') }}" class="space-y-4">
+                        <form method="POST" action="{{ route('register') }}" class="space-y-4" x-data="registrationOtp('{{ old('email') }}')" @submit="submitCheck($event)">
                             @csrf
 
                             <div>
@@ -352,13 +420,97 @@
                             </div>
 
                             <div>
-                                <label for="email"
-                                    class="mb-1.5 block font-mono text-[11px] font-medium uppercase tracking-wider text-ink">
-                                    Alamat Email *
-                                </label>
+                                <div class="mb-1.5 flex items-center justify-between">
+                                    <label for="email"
+                                        class="font-mono text-[11px] font-medium uppercase tracking-wider text-ink">
+                                        Alamat Email *
+                                    </label>
+                                    <template x-if="otpState === 'idle'">
+                                        <button type="button" @click="sendOtp()"
+                                            class="inline-flex items-center gap-1 font-mono text-[11px] font-semibold text-brand hover:text-brand-hover hover:underline transition-colors">
+                                            <span class="material-symbols-outlined text-[13px]">send</span>
+                                            <span>Kirim Kode OTP</span>
+                                        </button>
+                                    </template>
+                                    <template x-if="otpState === 'sending'">
+                                        <span class="inline-flex items-center gap-1 font-mono text-[11px] text-ink-subtle">
+                                            <svg class="h-3 w-3 animate-spin text-brand" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                            </svg>
+                                            <span>Mengirim OTP...</span>
+                                        </span>
+                                    </template>
+                                    <template x-if="otpState === 'sent' || otpState === 'verifying'">
+                                        <div class="flex items-center gap-2">
+                                            <button type="button" @click="sendOtp(true)" :disabled="countdown > 0"
+                                                class="font-mono text-[11px] font-semibold transition-colors"
+                                                :class="countdown > 0 ? 'text-ink-subtle cursor-not-allowed' : 'text-brand hover:underline'">
+                                                <span x-show="countdown > 0">Kirim Ulang (<span x-text="countdown"></span>s)</span>
+                                                <span x-show="countdown <= 0">Kirim Ulang Kode</span>
+                                            </button>
+                                        </div>
+                                    </template>
+                                    <template x-if="otpState === 'verified'">
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-success-soft px-2 py-0.5 font-mono text-[10px] font-bold text-success-ink border border-success/30">
+                                            <span class="material-symbols-outlined text-[12px] text-success">verified</span>
+                                            TERVERIFIKASI
+                                        </span>
+                                    </template>
+                                </div>
                                 <input id="email" name="email" type="email" autocomplete="email" required
-                                    value="{{ old('email') }}" placeholder="nama@perusahaan.co.id"
+                                    x-model="email"
+                                    :readonly="otpState === 'verified'"
+                                    :class="otpState === 'verified' ? 'bg-surface-raised cursor-not-allowed text-ink font-semibold' : ''"
+                                    placeholder="nama@perusahaan.co.id"
                                     class="h-10 w-full rounded-sm border-line-strong bg-surface px-3 font-mono text-xs text-ink placeholder:font-mono placeholder:text-[11px] placeholder:text-ink-subtle focus:border-brand focus:ring-0">
+
+                                <!-- Inline OTP Input Box (Muncul ketika OTP terkirim/verifikasi) -->
+                                <div x-show="otpState === 'sent' || otpState === 'verifying'" x-cloak x-transition
+                                    class="mt-2.5 rounded-sm border border-brand/30 bg-[#F1F6EC] p-3 text-ink">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <div class="flex items-center gap-1.5 font-mono text-[11px] font-semibold text-brand">
+                                            <span class="material-symbols-outlined text-[15px]">mark_email_read</span>
+                                            <span>Masukkan 6 Digit Kode OTP</span>
+                                        </div>
+                                        <span class="font-mono text-[10px] text-ink-subtle">Cek Inbox / Spam</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <input type="text" x-model="otpCode" maxlength="6" inputmode="numeric"
+                                            placeholder="000000"
+                                            @keyup.enter="verifyOtp()"
+                                            class="h-9 w-32 rounded-sm border-line-strong bg-white px-2.5 text-center font-mono text-sm tracking-widest text-ink placeholder:tracking-normal focus:border-brand focus:ring-0">
+                                        <button type="button" @click="verifyOtp()" :disabled="otpState === 'verifying'"
+                                            class="flex h-9 items-center justify-center gap-1 rounded-sm bg-brand px-3.5 font-mono text-xs font-semibold text-white transition-colors hover:bg-brand-hover active:translate-y-px disabled:opacity-60">
+                                            <svg x-show="otpState === 'verifying'" class="h-3.5 w-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                            </svg>
+                                            <span x-text="otpState === 'verifying' ? 'Memverifikasi...' : 'Verifikasi'"></span>
+                                        </button>
+                                    </div>
+                                    <p x-show="error" x-text="error" class="mt-2 font-mono text-[11px] text-danger"></p>
+                                    <p x-show="success && otpState !== 'verified'" x-text="success" class="mt-1.5 font-mono text-[10px] text-brand"></p>
+                                </div>
+
+                                <!-- Notifikasi Status Sukses Terverifikasi -->
+                                <div x-show="otpState === 'verified'" x-cloak x-transition
+                                    class="mt-2 flex items-center justify-between rounded-sm border border-success/30 bg-success-soft px-3 py-2 text-xs text-success-ink">
+                                    <div class="flex items-center gap-1.5">
+                                        <span class="material-symbols-outlined text-sm text-success">check_circle</span>
+                                        <span class="font-mono text-[11px]">Email terverifikasi resmi oleh GPA.</span>
+                                    </div>
+                                    <button type="button" @click="resetVerification()"
+                                        class="font-mono text-[10px] text-ink-subtle underline hover:text-ink">
+                                        Ganti Email
+                                    </button>
+                                </div>
+
+                                <!-- Error Alert jika validasi gagal -->
+                                <div x-show="error && otpState !== 'sent' && otpState !== 'verifying'" x-cloak class="mt-1.5">
+                                    <p x-text="error" class="font-mono text-[11px] text-danger"></p>
+                                </div>
+
                                 @error('email')
                                     <p class="mt-1.5 text-[11px] text-danger">{{ $message }}</p>
                                 @enderror
@@ -391,23 +543,6 @@
                                 @enderror
                             </div>
 
-                            <div>
-                                <label class="mb-1.5 block font-mono text-[11px] font-medium uppercase tracking-wider text-ink">
-                                    Status Kemitraan Awal
-                                </label>
-                                <div class="rounded-sm border border-line-strong bg-surface-shell/50 p-3">
-                                    <div class="flex items-center gap-2">
-                                        <span class="inline-flex items-center gap-1.5 rounded-full bg-accent px-2 py-0.5 font-mono text-[10px] font-bold text-success-ink">
-                                            <span class="h-1.5 w-1.5 rounded-full bg-success-deep"></span>
-                                            KLIEN REGULER (DEFAULT)
-                                        </span>
-                                        <span class="font-mono text-[11px] text-ink-body">Pembayaran di Muka</span>
-                                    </div>
-                                    <p class="mt-2 font-sans text-[11px] leading-relaxed text-ink-body">
-                                        Seluruh pendaftaran akun baru bermula sebagai <strong>Klien Reguler</strong>. Fasilitas <strong>Kemitraan Kontrak B2B</strong> (Harga Terkunci &amp; TOP Tempo 14–30 Hari) dapat diajukan secara resmi melalui Dasbor Klien setelah akun aktif untuk disahkan Direktur Utama GPA.
-                                    </p>
-                                </div>
-                            </div>
 
                             <div>
                                 <label for="address"
@@ -481,6 +616,155 @@
     </main>
 
     <x-gpa.toast />
+
+    <script>
+        function registrationOtp(initialEmail = '') {
+            return {
+                email: initialEmail,
+                otpCode: '',
+                otpState: 'idle', // 'idle' | 'sending' | 'sent' | 'verifying' | 'verified'
+                countdown: 0,
+                timer: null,
+                error: '',
+                success: '',
+                devCode: null,
+
+                async sendOtp(isResend = false) {
+                    this.error = '';
+                    this.success = '';
+
+                    const emailInput = this.email ? this.email.trim() : '';
+                    if (!emailInput || !emailInput.includes('@') || !emailInput.includes('.')) {
+                        this.error = 'Masukkan format alamat email yang valid sebelum meminta kode OTP.';
+                        return;
+                    }
+
+                    this.otpState = 'sending';
+
+                    try {
+                        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        const response = await fetch('{{ route('register.otp.send') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': token,
+                            },
+                            body: JSON.stringify({ email: emailInput })
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            const errorMsg = data.errors ? Object.values(data.errors)[0][0] : (data.message || 'Gagal mengirim kode OTP.');
+                            throw new Error(errorMsg);
+                        }
+
+                        this.otpState = 'sent';
+                        this.devCode = data.dev_code || null;
+                        this.success = 'Kode OTP 6-digit berhasil dikirim ke ' + emailInput;
+                        this.startTimer(60);
+
+                        if (window.gpaToast) {
+                            window.gpaToast('Kode Terkirim', 'Kode OTP 6-digit telah dikirim ke email Anda.', 'success');
+                        }
+                    } catch (err) {
+                        this.otpState = 'idle';
+                        this.error = err.message || 'Terjadi gangguan saat mengirim OTP.';
+                        if (window.gpaToast) {
+                            window.gpaToast('Gagal Mengirim OTP', this.error, 'danger');
+                        }
+                    }
+                },
+
+                async verifyOtp() {
+                    this.error = '';
+                    this.success = '';
+
+                    const code = (this.otpCode || '').trim();
+                    if (code.length !== 6) {
+                        this.error = 'Masukkan 6 digit angka kode OTP.';
+                        return;
+                    }
+
+                    this.otpState = 'verifying';
+
+                    try {
+                        const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        const response = await fetch('{{ route('register.otp.verify') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': token,
+                            },
+                            body: JSON.stringify({
+                                email: (this.email || '').trim(),
+                                code: code
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (!response.ok) {
+                            const errorMsg = data.errors ? Object.values(data.errors)[0][0] : (data.message || 'Kode OTP tidak valid.');
+                            throw new Error(errorMsg);
+                        }
+
+                        this.otpState = 'verified';
+                        this.success = 'Email berhasil diverifikasi!';
+                        this.error = '';
+
+                        if (window.gpaToast) {
+                            window.gpaToast('Terverifikasi', 'Alamat email berhasil diverifikasi resmi.', 'success');
+                        }
+                    } catch (err) {
+                        this.otpState = 'sent';
+                        this.error = err.message || 'Kode OTP salah atau kedaluwarsa.';
+                        if (window.gpaToast) {
+                            window.gpaToast('Verifikasi Gagal', this.error, 'danger');
+                        }
+                    }
+                },
+
+                startTimer(seconds) {
+                    if (this.timer) clearInterval(this.timer);
+                    this.countdown = seconds;
+                    this.timer = setInterval(() => {
+                        this.countdown--;
+                        if (this.countdown <= 0) {
+                            clearInterval(this.timer);
+                        }
+                    }, 1000);
+                },
+
+                resetVerification() {
+                    this.otpState = 'idle';
+                    this.otpCode = '';
+                    this.error = '';
+                    this.success = '';
+                    if (this.timer) clearInterval(this.timer);
+                    this.countdown = 0;
+                },
+
+                submitCheck(event) {
+                    if (this.otpState !== 'verified') {
+                        event.preventDefault();
+                        this.error = 'Alamat email wajib diverifikasi dengan kode OTP sebelum mendaftar.';
+                        if (window.gpaToast) {
+                            window.gpaToast('Verifikasi Diperlukan', 'Silakan klik "Kirim Kode OTP" dan verifikasi email Anda terlebih dahulu.', 'warning');
+                        }
+                        const emailEl = event.target.querySelector('input[name="email"]');
+                        if (emailEl) {
+                            emailEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            emailEl.focus();
+                        }
+                        return false;
+                    }
+                }
+            };
+        }
+    </script>
 </body>
 
 </html>

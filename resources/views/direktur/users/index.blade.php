@@ -205,7 +205,7 @@
             </header>
 
             <div class="gpa-scroll-x overflow-x-auto">
-                <table class="w-full min-w-[68rem] border-collapse">
+                <table class="w-full border-collapse">
                     <caption class="sr-only">Hak Akses &amp; Wewenang 5 Role</caption>
                     <thead>
                         <tr class="border-b border-line-board">
@@ -423,7 +423,7 @@
             </header>
 
             <div class="gpa-scroll-x overflow-x-auto">
-                <table class="w-full min-w-[72rem] border-collapse">
+                <table class="w-full border-collapse">
                     <caption class="sr-only">Direktori Pengguna &amp; Status Kredensial</caption>
                     <thead>
                         <tr class="border-b border-line-board">

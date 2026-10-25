@@ -32,90 +32,15 @@ class DispatchController extends Controller
             $orders = Order::with(['orderItems.product', 'user', 'driver', 'verifier'])->latest()->take(5)->get();
         }
 
-        $paidOrders = $orders->where('status', 'LUNAS');
-        $readyOrders = $orders->where('status', 'SIAP_KIRIM');
-        $shippingOrders = $orders->where('status', 'DALAM_PENGIRIMAN');
-        $doneOrders = $orders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN']);
+        $paidOrdersCount = $orders->where('status', \App\Enums\OrderStatus::LUNAS->value)->count();
+        $readyOrdersCount = $orders->where('status', \App\Enums\OrderStatus::SIAP_KIRIM->value)->count();
+        $shippingOrdersCount = $orders->where('status', \App\Enums\OrderStatus::DALAM_PENGIRIMAN->value)->count();
+        $doneOrdersCount = $orders->whereIn('status', [
+            \App\Enums\OrderStatus::SELESAI->value,
+            \App\Enums\OrderStatus::SELESAI_CATATAN->value,
+        ])->count();
 
-        $paidOrdersCount = count($paidOrders);
-        $readyOrdersCount = count($readyOrders);
-        $shippingOrdersCount = count($shippingOrders);
-        $doneOrdersCount = count($doneOrders);
-
-        $rows = [];
-        foreach ($orders->values() as $index => $order) {
-            $clientName = $order->user?->company_name ?: ($order->user?->name ?: 'Mitra Klien GPA');
-            $address = $order->delivery_address ?: 'Gudang Utama Klien';
-            $totalWeight = (float) $order->orderItems->sum('ordered_qty');
-
-            $driver = $order->driver;
-            $driverName = $driver?->name ?: 'Belum Ditugaskan';
-            $plateNumber = $order->vehicle_plate_number ?: '—';
-            $armadaName = $driver ? 'Armada Logistik GPA' : 'Menunggu Penugasan';
-
-            $sjNumber = $order->surat_jalan_number ?: ('SJ-GPA-' . date('Ym') . '-' . str_pad($order->id, 4, '0', STR_PAD_LEFT));
-            
-            // Aturan SOP 1.2: Hanya status LUNAS yang siap diterbitkan Surat Jalan
-            $isPaid = ($order->status === 'LUNAS');
-            $isIssued = in_array($order->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']);
-
-            $itemLines = $order->orderItems->map(function ($it, $lineIdx) {
-                $qty = (float) $it->ordered_qty;
-                return [
-                    'no'        => $lineIdx + 1,
-                    'commodity' => $it->product?->name ?: 'Komoditas Sayur',
-                    'lot'       => 'Wadah Krat Standar GPA',
-                    'estimate'  => number_format($qty, 1, ',', '.') . ' kg',
-                    'netto'     => number_format($qty, 1, ',', '.') . ' kg',
-                    'delta'     => '0.0 kg (Tagihan Pasti)',
-                ];
-            })->all();
-
-            $rows[] = [
-                'order_id'    => $order->id,
-                'id'          => $order->order_number,
-                'client'      => $clientName,
-                'warehouse'   => 'Gudang Pusat Sentra GPA',
-                'dock'        => $address,
-                'state'       => $isPaid ? 'ready' : ($isIssued ? 'issued' : 'locked'),
-                'order_status'=> $order->status,
-                'estimate'    => number_format($totalWeight, 1, ',', '.') . ' kg',
-                'netto'       => number_format($totalWeight, 1, ',', '.') . ' kg',
-                'deviation'   => 'Lunas Terverifikasi',
-                'revision'    => null,
-                'status_chip' => [
-                    'label' => $isIssued ? 'Surat Jalan Terbit (SIAP KIRIM)' : ($isPaid ? 'Pembayaran LUNAS (Siap Rilis SJ)' : 'Menunggu Pembayaran Lunas'),
-                    'class' => $isIssued ? 'bg-surface-pill text-ink-body' : ($isPaid ? 'bg-accent text-success-ink outline outline-1 outline-success-deep font-bold' : 'bg-warning-soft text-warning-deep'),
-                ],
-                'tera'        => 'Verifikator: ' . ($order->verifier?->name ?: 'Sekretariat GPA'),
-                'armada'      => $armadaName,
-                'plate'       => $plateNumber,
-                'driver'      => $driverName,
-                'driver_id'   => $driver?->id,
-                'sj'          => $sjNumber,
-                'issued_at'   => ($order->updated_at ?: now())->format('d F Y (H:i') . ' WIB)',
-                'handover_at' => 'Gudang Pusat Sentra GPA',
-                'auth_key'    => 'GPA-AUTH-' . substr(hash('sha256', $sjNumber), 0, 8),
-                'document'    => [
-                    'client'       => $clientName,
-                    'drop_point'   => $address,
-                    'address'      => $address,
-                    'pic'          => 'PIC Klien: ' . ($order->user?->name ?: 'Bagian Penerimaan') . ($order->user?->phone ? ' (' . $order->user->phone . ')' : ''),
-                    'armada'       => $armadaName,
-                    'plate'        => $plateNumber,
-                    'driver'       => $driverName,
-                    'sim'          => 'SIM: ' . ($driver?->phone ?: 'Terdata di Sistem'),
-                    'chiller'      => 'Cold Chain: 4°C - 6°C',
-                    'officer'      => $order->verifier?->name ?: 'Sekretaris Operasional',
-                    'officer_role' => 'Sekretariat / Otorisasi Legalitas',
-                    'officer_note' => 'Pembayaran lunas terverifikasi. Surat jalan sah untuk pengantaran.',
-                    'estimate'     => number_format($totalWeight, 1, ',', '.') . ' kg',
-                    'netto'        => number_format($totalWeight, 1, ',', '.') . ' kg',
-                    'delta'        => '0.0 kg',
-                    'lines'        => $itemLines,
-                ],
-            ];
-        }
+        $rows = \App\Http\Resources\Sekretaris\DispatchResource::collection($orders)->resolve();
 
         return view('sekretaris.dispatch', [
             'drivers'             => $drivers,
@@ -131,21 +56,14 @@ class DispatchController extends Controller
      * Penerbitan Surat Jalan resmi & penugasan supir armada (SOP Penerbitan)
      * Hanya pesanan dengan status LUNAS yang berhak diterbitkan Surat Jalan.
      */
-    public function issue(Request $request, int $id)
+    public function issue(\App\Http\Requests\Sekretaris\AssignDriverRequest $request, Order $order)
     {
-        $order = Order::findOrFail($id);
-
         // Validasi ketat gerbang SOP: Hanya pesanan LUNAS yang boleh diterbitkan Surat Jalan
         if ($order->status !== 'LUNAS' && $order->status !== 'SIAP_KIRIM') {
             return back()->withErrors([
                 'error' => "Penerbitan Surat Jalan DITOLAK: Pesanan #{$order->order_number} belum berstatus LUNAS. Pembayaran wajib diverifikasi terlebih dahulu sebelum Surat Jalan dapat dicetak."
             ]);
         }
-
-        $request->validate([
-            'driver_id'            => 'nullable|exists:users,id',
-            'vehicle_plate_number' => 'nullable|string|max:20',
-        ]);
 
         $driverId = $request->input('driver_id') ?: ($order->driver_id ?: User::where('role', 'ARMADA')->first()?->id);
         $plate = $request->input('vehicle_plate_number') ?: ($order->vehicle_plate_number ?: 'B 9014 KPA');
@@ -158,7 +76,7 @@ class DispatchController extends Controller
             if ($lastSj) {
                 $seq = ((int) substr($lastSj->surat_jalan_number, -4)) + 1;
             }
-            $sjNumber = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+            $sjNumber = $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
         }
 
         $order->update([
@@ -189,9 +107,8 @@ class DispatchController extends Controller
     /**
      * Memperbarui / menugaskan supir armada ke pesanan
      */
-    public function assignDriver(Request $request, int $id)
+    public function assignDriver(Request $request, Order $order)
     {
-        $order = Order::findOrFail($id);
 
         // SOP Penugasan Armada: Supir HANYA bisa dipilih/diubah SEBELUM Surat Jalan diterbitkan
         if (in_array($order->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) || !empty($order->surat_jalan_number)) {

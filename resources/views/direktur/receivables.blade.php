@@ -292,7 +292,7 @@
             </header>
 
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[1080px] border-collapse text-left">
+                <table class="w-full border-collapse text-left">
                     <thead>
                         <tr class="border-b border-line-board bg-surface-shell">
                             <th scope="col" class="px-4 py-3 text-[11px] font-bold uppercase leading-[14px] tracking-[0.55px] text-ink-body {{ $mono }}">

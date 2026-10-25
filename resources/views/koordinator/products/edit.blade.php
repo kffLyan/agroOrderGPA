@@ -69,7 +69,7 @@
                 <label for="minimum_order" class="block text-xs font-semibold text-slate-700 mb-1">
                     Min. Pemesanan <span class="text-rose-500">*</span>
                 </label>
-                <input type="number" id="minimum_order" name="minimum_order" value="{{ old('minimum_order', $product->minimum_order) }}" min="0.1" step="0.5" required
+                <input type="number" id="minimum_order" name="minimum_order" value="{{ old('minimum_order', $product->minimum_order) }}" min="0.1" step="any" required
                     class="w-full rounded border border-slate-300 px-3 py-2 text-xs font-mono focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600">
             </div>
         </div>

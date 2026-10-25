@@ -43,4 +43,9 @@ class Contract extends Model
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
+
+    public function getStatusEnumAttribute(): ?\App\Enums\ContractStatus
+    {
+        return \App\Enums\ContractStatus::tryFrom((string) $this->status);
+    }
 }

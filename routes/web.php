@@ -45,6 +45,7 @@ use App\Http\Controllers\Armada\StatusController as ArmadaStatusController;
 use App\Http\Controllers\Prints\ReturnActController;
 use App\Http\Controllers\Prints\SecretaryInvoiceController as PrintsSecretaryInvoiceController;
 use App\Http\Controllers\Prints\SuratJalanController;
+use App\Http\Controllers\Prints\ReportPrintController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -86,18 +87,11 @@ Route::get('/errors/{code}', function ($code) {
     abort(404);
 })->where('code', '403|404|419|429|500')->name('errors.preview');
 
-// Pengalihan cerdas /dashboard utama ke dasbor masing-masing peran
+// Pengalihan cerdas /dashboard utama ke dasbor masing-masing peran berbasis Enum
 Route::middleware(['auth'])->get('/dashboard', function () {
-    $role = auth()->user()->role;
+    $roleEnum = \App\Enums\UserRole::tryFrom((string) auth()->user()?->role);
 
-    return match ($role) {
-        'DIREKTUR'    => redirect()->route('direktur.dashboard'),
-        'SEKRETARIS'  => redirect()->route('sekretaris.dashboard'),
-        'KOORDINATOR' => redirect()->route('koordinator.dashboard'),
-        'ARMADA'      => redirect()->route('armada.dashboard'),
-        'KLIEN'       => redirect()->route('klien.dashboard'),
-        default       => redirect('/'),
-    };
+    return $roleEnum ? redirect()->route($roleEnum->dashboardRoute()) : redirect('/');
 })->name('dashboard');
 
 //otentikasi login
@@ -111,7 +105,7 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name
 // Route Peran
 
 // 1. KLIEN
-Route::middleware(['auth', 'role:KLIEN'])->prefix('klien')->name('klien.')->group(function () {
+Route::middleware(['auth', 'verified', 'role:KLIEN'])->prefix('klien')->name('klien.')->group(function () {
     // Dasbor Operasional & Ringkasan Klien
     Route::get('/dashboard', [KlienDashboardController::class, 'index'])->name('dashboard');
 
@@ -127,7 +121,7 @@ Route::middleware(['auth', 'role:KLIEN'])->prefix('klien')->name('klien.')->grou
     Route::get('/orders/export', [KlienOrderController::class, 'exportCsv'])->name('orders.export');
     Route::get('/orders/create', [KlienOrderController::class, 'create'])->name('orders.create');
     Route::post('/orders', [KlienOrderController::class, 'store'])->name('orders.store');
-    Route::get('/orders/{id}', [KlienOrderController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}', [KlienOrderController::class, 'show'])->name('orders.show');
 
     // Pusat Dokumen, Faktur Konsolidasi & Unggah Bukti Bayar
     Route::get('/documents', [KlienDocumentController::class, 'index'])->name('documents');
@@ -141,7 +135,7 @@ Route::middleware(['auth', 'role:KLIEN'])->prefix('klien')->name('klien.')->grou
     Route::get('/bukti-bayar', fn() => redirect()->route('klien.payment-proof', request()->query()));
     Route::get('/dokumen', fn() => redirect()->route('klien.documents', request()->query()));
     Route::get('/pesanan', fn() => redirect()->route('klien.orders.index', request()->query()));
-    Route::get('/pesanan/{id}', fn($id) => redirect()->route('klien.orders.show', array_merge(['id' => $id], request()->query())));
+    Route::get('/pesanan/{order}', fn($order) => redirect()->route('klien.orders.show', array_merge(['order' => $order], request()->query())));
 
     // Pengajuan Kontrak Kemitraan B2B (Khusus Klien Reguler ke Direktur)
     Route::post('/contracts/propose', [KlienContractProposalController::class, 'store'])->name('contracts.propose');
@@ -155,16 +149,16 @@ Route::middleware(['auth', 'role:SEKRETARIS'])->prefix('sekretaris')->name('sekr
     // 2. Verifikasi Pesanan Masuk (PO) & Kunci Kuota Panen
     Route::get('/verifikasi', [SekretarisOrderVerificationController::class, 'index'])->name('verification');
     Route::get('/orders/verify', [SekretarisOrderVerificationController::class, 'index'])->name('orders.verify.index');
-    Route::post('/orders/{id}/approve', [SekretarisOrderVerificationController::class, 'approve'])->name('orders.approve');
-    Route::post('/orders/{id}/reject', [SekretarisOrderVerificationController::class, 'reject'])->name('orders.reject');
+    Route::post('/orders/{order}/approve', [SekretarisOrderVerificationController::class, 'approve'])->name('orders.approve');
+    Route::post('/orders/{order}/reject', [SekretarisOrderVerificationController::class, 'reject'])->name('orders.reject');
 
     // 3. Kesiapan Buffer Stock & Monitoring Stok Gudang
     Route::get('/stok', [SekretarisInventoryController::class, 'index'])->name('inventory');
 
     // 4. Surat Jalan & Dispatch Armada Logistik (SOP 1.2: Hanya pesanan LUNAS)
     Route::get('/surat-jalan', [SekretarisDispatchController::class, 'index'])->name('dispatch');
-    Route::post('/surat-jalan/{id}/terbitkan', [SekretarisDispatchController::class, 'issue'])->name('dispatch.issue');
-    Route::post('/surat-jalan/{id}/assign-driver', [SekretarisDispatchController::class, 'assignDriver'])->name('dispatch.assign-driver');
+    Route::post('/surat-jalan/{order}/terbitkan', [SekretarisDispatchController::class, 'issue'])->name('dispatch.issue');
+    Route::post('/surat-jalan/{order}/assign-driver', [SekretarisDispatchController::class, 'assignDriver'])->name('dispatch.assign-driver');
 
     // 5. Faktur Konsolidasi & Penagihan Tempo B2B
     Route::get('/faktur', [SekretarisInvoiceController::class, 'index'])->name('invoices');
@@ -172,8 +166,8 @@ Route::middleware(['auth', 'role:SEKRETARIS'])->prefix('sekretaris')->name('sekr
 
     // 6. Verifikasi Pembayaran & Pencocokan Rekening Giro
     Route::get('/pembayaran', [SekretarisPaymentController::class, 'index'])->name('payments');
-    Route::post('/pembayaran/{id}/approve', [SekretarisPaymentController::class, 'approve'])->name('payments.approve');
-    Route::post('/pembayaran/{id}/reject', [SekretarisPaymentController::class, 'reject'])->name('payments.reject');
+    Route::post('/pembayaran/{payment}/approve', [SekretarisPaymentController::class, 'approve'])->name('payments.approve');
+    Route::post('/pembayaran/{payment}/reject', [SekretarisPaymentController::class, 'reject'])->name('payments.reject');
 
     // 7. Rekap Laporan & Jurnal Harian Operasional
     Route::get('/laporan', [SekretarisReportController::class, 'index'])->name('reports');
@@ -264,19 +258,19 @@ Route::middleware(['auth', 'role:DIREKTUR'])->prefix('direktur')->name('direktur
     // 5. Otorisasi Kontrak Khusus & Diskon Volume B2B
     Route::get('/contracts/approval', [ContractController::class, 'approval'])->name('contracts.approval');
     Route::post('/contracts/batch-approve', [ContractController::class, 'batchApprove'])->name('contracts.batch-approve');
-    Route::post('/contracts/{id}/reject', [ContractController::class, 'reject'])->name('contracts.reject');
-    Route::post('/contracts/{id}/revision', [ContractController::class, 'requestRevision'])->name('contracts.revision');
+    Route::post('/contracts/{contract}/reject', [ContractController::class, 'reject'])->name('contracts.reject');
+    Route::post('/contracts/{contract}/revision', [ContractController::class, 'requestRevision'])->name('contracts.revision');
     
     // CRUD Penuh Kontrak Kemitraan
     Route::get('/contracts', [ContractController::class, 'index'])->name('contracts.index');
     Route::get('/contracts/create', [ContractController::class, 'create'])->name('contracts.create');
     Route::post('/contracts', [ContractController::class, 'store'])->name('contracts.store');
-    Route::get('/contracts/{id}', [ContractController::class, 'show'])->name('contracts.show');
-    Route::get('/contracts/{id}/edit', [ContractController::class, 'edit'])->name('contracts.edit');
-    Route::put('/contracts/{id}', [ContractController::class, 'update'])->name('contracts.update');
-    Route::delete('/contracts/{id}', [ContractController::class, 'destroy'])->name('contracts.destroy');
-    Route::post('/contracts/{id}/approve', [ContractController::class, 'approve'])->name('contracts.approve');
-    Route::post('/contracts/{id}/terminate', [ContractController::class, 'terminate'])->name('contracts.terminate');
+    Route::get('/contracts/{contract}', [ContractController::class, 'show'])->name('contracts.show');
+    Route::get('/contracts/{contract}/edit', [ContractController::class, 'edit'])->name('contracts.edit');
+    Route::put('/contracts/{contract}', [ContractController::class, 'update'])->name('contracts.update');
+    Route::delete('/contracts/{contract}', [ContractController::class, 'destroy'])->name('contracts.destroy');
+    Route::post('/contracts/{contract}/approve', [ContractController::class, 'approve'])->name('contracts.approve');
+    Route::post('/contracts/{contract}/terminate', [ContractController::class, 'terminate'])->name('contracts.terminate');
 
     // 6. Laporan Penjualan Eksekutif - Status Terkunci (Immutable Archive)
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
@@ -305,7 +299,7 @@ Route::middleware(['auth', 'role:DIREKTUR'])->prefix('direktur')->name('direktur
     Route::resource('users', UserController::class);
 
     // 9. Inspeksi Pengawasan Pesanan Terintegrasi
-    Route::get('/orders/{id}', [OrderInspectionController::class, 'show'])->name('orders.show');
+    Route::get('/orders/{order}', [OrderInspectionController::class, 'show'])->name('orders.show');
 });
 
 Route::middleware('auth')->group(function () {
@@ -314,11 +308,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Dokumen Cetak Format Resmi A4 (Surat Jalan, Faktur Penagihan, Berita Acara Retur)
+// Dokumen Cetak Format Resmi A4 (Surat Jalan, Faktur Penagihan, Berita Acara Retur, Laporan Eksekutif)
 Route::middleware('auth')->group(function () {
     Route::get('/cetak/surat-jalan', SuratJalanController::class)->name('prints.surat-jalan');
     Route::get('/cetak/faktur/{invoice}', PrintsSecretaryInvoiceController::class)->name('prints.invoice');
     Route::get('/cetak/berita-acara-retur', ReturnActController::class)->name('prints.return-act');
+    Route::get('/cetak/laporan-eksekutif', ReportPrintController::class)->name('prints.report');
 });
 
 // Fallback rute untuk file bukti serah terima PoD agar tidak terblokir 403

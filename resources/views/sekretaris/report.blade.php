@@ -405,7 +405,7 @@
 
             <div style="display:none" x-show="activeTab">
                 <div class="gpa-scroll-x">
-                    <table class="w-full min-w-[1320px] border-collapse text-left">
+                    <table class="w-full border-collapse text-left">
                         <thead class="bg-brand text-accent">
                             <tr>
                                 <th scope="col" class="px-3 py-3 gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-right">#</th>
@@ -669,7 +669,7 @@
                         </div>
 
                         <p class="mt-2 max-w-4xl text-xs leading-5 text-ink-body">
-                            Laporan ini merupakan rekapitulasi resmi transaksi PT Guna Panen Agro yang siap diserahkan kepada Direksi.
+                            Laporan ini merupakan rekapitulasi resmi transaksi PT Green Pasundan Agriculture yang siap diserahkan kepada Direksi.
                         </p>
                     </div>
                 </div>

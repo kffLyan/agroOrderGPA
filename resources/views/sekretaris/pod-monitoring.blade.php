@@ -176,7 +176,7 @@
             </header>
 
             <div class="gpa-scroll-x">
-                <table class="w-full min-w-[64rem] border-collapse text-left text-xs">
+                <table class="w-full border-collapse text-left text-xs">
                     <thead>
                         <tr class="border-b border-line-hair bg-surface-muted text-[11px] font-bold uppercase tracking-wider text-ink-body">
                             <th scope="col" class="px-4 py-3">No. SJ &amp; Order</th>

@@ -118,7 +118,7 @@ class GovernanceController extends Controller
         $this->governanceService->addAuditLog(
             'PLT_SUCCESSION_CONFIG',
             'SEC-PLT-MANDATE',
-            "Mandat Plt Direktur {$statusStr}. Penerima: " . ($validated['plt_delegate_name'] ?? '-') . ", Plafon: Rp " . number_format($validated['plt_ceiling_amount'] ?? 0, 0, ',', '.'),
+            "Mandat Plt Direktur {$statusStr}. Penerima: " . ($delegateName ?: '-') . ", Plafon: Rp " . number_format($ceiling ?? 0, 0, ',', '.'),
             $directorName,
             'DIR-01 [ROOT-ACCESS]',
             'SEALED'

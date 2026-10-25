@@ -66,19 +66,35 @@
     @endif
 
     {{-- INFO SYNC BANNER --}}
-    <div class="mt-6 flex flex-col gap-3 rounded-xl border border-line bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex items-center gap-2.5">
-            <span class="font-mono text-xs font-bold uppercase text-ink">info</span>
-            <p class="font-mono text-xs text-ink">
-                Data profil disinkronisasi dengan kontrak aktif <span class="font-bold underline decoration-accent decoration-2 underline-offset-2">{{ $contractNumber }}</span>.
-            </p>
+    @if ($isB2b)
+        <div class="mt-6 flex flex-col gap-3 rounded-xl border border-line bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-2.5">
+                <span class="font-mono text-xs font-bold uppercase text-ink">info</span>
+                <p class="font-mono text-xs text-ink">
+                    Data profil disinkronisasi dengan kontrak aktif <span class="font-bold underline decoration-accent decoration-2 underline-offset-2">{{ $contractNumber }}</span>.
+                </p>
+            </div>
+            <div>
+                <span class="inline-flex items-center rounded border border-line bg-canvas px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink">
+                    STATUS: AKTIF B2B
+                </span>
+            </div>
         </div>
-        <div>
-            <span class="inline-flex items-center rounded border border-line bg-canvas px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink">
-                STATUS: AKTIF
-            </span>
+    @else
+        <div class="mt-6 flex flex-col gap-3 rounded-xl border border-line bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-2.5">
+                <span class="font-mono text-xs font-bold uppercase text-ink">info</span>
+                <p class="font-mono text-xs text-ink">
+                    Status akun saat ini adalah <strong class="text-brand">Klien Reguler (Spot Market)</strong>. Transaksi pemesanan menggunakan metode pembayaran di muka.
+                </p>
+            </div>
+            <div>
+                <span class="inline-flex items-center rounded border border-line bg-canvas px-2.5 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink-subtle">
+                    KLIEN REGULER
+                </span>
+            </div>
         </div>
-    </div>
+    @endif
 
     {{-- MAIN FORM & SIDEBAR GRID --}}
     <form method="POST" action="{{ route('profile.update') }}" class="mt-6">
@@ -92,7 +108,7 @@
                 <div class="rounded-xl border border-line bg-white p-6 shadow-sm">
                     <div class="flex items-center justify-between border-b border-line pb-4">
                         <div class="flex items-center gap-2">
-                            <span class="font-mono text-xs text-ink-subtle">person</span>
+                            <x-gpa.icon name="user" class="h-4 w-4 text-ink-subtle" />
                             <h2 class="font-mono text-xs font-bold uppercase tracking-wider text-ink">
                                 01. INFORMASI PROFIL & ENTITAS USAHA
                             </h2>
@@ -119,14 +135,40 @@
 
                         {{-- Email & Telepon Grid --}}
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <div>
-                                <label for="email" class="block font-mono text-[11px] font-bold uppercase tracking-wider text-ink">
-                                    Alamat Email Resmi <span class="text-red-500">*</span>
-                                </label>
-                                <input id="email" name="email" type="email" required
-                                    value="{{ old('email', $user->email) }}"
-                                    placeholder="purchasing@kulinerprima.co.id"
-                                    class="mt-1.5 block w-full rounded-lg border border-line bg-canvas/40 px-3.5 py-2.5 font-sans text-sm text-ink placeholder:text-ink-subtle/60 focus:border-brand focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand">
+                            <div x-data="{ editingEmail: false }">
+                                <div class="flex items-center justify-between">
+                                    <label for="email" class="block font-mono text-[11px] font-bold uppercase tracking-wider text-ink">
+                                        Alamat Email Resmi <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="flex items-center gap-1.5">
+                                        @if ($user->hasVerifiedEmail())
+                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 font-mono text-[10px] font-bold text-emerald-700 border border-emerald-300 shadow-xs">
+                                                <x-gpa.icon name="check-circle" class="h-3.5 w-3.5 text-emerald-600" />
+                                                <span>TERVERIFIKASI OTP</span>
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 font-mono text-[10px] font-bold text-amber-700 border border-amber-300">
+                                                <x-gpa.icon name="alert-triangle" class="h-3 w-3 text-amber-600" />
+                                                <span>BELUM VERIFIKASI</span>
+                                            </span>
+                                        @endif
+                                        <button type="button" @click="editingEmail = !editingEmail"
+                                            class="font-mono text-[10px] font-semibold text-brand hover:underline ml-1">
+                                            <span x-text="editingEmail ? 'Batal' : 'Ubah'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="relative mt-1.5">
+                                    <input id="email" name="email" type="email" required
+                                        value="{{ old('email', $user->email) }}"
+                                        :readonly="!editingEmail"
+                                        :class="!editingEmail ? 'bg-canvas/80 cursor-not-allowed text-ink font-medium' : 'bg-white focus:border-brand focus:ring-1 focus:ring-brand'"
+                                        placeholder="purchasing@kulinerprima.co.id"
+                                        class="block w-full rounded-lg border border-line px-3.5 py-2.5 font-sans text-sm text-ink placeholder:text-ink-subtle/60 focus:outline-none transition-colors">
+                                </div>
+                                <p x-show="editingEmail" class="mt-1 font-mono text-[10px] text-amber-700">
+                                    Perhatian: Mengubah email akan memperbarui kontak korespondensi resmi akun Anda.
+                                </p>
                                 @error('email')
                                     <p class="mt-1 font-mono text-[11px] text-red-600">{{ $message }}</p>
                                 @enderror
@@ -182,7 +224,7 @@
                 <div class="rounded-xl border border-line bg-white p-6 shadow-sm">
                     <div class="flex items-center justify-between border-b border-line pb-4">
                         <div class="flex items-center gap-2">
-                            <span class="font-mono text-xs text-ink-subtle">lock</span>
+                            <x-gpa.icon name="lock" class="h-4 w-4 text-ink-subtle" />
                             <h2 class="font-mono text-xs font-bold uppercase tracking-wider text-ink">
                                 02. PENGATURAN KATA SANDI (SECURITY)
                             </h2>
@@ -208,7 +250,14 @@
                                     class="block w-full rounded-lg border border-line bg-canvas/40 px-3.5 py-2.5 pr-24 font-mono text-sm text-ink placeholder:text-ink-subtle/60 focus:border-brand focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand">
                                 <button type="button" @click="show = !show"
                                     class="absolute inset-y-0 right-0 flex items-center px-3 font-mono text-[11px] text-ink-subtle hover:text-brand">
-                                    <span x-text="show ? 'hide' : 'visibility'"></span>
+                                    <span x-show="!show" class="flex items-center gap-1">
+                                        <x-gpa.icon name="eye" class="h-4 w-4" />
+                                        <span>Lihat</span>
+                                    </span>
+                                    <span x-show="show" x-cloak class="flex items-center gap-1 text-brand">
+                                        <x-gpa.icon name="eye-off" class="h-4 w-4" />
+                                        <span>Tutup</span>
+                                    </span>
                                 </button>
                             </div>
                             @error('current_password')
@@ -228,7 +277,14 @@
                                         class="block w-full rounded-lg border border-line bg-canvas/40 px-3.5 py-2.5 pr-20 font-mono text-sm text-ink placeholder:text-ink-subtle/60 focus:border-brand focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand">
                                     <button type="button" @click="show = !show"
                                         class="absolute inset-y-0 right-0 flex items-center px-3 font-mono text-[11px] text-ink-subtle hover:text-brand">
-                                        <span x-text="show ? 'hide' : 'visibility'"></span>
+                                        <span x-show="!show" class="flex items-center gap-1">
+                                            <x-gpa.icon name="eye" class="h-4 w-4" />
+                                            <span>Lihat</span>
+                                        </span>
+                                        <span x-show="show" x-cloak class="flex items-center gap-1 text-brand">
+                                            <x-gpa.icon name="eye-off" class="h-4 w-4" />
+                                            <span>Tutup</span>
+                                        </span>
                                     </button>
                                 </div>
                                 @error('password')
@@ -246,7 +302,14 @@
                                         class="block w-full rounded-lg border border-line bg-canvas/40 px-3.5 py-2.5 pr-20 font-mono text-sm text-ink placeholder:text-ink-subtle/60 focus:border-brand focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand">
                                     <button type="button" @click="show = !show"
                                         class="absolute inset-y-0 right-0 flex items-center px-3 font-mono text-[11px] text-ink-subtle hover:text-brand">
-                                        <span x-text="show ? 'hide' : 'visibility'"></span>
+                                        <span x-show="!show" class="flex items-center gap-1">
+                                            <x-gpa.icon name="eye" class="h-4 w-4" />
+                                            <span>Lihat</span>
+                                        </span>
+                                        <span x-show="show" x-cloak class="flex items-center gap-1 text-brand">
+                                            <x-gpa.icon name="eye-off" class="h-4 w-4" />
+                                            <span>Tutup</span>
+                                        </span>
                                     </button>
                                 </div>
                             </div>
@@ -258,13 +321,13 @@
                 <div class="flex flex-col-reverse items-stretch justify-between gap-3 pt-2 sm:flex-row sm:items-center">
                     <button type="reset"
                         class="inline-flex items-center justify-center gap-2 rounded-lg border border-line bg-white px-5 py-2.5 font-mono text-xs font-semibold text-ink hover:bg-canvas transition-colors shadow-sm">
-                        <span class="text-ink-subtle">close</span>
+                        <x-gpa.icon name="x" class="h-3.5 w-3.5 text-ink-subtle" />
                         <span>[ Batal / Reset ]</span>
                     </button>
 
                     <button type="submit"
                         class="inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-6 py-2.5 font-mono text-xs font-bold text-white hover:bg-brand transition-colors shadow-sm">
-                        <span class="text-accent">save</span>
+                        <x-gpa.icon name="save" class="h-3.5 w-3.5 text-accent" />
                         <span>[ Simpan Perubahan Profil ]</span>
                     </button>
                 </div>
@@ -276,13 +339,13 @@
                 <div class="rounded-xl border border-line bg-white p-6 shadow-sm">
                     <div class="flex items-center justify-between border-b border-line pb-4">
                         <div class="flex items-center gap-2">
-                            <span class="font-mono text-xs text-ink-subtle">verified</span>
+                            <x-gpa.icon name="shield" class="h-4 w-4 text-ink-subtle" />
                             <h2 class="font-mono text-xs font-bold uppercase tracking-wider text-ink">
                                 RINGKASAN KEMITRAAN
                             </h2>
                         </div>
-                        <span class="rounded bg-ink px-2 py-0.5 font-mono text-[10px] font-bold text-white">
-                            B2B
+                        <span class="rounded {{ $isB2b ? 'bg-ink text-accent' : 'bg-canvas border border-line text-ink' }} px-2 py-0.5 font-mono text-[10px] font-bold uppercase">
+                            {{ $isB2b ? 'B2B KONTRAK' : 'REGULER' }}
                         </span>
                     </div>
 
@@ -291,27 +354,49 @@
                         <p class="mt-0.5 font-sans text-sm font-bold text-ink">
                             {{ $accountType }}
                         </p>
-                        <p class="mt-1 font-mono text-[11px] text-ink-subtle">
-                            No. PKS: <span class="text-ink font-semibold">{{ $contractNumber }}</span>
-                        </p>
+                        @if ($isB2b)
+                            <p class="mt-1 font-mono text-[11px] text-ink-subtle">
+                                No. PKS: <span class="text-ink font-semibold">{{ $contractNumber }}</span>
+                            </p>
+                        @else
+                            <p class="mt-1 font-mono text-[11px] text-ink-subtle">
+                                Metode Pembayaran: <span class="text-brand font-semibold">Spot Market (Bayar di Muka)</span>
+                            </p>
+                        @endif
                     </div>
 
-                    <div class="mt-5 border-t border-line pt-4">
-                        <div class="flex items-center justify-between text-xs">
-                            <span class="font-mono text-[11px] text-ink-subtle">Plafon Kredit:</span>
-                            <span class="font-mono font-bold text-ink">Rp {{ number_format($creditLimit, 0, ',', '.') }}</span>
-                        </div>
+                    @if ($isB2b)
+                        <div class="mt-5 border-t border-line pt-4">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-mono text-[11px] text-ink-subtle">Plafon Kredit:</span>
+                                <span class="font-mono font-bold text-ink">Rp {{ number_format($creditLimit, 0, ',', '.') }}</span>
+                            </div>
 
-                        {{-- Progress Bar Plafon --}}
-                        <div class="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-canvas border border-line">
-                            <div class="h-full rounded-full bg-ink transition-all" style="width: {{ 100 - $creditPercent }}%"></div>
-                        </div>
+                            {{-- Progress Bar Plafon --}}
+                            <div class="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-canvas border border-line">
+                                <div class="h-full rounded-full bg-ink transition-all" style="width: {{ 100 - $creditPercent }}%"></div>
+                            </div>
 
-                        <div class="mt-2 flex items-center justify-between text-xs">
-                            <span class="font-mono text-[11px] text-ink-subtle">Sisa Kuota:</span>
-                            <span class="font-mono font-bold text-ink">Rp {{ number_format($availableCredit, 0, ',', '.') }}</span>
+                            <div class="mt-2 flex items-center justify-between text-xs">
+                                <span class="font-mono text-[11px] text-ink-subtle">Sisa Kuota:</span>
+                                <span class="font-mono font-bold text-ink">Rp {{ number_format($availableCredit, 0, ',', '.') }}</span>
+                            </div>
                         </div>
-                    </div>
+                    @else
+                        <div class="mt-5 border-t border-line pt-4">
+                            <div class="rounded-lg bg-surface-shell/50 border border-line p-3.5">
+                                <p class="font-mono text-[11px] font-bold text-ink">Fasilitas Kontrak B2B Belum Aktif</p>
+                                <p class="mt-1 font-sans text-xs text-ink-subtle leading-relaxed">
+                                    Fasilitas plafon kredit TOP Tempo 14–30 hari dan harga terkunci komoditas hanya berlaku untuk mitra kontrak yang telah disahkan Direktur GPA.
+                                </p>
+                                <a href="{{ route('klien.dashboard') }}"
+                                    class="mt-3 flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 font-mono text-xs font-bold text-white hover:bg-brand-hover transition-colors shadow-sm">
+                                    <span>[ Ajukan Kemitraan Kontrak B2B ]</span>
+                                    <x-gpa.icon name="arrow-right" class="h-3.5 w-3.5 text-white" />
+                                </a>
+                            </div>
+                        </div>
+                    @endif
 
                     <div class="mt-5 space-y-3 border-t border-line pt-4 font-mono text-xs">
                         <div class="flex items-start justify-between gap-2">
@@ -320,7 +405,9 @@
                         </div>
                         <div class="flex items-start justify-between gap-2">
                             <span class="text-ink-subtle text-[11px]">Verifikasi Akun:</span>
-                            <span class="text-right font-semibold text-ink">Terverifikasi (OTP & PKS)</span>
+                            <span class="text-right font-semibold text-ink">
+                                {{ $isB2b ? 'Terverifikasi (OTP & PKS Resmi)' : 'Terverifikasi (Email OTP)' }}
+                            </span>
                         </div>
                         <div class="flex items-start justify-between gap-2">
                             <span class="text-ink-subtle text-[11px]">Layanan Bantuan:</span>
@@ -332,7 +419,7 @@
                 {{-- CARD: BUTUH BANTUAN PROFIL? --}}
                 <div class="rounded-xl border border-line bg-white p-6 shadow-sm">
                     <div class="flex items-center gap-2">
-                        <span class="font-mono text-xs text-ink-subtle">support_agent</span>
+                        <x-gpa.icon name="headset" class="h-4 w-4 text-ink-subtle" />
                         <h2 class="font-sans text-sm font-bold text-ink">
                             Butuh Bantuan Profil?
                         </h2>
@@ -343,7 +430,7 @@
                     <a href="{{ route('public.kontak') }}"
                         class="mt-4 inline-flex items-center gap-1.5 font-mono text-xs font-bold text-ink hover:text-brand hover:underline">
                         <span>[ Hubungi Helpdesk SLA 24/7 ]</span>
-                        <span>&rarr;</span>
+                        <x-gpa.icon name="arrow-right" class="h-3.5 w-3.5 text-ink" />
                     </a>
                 </div>
             </div>

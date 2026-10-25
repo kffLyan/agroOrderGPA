@@ -4,99 +4,11 @@
 
 @section('content')
     @php
-        $user = auth()->user();
-        $lockPeriod = $periodLock['period'] ?? 'Kuartal IV 2026 (Okt - Des 2026)';
-        $lockedAt = $periodLock['locked_at'] ?? '24 Okt 2026 23:59:59 WIB';
-        $lockedBy = $periodLock['locked_by'] ?? ($user?->name ?: 'Direktur GPA');
-        $sha256Hash = $periodLock['sha256_hash'] ?? '0x8F9C4A217B1E90D4CC67F814E32A0B7D18C992E5F67104B8A293CD0891DE33';
-
-        // Format commodities
-        $commRev = 0;
-        $cList = $commodityList ?? [];
-        foreach ($cList as $idx => $c) {
-            $commRev += $cList[$idx]['omzet'] = (int) round($c['tera_kg'] * $c['price']);
-        }
-        $poTotal = array_sum(array_column($cList, 'po_kg'));
-        $teraTotal = array_sum(array_column($cList, 'tera_kg'));
-        $shrinkageTotal = $poTotal - $teraTotal;
-        $marginTotal = array_sum(array_column($cList, 'margin'));
-
-        foreach ($cList as $idx => $row) {
-            $shrinkage = $row['po_kg'] - $row['tera_kg'];
-            $dev = round(($shrinkage / ($row['po_kg'] ?: 1)) * 100, 2);
-            $cList[$idx]['po_label']            = number_format($row['po_kg'], 0, ',', '.');
-            $cList[$idx]['tera_label']          = number_format($row['tera_kg'], 0, ',', '.');
-            $cList[$idx]['shrinkage_kg']        = $shrinkage;
-            $cList[$idx]['deviation']           = $dev;
-            $cList[$idx]['deviation_label']     = '-' . number_format($shrinkage, 0, ',', '.') . ' kg (-' . $dev . '%)';
-            $cList[$idx]['price_label']         = 'Rp ' . number_format($row['price'], 0, ',', '.');
-            $cList[$idx]['revenue']             = $row['omzet'];
-            $cList[$idx]['revenue_label']       = 'Rp ' . number_format($row['omzet'], 0, ',', '.');
-            $cList[$idx]['contribution']        = round(($row['omzet'] / ($commRev ?: 1)) * 100, 2);
-            $cList[$idx]['contribution_label']  = number_format(($row['omzet'] / ($commRev ?: 1)) * 100, 2, '.', '') . '%';
-            $cList[$idx]['margin_label']        = number_format($row['margin'], 1, '.', '') . '%';
-        }
-
-        // Format clients
-        $clList = $clientList ?? [];
-        foreach ($clList as $idx => $row) {
-            $rec = $row['gross'] - $row['settled'];
-            $clList[$idx]['volume_label']     = number_format($row['volume_kg'], 0, ',', '.') . ' kg';
-            $clList[$idx]['po_label']         = $row['po_count'] . ' PO';
-            $clList[$idx]['gross_label']      = 'Rp ' . number_format($row['gross'], 0, ',', '.');
-            $clList[$idx]['settled_label']    = 'Rp ' . number_format($row['settled'], 0, ',', '.');
-            $clList[$idx]['receivable']       = $rec;
-            $clList[$idx]['receivable_label'] = $rec > 0 ? 'Rp ' . number_format($rec, 0, ',', '.') : 'Rp 0';
-            $clList[$idx]['term_label']       = $row['term_days'] > 0 ? 'TOP ' . $row['term_days'] . ' Hari' : $row['due_label'];
-            $clList[$idx]['status']           = $row['term_days'] > 0 ? 'LANCAR' : 'LUNAS';
-            $clList[$idx]['status_label']     = $row['term_days'] > 0 ? 'LANCAR (' . $row['due_label'] . ')' : 'LUNAS 100%';
-            $clList[$idx]['status_tone']      = $row['term_days'] > 0 ? 'lancar' : 'lunas';
-        }
-
-        $cPoTotal = array_sum(array_column($clList, 'po_count'));
-        $cVolTotal = array_sum(array_column($clList, 'volume_kg'));
-        $cGrossTotal = array_sum(array_column($clList, 'gross'));
-        $cSettledTotal = array_sum(array_column($clList, 'settled'));
-        $cRecTotal = $cGrossTotal - $cSettledTotal;
-        $cTerms = array_values(array_filter(array_column($clList, 'term_days')));
-        $avgTerm = !empty($cTerms) ? round(array_sum($cTerms) / count($cTerms), 1) : 0.0;
-
-        $auditEntries = [
-            [
-                'timestamp' => '[2026-10-24 23:45:10 WIB]',
-                'tag'       => '> SYS_VERIFY:',
-                'message'   => '5 komoditas timbangan tera gudang tuntas dicocokkan (' . number_format($teraTotal, 0, ',', '.') . ' kg).',
-            ],
-            [
-                'timestamp' => '[2026-10-24 23:51:22 WIB]',
-                'tag'       => '> AR_CLEARING:',
-                'message'   => 'Piutang berjalan Rp ' . number_format($openReceivables, 0, ',', '.') . ' diverifikasi terhadap 4 kontrak aktif.',
-            ],
-            [
-                'timestamp' => '[2026-10-24 23:58:05 WIB]',
-                'tag'       => '> DIR_AUTH:',
-                'message'   => $lockedBy . ' memasukkan token kunci otorisasi biometric.',
-            ],
-            [
-                'timestamp'   => '[2026-10-24 23:59:59 WIB]',
-                'tag'         => '> STATUS_LOCK_ENGAGED:',
-                'message'     => 'Record disahkan. SHA-256 dibuat.',
-                'trailing'    => 'Write-access dicabut permanen.',
-                'highlighted' => true,
-            ],
-        ];
-
-        $sealData = [
-            'certificate' => 'GPA-AUDIT-CERT-2026-Q4',
-            'hash'        => $sha256Hash,
-            'signatory'   => $lockedBy,
-        ];
-
         $ledgerFont = 'font-mono tracking-[0.2px]';
     @endphp
 
     <div class="flex flex-col gap-5"
-        x-data="directorReport(@js($cList), @js($clList), @js($auditEntries), @js($sealData))">
+        x-data="directorReport(@js($commodityList), @js($clientList), @js($auditEntries), @js($sealData))">
 
         {{-- ---------- Banner arsip terkunci ---------- --}}
         <section class="relative overflow-hidden rounded-xl bg-brand p-6 text-white shadow-card">
@@ -330,7 +242,7 @@
             </header>
 
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[1040px] border-collapse text-left">
+                <table class="w-full border-collapse text-left">
                     <thead>
                         <tr class="border-b border-line-hair bg-surface-base">
                             <th scope="col" class="sticky left-0 z-10 bg-surface-base px-4 py-3 text-[10px] font-bold uppercase leading-4 tracking-[0.88px] text-ink-subtle gpa-micro-bold">
@@ -363,7 +275,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($cList as $row)
+                        @forelse ($commodityList as $row)
                             <tr class="border-b border-line-faint transition-colors hover:bg-surface-base">
                                 <th scope="row"
                                     class="sticky left-0 z-10 bg-surface px-4 py-3 text-[12px] font-semibold text-ink">
@@ -411,7 +323,7 @@
                             <td class="px-4 py-3 text-right text-[12px] font-bold text-ink">Rp {{ number_format(round($commRev / ($teraTotal ?: 1)), 0, ',', '.') }} (Avg)</td>
                             <td class="px-4 py-3 text-right text-[13px] font-extrabold text-ink">Rp {{ number_format($commRev, 0, ',', '.') }}</td>
                             <td class="px-4 py-3 text-right text-[12px] font-bold text-ink {{ $ledgerFont }}">100.0%</td>
-                            <td class="px-4 py-3 text-right text-[12px] font-bold text-success-deep">{{ round($marginTotal / (count($cList) ?: 1), 1) }}% (Avg)</td>
+                            <td class="px-4 py-3 text-right text-[12px] font-bold text-success-deep">{{ round($marginTotal / (count($commodityList) ?: 1), 1) }}% (Avg)</td>
                             <td class="px-4 py-3 text-right">
                                 <span
                                     class="rounded-full bg-accent px-2 py-0.5 text-[9px] font-bold tracking-[0.88px] text-ink">
@@ -439,7 +351,7 @@
             </header>
 
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[1160px] border-collapse text-left">
+                <table class="w-full border-collapse text-left">
                     <thead>
                         <tr class="border-b border-line-hair bg-surface-base">
                             <th scope="col" class="sticky left-0 z-10 bg-surface-base px-4 py-3 text-[10px] font-bold uppercase leading-4 tracking-[0.88px] text-ink-subtle gpa-micro-bold">
@@ -469,7 +381,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($clList as $row)
+                        @forelse ($clientList as $row)
                             <tr class="border-b border-line-faint transition-colors hover:bg-surface-base">
                                 <th scope="row" class="sticky left-0 z-10 bg-surface px-4 py-3">
                                     <span class="block text-[12px] font-semibold leading-5 text-ink">{{ $row['name'] }}</span>

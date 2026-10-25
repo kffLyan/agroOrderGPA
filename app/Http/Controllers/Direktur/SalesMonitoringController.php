@@ -36,68 +36,19 @@ class SalesMonitoringController extends Controller
         $settledOrdersCount = Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count();
         $aov = $settledOrdersCount > 0 ? round($totalRevenue / $settledOrdersCount) : 0;
 
-        // Portofolio produk
-        $products = Product::all();
-        $portfolioRows = [];
-        $revTotal = 0;
-        $grossTotal = 0;
-        $volTotal = 0;
+        // 2. Portofolio produk via SalesPortfolioResource (Eager load untuk cegah N+1)
+        $products = Product::with('orderItems')->take(5)->get();
+        $preliminaryRows = $products->map(
+            fn ($prod) => (new \App\Http\Resources\Direktur\SalesPortfolioResource($prod, 1.0))->toArray($request)
+        )->all();
 
-        foreach ($products->take(5) as $idx => $prod) {
-            $items = OrderItem::where('product_id', $prod->id)->get();
-            $vol = (float) $items->sum('ordered_qty');
-            $rev = (float) $items->sum('subtotal');
-            $costPerKg = (float) ($prod->base_price * 0.75); // standar margin Koperasi 25%
-            $cost = $vol * $costPerKg;
-            $gross = max(0, $rev - $cost);
-            $price = $vol > 0 ? round($rev / $vol) : (float) $prod->base_price;
-            $listPrice = (float) $prod->base_price;
-            $margin = $rev > 0 ? round(($gross / $rev) * 100, 1) : 25.0;
+        $revTotal = (float) array_sum(array_column($preliminaryRows, '_rev'));
+        $grossTotal = (float) array_sum(array_column($preliminaryRows, '_gross'));
+        $volTotal = (float) array_sum(array_column($preliminaryRows, '_vol'));
 
-            $revTotal += $rev;
-            $grossTotal += $gross;
-            $volTotal += $vol;
-
-            $statusTone = match (true) {
-                $margin >= 23.0 => 'success',
-                $margin >= 19.5 => 'ink',
-                $margin >= 17.5 => 'deep',
-                default         => 'caution',
-            };
-            $statusLabel = match (true) {
-                $margin >= 23.0 => 'PRIMA',
-                $margin >= 19.5 => 'NOMINAL',
-                $margin >= 17.5 => 'STABIL',
-                default         => 'TIGHT',
-            };
-
-            $portfolioRows[] = [
-                'name'             => $prod->name,
-                'sku'              => $prod->code ?: ('KMD-0' . ($idx + 1)),
-                'volume'           => $vol,
-                'volume_label'     => number_format($vol, 0, ',', '.'),
-                'list_price_label' => 'Rp ' . number_format($listPrice, 0, ',', '.'),
-                'price_label'      => 'Rp ' . number_format($price, 0, ',', '.'),
-                'revenue_label'    => 'Rp ' . number_format($rev, 0, ',', '.'),
-                'gross_label'      => 'Rp ' . number_format($gross, 0, ',', '.'),
-                'margin'           => $margin,
-                'margin_label'     => $margin . '%',
-                'share'            => 0,
-                'share_label'      => '0%',
-                'status'           => $statusLabel,
-                'status_tone'      => $statusTone,
-                'bar_percent'      => round(min($margin, 30) / 30 * 100, 1),
-                '_rev'             => $rev,
-            ];
-        }
-
-        foreach ($portfolioRows as &$row) {
-            $share = $revTotal > 0 ? round(($row['_rev'] / $revTotal) * 100, 1) : 0;
-            $row['share'] = $share;
-            $row['share_label'] = $share . '%';
-            unset($row['_rev']);
-        }
-        unset($row);
+        $portfolioRows = $products->map(
+            fn ($prod) => (new \App\Http\Resources\Direktur\SalesPortfolioResource($prod, $revTotal))->toArray($request)
+        )->all();
 
         $grossMarginPercent = $revTotal > 0 ? round(($grossTotal / $revTotal) * 100, 1) : 0.0;
         $grossProfit = $grossTotal;

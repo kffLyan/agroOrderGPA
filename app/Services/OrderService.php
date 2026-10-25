@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Contract;
 use App\Models\Invoice;
 use App\Models\Order;
@@ -66,7 +68,7 @@ class OrderService
         }
 
         $recentOrders = Order::where('user_id', $user->id)
-            ->where('status', 'MENUNGGU_VERIFIKASI')
+            ->where('status', OrderStatus::MENUNGGU_VERIFIKASI->value)
             ->whereDate('target_delivery_date', $targetDate)
             ->where('created_at', '>=', now()->subSeconds(90))
             ->with('orderItems')
@@ -133,7 +135,7 @@ class OrderService
                 'target_delivery_date' => $data['target_delivery_date'],
                 'delivery_address'     => $data['delivery_address'],
                 'grand_total'          => $estimatedTotal,
-                'status'               => 'MENUNGGU_VERIFIKASI',
+                'status'               => OrderStatus::MENUNGGU_VERIFIKASI->value,
             ]);
 
             // 3. Simpan baris detail komoditas
@@ -158,7 +160,7 @@ class OrderService
                     'payment_method'    => $data['payment_method'],
                     'amount'            => $estimatedTotal,
                     'proof_url'         => $proofPath,
-                    'status'            => 'MENUNGGU_VERIFIKASI',
+                    'status'            => PaymentStatus::MENUNGGU_VERIFIKASI->value,
                     'paid_at'           => ($data['payment_method'] === 'TEMPO_TOP' || empty($proofPath)) ? null : now(),
                 ]);
             }
@@ -178,7 +180,7 @@ class OrderService
         return DB::transaction(function () use ($orderId, $secretaryId) {
             $order = Order::with('orderItems')->lockForUpdate()->findOrFail($orderId);
 
-            if ($order->status !== 'MENUNGGU_VERIFIKASI') {
+            if ($order->status !== OrderStatus::MENUNGGU_VERIFIKASI->value) {
                 throw new Exception("Hanya pesanan berstatus MENUNGGU_VERIFIKASI yang dapat disetujui.");
             }
 
@@ -227,7 +229,7 @@ class OrderService
             }
 
             // 2. Perbarui status pesanan menjadi MENUNGGU_PEMBAYARAN sesuai MODELING_SUMMARY.md
-            $order->status = 'MENUNGGU_PEMBAYARAN';
+            $order->status = OrderStatus::MENUNGGU_PEMBAYARAN->value;
             $order->verified_by = $secretaryId;
             $order->save();
 
@@ -245,12 +247,12 @@ class OrderService
         return DB::transaction(function () use ($orderId, $secretaryId, $reason) {
             $order = Order::lockForUpdate()->findOrFail($orderId);
 
-            if ($order->status !== 'MENUNGGU_VERIFIKASI') {
+            if ($order->status !== OrderStatus::MENUNGGU_VERIFIKASI->value) {
                 throw new Exception("Hanya pesanan berstatus MENUNGGU_VERIFIKASI yang dapat dibatalkan.");
             }
 
             $order->update([
-                'status'      => 'BATAL',
+                'status'      => OrderStatus::BATAL->value,
                 'verified_by' => $secretaryId,
             ]);
 
@@ -258,7 +260,7 @@ class OrderService
             $payment = Payment::where('order_id', $order->id)->first();
             if ($payment) {
                 $payment->update([
-                    'status'            => 'DITOLAK',
+                    'status'            => PaymentStatus::DITOLAK->value,
                     'verified_by'       => $secretaryId,
                     'verification_note' => $reason,
                 ]);
@@ -269,7 +271,7 @@ class OrderService
                     'payment_reference' => 'REJ-' . strtoupper(uniqid()),
                     'payment_method'    => 'TRANSFER_BANK',
                     'amount'            => $order->grand_total,
-                    'status'            => 'DITOLAK',
+                    'status'            => PaymentStatus::DITOLAK->value,
                     'verified_by'       => $secretaryId,
                     'verification_note' => $reason,
                 ]);

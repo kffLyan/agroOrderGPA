@@ -120,12 +120,12 @@ class DashboardController extends Controller
         }
 
         // 7. 5 Komoditas Teratas
-        $allProducts = Product::all();
+        $topProducts = Product::take(5)->withSum('orderItems', 'ordered_qty')->get();
         $totalKgAll = $totalTonnageKg ?: 1;
         $topProductsData = [];
         $palette = ['bg-ink', 'bg-brand', 'bg-success', 'bg-accent-deep', 'bg-accent-edge'];
-        foreach ($allProducts->take(5) as $idx => $p) {
-            $volKg = (float) OrderItem::where('product_id', $p->id)->sum('ordered_qty');
+        foreach ($topProducts as $idx => $p) {
+            $volKg = (float) ($p->order_items_sum_ordered_qty ?? 0);
             $volTon = round($volKg / 1000, 2);
             $share = round(($volKg / $totalKgAll) * 100);
             $topProductsData[] = [
@@ -137,18 +137,22 @@ class DashboardController extends Controller
         }
 
         // 8. Saluran Penjualan
+        $horecaKg = (float) OrderItem::whereHas('order.user', fn ($q) => $q->where('client_type', 'B2B_KONTRAK'))->sum('ordered_qty');
+        $retailKg = (float) OrderItem::whereHas('order.user', fn ($q) => $q->where('client_type', 'REGULER'))->sum('ordered_qty');
+        $manualKg = (float) OrderItem::whereHas('order', fn ($q) => $q->where('order_source', 'MANUAL_SEKRETARIS'))->sum('ordered_qty');
+
         $channelData = [
             'horeca' => [
                 'share' => 0,
-                'ton'   => round((float) Order::whereHas('user', fn ($q) => $q->where('client_type', 'B2B_KONTRAK'))->with('orderItems')->get()->sum(fn ($o) => $o->orderItems->sum('ordered_qty')) / 1000, 2),
+                'ton'   => round($horecaKg / 1000, 2),
             ],
             'retail' => [
                 'share' => 0,
-                'ton'   => round((float) Order::whereHas('user', fn ($q) => $q->where('client_type', 'REGULER'))->with('orderItems')->get()->sum(fn ($o) => $o->orderItems->sum('ordered_qty')) / 1000, 2),
+                'ton'   => round($retailKg / 1000, 2),
             ],
             'manual' => [
                 'share' => 0,
-                'ton'   => round((float) Order::where('order_source', 'MANUAL_SEKRETARIS')->with('orderItems')->get()->sum(fn ($o) => $o->orderItems->sum('ordered_qty')) / 1000, 2),
+                'ton'   => round($manualKg / 1000, 2),
             ],
         ];
         $totChanTon = $channelData['horeca']['ton'] + $channelData['retail']['ton'] + $channelData['manual']['ton'];

@@ -5,8 +5,8 @@
 
     <div class="max-w-3xl space-y-4">
         <div class="flex items-center justify-between">
-            <a href="{{ route('direktur.contracts.index') }}" class="text-xs text-[#153a01] hover:underline font-semibold flex items-center gap-1">
-                &larr; Kembali ke Daftar Kontrak
+            <a href="{{ route('direktur.contracts.show', $contract->id) }}" class="text-xs text-[#153a01] hover:underline font-semibold flex items-center gap-1">
+                &larr; Kembali ke Detail Kontrak
             </a>
         </div>
         @if($errors->any())
@@ -99,7 +99,7 @@
                 </div>
 
                 <div class="pt-4 border-t border-gray-100 flex items-center justify-end space-x-2">
-                    <a href="{{ route('direktur.contracts.index') }}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold transition">
+                    <a href="{{ route('direktur.contracts.show', $contract->id) }}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold transition">
                         Batal
                     </a>
                     <button type="submit" class="px-5 py-2 bg-[#153a01] hover:bg-[#0f2801] text-white rounded-lg font-bold shadow-sm transition">

@@ -231,7 +231,7 @@
             </div>
 
             <div class="gpa-scroll-x">
-                <table class="w-full min-w-[1080px] border-collapse text-left">
+                <table class="w-full border-collapse text-left">
                     <thead class="border-b border-line-soft bg-surface-track">
                         <tr>
                             <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">ID Pesanan &amp; Klien</th>

@@ -30,19 +30,41 @@ class StoreOrderRequest extends FormRequest
         ];
     }
 
-    //  Pemeriksaan batas minimum pemesanan komoditas
+    //  Pemeriksaan stok dan batas minimum pemesanan komoditas
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
             $items = $this->input('items', []);
+            $stockService = app(\App\Services\StockService::class);
+
             foreach ($items as $index => $item) {
                 if (isset($item['product_id'], $item['quantity'])) {
                     $product = Product::find($item['product_id']);
-                    if ($product && (float) $item['quantity'] < (float) $product->minimum_order) {
-                        $validator->errors()->add(
-                            "items.{$index}.quantity",
-                            "Kuantitas {$product->name} minimal " . number_format($product->minimum_order, 0) . " {$product->unit}."
-                        );
+                    if ($product) {
+                        $requestedQty = (float) $item['quantity'];
+                        $availableStock = (float) $stockService->getAvailableStock($product->id);
+
+                        if ($availableStock <= 0) {
+                            $validator->errors()->add(
+                                "items.{$index}.quantity",
+                                "Stok {$product->name} saat ini habis / kuota 0 {$product->unit}."
+                            );
+                        } elseif ($requestedQty > $availableStock) {
+                            $validator->errors()->add(
+                                "items.{$index}.quantity",
+                                "Stok {$product->name} tidak mencukupi (sisa kuota: {$availableStock} {$product->unit}, diminta: {$requestedQty} {$product->unit})."
+                            );
+                        } elseif ($availableStock < (float) $product->minimum_order) {
+                            $validator->errors()->add(
+                                "items.{$index}.quantity",
+                                "Sisa stok {$product->name} ({$availableStock} {$product->unit}) belum memenuhi batas minimum pemesanan (" . number_format($product->minimum_order, 0) . " {$product->unit})."
+                            );
+                        } elseif ($requestedQty < (float) $product->minimum_order) {
+                            $validator->errors()->add(
+                                "items.{$index}.quantity",
+                                "Kuantitas {$product->name} minimal " . number_format($product->minimum_order, 0) . " {$product->unit}."
+                            );
+                        }
                     }
                 }
             }

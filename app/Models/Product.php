@@ -39,26 +39,42 @@ class Product extends Model
         return $this->hasMany(Contract::class);
     }
 
+    /**
+     * Resolusi URL/Path gambar komoditas secara dinamis murni dari database.
+     * Menggunakan file unggahan atau preset yang tersimpan di kolom image_url.
+     * Jika belum ada gambar, menggunakan default placeholder resmi GPA (gpaleaves.png).
+     */
     public function getImagePathAttribute(): string
     {
-        $nameLower = strtolower($this->name ?? '');
-
-        if (str_contains($nameLower, 'selada') || str_contains($nameLower, 'lettuce') || str_contains($nameLower, 'romaine')) {
-            return 'lettuce.jpg';
-        } elseif (str_contains($nameLower, 'brokoli') || str_contains($nameLower, 'broccoli')) {
-            return 'broccoli.jpg';
-        } elseif (str_contains($nameLower, 'tomat') || str_contains($nameLower, 'tomato')) {
-            return 'tomato.jpg';
-        } elseif (str_contains($nameLower, 'stroberi') || str_contains($nameLower, 'strawberry') || str_contains($nameLower, 'berry')) {
-            return 'strawberry.jpg';
-        } elseif (str_contains($nameLower, 'kol') || str_contains($nameLower, 'cabbage') || str_contains($nameLower, 'kubis')) {
-            return 'cabbage.jpg';
-        } elseif ($this->image_url && file_exists(public_path($this->image_url))) {
-            return $this->image_url;
-        } elseif ($this->image_url && file_exists(public_path('storage/' . $this->image_url))) {
-            return 'storage/' . $this->image_url;
+        if (!empty($this->image_url)) {
+            $clean = ltrim($this->image_url, '/');
+            if (file_exists(public_path($clean))) {
+                return $clean;
+            }
+            if (file_exists(public_path('storage/' . $clean))) {
+                return 'storage/' . $clean;
+            }
+            if (str_starts_with($this->image_url, 'http://') || str_starts_with($this->image_url, 'https://')) {
+                return $this->image_url;
+            }
         }
 
         return 'gpaleaves.png';
+    }
+
+    /**
+     * Format harga dasar komoditas ke format mata uang Rupiah
+     */
+    public function getFormattedBasePriceAttribute(): string
+    {
+        return 'Rp ' . number_format((float) ($this->base_price ?? 0), 0, ',', '.');
+    }
+
+    /**
+     * Format minimal order komoditas dengan satuan (kg/unit)
+     */
+    public function getFormattedMinimumOrderAttribute(): string
+    {
+        return number_format((float) ($this->minimum_order ?? 0), 0, ',', '.') . ' ' . ($this->unit ?: 'kg');
     }
 }

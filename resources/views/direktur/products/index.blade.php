@@ -161,7 +161,7 @@
 
         {{-- Tabel Komoditas --}}
         <div class="gpa-scroll-x overflow-x-auto">
-            <table class="w-full min-w-[70rem] border-collapse">
+            <table class="w-full border-collapse">
                 <thead>
                     <tr class="border-b border-line-board">
                         <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase tracking-wider text-ink-body">Komoditas &amp; Foto</th>

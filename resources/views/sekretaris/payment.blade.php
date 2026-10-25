@@ -112,11 +112,11 @@
                 <div>
                     <p class="flex flex-wrap items-baseline gap-2">
                         <span class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-success-deep">
-                            {{ max(1, $verifiedCount ?? 0) }}
+                            {{ $verifiedCount ?? 0 }}
                         </span>
                         <span class="gpa-note text-ink-body">Transaksi Sah</span>
                     </p>
-                    <p class="mt-1 font-mono text-sm font-bold tracking-[0.88px] text-success-deep">Rp {{ number_format(max(18550000, $verifiedTotal ?? 0), 0, ',', '.') }}</p>
+                    <p class="mt-1 font-mono text-sm font-bold tracking-[0.88px] text-success-deep">Rp {{ number_format($verifiedTotal ?? 0, 0, ',', '.') }}</p>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
@@ -555,7 +555,7 @@
             </div>
 
             <div class="gpa-scroll-x rounded-xl outline outline-1 outline-line-board/60">
-                <table class="w-full min-w-[1180px] border-collapse text-left">
+                <table class="w-full border-collapse text-left">
                     <thead class="border-b border-line-soft bg-surface-shell">
                         <tr>
                             <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">Waktu</th>

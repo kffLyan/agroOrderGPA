@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Sekretaris;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -69,25 +70,22 @@ class PodMonitoringController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        // Metrik Ringkasan
-        $allDeliveries = Order::where(function ($q) {
+        // Metrik Ringkasan dihitung langsung via SQL agregasi efisien (anti OOM)
+        $baseMetricsQuery = Order::where(function ($q) {
             $q->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'DALAM_PENGIRIMAN', 'SIAP_KIRIM'])
               ->orWhereNotNull('pod_photo_url');
-        })->get();
+        });
 
-        $totalCompleted = $allDeliveries->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count();
-        $cleanCount = $allDeliveries->where('status', 'SELESAI')->count();
-        $discrepancyCount = $allDeliveries->where('status', 'SELESAI_CATATAN')->count();
-        $inTransitCount = $allDeliveries->where('status', 'DALAM_PENGIRIMAN')->count();
-        $readyCount = $allDeliveries->where('status', 'SIAP_KIRIM')->count();
+        $cleanCount       = (clone $baseMetricsQuery)->where('status', 'SELESAI')->count();
+        $discrepancyCount = (clone $baseMetricsQuery)->where('status', 'SELESAI_CATATAN')->count();
+        $totalCompleted   = $cleanCount + $discrepancyCount;
+        $inTransitCount   = (clone $baseMetricsQuery)->where('status', 'DALAM_PENGIRIMAN')->count();
+        $readyCount       = (clone $baseMetricsQuery)->where('status', 'SIAP_KIRIM')->count();
 
-        // Total retur kg
-        $totalReturnKg = 0;
-        foreach ($allDeliveries->where('status', 'SELESAI_CATATAN') as $ord) {
-            foreach ($ord->orderItems as $item) {
-                $totalReturnKg += (float) ($item->returned_weight ?? 0);
-            }
-        }
+        // Total retur kg dihitung langsung dari basis data tanpa memuat seluruh model ke memori
+        $totalReturnKg = (float) OrderItem::whereHas('order', function ($q) {
+            $q->where('status', 'SELESAI_CATATAN');
+        })->sum('returned_weight');
 
         // Daftar supir untuk dropdown filter
         $drivers = User::where('role', 'ARMADA')

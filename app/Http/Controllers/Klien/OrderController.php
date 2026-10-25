@@ -130,13 +130,13 @@ class OrderController extends Controller
     /**
      * Menampilkan detail dan visual tracking 5 tahap pesanan Klien
      */
-    public function show(int $id)
+    public function show(Order $order)
     {
-        $userId = Auth::guard('web')->id();
+        if ($order->user_id !== Auth::guard('web')->id()) {
+            abort(403, 'Akses pesanan tidak diizinkan.');
+        }
 
-        $order = Order::where('user_id', $userId)
-            ->with(['orderItems.product', 'payments', 'verifier', 'driver', 'invoice'])
-            ->findOrFail($id);
+        $order->loadMissing(['orderItems.product', 'payments', 'verifier', 'driver', 'invoice']);
 
         return view('klien.orders.show', compact('order'));
     }
@@ -179,7 +179,7 @@ class OrderController extends Controller
         $docNumber = 'DOC/GPA-REKAP/' . now()->format('Ym') . '/' . str_pad($user->id, 4, '0', STR_PAD_LEFT);
         $printDate = now()->translatedFormat('d F Y, H:i') . ' WIB';
 
-        return view('klien.orders.print-rekap', compact(
+        return view('prints.client-orders-rekap', compact(
             'user',
             'orders',
             'totalKgOrder',

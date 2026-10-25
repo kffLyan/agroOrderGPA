@@ -18,27 +18,6 @@ class InvoiceController extends Controller
      */
     public function index(Request $request): View
     {
-        $user = Auth::user();
-
-        $operator = [
-            'role'     => 'Sekretaris Operasional',
-            'name'     => $user?->name ?: 'Sekretariat GPA',
-            'code'     => $user ? 'SK-' . str_pad($user->id, 4, '0', STR_PAD_LEFT) : 'SK-001',
-            'initials' => strtoupper(substr($user?->name ?: 'SK', 0, 2)),
-            'branch'   => 'Gudang Pusat Sentra',
-            'email'    => $user?->email ?: 'sekretaris@agroorder.co.id',
-            'shift'    => 'Shift Pagi 07.00 - 16.00 WIB',
-        ];
-
-        $heading = [
-            'title_before'     => 'Manajemen Faktur Tagihan &',
-            'title_after'      => 'Pemantauan Tempo Pembayaran',
-            'subtitle_before'  => 'Konsolidasi Surat Jalan sayur yang telah selesai dikirim menjadi lembar',
-            'subtitle_rule'    => 'faktur penagihan resmi sesuai kesepakatan tempo bayar (14 / 30 / 45 Hari).',
-            'export_label'     => 'Unduh Laporan Faktur (CSV)',
-            'manual_label'     => '+ Terbitkan Faktur Baru',
-        ];
-
         // Ambil data klien B2B dan pesanan riil
         $clientsQuery = User::where('client_type', 'B2B_KONTRAK')
             ->orWhere('role', 'KLIEN')
@@ -49,126 +28,24 @@ class InvoiceController extends Controller
             $clientsQuery = User::where('role', 'KLIEN')->get();
         }
 
-        $clients = [];
-        foreach ($clientsQuery as $c) {
-            $docs = [];
-            foreach ($c->orders as $ord) {
-                $netWeight = (float) $ord->orderItems->sum(fn($it) => $it->ordered_qty);
-                $val = (float) $ord->grand_total;
-                $commodity = $ord->orderItems->first()?->product?->name ?: 'Sayur Segar Grade A';
-                $sjNum = $ord->surat_jalan_number ?: ('SJ-' . date('Ym') . '-' . str_pad($ord->id, 4, '0', STR_PAD_LEFT));
-
-                $docs[] = [
-                    'sj'           => $sjNum,
-                    'date'         => ($ord->created_at ?: now())->format('d M Y'),
-                    'commodity'    => $commodity,
-                    'weight'       => $netWeight,
-                    'weight_label' => number_format($netWeight, 0, ',', '.') . ' kg',
-                    'pod'          => 'Telah Diterima & Sah',
-                    'value'        => $val,
-                    'value_label'  => 'Rp ' . number_format($val, 0, ',', '.'),
-                ];
-            }
-
-            $contractObj = method_exists($c, 'contracts') ? $c->contracts()->where('status', 'ACTIVE')->first() : null;
-            $topDays = $contractObj?->top_days ?: 30;
-            $plafon = $contractObj ? (float) ($contractObj->fixed_price_per_kg * $contractObj->committed_volume_per_cycle * 2) : 0;
-            $usedPlafon = (float) $c->orders()->whereIn('status', ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])->sum('grand_total');
-
-            $clients[] = [
-                'id'          => (string) $c->id,
-                'name'        => $c->company_name ?: ($c->name ?: 'Mitra Klien'),
-                'terms_label' => 'Tempo ' . $topDays . ' Hari',
-                'terms_days'  => $topDays,
-                'npwp'        => '—',
-                'contract'    => $contractObj?->contract_number ?: ('KONTRAK-' . str_pad($c->id, 3, '0', STR_PAD_LEFT)),
-                'plafon'      => $plafon,
-                'used'        => $usedPlafon,
-                'issue_date'  => now()->format('Y-m-d'),
-                'documents'   => $docs,
-            ];
-        }
+        $clients = \App\Http\Resources\Sekretaris\InvoiceClientResource::collection($clientsQuery)->resolve();
 
         // Ambil data faktur dari database
         $invoices = Invoice::with(['user', 'orders.orderItems', 'payments'])->latest()->get();
 
-        $receivableTotal = 0;
-        $dueSoonTotal = 0;
-        $paidTotal = 0;
-        $ledgerRows = [];
+        $receivableTotal = (float) $invoices->where('status', '!=', 'PAID')->sum('grand_total');
+        $paidTotal = (float) $invoices->where('status', 'PAID')->sum('grand_total');
 
-        if ($invoices->isNotEmpty()) {
-            foreach ($invoices as $inv) {
-                $amount = (float) $inv->grand_total;
-                $isPaid = $inv->status === 'PAID';
-                $clientName = $inv->user?->company_name ?: ($inv->user?->name ?: 'Mitra Klien GPA');
-                $dueDate = $inv->due_date ?: now()->addDays(30);
-                $daysRemaining = now()->diffInDays($dueDate, false);
-
-                if ($isPaid) {
-                    $paidTotal += $amount;
-                    $statusKey = 'paid';
-                    $statusLabel = 'Lunas';
-                    $statusClass = 'bg-accent text-success-deep outline outline-1 outline-success-deep';
-                    $remainingText = 'Telah Lunas';
-                    $remainingClass = 'text-success-deep';
-                    $remainingDot = 'bg-success-deep';
-                } else {
-                    $receivableTotal += $amount;
-                    if ($daysRemaining < 0) {
-                        $statusKey = 'blocked';
-                        $statusLabel = 'Jatuh Tempo';
-                        $statusClass = 'bg-danger-soft text-danger outline outline-1 outline-danger/60';
-                        $remainingText = 'Lewat ' . abs($daysRemaining) . ' Hari';
-                        $remainingClass = 'text-danger';
-                        $remainingDot = 'bg-danger';
-                    } elseif ($daysRemaining <= 7) {
-                        $dueSoonTotal += $amount;
-                        $statusKey = 'follow_up';
-                        $statusLabel = 'Perlu Dihubungi';
-                        $statusClass = 'bg-warning-soft/60 text-warning-deep outline outline-1 outline-warning/50';
-                        $remainingText = "Sisa {$daysRemaining} Hari";
-                        $remainingClass = 'text-warning-deep';
-                        $remainingDot = 'bg-warning';
-                    } else {
-                        $statusKey = 'lancar';
-                        $statusLabel = 'Lancar';
-                        $statusClass = 'bg-accent text-success-deep outline outline-1 outline-success-deep';
-                        $remainingText = "Sisa {$daysRemaining} Hari";
-                        $remainingClass = 'text-success-deep';
-                        $remainingDot = 'bg-success-deep';
-                    }
-                }
-
-                $ledgerRows[] = [
-                    'id'             => $inv->invoice_number,
-                    'issued'         => $inv->created_at->format('d M Y'),
-                    'issued_note'    => '(Faktur)',
-                    'client'         => $clientName,
-                    'contract'       => 'KONTRAK-' . ($inv->user_id ? str_pad($inv->user_id, 3, '0', STR_PAD_LEFT) : '001'),
-                    'contract_note'  => null,
-                    'contract_class' => 'text-ink-quiet',
-                    'sj_count'       => max(1, $inv->orders->count()),
-                    'total'          => $amount,
-                    'total_label'    => 'Rp ' . number_format($amount, 0, ',', '.'),
-                    'total_class'    => 'text-ink font-bold',
-                    'terms_days'     => 30,
-                    'terms_label'    => 'Tempo 30',
-                    'terms_class'    => 'bg-surface-pill text-ink-body outline outline-1 outline-line-board/70',
-                    'due'            => $dueDate->format('d M Y'),
-                    'due_class'      => 'text-ink',
-                    'remaining'      => $remainingText,
-                    'remaining_class'=> $remainingClass,
-                    'remaining_dot'  => $remainingDot,
-                    'status_key'     => $statusKey,
-                    'status_label'   => $statusLabel,
-                    'status_class'   => $statusClass,
-                    'row_class'      => '',
-                    'highlight'      => '',
-                    'paid'           => $isPaid,
-                ];
+        $dueSoonTotal = (float) $invoices->filter(function ($inv) {
+            if ($inv->status === 'PAID') {
+                return false;
             }
-        }
+            $dueDate = $inv->due_date ?: now()->addDays(30);
+            $days = now()->diffInDays($dueDate, false);
+            return $days >= 0 && $days <= 7;
+        })->sum('grand_total');
+
+        $ledgerRows = \App\Http\Resources\Sekretaris\InvoiceLedgerResource::collection($invoices)->resolve();
 
         return view('sekretaris.invoice', [
             'clients'         => $clients,

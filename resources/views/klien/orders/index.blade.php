@@ -310,7 +310,7 @@
         {{-- ------------------------------------------------------------------ --}}
         <section class="gpa-card overflow-hidden">
             <div class="gpa-scroll-x">
-                <table class="w-full min-w-[73.75rem] border-collapse">
+                <table class="w-full border-collapse">
                     <caption class="sr-only">Daftar pesanan klien beserta hasil timbangan netto, surat jalan, status, dan tagihan final</caption>
                     <thead>
                         <tr class="border-b border-line-soft/80 bg-surface-shell">

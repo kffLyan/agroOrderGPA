@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Klien;
 
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
-use App\Models\Order;
-use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -54,7 +52,7 @@ class DocumentController extends Controller
         $docNumber = 'DOC/GPA-INV-REKAP/' . now()->format('Ym') . '/' . str_pad($userId, 4, '0', STR_PAD_LEFT);
         $printDate = now()->translatedFormat('d F Y, H:i') . ' WIB';
 
-        return view('klien.documents.print-rekap', compact(
+        return view('prints.client-documents-rekap', compact(
             'user',
             'invoices',
             'totalNetto',

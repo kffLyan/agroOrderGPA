@@ -365,9 +365,10 @@
                                 <span class="gpa-micro-bold text-ink-body">KG</span>
 
                                 <button type="button" @click="addToDraft(card.key)"
-                                    class="inline-flex min-w-[9rem] flex-1 items-center justify-center gap-2 rounded bg-accent px-3 py-2.5 text-ink shadow-sub transition-colors hover:bg-accent-deep">
+                                    :class="card.stock <= 0 ? 'bg-surface-disabled text-ink-muted hover:bg-surface-disabled' : 'bg-accent text-ink hover:bg-accent-deep'"
+                                    class="inline-flex min-w-[9rem] flex-1 items-center justify-center gap-2 rounded px-3 py-2.5 shadow-sub transition-colors">
                                     <x-gpa.icon name="cart" class="h-3.5 w-3.5" />
-                                    <span class="gpa-meta-lg font-bold">Tambah Draft</span>
+                                    <span class="gpa-meta-lg font-bold" x-text="card.stock <= 0 ? 'Stok Habis' : 'Tambah Draft'"></span>
                                 </button>
                             </div>
 

@@ -37,24 +37,19 @@ class CatalogController extends Controller
             ->get()
             ->keyBy('product_id');
 
-        $stockMap = [];
-        foreach ($rawProducts as $p) {
-            $stockMap[$p->id] = $this->stockService->getAvailableStock($p->id);
-        }
+        // Query kuota stok panen tersedia dalam 1 query SQL efisien (anti N+1)
+        $stockMap = $this->stockService->getAvailableStockMap($rawProducts->pluck('id')->all());
 
         // Hitung kuota bulanan dari kontrak
         $totalCommittedQuota = (float) $activeContracts->sum('committed_volume_per_cycle');
 
-        // Hitung serapan kuota bulan berjalan
+        // Hitung serapan kuota bulan berjalan langsung melalui agregasi database
         $startOfMonth = now()->startOfMonth();
-        $usedQuota = (float) Order::where('user_id', $user->id)
-            ->where('created_at', '>=', $startOfMonth)
-            ->whereNotIn('status', ['BATAL', 'DRAFT'])
-            ->with('orderItems')
-            ->get()
-            ->sum(function ($order) {
-                return $order->orderItems->sum('ordered_qty');
-            });
+        $usedQuota = (float) \App\Models\OrderItem::whereHas('order', function ($q) use ($user, $startOfMonth) {
+            $q->where('user_id', $user->id)
+                ->where('created_at', '>=', $startOfMonth)
+                ->whereNotIn('status', ['BATAL', 'DRAFT']);
+        })->sum('ordered_qty');
 
         // Plafon kredit tempo
         $creditLimit = 0.0;

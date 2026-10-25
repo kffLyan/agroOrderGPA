@@ -235,38 +235,38 @@
             </div>
 
             <div class="gpa-scroll-x">
-                <table class="w-full min-w-[1180px] border-collapse text-left">
+                <table class="w-full border-collapse text-left">
                     <thead class="border-b border-line-board bg-surface-pill/40">
                         <tr>
-                            <th scope="col" class="px-4 py-3 gpa-micro-bold uppercase tracking-[0.88px] text-ink">Nama Sayur &amp; Mutu</th>
-                            <th scope="col" class="px-4 py-3 gpa-micro-bold uppercase tracking-[0.88px] text-ink">Hasil Panen Kebun</th>
-                            <th scope="col" class="px-4 py-3 gpa-micro-bold uppercase tracking-[0.88px] text-ink">Cadangan Mitra</th>
-                            <th scope="col" class="px-4 py-3 gpa-micro-bold uppercase tracking-[0.88px] text-ink">Total Pasokan</th>
-                            <th scope="col" class="px-4 py-3 gpa-micro-bold uppercase tracking-[0.88px] text-ink text-right">Terkunci Pesanan</th>
-                            <th scope="col" class="px-4 py-3 gpa-micro-bold uppercase tracking-[0.88px] text-ink text-right">Sisa Bebas Dipesan</th>
-                            <th scope="col" class="px-4 py-3 gpa-micro-bold uppercase tracking-[0.88px] text-ink">Status Ketersediaan</th>
+                            <th scope="col" class="px-4 py-3.5 gpa-micro-bold uppercase tracking-[0.88px] text-ink">Nama Sayur &amp; Mutu</th>
+                            <th scope="col" class="px-4 py-3.5 gpa-micro-bold uppercase tracking-[0.88px] text-ink">Hasil Panen Kebun</th>
+                            <th scope="col" class="px-4 py-3.5 gpa-micro-bold uppercase tracking-[0.88px] text-ink">Cadangan Mitra</th>
+                            <th scope="col" class="px-4 py-3.5 gpa-micro-bold uppercase tracking-[0.88px] text-ink">Total Pasokan</th>
+                            <th scope="col" class="px-4 py-3.5 gpa-micro-bold uppercase tracking-[0.88px] text-ink text-right">Terkunci Pesanan</th>
+                            <th scope="col" class="px-4 py-3.5 gpa-micro-bold uppercase tracking-[0.88px] text-ink text-right">Sisa Bebas Dipesan</th>
+                            <th scope="col" class="px-4 py-3.5 gpa-micro-bold uppercase tracking-[0.88px] text-ink text-center whitespace-nowrap">Status Ketersediaan</th>
                         </tr>
                     </thead>
 
                     <tbody class="divide-y divide-line-faint">
                         @foreach ($rows as $row)
-                            <tr x-show="matchesFilter(@js($row))" class="align-top transition-colors hover:bg-surface-shell/60">
-                                <td class="px-4 py-3">
+                            <tr x-show="matchesFilter(@js($row))" class="align-middle transition-colors hover:bg-surface-shell/60">
+                                <td class="px-4 py-3.5 min-w-[13rem]">
                                     <p class="font-sans text-sm font-bold leading-5 text-ink">{{ $row['name'] }}</p>
-                                    <p class="mt-1 gpa-note text-ink-quiet">{{ $row['sku'] }}</p>
+                                    <p class="mt-0.5 gpa-note text-ink-quiet">{{ $row['sku'] }}</p>
                                     <p class="gpa-note text-ink-quiet">{{ $row['grade'] }}</p>
                                 </td>
 
-                                <td class="px-4 py-3">
+                                <td class="px-4 py-3.5">
                                     <p class="gpa-meta-lg font-bold tracking-[0.28px] text-ink">{{ $row['binawan_value'] }}</p>
                                     <p class="gpa-note text-ink-quiet">{{ $row['binawan_share'] }}</p>
-                                    <div class="mt-1.5 h-1.5 w-full max-w-[9rem] overflow-hidden rounded-full bg-surface-pill">
+                                    <div class="mt-1.5 h-1.5 w-full max-w-[8.5rem] overflow-hidden rounded-full bg-surface-pill">
                                         <div class="h-full rounded-full bg-success-deep"
                                             :style="'width: ' + {{ $row['binawan_percent'] }} + '%'"></div>
                                     </div>
                                 </td>
 
-                                <td class="px-4 py-3">
+                                <td class="px-4 py-3.5">
                                     <p class="gpa-meta-lg font-bold tracking-[0.28px] {{ $row['buffer_class'] }}">
                                         {{ $row['buffer_value'] }}
                                     </p>
@@ -279,19 +279,19 @@
                                     @endif
                                 </td>
 
-                                <td class="px-4 py-3">
+                                <td class="px-4 py-3.5 whitespace-nowrap">
                                     <p class="gpa-meta-lg font-bold tracking-[0.28px] text-ink">{{ $row['total_value'] }}</p>
                                     <p class="gpa-note text-ink-quiet">Gudang + Kebun</p>
                                 </td>
 
-                                <td class="px-4 py-3 text-right">
+                                <td class="px-4 py-3.5 text-right whitespace-nowrap">
                                     <p class="gpa-meta-lg font-bold tracking-[0.28px] text-danger">{{ $row['locked_value'] }}</p>
                                     <span class="mt-1 inline-flex rounded bg-danger-soft/10 px-1.5 py-0.5 gpa-micro-bold text-danger-ink">
                                         {{ $row['locked_note'] }}
                                     </span>
                                 </td>
 
-                                <td class="px-4 py-3 text-right">
+                                <td class="px-4 py-3.5 text-right whitespace-nowrap">
                                     <p class="gpa-meta-lg font-bold tracking-[0.28px] {{ $row['atp_class'] }}">
                                         {{ $row['atp_value'] }}
                                     </p>
@@ -300,22 +300,14 @@
                                     </span>
                                 </td>
 
-                                <td class="px-4 py-3">
+                                <td class="px-4 py-3.5 text-center whitespace-nowrap">
                                     <span @class([
-                                        'inline-flex items-center gap-1 rounded px-2 py-0.5 gpa-micro-bold',
+                                        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 gpa-micro-bold text-xs',
                                         $row['status']['class'],
                                     ])>
-                                        <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-70" aria-hidden="true"></span>
+                                        <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-80" aria-hidden="true"></span>
                                         {{ $row['status']['label'] }}
                                     </span>
-
-                                    <div class="mt-2">
-                                        <button type="button" @click="detail(@js($row))"
-                                            class="inline-flex h-7 items-center gap-1 rounded bg-surface-track px-2.5 text-ink outline outline-1 outline-line-board transition-colors hover:bg-surface-shell gpa-micro-bold uppercase tracking-[0.88px]">
-                                            <x-gpa.icon name="eye" class="h-3 w-3 shrink-0" />
-                                            Pantau Detail
-                                        </button>
-                                    </div>
                                 </td>
                             </tr>
                         @endforeach

@@ -36,10 +36,8 @@ class CartController extends Controller
             ->get()
             ->keyBy('product_id');
 
-        $stockMap = [];
-        foreach ($products as $p) {
-            $stockMap[$p->id] = $this->stockService->getAvailableStock($p->id);
-        }
+        // Query kuota stok panen tersedia dalam 1 query SQL efisien (anti N+1)
+        $stockMap = $this->stockService->getAvailableStockMap($products->pluck('id')->all());
 
         $receivingRoster = [
             [

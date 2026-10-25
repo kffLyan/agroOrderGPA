@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Armada;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Armada\StorePodRequest;
 use App\Models\Order;
+use App\Services\ArmadaService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,33 +13,19 @@ use Illuminate\Support\Facades\Auth;
 
 class PodController extends Controller
 {
+    public function __construct(
+        protected ArmadaService $armadaService
+    ) {}
+
     /**
      * Menampilkan formulir dan konsol bukti terima digital (Proof of Delivery / PoD).
      */
     public function index(Request $request): View
     {
         $user = Auth::user();
+        $targetOrderId = $request->query('order_id') ? (int) $request->query('order_id') : null;
 
-        // Cari pesanan yang menjadi target PoD
-        $targetOrderId = $request->query('order_id');
-        $query = Order::with(['orderItems.product', 'user', 'driver']);
-
-        if ($targetOrderId) {
-            $currentOrder = $query->find($targetOrderId);
-        } else {
-            $currentOrder = $query->where(function ($q) use ($user) {
-                $q->where('driver_id', $user?->id)
-                  ->orWhereIn('status', ['DALAM_PENGIRIMAN', 'SIAP_KIRIM']);
-            })
-            ->whereNotIn('status', ['DRAFT', 'BATAL'])
-            ->latest()
-            ->first();
-        }
-
-        if (!$currentOrder) {
-            $currentOrder = Order::with(['orderItems.product', 'user', 'driver'])->latest()->first();
-        }
-
+        $currentOrder = $this->armadaService->resolveCurrentDeliveryOrder($targetOrderId, $user);
         $plate = $currentOrder?->vehicle_plate_number ?: '—';
 
         return view('armada.pod', [
@@ -50,20 +38,9 @@ class PodController extends Controller
     /**
      * Menyimpan dokumen bukti terima pengiriman (Proof of Delivery)
      */
-    public function store(Request $request, Order $order): RedirectResponse
+    public function store(StorePodRequest $request, Order $order): RedirectResponse
     {
         $user = Auth::user();
-
-        $request->validate([
-            'condition'        => 'nullable|string',
-            'signature'        => 'nullable|string',
-            'received_by_name' => 'nullable|string',
-            'manifest_photo'   => 'nullable|image|max:10240',
-            'dock_photo'       => 'nullable|image|max:10240',
-            'returns'          => 'nullable|array',
-            'returns.*.returned_weight' => 'nullable|numeric|min:0',
-            'returns.*.return_reason'   => 'nullable|string|max:255',
-        ]);
 
         $condition = $request->input('condition', 'clear');
         $receiverName = $request->input('received_by_name');
@@ -97,7 +74,7 @@ class PodController extends Controller
             }
         }
 
-        // Simpan perubahan ke pesanan
+        // Simpan status pesanan dan catatan kedatangan
         $order->status = ($condition === 'discrepancy' || $hasReturn) ? 'SELESAI_CATATAN' : 'SELESAI';
         $order->arrival_time = now();
         if ($receiverName) {

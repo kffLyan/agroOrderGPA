@@ -22,6 +22,7 @@ export default function secretaryManualOrder(
     source = {},
     client = {},
     clientList = [],
+    paymentChannels = [],
 ) {
     const rows = Array.isArray(commodities) ? commodities.map(clone) : [];
     const catalogList = Array.isArray(catalog) ? catalog.map(clone) : [];
@@ -30,6 +31,10 @@ export default function secretaryManualOrder(
     const sourceForm = clone(source) ?? {};
     const clientForm = clone(client) ?? {};
     const clients = Array.isArray(clientList) ? clientList.map(clone) : [];
+    const channels = Array.isArray(paymentChannels) ? paymentChannels.map(clone) : [];
+
+    const defaultChannelId = channels.length > 0 ? channels[0].id : 'bca';
+    const defaultChannelName = channels.length > 0 ? channels[0].name : 'Bank BCA';
 
     return {
         rows,
@@ -40,13 +45,25 @@ export default function secretaryManualOrder(
         selectedClientId: clientForm.id ?? (clients[0]?.id ?? ''),
         logistics: logisticsForm,
         payment: paymentForm,
+        channels,
+        paymentCategory: 'official', // 'official' (Kanal Resmi GPA) atau 'b2b' (Termin Khusus B2B)
+        selectedChannelId: defaultChannelId,
+        senderBank: defaultChannelName,
+        senderAccount: '',
+        paymentReference: '',
         query: '',
         isSubmitting: false,
+        rawFile: null,
+        dragActive: false,
+        fullQrisModal: null,
+        evidenceModal: false,
         evidence: {
             file: paymentForm.file ?? '',
             size: paymentForm.size ?? '',
             hash: paymentForm.hash ?? '',
             hash_note: paymentForm.hash_note ?? '',
+            previewUrl: null,
+            isImage: false,
         },
         nextKey: 0,
         selectedCatalog: '',
@@ -54,6 +71,81 @@ export default function secretaryManualOrder(
         clientMode: clientForm.active_mode ?? 'registered',
         paymentMethod: paymentForm.active ?? 'transfer',
         paymentCustomNote: '',
+        cashAmount: 0,
+
+        get selectedChannel() {
+            return this.channels.find((c) => c.id === this.selectedChannelId) ?? this.channels[0] ?? {
+                id: 'bca',
+                type: 'BANK',
+                name: 'Bank BCA',
+                account_number: '8210-992-3841',
+                account_name: 'PT Green Pasundan Agriculture (Divisi Keuangan B2B)',
+                instructions: 'Sertakan nomor referensi pesanan di berita transfer.',
+                logo_url: '/images/payments/bca.svg',
+            };
+        },
+
+        selectChannel(id) {
+            this.selectedChannelId = id;
+            this.paymentCategory = 'official';
+            const ch = this.selectedChannel;
+            if (ch) {
+                this.paymentMethod = ch.type === 'QRIS' ? 'qris' : (ch.type === 'EWALLET' ? 'ewallet' : 'transfer');
+                this.senderBank = ch.name;
+                this.run('Kanal Pembayaran Dipilih', `${ch.name}: ${ch.account_number} (a.n. ${ch.account_name})`, 'info');
+            }
+        },
+
+        selectCashMethod() {
+            this.paymentCategory = 'cash';
+            this.paymentMethod = 'cash';
+            this.senderBank = 'Kasir Tunai / Kas Sekretariat';
+            if (!this.cashAmount || this.cashAmount < this.total) {
+                this.cashAmount = this.total;
+            }
+            this.run('Pembayaran Tunai (Cash)', 'Sistem menghitung kembalian otomatis di kasir.', 'info');
+        },
+
+        setCashExact() {
+            this.cashAmount = this.total;
+            this.run('Uang Pas Dipilih', `Nominal tunai diatur: ${this.rupiah(this.total)}`, 'info');
+        },
+
+        addCashPreset(amount) {
+            this.cashAmount = (toNumber(this.cashAmount) || 0) + amount;
+        },
+
+        roundCashUp(step = 50000) {
+            if (this.total <= 0) return;
+            const rounded = Math.ceil(this.total / step) * step;
+            this.cashAmount = Math.max(rounded, this.total);
+        },
+
+        selectB2bMethod(method) {
+            this.paymentCategory = 'b2b';
+            this.paymentMethod = method;
+            const labels = {
+                cod: 'Bayar di Tempat (COD)',
+                top14: 'Tempo 14 Hari (Mitra Kontrak)',
+                custom: 'Metode Khusus / SK Direktur',
+            };
+            this.run('Skema Pembayaran Dipilih', labels[method] || method, 'info');
+        },
+
+        async copy(text, label) {
+            try {
+                await navigator.clipboard.writeText(text);
+                this.run(label, `"${text}" berhasil disalin ke papan klip.`, 'success');
+            } catch {
+                this.run(label, `Salin manual: ${text}`, 'info');
+            }
+        },
+
+        copyAccount() {
+            const acc = this.selectedChannel?.account_number ?? '';
+            const name = this.selectedChannel?.name ?? 'GPA';
+            this.copy(acc, `Nomor Rekening / NMID ${name}`);
+        },
 
         run(title, message, tone = 'info') {
             if (typeof this.$dispatch === 'function') {
@@ -148,6 +240,22 @@ export default function secretaryManualOrder(
 
         get total() {
             return this.subtotal + this.fee;
+        },
+
+        get cashReceived() {
+            return toNumber(this.cashAmount);
+        },
+
+        get cashChange() {
+            return Math.max(0, this.cashReceived - this.total);
+        },
+
+        get cashShortage() {
+            return Math.max(0, this.total - this.cashReceived);
+        },
+
+        get isCashSufficient() {
+            return this.cashReceived >= this.total && this.total > 0;
         },
 
         /* ------------------------------------------------------------------
@@ -294,38 +402,78 @@ export default function secretaryManualOrder(
             this.run('Baris Komoditas Dihapus', `${row.name} (${row.sku}) dikeluarkan dari draft PO ini.`, 'warning');
         },
 
-        handleFileUpload(event) {
-            const file = event.target.files?.[0];
+        onFileInput(event) {
+            this.acceptFile(event.target.files?.[0] ?? null);
+        },
+
+        onDragOver() {
+            this.dragActive = true;
+        },
+
+        onDrop(event) {
+            this.dragActive = false;
+            this.acceptFile(event.dataTransfer?.files?.[0] ?? null);
+        },
+
+        acceptFile(file) {
             if (!file) return;
 
+            const extension = (file.name.split('.').pop() ?? '').toLowerCase();
+            const allowed = ['jpg', 'jpeg', 'png', 'pdf'];
+            const maxBytes = 5120 * 1024; // 5 MB
+
+            if (!allowed.includes(extension)) {
+                this.run('Format Tidak Didukung', `Berkas .${extension} tidak didukung. Gunakan JPG, PNG, atau PDF.`, 'danger');
+                return;
+            }
+
+            if (file.size > maxBytes) {
+                const mb = (file.size / (1024 * 1024)).toFixed(1);
+                this.run('Ukuran Melebihi Batas', `Ukuran berkas ${mb} MB melebihi batas maksimal 5 MB.`, 'danger');
+                return;
+            }
+
+            this.rawFile = file;
             const sizeKb = Math.round(file.size / 1024);
             const sizeText = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${sizeKb} KB`;
-            const fakeHash = 'GPA-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+            const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
 
             this.evidence = {
                 file: file.name,
                 size: sizeText,
-                hash: fakeHash,
-                hash_note: 'Dokumen Terverifikasi Otomatis',
+                hash: 'GPA-' + Math.random().toString(36).substring(2, 10).toUpperCase(),
+                hash_note: 'Berkas Siap Diunggah',
+                previewUrl: previewUrl,
+                isImage: file.type.startsWith('image/'),
             };
 
-            this.run('Bukti Dilampirkan', `${file.name} (${sizeText}) berhasil diunggah ke formulir.`, 'success');
+            this.run('Bukti Dilampirkan', `${file.name} (${sizeText}) siap disimpan bersama pesanan.`, 'success');
+        },
+
+        handleFileUpload(event) {
+            this.onFileInput(event);
         },
 
         viewEvidence() {
-            if (! this.evidence.file) {
-                this.run('Bukti Belum Diunggah', 'Lampirkan screenshot bukti transfer sebelum meneruskan PO.', 'warning');
-
+            if (!this.evidence.file) {
+                this.run('Bukti Belum Diunggah', 'Belum ada berkas bukti pembayaran yang dilampirkan.', 'warning');
                 return;
             }
 
-            this.run('Bukti Pembayaran', `${this.evidence.file} • ${this.evidence.size} • Hash: ${this.evidence.hash}`, 'info');
+            if (this.evidence.previewUrl) {
+                this.evidenceModal = true;
+            } else {
+                this.run('Bukti Pembayaran', `${this.evidence.file} (${this.evidence.size}) • Berkas PDF/Dokumen terlampir.`, 'info');
+            }
         },
 
         removeEvidence() {
-            this.evidence = { file: '', size: '', hash: '', hash_note: '' };
-
-            this.run('Bukti Dihapus', 'Lampiran bukti pembayaran dilepas dari draft PO.', 'warning');
+            if (this.evidence.previewUrl) {
+                URL.revokeObjectURL(this.evidence.previewUrl);
+            }
+            this.rawFile = null;
+            this.evidence = { file: '', size: '', hash: '', hash_note: '', previewUrl: null, isImage: false };
+            this.run('Bukti Dihapus', 'Lampiran bukti transfer telah dilepas.', 'warning');
         },
 
         /* ------------------------------------------------------------------
@@ -354,6 +502,18 @@ export default function secretaryManualOrder(
                     this.run('Verifikasi Diblokir', issues[0], 'danger');
                     return;
                 }
+
+                // Validasi uang tunai jika memilih metode cash
+                if (this.paymentMethod === 'cash') {
+                    if (this.cashReceived < this.total) {
+                        this.run(
+                            'Uang Tunai Kurang',
+                            `Nominal tunai yang diterima kurang Rp ${this.number(this.cashShortage)}. Total tagihan: Rp ${this.number(this.total)}, Diterima: Rp ${this.number(this.cashReceived)}.`,
+                            'danger'
+                        );
+                        return;
+                    }
+                }
             }
 
             this.isSubmitting = true;
@@ -365,37 +525,45 @@ export default function secretaryManualOrder(
             }
 
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-            const payload = {
-                client_id: this.clientMode === 'registered' ? (this.client.id || null) : null,
-                client_name: this.client.name || 'Pelanggan Walk-In',
-                client_phone: this.client.phone || '',
-                delivery_address: this.client.address || 'Gudang Utama Klien, Jawa Barat',
-                target_delivery_date: this.logistics.date || null,
-                order_source: (this.channel || 'WHATSAPP').toUpperCase(),
-                source_reference: this.source.reference,
-                payment_method: this.paymentMethod,
-                payment_custom_note: this.paymentCustomNote || '',
-                fleet_type: this.logistics?.fleet === 'Armada Khusus / Custom'
-                    ? (this.logistics?.customFleet || 'Armada Khusus')
-                    : (this.logistics?.fleet || 'CDD Reefer Chilled'),
-                status: targetStatus,
-                items: this.rows.map(row => ({
-                    product_id: row.product_id,
-                    quantity: this.quantity(row),
-                    price: this.price(row),
-                })),
-            };
+            const formData = new FormData();
+            formData.append('client_id', this.clientMode === 'registered' ? (this.client.id || '') : '');
+            formData.append('client_name', this.client.name || 'Pelanggan Walk-In');
+            formData.append('client_phone', this.client.phone || '');
+            formData.append('delivery_address', this.client.address || 'Gudang Utama Klien, Jawa Barat');
+            if (this.logistics.date) formData.append('target_delivery_date', this.logistics.date);
+            formData.append('order_source', (this.channel || 'WHATSAPP').toUpperCase());
+            formData.append('source_reference', this.source.reference || '');
+            formData.append('payment_method', this.paymentMethod || 'transfer');
+            formData.append('payment_channel_id', this.paymentCategory === 'cash' ? 'cash' : (this.selectedChannelId || ''));
+            formData.append('sender_bank', this.paymentCategory === 'cash' ? 'Kasir Tunai / Kas Sekretariat' : (this.senderBank || this.selectedChannel?.name || ''));
+            formData.append('sender_account', this.senderAccount || '');
+            formData.append('payment_reference', this.paymentReference || '');
+            formData.append('payment_custom_note', this.paymentCustomNote || '');
+            formData.append('cash_amount', this.cashAmount || 0);
+            formData.append('cash_change', this.cashChange || 0);
+            formData.append('fleet_type', this.logistics?.fleet === 'Armada Khusus / Custom'
+                ? (this.logistics?.customFleet || 'Armada Khusus')
+                : (this.logistics?.fleet || 'CDD Reefer Chilled'));
+            formData.append('status', targetStatus);
+            formData.append('items', JSON.stringify(this.rows.map(row => ({
+                product_id: row.product_id,
+                quantity: this.quantity(row),
+                price: this.price(row),
+            }))));
+
+            if (this.rawFile) {
+                formData.append('proof_file', this.rawFile);
+            }
 
             try {
                 const storeUrl = window.gpaManualOrderStoreUrl || '/sekretaris/pesanan-manual';
                 const res = await fetch(storeUrl, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': token,
                         'Accept': 'application/json',
                     },
-                    body: JSON.stringify(payload),
+                    body: formData,
                 });
 
                 const data = await res.json().catch(() => ({

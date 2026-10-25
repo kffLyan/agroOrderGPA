@@ -326,7 +326,7 @@
             </header>
 
             <div class="gpa-scroll-x overflow-x-auto py-1">
-                <table class="w-full min-w-[72rem] border-collapse">
+                <table class="w-full border-collapse">
                     <caption class="sr-only">Kinerja Portofolio Finansial: 5 Komoditas Inti GPA</caption>
                     <thead>
                         <tr class="border-b border-line-board bg-surface-track">

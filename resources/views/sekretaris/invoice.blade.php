@@ -221,7 +221,7 @@
                     </div>
 
                     <div class="gpa-scroll-x rounded-xl outline outline-1 outline-line-board/60">
-                        <table class="w-full min-w-[1080px] border-collapse text-left">
+                        <table class="w-full border-collapse text-left">
                             <thead class="border-b border-line-soft bg-surface-track">
                                 <tr>
                                     <th scope="col" class="w-12 px-4 py-3">
@@ -366,7 +366,7 @@
             </div>
 
             <div class="gpa-scroll-x rounded-xl outline outline-1 outline-line-board/60">
-                <table class="w-full min-w-[1100px] border-collapse text-left">
+                <table class="w-full border-collapse text-left">
                     <thead class="border-b border-line-soft bg-surface-track">
                         <tr>
                             <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">No. Faktur &amp; Tanggal</th>

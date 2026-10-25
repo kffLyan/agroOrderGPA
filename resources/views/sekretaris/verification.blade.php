@@ -221,7 +221,7 @@
                 </div>
 
                 <div class="gpa-scroll-x mt-3 rounded-xl outline outline-1 outline-line-soft">
-                    <table class="w-full min-w-[880px] border-collapse text-left">
+                    <table class="w-full border-collapse text-left">
                         <thead class="border-b border-line-soft bg-surface-track">
                             <tr>
                                 <th scope="col" class="px-4 py-3 gpa-meta-lg uppercase tracking-[0.55px] text-ink-body">

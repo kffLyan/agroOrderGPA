@@ -10,9 +10,14 @@
                 <h3 class="font-bold text-sm text-gray-800">Otorisasi & Manajemen Kontrak Kemitraan B2B</h3>
                 <p class="text-xs text-gray-500">Penetapan harga tetap, komitmen pasokan, dan jangka waktu pembayaran (TOP).</p>
             </div>
-            <a href="{{ route('direktur.contracts.create') }}" class="inline-flex items-center justify-center px-4 py-2 bg-[#153a01] hover:bg-[#0f2801] text-white text-xs font-bold rounded-lg shadow-sm transition">
-                + Terbitkan Kontrak Baru
-            </a>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('direktur.contracts.approval') }}" class="inline-flex items-center justify-center px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold rounded-lg shadow-sm transition">
+                    &larr; Antrean Persetujuan Kontrak
+                </a>
+                <a href="{{ route('direktur.contracts.create') }}" class="inline-flex items-center justify-center px-4 py-2 bg-[#153a01] hover:bg-[#0f2801] text-white text-xs font-bold rounded-lg shadow-sm transition">
+                    + Terbitkan Kontrak Baru
+                </a>
+            </div>
         </div>
         <!-- Notifikasi -->
         @if(session('success'))

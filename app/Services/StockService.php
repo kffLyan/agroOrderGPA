@@ -16,6 +16,33 @@ class StockService
             ->sum('available_quantity');
     }
 
+    /**
+     * Dapatkan peta kuota stok panen tersedia untuk banyak produk dalam 1 query efisien (mencegah N+1).
+     *
+     * @param array<int> $productIds
+     * @return array<int, float>
+     */
+    public function getAvailableStockMap(array $productIds): array
+    {
+        if (empty($productIds)) {
+            return [];
+        }
+
+        $stocks = HarvestBatch::whereIn('product_id', $productIds)
+            ->where('available_quantity', '>', 0)
+            ->groupBy('product_id')
+            ->selectRaw('product_id, SUM(available_quantity) as total_available')
+            ->pluck('total_available', 'product_id')
+            ->toArray();
+
+        $result = [];
+        foreach ($productIds as $id) {
+            $result[$id] = (float) ($stocks[$id] ?? 0.0);
+        }
+
+        return $result;
+    }
+
     // Periksa apakah kuota stok mencukupi untuk jumlah yang diminta
     public function isStockSufficient(int $productId, float $requestedQty): bool
     {

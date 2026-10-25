@@ -32,63 +32,13 @@ class ContractController extends Controller
             ->with(['user', 'product'])
             ->get();
 
-        $rows = [];
-        if ($pendingDb->count() > 0) {
-            foreach ($pendingDb as $c) {
-                $clientName = $c->user ? ($c->user->company_name ?: $c->user->name) : 'Klien';
-                $prodName = $c->product ? $c->product->name : 'Komoditas Inti';
-                $vol = (float) ($c->committed_volume_per_cycle ?: 0);
-                $price = (float) ($c->fixed_price_per_kg ?: ($c->product?->base_price ?: 0));
-                $contractVal = $vol * $price;
-                $top = (int) ($c->top_days ?: 30);
+        $settings = $this->governanceService->getSettings();
 
-                $filterKey = 'annual';
-                if ($price < 14000) {
-                    $filterKey = 'discount';
-                } elseif ($top > 30) {
-                    $filterKey = 'top';
-                }
+        $rows = $pendingDb->map(
+            fn (Contract $c) => (new \App\Http\Resources\Direktur\ContractApprovalResource($c, $settings))->resolve()
+        )->all();
 
-                $rows[] = [
-                    'id'               => $c->id,
-                    'contract'         => $c->contract_number,
-                    'region'           => 'BANDUNG RAYA',
-                    'client'           => $clientName,
-                    'client_tone'      => 'success',
-                    'submitted_by'     => 'Key Account Executive',
-                    'submitted_at'     => $c->created_at ? $c->created_at->translatedFormat('d M Y') : date('d M Y'),
-                    'commodity'        => $prodName,
-                    'volume'           => number_format($vol, 0, ',', '.') . ' kg / siklus',
-                    'segment'          => 'Standar Kemitraan GPA',
-                    'price'            => 'Rp ' . number_format($price, 0, ',', '.') . ' / kg',
-                    'price_strike'     => null,
-                    'list_price'       => null,
-                    'offer_price'      => null,
-                    'discount_percent' => null,
-                    'discount_ceiling' => null,
-                    'exception'        => $top > 30 ? "Ekstensi TOP {$top} Hari" : 'Pengajuan Standar',
-                    'exception_tone'   => $top > 30 ? 'caution' : 'neutral',
-                    'term'             => "TOP {$top} Hari",
-                    'top_days'         => $top,
-                    'top_default'      => 30,
-                    'margin'           => '19.5% Net Margin',
-                    'margin_value'     => 19.5,
-                    'margin_minimum'   => 15.0,
-                    'margin_delta'     => 4.5,
-                    'margin_flag'      => 'Safe Margin Pass',
-                    'score'            => 'A (85/100)',
-                    'score_note'       => 'Riwayat Kemitraan Lancar',
-                    'approve_label'    => 'Setujui Kontrak',
-                    'approve_tone'     => 'solid',
-                    'filter_key'       => $filterKey,
-                    'value'            => $contractVal,
-                    'value_label'      => 'Rp ' . number_format($contractVal, 0, ',', '.'),
-                    'exceeds_plafon'   => $top > 30 || $price < 14000,
-                ];
-            }
-        }
-
-        return view('direktur.approval', compact('rows'));
+        return view('direktur.contracts.approval', compact('rows'));
     }
 
     /**
@@ -144,9 +94,8 @@ class ContractController extends Controller
     /**
      * Menolak Pengajuan Kontrak
      */
-    public function reject(Request $request, int $id)
+    public function reject(Request $request, Contract $contract)
     {
-        $contract = Contract::findOrFail($id);
         $reason = $request->input('rejection_reason', 'Margin di bawah threshold ketentuan Direksi atau riwayat kredit tidak memenuhi kualifikasi.');
 
         $contract->update([
@@ -173,9 +122,8 @@ class ContractController extends Controller
     /**
      * Meminta Revisi Klausul Kontrak
      */
-    public function requestRevision(Request $request, int $id)
+    public function requestRevision(Request $request, Contract $contract)
     {
-        $contract = Contract::findOrFail($id);
         $notes = $request->input('revision_notes', 'Harap sesuaikan tenor TOP menjadi maksimal 30 hari atau tingkatkan kuota komitmen.');
 
         $this->governanceService->addAuditLog(
@@ -303,9 +251,9 @@ class ContractController extends Controller
     /**
      * Menampilkan lembar detail resmi kontrak kemitraan B2B
      */
-    public function show(int $id)
+    public function show(Contract $contract)
     {
-        $contract = Contract::with(['user', 'product', 'approver'])->findOrFail($id);
+        $contract->loadMissing(['user', 'product', 'approver']);
 
         $recentOrders = Order::where('user_id', $contract->user_id)
             ->whereHas('orderItems', function ($q) use ($contract) {
@@ -322,9 +270,9 @@ class ContractController extends Controller
     /**
      * Form pengubahan parameter kontrak kemitraan
      */
-    public function edit(int $id)
+    public function edit(Contract $contract)
     {
-        $contract = Contract::with(['user', 'product'])->findOrFail($id);
+        $contract->loadMissing(['user', 'product']);
 
         return view('direktur.contracts.edit', compact('contract'));
     }
@@ -332,10 +280,9 @@ class ContractController extends Controller
     /**
      * Memperbarui parameter kontrak kemitraan
      */
-    public function update(UpdateContractRequest $request, int $id)
+    public function update(UpdateContractRequest $request, Contract $contract)
     {
         try {
-            $contract = Contract::findOrFail($id);
             $validated = $request->validated();
 
             if ($validated['status'] === 'ACTIVE' && $contract->status !== 'ACTIVE') {
@@ -364,10 +311,9 @@ class ContractController extends Controller
     /**
      * Otorisasi dan pengesahan kontrak oleh Direktur
      */
-    public function approve(int $id)
+    public function approve(Contract $contract)
     {
         try {
-            $contract = Contract::findOrFail($id);
             $contract->update([
                 'status'      => 'ACTIVE',
                 'approved_by' => Auth::guard('web')->id(),
@@ -409,10 +355,9 @@ class ContractController extends Controller
     /**
      * Menghentikan kontrak secara resmi oleh Direktur
      */
-    public function terminate(int $id)
+    public function terminate(Contract $contract)
     {
         try {
-            $contract = Contract::findOrFail($id);
             $contract->update([
                 'status' => 'TERMINATED',
             ]);
@@ -436,10 +381,9 @@ class ContractController extends Controller
     /**
      * Menghapus kontrak dari sistem
      */
-    public function destroy(int $id)
+    public function destroy(Contract $contract)
     {
         try {
-            $contract = Contract::findOrFail($id);
             $contractNumber = $contract->contract_number;
             $contract->delete();
 

@@ -75,7 +75,7 @@
     </script>
 
     <div class="space-y-6"
-        x-data="secretaryManualOrder(@js($commodities), @js($catalog), @js($logisticsData), @js($paymentData), @js($sourceData), @js($clientData), @js($clients))">
+        x-data="secretaryManualOrder(@js($commodities ?? []), @js($catalog ?? []), @js($logisticsData), @js($paymentData), @js($sourceData), @js($clientData), @js($clients ?? []), @js($paymentChannels ?? []))">
 
         {{-- Policy banner: Supply Chain Guardrails --}}
         <section class="gpa-panel overflow-hidden">
@@ -313,7 +313,7 @@
             </div>
 
             <div class="gpa-scroll-x px-6 py-5">
-                <table class="w-full min-w-[64rem] border-collapse text-left">
+                <table class="w-full border-collapse text-left">
                     <caption class="sr-only">Daftar komoditas order manual beserta stok sistem dan subtotal.</caption>
                     <thead>
                         <tr class="border-b border-line-board">
@@ -516,127 +516,459 @@
                         class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand gpa-micro-bold text-accent">05</span>
                     <div class="min-w-0">
                         <h2 class="gpa-section-title text-ink">Cara Pembayaran &amp; Bukti Transfer</h2>
-                        <p class="gpa-note text-ink-quiet">Pilih metode pembayaran yang disepakati dengan pembeli.</p>
+                        <p class="gpa-note text-ink-quiet">Sesuaikan dengan kanal pembayaran resmi GPA (ditetapkan oleh Direktur) atau skema termin khusus B2B.</p>
                     </div>
                 </div>
 
-                <span class="shrink-0 rounded-full bg-warning-soft px-2.5 py-1 gpa-micro-bold text-warning-caution">
-                    SOP Pembayaran &amp; Tempo
+                <span class="shrink-0 rounded-full bg-accent px-2.5 py-1 gpa-micro-bold text-success-ink">
+                    Gateway &amp; Rekening Resmi Direksi
                 </span>
             </div>
 
-            <div class="grid gap-5 px-6 py-5 xl:grid-cols-[minmax(0,1fr)_22rem]">
-                <fieldset>
-                    <legend class="gpa-label">Metode Pembayaran</legend>
-                    <div class="mt-2 grid gap-2 sm:grid-cols-2">
-                        <label
-                            class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-line-faint bg-surface px-3 py-3 transition-colors hover:border-brand">
-                            <input type="radio" name="payment-method" value="transfer"
-                                x-model="paymentMethod" class="gpa-check gpa-check--radio mt-0.5">
-                            <span class="min-w-0">
-                                <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
-                                    Transfer Bank (BCA / Mandiri)
-                                </span>
-                            </span>
-                        </label>
-                        <label
-                            class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-line-faint bg-surface px-3 py-3 transition-colors hover:border-brand">
-                            <input type="radio" name="payment-method" value="qris"
-                                x-model="paymentMethod" class="gpa-check gpa-check--radio mt-0.5">
-                            <span class="min-w-0">
-                                <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
-                                    QRIS Resmi GPA
-                                </span>
-                            </span>
-                        </label>
-                        <label
-                            class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-line-faint bg-surface px-3 py-3 transition-colors hover:border-brand">
-                            <input type="radio" name="payment-method" value="cod"
-                                x-model="paymentMethod" class="gpa-check gpa-check--radio mt-0.5">
-                            <span class="min-w-0">
-                                <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
-                                    Bayar di Tempat (COD)
-                                </span>
-                            </span>
-                        </label>
-                        <label
-                            class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-line-faint bg-surface px-3 py-3 transition-colors hover:border-brand">
-                            <input type="radio" name="payment-method" value="top14"
-                                x-model="paymentMethod" class="gpa-check gpa-check--radio mt-0.5">
-                            <span class="min-w-0">
-                                <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
-                                    Tempo 14 Hari (Khusus Mitra Kontrak)
-                                </span>
-                            </span>
-                        </label>
-                        <label
-                            class="flex cursor-pointer items-start gap-2.5 rounded-xl border border-line-faint bg-surface px-3 py-3 transition-colors hover:border-brand sm:col-span-2">
-                            <input type="radio" name="payment-method" value="custom"
-                                x-model="paymentMethod" class="gpa-check gpa-check--radio mt-0.5">
-                            <span class="min-w-0">
-                                <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
-                                    Metode Khusus / SK Direktur (Custom)
-                                </span>
-                                <span class="mt-0.5 block gpa-note text-ink-quiet">Disposisi &amp; kesepakatan termin kredit khusus direksi</span>
-                            </span>
-                        </label>
-                    </div>
-
-                    {{-- Form Keterangan Termin Kustom / SK Direktur --}}
-                    <div x-cloak x-show="paymentMethod === 'custom'" class="mt-3 rounded-xl border border-accent-deep/30 bg-accent/20 p-3.5">
-                        <div class="flex items-center gap-2">
-                            <x-gpa.icon name="shield" class="h-4 w-4 text-brand" />
-                            <label class="gpa-label text-brand" for="payment-custom-note">Otorisasi &amp; Keterangan Termin Khusus (SK Direktur)</label>
+            <div class="grid gap-6 px-6 py-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+                {{-- Kolom Kiri: Pemilihan Metode / Kanal Pembayaran --}}
+                <div class="space-y-4">
+                    {{-- Tab Pemilih Kategori: Kanal Resmi vs Tunai/Cash vs Termin B2B --}}
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line-soft pb-3">
+                        <div class="inline-flex flex-wrap gap-1.5 rounded-lg bg-surface-shell p-1" role="group"
+                            aria-label="Kategori Cara Pembayaran">
+                            <button type="button" @click="paymentCategory = 'official'; selectChannel(selectedChannelId)"
+                                :class="paymentCategory === 'official'
+                                    ? 'bg-brand text-accent shadow-sub'
+                                    : 'text-ink-body hover:bg-surface'"
+                                class="rounded px-3 py-1.5 gpa-meta-lg font-semibold tracking-[0.07em] transition-colors">
+                                Kanal Resmi GPA (Bank / QRIS)
+                            </button>
+                            <button type="button" @click="selectCashMethod()"
+                                :class="paymentCategory === 'cash'
+                                    ? 'bg-brand text-accent shadow-sub'
+                                    : 'text-ink-body hover:bg-surface'"
+                                class="inline-flex items-center gap-1.5 rounded px-3 py-1.5 gpa-meta-lg font-semibold tracking-[0.07em] transition-colors">
+                                <x-gpa.icon name="banknote" class="h-4 w-4" />
+                                <span>Tunai / Cash (Kasir)</span>
+                            </button>
+                            <button type="button" @click="paymentCategory = 'b2b'; selectB2bMethod('cod')"
+                                :class="paymentCategory === 'b2b'
+                                    ? 'bg-brand text-accent shadow-sub'
+                                    : 'text-ink-body hover:bg-surface'"
+                                class="rounded px-3 py-1.5 gpa-meta-lg font-semibold tracking-[0.07em] transition-colors">
+                                Termin Khusus B2B / COD / SK Direktur
+                            </button>
                         </div>
-                        <p class="mt-1 gpa-note text-ink-body">
-                            Metode pembayaran ini dapat disesuaikan dan diedit berdasarkan disposisi Direktur (misal: Tempo 30 Hari, DP Bertahap, atau SK Khusus).
-                        </p>
-                        <input id="payment-custom-note" type="text" x-model="paymentCustomNote"
-                            placeholder="Contoh: Tempo 30 Hari - Disposisi Memo Direksi No. 042/GPA/DIR/X/2026"
-                            class="gpa-control mt-2 border-brand-line bg-surface" spellcheck="false">
+
+                        <span class="gpa-note text-ink-quiet">
+                            <template x-if="paymentCategory === 'cash'">
+                                <span class="font-bold text-success-deep flex items-center gap-1">
+                                    <x-gpa.icon name="check-circle" class="h-3.5 w-3.5" />
+                                    Kas Masuk Langsung H+0
+                                </span>
+                            </template>
+                            <template x-if="paymentCategory !== 'cash'">
+                                <span>Status Kanal: <strong class="text-success-deep" x-text="channels.length + ' Aktif Disetujui Direksi'"></strong></span>
+                            </template>
+                        </span>
                     </div>
-                </fieldset>
 
-                <div class="rounded-xl border border-line-faint bg-surface-shell p-4">
-                    <p class="gpa-label">Foto Bukti Pembayaran</p>
+                    {{-- MODE 1: Kanal Resmi GPA (Sesuai Konfigurasi Direktur & Payment Proof) --}}
+                    <div x-show="paymentCategory === 'official'" class="space-y-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="gpa-label">Pilih Rekening Tujuan / Kanal Resmi:</label>
+                                <span class="gpa-note text-brand font-semibold">Tersinkronisasi dengan Portal Klien</span>
+                            </div>
 
-                    <div x-show="evidence.file" class="mt-2 flex items-start gap-2">
-                        <x-gpa.icon name="file-text" class="mt-0.5 h-4 w-4 shrink-0 text-success-deep" />
-                        <div class="min-w-0 flex-1">
-                            <p class="truncate gpa-mono-xs font-bold text-ink" x-text="evidence.file"></p>
-                            <p class="gpa-note text-ink-quiet">
-                                <span x-text="evidence.size"></span> • SHA-256
-                                <span x-text="evidence.hash"></span>
+                            {{-- Grid Kartu Kanal Pembayaran --}}
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                                <template x-for="ch in channels" :key="ch.id">
+                                    <button type="button" @click="selectChannel(ch.id)"
+                                        class="flex items-center gap-2.5 rounded-xl border p-2.5 text-left transition-all"
+                                        :class="selectedChannelId === ch.id 
+                                            ? 'border-brand bg-brand text-white shadow-sub ring-2 ring-accent' 
+                                            : 'border-line-soft bg-surface text-ink hover:border-line-board hover:bg-surface-muted'">
+                                        <div class="flex h-10 w-14 shrink-0 items-center justify-center rounded-lg bg-white p-1.5 shadow-xs border border-line-soft overflow-hidden">
+                                            <template x-if="ch.logo_url">
+                                                <img :src="ch.logo_url" :alt="ch.name" class="h-full w-full object-contain" />
+                                            </template>
+                                            <template x-if="!ch.logo_url">
+                                                <span class="font-mono text-xs font-extrabold text-ink"
+                                                    x-text="ch.bank_code || (ch.type === 'QRIS' ? 'QRIS' : (ch.type === 'EWALLET' ? 'WALLET' : 'BANK'))">
+                                                </span>
+                                            </template>
+                                        </div>
+                                        <div class="min-w-0 flex flex-col">
+                                            <span class="font-sans text-xs font-bold truncate" :class="selectedChannelId === ch.id ? 'text-white' : 'text-ink'" x-text="ch.name"></span>
+                                            <span class="font-mono text-[10px] truncate" :class="selectedChannelId === ch.id ? 'text-accent' : 'text-ink-quiet'" x-text="ch.account_number"></span>
+                                        </div>
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        {{-- Kartu Detail Penerima Terpilih (Identik dengan Payment Proof Klien & Direktur) --}}
+                        <div class="flex flex-col gap-3 rounded-xl bg-brand p-4 ring-1 ring-inset ring-accent/30 text-white">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div class="flex min-w-0 items-start gap-3">
+                                    <div class="flex h-12 w-20 shrink-0 items-center justify-center rounded-xl bg-white p-2 shadow-sub border border-white/30 overflow-hidden">
+                                        <template x-if="selectedChannel?.logo_url">
+                                            <img :src="selectedChannel.logo_url" :alt="selectedChannel.name" class="h-full w-full object-contain" />
+                                        </template>
+                                        <template x-if="!selectedChannel?.logo_url">
+                                            <span class="font-mono text-sm font-extrabold text-ink"
+                                                x-text="selectedChannel?.bank_code || (selectedChannel?.type === 'QRIS' ? 'QRIS' : (selectedChannel?.type === 'EWALLET' ? 'WALLET' : 'BANK'))">
+                                            </span>
+                                        </template>
+                                    </div>
+                                    <div class="flex min-w-0 flex-col">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[10px] font-bold uppercase tracking-wider text-accent"
+                                                x-text="selectedChannel?.type === 'QRIS' ? 'QRIS Standar Nasional Indonesia (ASPI)' : (selectedChannel?.type === 'EWALLET' ? 'Dompet Digital Bisnis Resmi' : 'Rekening Giro / Virtual Account Resmi')">
+                                            </span>
+                                            <span class="rounded bg-accent/20 px-1.5 py-0.2 text-[9px] font-semibold text-accent">TERVERIFIKASI</span>
+                                        </div>
+                                        <p class="font-mono text-base font-bold tracking-wide text-white"
+                                            x-text="selectedChannel?.name + ' : ' + selectedChannel?.account_number">
+                                        </p>
+                                        <p class="text-xs text-line-soft">
+                                            a.n. <strong class="text-white" x-text="selectedChannel?.account_name"></strong>
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <button type="button" @click="copyAccount()"
+                                    class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-accent px-4 py-2 font-sans text-xs font-bold uppercase tracking-wider text-ink transition-transform hover:scale-105 hover:bg-accent-deep shadow-sub">
+                                    <x-gpa.icon name="copy" class="h-3.5 w-3.5 text-ink" />
+                                    <span x-text="selectedChannel?.type === 'QRIS' ? 'Salin NMID' : (selectedChannel?.type === 'EWALLET' ? 'Salin No. HP/ID' : 'Salin Rekening')"></span>
+                                </button>
+                            </div>
+
+                            {{-- Pratinjau Barcode jika memilih QRIS --}}
+                            <div x-show="selectedChannel?.type === 'QRIS'" class="mt-1 flex flex-col sm:flex-row items-center gap-4 rounded-xl bg-surface/10 p-3.5 border border-accent/20">
+                                <div class="group relative h-28 w-28 shrink-0 rounded-xl bg-white p-1.5 flex items-center justify-center shadow-lg border border-accent/40 cursor-pointer overflow-hidden transition-all hover:scale-105"
+                                    @click="fullQrisModal = (selectedChannel?.image_url || '/storage/payment-channels/qris-gpa-default.png')">
+                                    <img :src="selectedChannel?.image_url || '/storage/payment-channels/qris-gpa-default.png'" 
+                                        onerror="this.onerror=null;this.src='/storage/payment-channels/qris-gpa-default.png'"
+                                        alt="Barcode QRIS Resmi GPA" class="h-full w-full object-contain rounded-lg">
+                                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl">
+                                        <span class="text-[10px] font-bold text-white bg-black/70 px-2 py-1 rounded">Perbesar</span>
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-col text-xs min-w-0 flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <p class="font-bold text-accent">Scan QRIS GPA via M-Banking / Dompet Digital:</p>
+                                        <span class="rounded bg-accent/20 px-1.5 py-0.2 text-[9px] font-semibold text-accent">INSTAN</span>
+                                    </div>
+                                    <p class="mt-0.5 text-line-soft text-[11px] leading-relaxed">
+                                        Pindai QRIS via BCA Mobile, Livin Mandiri, BRImo, BNI Mobile, BSI Mobile, GoPay, OVO, ShopeePay, atau DANA.
+                                    </p>
+                                    <p class="mt-1 font-mono text-[11px] text-accent font-semibold" x-text="'NMID: ' + selectedChannel?.account_number"></p>
+                                    
+                                    <div class="mt-2.5 flex flex-wrap items-center gap-2">
+                                        <button type="button" @click="fullQrisModal = (selectedChannel?.image_url || '/storage/payment-channels/qris-gpa-default.png')"
+                                            class="inline-flex items-center gap-1.5 rounded-lg border border-white/30 bg-white/10 px-3 py-1.5 font-sans text-xs font-semibold text-white hover:bg-white/20 transition-all">
+                                            <x-gpa.icon name="eye" class="h-3.5 w-3.5 text-white" />
+                                            Perbesar Barcode
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="text-[11px] leading-relaxed text-line-soft" x-text="selectedChannel?.instructions || 'Sertakan nomor referensi pesanan di berita transfer perbankan.'"></p>
+                        </div>
+                    </div>
+
+                    {{-- MODE 3: Tunai / Cash di Kasir / Meja Sekretariat --}}
+                    <div x-cloak x-show="paymentCategory === 'cash'" class="space-y-4">
+                        <div class="rounded-2xl border border-accent/40 bg-gradient-to-br from-brand/95 via-brand to-brand-deep p-5 text-white shadow-sub">
+                            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
+                                <div class="flex items-center gap-3">
+                                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand shadow-sub">
+                                        <x-gpa.icon name="banknote" class="h-5 w-5 text-brand" />
+                                    </span>
+                                    <div>
+                                        <h3 class="font-sans text-sm font-bold text-white">Kasir Tunai / Meja Sekretariat GPA</h3>
+                                        <p class="text-[11px] text-white/70">Penerimaan fisik langsung di loket / packhouse saat pesanan dicatat</p>
+                                    </div>
+                                </div>
+                                <span class="rounded-full bg-accent/20 px-2.5 py-1 text-[10px] font-bold tracking-wider text-accent uppercase">
+                                    Kas Masuk: Lunas H+0
+                                </span>
+                            </div>
+
+                            <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                                {{-- Total Tagihan --}}
+                                <div class="rounded-xl bg-white/10 p-3.5 border border-white/10 flex flex-col justify-between">
+                                    <div>
+                                        <span class="text-[11px] font-semibold text-white/70 uppercase tracking-wider block">Total Tagihan</span>
+                                        <span class="mt-1.5 font-mono text-2xl font-black text-white block" x-text="rupiah(total)"></span>
+                                    </div>
+                                    <span class="text-[10px] text-white/60 mt-2 block">Termasuk ongkir flat (Rp 75.000)</span>
+                                </div>
+
+                                {{-- Input Nominal Diterima --}}
+                                <div class="rounded-xl bg-white/15 p-3.5 border border-accent/60 ring-2 ring-accent/30 sm:col-span-2">
+                                    <div class="flex items-center justify-between mb-1.5">
+                                        <label for="cash-received-input" class="text-[11px] font-bold text-accent uppercase tracking-wider flex items-center gap-1.5">
+                                            <x-gpa.icon name="calculator" class="h-3.5 w-3.5" />
+                                            <span>Uang Tunai Diterima dari Pembeli:</span>
+                                        </label>
+                                        <button type="button" @click="setCashExact()"
+                                            class="rounded bg-accent px-2 py-0.5 text-[10px] font-bold text-brand uppercase hover:bg-accent-deep transition-colors shadow-xs">
+                                            Uang Pas
+                                        </button>
+                                    </div>
+                                    <div class="relative">
+                                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 font-mono text-sm font-bold text-white/70">Rp</span>
+                                        <input id="cash-received-input" type="number" min="0" step="1000" x-model.number="cashAmount"
+                                            class="w-full rounded-lg border border-white/20 bg-black/30 py-2.5 pl-10 pr-3 font-mono text-xl font-bold text-white placeholder-white/40 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                                            placeholder="0" />
+                                    </div>
+
+                                    {{-- Preset Cepat Nominal Uang Pecahan --}}
+                                    <div class="mt-2.5 flex flex-wrap items-center gap-1.5">
+                                        <span class="text-[10px] text-white/60 mr-1">Preset Cepat:</span>
+                                        <button type="button" @click="setCashExact()"
+                                            class="rounded-md border border-white/20 bg-white/10 px-2 py-0.5 font-mono text-[11px] font-medium text-white hover:bg-white/20 transition-colors">
+                                            Uang Pas
+                                        </button>
+                                        <button type="button" @click="roundCashUp(50000)"
+                                            class="rounded-md border border-white/20 bg-white/10 px-2 py-0.5 font-mono text-[11px] font-medium text-white hover:bg-white/20 transition-colors">
+                                            Bulatkan 50rb
+                                        </button>
+                                        <button type="button" @click="roundCashUp(100000)"
+                                            class="rounded-md border border-white/20 bg-white/10 px-2 py-0.5 font-mono text-[11px] font-medium text-white hover:bg-white/20 transition-colors">
+                                            Bulatkan 100rb
+                                        </button>
+                                        <button type="button" @click="addCashPreset(50000)"
+                                            class="rounded-md border border-white/20 bg-white/10 px-2 py-0.5 font-mono text-[11px] font-medium text-accent hover:bg-white/20 transition-colors">
+                                            +50.000
+                                        </button>
+                                        <button type="button" @click="addCashPreset(100000)"
+                                            class="rounded-md border border-white/20 bg-white/10 px-2 py-0.5 font-mono text-[11px] font-medium text-accent hover:bg-white/20 transition-colors">
+                                            +100.000
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Panel Perhitungan Kembalian / Kekurangan --}}
+                            <div class="mt-4 pt-3.5 border-t border-white/10">
+                                <template x-if="total <= 0">
+                                    <div class="flex items-center gap-2 rounded-xl bg-white/10 p-3 text-xs text-white/80">
+                                        <x-gpa.icon name="info" class="h-4 w-4 text-accent shrink-0" />
+                                        <span>Tambahkan komoditas pada bagian 03 di atas untuk menghitung total tagihan kasir.</span>
+                                    </div>
+                                </template>
+
+                                <template x-if="total > 0 && isCashSufficient">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-success-deep/30 border border-success-ink/40 p-4">
+                                        <div class="flex items-center gap-3">
+                                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent text-brand">
+                                                <x-gpa.icon name="check-circle" class="h-6 w-6 text-brand" />
+                                            </span>
+                                            <div>
+                                                <span class="text-xs uppercase tracking-wider font-extrabold text-accent">
+                                                    Uang Tunai Diterima Cukup
+                                                </span>
+                                                <p class="font-mono text-xs text-white/90 mt-0.5">
+                                                    Diterima: <strong class="text-white" x-text="rupiah(cashReceived)"></strong> • Tagihan: <span x-text="rupiah(total)"></span>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-left sm:text-right bg-black/25 px-4 py-2.5 rounded-xl border border-white/15">
+                                            <span class="text-[10px] uppercase tracking-wider text-accent font-bold block">
+                                                Uang Kembalian Pembeli:
+                                            </span>
+                                            <span class="font-mono text-2xl font-black text-accent" x-text="rupiah(cashChange)"></span>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <template x-if="total > 0 && !isCashSufficient">
+                                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl bg-danger-soft/20 border border-danger/40 p-4">
+                                        <div class="flex items-center gap-3">
+                                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-danger text-white">
+                                                <x-gpa.icon name="alert-triangle" class="h-5 w-5" />
+                                            </span>
+                                            <div>
+                                                <span class="text-xs uppercase tracking-wider font-bold text-danger-ink">
+                                                    Uang Tunai Masih Kurang
+                                                </span>
+                                                <p class="text-[11px] text-white/80 mt-0.5">
+                                                    Nominal yang diserahkan pembeli belum mencukupi total tagihan.
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div class="text-left sm:text-right bg-black/30 px-3.5 py-2 rounded-xl border border-danger/30">
+                                            <span class="text-[10px] uppercase tracking-wider text-danger-ink font-bold block">
+                                                Kekurangan Pembayaran:
+                                            </span>
+                                            <span class="font-mono text-lg font-bold text-danger-ink" x-text="'- ' + rupiah(cashShortage)"></span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            {{-- Catatan / Tanda Terima Kasir --}}
+                            <div class="mt-3.5 flex items-center gap-2 text-xs text-white/80">
+                                <x-gpa.icon name="receipt" class="h-4 w-4 text-accent shrink-0" />
+                                <span>Pencatatan kasir akan otomatis disahkan dengan status <strong>LUNAS</strong> dan bukti bayar dicetak pada faktur Surat Jalan.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- MODE 2: Termin Khusus B2B / COD / SK Direktur --}}
+                    <div x-cloak x-show="paymentCategory === 'b2b'" class="space-y-4">
+                        <div class="grid gap-2.5 sm:grid-cols-3">
+                            <label
+                                class="flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition-colors"
+                                :class="paymentMethod === 'cod' ? 'border-brand bg-surface-shell ring-1 ring-brand' : 'border-line-faint bg-surface hover:border-brand'">
+                                <input type="radio" name="payment-method-b2b" value="cod"
+                                    @click="selectB2bMethod('cod')" :checked="paymentMethod === 'cod'" class="gpa-check gpa-check--radio mt-0.5">
+                                <span class="min-w-0">
+                                    <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
+                                        COD (Tunai di Tempat)
+                                    </span>
+                                    <span class="mt-0.5 block gpa-note text-ink-quiet">Pelunasan saat armada serah terima</span>
+                                </span>
+                            </label>
+
+                            <label
+                                class="flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition-colors"
+                                :class="paymentMethod === 'top14' ? 'border-brand bg-surface-shell ring-1 ring-brand' : 'border-line-faint bg-surface hover:border-brand'">
+                                <input type="radio" name="payment-method-b2b" value="top14"
+                                    @click="selectB2bMethod('top14')" :checked="paymentMethod === 'top14'" class="gpa-check gpa-check--radio mt-0.5">
+                                <span class="min-w-0">
+                                    <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
+                                        Tempo 14 Hari (TOP)
+                                    </span>
+                                    <span class="mt-0.5 block gpa-note text-ink-quiet">Khusus mitra kontrak aktif plafon</span>
+                                </span>
+                            </label>
+
+                            <label
+                                class="flex cursor-pointer items-start gap-2.5 rounded-xl border p-3 transition-colors"
+                                :class="paymentMethod === 'custom' ? 'border-brand bg-surface-shell ring-1 ring-brand' : 'border-line-faint bg-surface hover:border-brand'">
+                                <input type="radio" name="payment-method-b2b" value="custom"
+                                    @click="selectB2bMethod('custom')" :checked="paymentMethod === 'custom'" class="gpa-check gpa-check--radio mt-0.5">
+                                <span class="min-w-0">
+                                    <span class="block gpa-meta-lg font-bold tracking-[0.07em] text-ink">
+                                        SK Khusus Direktur
+                                    </span>
+                                    <span class="mt-0.5 block gpa-note text-ink-quiet">Disposisi &amp; kesepakatan direksi</span>
+                                </span>
+                            </label>
+                        </div>
+
+                        {{-- Form Keterangan Termin Kustom / SK Direktur --}}
+                        <div x-cloak x-show="paymentMethod === 'custom'" class="rounded-xl border border-accent-deep/30 bg-accent/20 p-3.5">
+                            <div class="flex items-center gap-2">
+                                <x-gpa.icon name="shield" class="h-4 w-4 text-brand" />
+                                <label class="gpa-label text-brand" for="payment-custom-note">Otorisasi &amp; Keterangan Termin Khusus (SK Direktur)</label>
+                            </div>
+                            <p class="mt-1 gpa-note text-ink-body">
+                                Masukkan nomor memo / disposisi persetujuan Direktur Utama atas termin pembayaran khusus ini.
                             </p>
-                            <p class="mt-1 inline-flex items-center gap-1 rounded bg-success-soft px-1.5 py-0.5 gpa-micro-bold text-success-ink"
-                                x-text="evidence.hash_note"></p>
+                            <input id="payment-custom-note" type="text" x-model="paymentCustomNote"
+                                placeholder="Contoh: Tempo 30 Hari - Disposisi Memo Direksi No. 042/GPA/DIR/X/2026"
+                                class="gpa-control mt-2 border-brand-line bg-surface" spellcheck="false">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Kolom Kanan: Berkas Bukti Pembayaran & Rekonsiliasi --}}
+                <div class="rounded-xl border border-line-faint bg-surface-shell p-4 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-line-soft pb-2.5">
+                            <p class="gpa-label" x-text="paymentCategory === 'cash' ? 'Lampiran Kuitansi / Bukti Fisik Kasir (Opsional)' : 'Unggah Bukti Transfer / Chat Pemesanan'"></p>
+                            <span class="gpa-note text-ink-quiet">Maks. 5 MB (JPG/PNG/PDF)</span>
+                        </div>
+
+                        {{-- Area Drag & Drop / Pilih Berkas --}}
+                        <div class="mt-3 relative rounded-xl border-2 border-dashed border-line-board bg-surface p-4 text-center transition-colors"
+                            :class="dragActive ? 'border-brand bg-accent/20' : 'hover:border-brand'"
+                            @dragover.prevent="onDragOver()" @dragenter.prevent="onDragOver()"
+                            @dragleave.prevent="dragActive = false" @drop.prevent="onDrop($event)">
+                            <input type="file" x-ref="proofFileInput" @change="onFileInput($event)"
+                                accept="image/jpeg,image/png,image/jpg,application/pdf" class="hidden">
+
+                            <div x-show="!evidence.file" class="flex flex-col items-center py-2">
+                                <span class="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-ink">
+                                    <x-gpa.icon name="upload" class="h-5 w-5" />
+                                </span>
+                                <p class="mt-2 text-xs font-bold text-ink">Tarik berkas bukti bayar ke sini</p>
+                                <p class="mt-0.5 text-[11px] text-ink-quiet">atau klik tombol di bawah untuk memilih file</p>
+                                <button type="button" @click="$refs.proofFileInput.click()"
+                                    class="mt-2.5 inline-flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-xs font-bold text-accent transition-colors hover:bg-brand-hover">
+                                    <x-gpa.icon name="upload" class="h-3.5 w-3.5" />
+                                    <span>Pilih Berkas Bukti</span>
+                                </button>
+                            </div>
+
+                            {{-- Pratinjau Berkas Terunggah --}}
+                            <div x-show="evidence.file" class="flex flex-col gap-2 py-1 text-left">
+                                <div class="flex items-start gap-2.5">
+                                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand text-accent">
+                                        <x-gpa.icon name="file-text" class="h-5 w-5" />
+                                    </span>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate font-mono text-xs font-bold text-ink" x-text="evidence.file"></p>
+                                        <p class="gpa-note text-ink-quiet">
+                                            <span x-text="evidence.size"></span> • <span x-text="evidence.hash"></span>
+                                        </p>
+                                        <span class="mt-1 inline-flex items-center gap-1 rounded bg-success-soft px-1.5 py-0.5 gpa-micro-bold text-success-ink"
+                                            x-text="evidence.hash_note"></span>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2 flex flex-wrap items-center gap-2 border-t border-line-soft pt-2">
+                                    <button type="button" @click="$refs.proofFileInput.click()"
+                                        class="inline-flex h-7 items-center gap-1 rounded-lg bg-accent px-2.5 text-xs font-bold text-ink hover:bg-accent-deep">
+                                        <x-gpa.icon name="upload" class="h-3 w-3" />
+                                        Ganti Berkas
+                                    </button>
+                                    <button type="button" @click="viewEvidence()"
+                                        class="inline-flex h-7 items-center gap-1 rounded-lg bg-brand px-2.5 text-xs font-bold text-accent hover:bg-brand-hover">
+                                        <x-gpa.icon name="eye" class="h-3 w-3" />
+                                        Lihat Pratinjau
+                                    </button>
+                                    <button type="button" @click="removeEvidence()"
+                                        class="inline-flex h-7 items-center gap-1 rounded-lg bg-surface px-2.5 text-xs font-bold text-danger-ink border border-line-board hover:bg-danger-soft">
+                                        <x-gpa.icon name="trash" class="h-3 w-3" />
+                                        Hapus
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Metadata Pengirim --}}
+                        <div class="mt-3.5 space-y-2.5">
+                            <div>
+                                <label class="gpa-label" for="manual-sender-bank">Bank / Dompet Pengirim:</label>
+                                <input id="manual-sender-bank" type="text" x-model="senderBank"
+                                    placeholder="Contoh: Bank BCA / Mandiri / QRIS" class="gpa-control mt-1">
+                            </div>
+
+                            <div class="grid gap-2 sm:grid-cols-2">
+                                <div>
+                                    <label class="gpa-label" for="manual-sender-acc">Rekening / No. HP:</label>
+                                    <input id="manual-sender-acc" type="text" x-model="senderAccount"
+                                        placeholder="No rekening atau no HP..." class="gpa-control mt-1 font-mono text-xs">
+                                </div>
+                                <div>
+                                    <label class="gpa-label" for="manual-ref-pay">No. Referensi Bank:</label>
+                                    <input id="manual-ref-pay" type="text" x-model="paymentReference"
+                                        placeholder="Contoh: TRX-9281..." class="gpa-control mt-1 font-mono text-xs">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <p x-cloak x-show="! evidence.file" class="mt-2 gpa-note text-danger-ink">
-                        Belum ada bukti pembayaran yang dilampirkan.
-                    </p>
-
-                    <div class="mt-3 flex flex-wrap gap-2">
-                        <input type="file" x-ref="proofFileInput" @change="handleFileUpload($event)" accept="image/*,.pdf" class="hidden">
-                        <button type="button" @click="$refs.proofFileInput.click()"
-                            class="inline-flex h-8 items-center gap-1.5 rounded-lg bg-accent px-3 text-ink transition-colors hover:bg-accent-deep">
-                            <x-gpa.icon name="upload" class="h-3.5 w-3.5" />
-                            <span class="gpa-micro-bold" x-text="evidence.file ? 'Ganti File Bukti' : 'Unggah Bukti Transfer'"></span>
-                        </button>
-                        <button type="button" x-show="evidence.file" @click="viewEvidence()"
-                            class="inline-flex h-8 items-center gap-1.5 rounded-lg bg-brand px-3 text-accent transition-colors hover:bg-brand-hover">
-                            <x-gpa.icon name="eye" class="h-3.5 w-3.5" />
-                            <span class="gpa-micro-bold">Lihat Bukti</span>
-                        </button>
-                        <button type="button" x-show="evidence.file" @click="removeEvidence()"
-                            class="inline-flex h-8 items-center gap-1.5 rounded-lg bg-surface px-3 text-ink-body outline outline-1 outline-line-board transition-colors hover:bg-surface-muted">
-                            <x-gpa.icon name="trash" class="h-3.5 w-3.5" />
-                            <span class="gpa-micro-bold">Hapus</span>
-                        </button>
-                    </div>
-
-                    <span class="gpa-hint mt-2">Unggah foto bukti transfer atau tangkapan layar chat pemesanan.</span>
+                    <span class="gpa-hint mt-3 block border-t border-line-soft pt-2">
+                        Bukti pembayaran akan disimpan di vault sistem dan dapat direkonsiliasi langsung oleh Direktur dan Kasir.
+                    </span>
                 </div>
             </div>
         </section>
@@ -688,5 +1020,55 @@
                 </div>
             </div>
         </section>
+
+        {{-- Modal Pratinjau Barcode QRIS --}}
+        <div x-cloak x-show="fullQrisModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+            @keydown.escape.window="fullQrisModal = null">
+            <div class="relative max-w-sm w-full rounded-2xl bg-white p-5 text-center shadow-2xl flex flex-col items-center gap-3">
+                <button type="button" @click="fullQrisModal = null"
+                    class="absolute right-3 top-3 rounded-full bg-surface-shell p-1.5 text-ink hover:bg-surface-muted"
+                    aria-label="Tutup modal QRIS">
+                    <x-gpa.icon name="x" class="h-5 w-5" />
+                </button>
+                <h3 class="font-sans text-base font-bold text-ink">Barcode QRIS Resmi GPA</h3>
+                <p class="text-xs text-ink-quiet">Pindai kode QR ini menggunakan BCA Mobile, Livin Mandiri, BRImo, GoPay, OVO, atau DANA.</p>
+                <div class="h-64 w-64 rounded-xl border border-line-soft p-2 bg-white flex items-center justify-center">
+                    <img :src="fullQrisModal" alt="Barcode QRIS Full" class="h-full w-full object-contain">
+                </div>
+                <div class="flex items-center gap-2 w-full pt-1">
+                    <a :href="fullQrisModal" download="QRIS-AgroOrder-GPA.png"
+                        class="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-xs font-bold text-accent hover:bg-brand-hover">
+                        <x-gpa.icon name="download" class="h-3.5 w-3.5" />
+                        Unduh QRIS
+                    </a>
+                    <button type="button" @click="fullQrisModal = null"
+                        class="rounded-lg border border-line-board bg-surface px-4 py-2 text-xs font-semibold text-ink hover:bg-surface-muted">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{-- Modal Pratinjau Bukti Pembayaran --}}
+        <div x-cloak x-show="evidenceModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+            @keydown.escape.window="evidenceModal = false">
+            <div class="relative max-w-lg w-full rounded-2xl bg-white p-5 text-center shadow-2xl flex flex-col items-center gap-3">
+                <button type="button" @click="evidenceModal = false"
+                    class="absolute right-3 top-3 rounded-full bg-surface-shell p-1.5 text-ink hover:bg-surface-muted"
+                    aria-label="Tutup modal bukti">
+                    <x-gpa.icon name="x" class="h-5 w-5" />
+                </button>
+                <h3 class="font-sans text-base font-bold text-ink" x-text="evidence.file || 'Pratinjau Bukti Transfer'"></h3>
+                <div class="max-h-96 w-full rounded-xl border border-line-soft p-2 bg-surface flex items-center justify-center overflow-hidden">
+                    <template x-if="evidence.previewUrl">
+                        <img :src="evidence.previewUrl" alt="Pratinjau Bukti" class="max-h-80 w-auto object-contain rounded">
+                    </template>
+                </div>
+                <button type="button" @click="evidenceModal = false"
+                    class="rounded-lg bg-brand px-5 py-2 text-xs font-semibold text-accent hover:bg-brand-hover">
+                    Tutup Pratinjau
+                </button>
+            </div>
+        </div>
     </div>
 @endsection

@@ -181,7 +181,7 @@
                     </div>
 
                     <div class="gpa-scroll-x">
-                        <table class="w-full min-w-[700px] border-collapse text-left">
+                        <table class="w-full border-collapse text-left">
                             <thead class="bg-surface-shell">
                                 <tr class="border-b border-line-soft">
                                     <th scope="col" class="px-4 py-3 gpa-meta-lg uppercase leading-[0.875rem] tracking-[0.55px] text-ink-body first:pl-6">
@@ -296,7 +296,7 @@
                     <ol class="grid grid-cols-2 gap-3 pt-4 sm:grid-cols-3 xl:grid-cols-5">
                         <li @class([
                             'rounded-xl border bg-surface-shell p-3',
-                            'border-success-deep/40' => ($pendingOrdersCount ?? 0) > 0,
+                            'border-warning/60 bg-warning-soft/20' => ($pendingOrdersCount ?? 0) > 0,
                             'border-line-soft' => ($pendingOrdersCount ?? 0) <= 0,
                         ])>
                             <div class="flex items-center justify-between gap-2">
@@ -305,55 +305,75 @@
                                 </span>
                                 <x-gpa.icon name="shield" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
-                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $pendingOrdersCount ?: 3 }} PO</p>
+                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $pendingOrdersCount ?? 0 }} PO</p>
                             <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Verifikasi PO</p>
                             <p class="mt-0.5 gpa-meta text-warning-deep font-semibold">Sekretariat GPA</p>
                         </li>
 
-                        <li class="rounded-xl border border-line-soft bg-surface-shell p-3">
+                        <li @class([
+                            'rounded-xl border bg-surface-shell p-3',
+                            'border-success-deep/40' => ($verifiedOrdersCount ?? 0) > 0,
+                            'border-line-soft' => ($verifiedOrdersCount ?? 0) <= 0,
+                        ])>
                             <div class="flex items-center justify-between gap-2">
                                 <span class="inline-flex h-6 w-6 items-center justify-center rounded-full gpa-micro-bold bg-surface-pill text-ink">
                                     2
                                 </span>
                                 <x-gpa.icon name="leaf" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
-                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $verifiedOrdersCount ?: 4 }} PO</p>
+                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $verifiedOrdersCount ?? 0 }} PO</p>
                             <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Alokasi Panen</p>
                             <p class="mt-0.5 gpa-meta text-ink-body">Sentra Kebun</p>
                         </li>
 
-                        <li class="rounded-xl border border-line-soft bg-surface-shell p-3">
+                        <li @class([
+                            'rounded-xl border bg-surface-shell p-3',
+                            'border-success-deep/40' => ($readyOrdersCount ?? 0) > 0,
+                            'border-line-soft' => ($readyOrdersCount ?? 0) <= 0,
+                        ])>
                             <div class="flex items-center justify-between gap-2">
                                 <span class="inline-flex h-6 w-6 items-center justify-center rounded-full gpa-micro-bold bg-surface-pill text-ink">
                                     3
                                 </span>
                                 <x-gpa.icon name="scale" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
-                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $readyOrdersCount ?: 3 }} PO</p>
+                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $readyOrdersCount ?? 0 }} PO</p>
                             <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Sortir &amp; Timbang</p>
                             <p class="mt-0.5 gpa-meta text-ink-body">Tera Netto Sah</p>
                         </li>
 
-                        <li class="rounded-xl border border-success-deep/40 bg-surface-shell p-3">
+                        <li @class([
+                            'rounded-xl border bg-surface-shell p-3',
+                            'border-success-deep/40 bg-accent/10' => ($shippingOrdersCount ?? 0) > 0,
+                            'border-line-soft' => ($shippingOrdersCount ?? 0) <= 0,
+                        ])>
                             <div class="flex items-center justify-between gap-2">
-                                <span class="inline-flex h-6 w-6 items-center justify-center rounded-full gpa-micro-bold bg-accent text-success-ink font-bold">
+                                <span @class([
+                                    'inline-flex h-6 w-6 items-center justify-center rounded-full gpa-micro-bold font-bold',
+                                    'bg-accent text-success-ink' => ($shippingOrdersCount ?? 0) > 0,
+                                    'bg-surface-pill text-ink' => ($shippingOrdersCount ?? 0) <= 0,
+                                ])>
                                     4
                                 </span>
                                 <x-gpa.icon name="truck" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
-                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $shippingOrdersCount ?: 2 }} Truk</p>
+                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $shippingOrdersCount ?? 0 }} Truk</p>
                             <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Armada Chiller</p>
                             <p class="mt-0.5 gpa-meta text-success-deep font-semibold">Suhu 2 - 6&deg;C</p>
                         </li>
 
-                        <li class="rounded-xl border border-line-soft bg-surface-shell p-3">
+                        <li @class([
+                            'rounded-xl border bg-surface-shell p-3',
+                            'border-success-deep/40' => ($completedOrdersCount ?? 0) > 0,
+                            'border-line-soft' => ($completedOrdersCount ?? 0) <= 0,
+                        ])>
                             <div class="flex items-center justify-between gap-2">
                                 <span class="inline-flex h-6 w-6 items-center justify-center rounded-full gpa-micro-bold bg-surface-pill text-ink">
                                     5
                                 </span>
                                 <x-gpa.icon name="check" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
-                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $completedOrdersCount ?: 18 }} PO</p>
+                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $completedOrdersCount ?? 0 }} PO</p>
                             <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Selesai Dock</p>
                             <p class="mt-0.5 gpa-meta text-ink-body">BAST Digital Sah</p>
                         </li>

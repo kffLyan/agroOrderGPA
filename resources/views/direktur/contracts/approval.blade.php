@@ -25,6 +25,11 @@
                     <span class="gpa-note text-ink-body">PERIODE LAPORAN</span>
                     <span class="gpa-meta-lg font-bold text-ink">PERIODE: {{ strtoupper(now()->translatedFormat('F Y')) }}</span>
                 </p>
+                <a href="{{ route('direktur.contracts.index') }}"
+                    class="inline-flex items-center gap-2 rounded-lg bg-surface px-3.5 py-2.5 text-ink shadow-sm outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                    <x-gpa.icon name="file-text" class="h-3.5 w-3.5 shrink-0 text-ink-body" />
+                    <span class="text-xs font-semibold leading-4 text-ink">Semua Arsip Kontrak</span>
+                </a>
                 <button type="button" @click="printAuthorization()"
                     class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 shadow-sub outline outline-1 -outline-offset-1 outline-success transition-colors hover:bg-brand-hover">
                     <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0 text-white" />
@@ -196,7 +201,7 @@
             </div>
 
             <div class="gpa-scroll-x overflow-x-auto">
-                <table class="w-full min-w-[64rem] border-collapse">
+                <table class="w-full border-collapse">
                     <caption class="sr-only">Daftar Pengajuan Kontrak Khusus &amp; Diskon Volume B2B</caption>
                     <thead>
                         <tr class="border-b border-line-board">
@@ -242,12 +247,17 @@
                                             </span>
                                         </span>
                                     </div>
-                                    <p class="mt-2 text-[11px] leading-4 text-ink-body">
-                                        <span class="font-medium text-ink">{{ $row['contract'] }}</span>
-                                    </p>
-                                    <p class="text-[11px] leading-4 text-ink-body">
-                                        {{ $row['submitted_by'] }} &middot; {{ $row['submitted_at'] }}
-                                    </p>
+                                    <div class="mt-2 flex flex-col gap-0.5 text-[11px] leading-4 text-ink-body">
+                                        <p class="font-mono font-medium text-ink">{{ $row['contract'] }}</p>
+                                        <p>PIC: <span class="font-semibold text-ink">{{ $row['submitted_by'] }}</span></p>
+                                        @if(!empty($row['pic_phone']))
+                                            <p class="inline-flex items-center gap-1 font-mono text-[10px] font-bold text-emerald-800">
+                                                <x-gpa.icon name="phone" class="h-3 w-3 shrink-0 text-emerald-600" />
+                                                <span>{{ $row['pic_phone'] }}</span>
+                                            </p>
+                                        @endif
+                                        <p class="text-ink-quiet text-[10px]">{{ $row['submitted_at'] }}</p>
+                                    </div>
                                 </th>
                                 <td class="px-3 py-4 align-top">
                                     <p class="text-[13px] font-medium leading-5 text-ink">{{ $row['commodity'] }}</p>
@@ -257,7 +267,7 @@
                                 <td class="px-3 py-4 align-top">
                                     @if (!empty($row['price_strike']))
                                         <p class="text-[13px] font-semibold leading-5 text-ink">
-                                            {{ $row['price'] }}
+                                             {{ $row['price'] }}
                                             <span class="text-[11px] font-normal text-ink-body line-through">
                                                 {{ $row['price_strike'] }}
                                             </span>
@@ -287,7 +297,15 @@
                                     <p class="mt-1 text-[11px] leading-4 text-ink-body">{{ $row['score_note'] }}</p>
                                 </td>
                                 <td class="px-3 py-4 text-right align-top">
-                                    <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1.5">
+                                    <div class="flex flex-wrap items-center justify-end gap-x-2 gap-y-1.5">
+                                        @if (!empty($row['wa_link']))
+                                            <a href="{{ $row['wa_link'] }}" target="_blank" rel="noopener noreferrer"
+                                                class="inline-flex items-center gap-1 rounded-md bg-emerald-50 border border-emerald-300 px-2 py-1.5 text-[11px] font-bold text-emerald-800 transition-colors hover:bg-emerald-100 hover:text-emerald-900 shadow-sm"
+                                                title="Hubungi PIC via WhatsApp untuk konfirmasi pengajuan">
+                                                <x-gpa.icon name="phone" class="h-3 w-3 shrink-0 text-emerald-700" />
+                                                <span>WhatsApp PIC</span>
+                                            </a>
+                                        @endif
                                         <a href="{{ route('direktur.contracts.show', $row['id']) }}"
                                             class="inline-flex items-center gap-1.5 rounded-md border border-line-board px-2.5 py-1.5 text-[11px] font-medium leading-4 text-ink transition-colors hover:bg-surface-muted">
                                             <x-gpa.icon name="file-text" class="h-3.5 w-3.5 shrink-0" />

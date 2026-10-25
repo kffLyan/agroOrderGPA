@@ -781,7 +781,7 @@
             </div>
 
             <div class="-mx-1 overflow-x-auto px-1">
-                <table class="w-full min-w-[64rem] border-collapse text-left">
+                <table class="w-full border-collapse text-left">
                     <thead>
                         <tr class="border-b border-line-soft bg-surface-shell">
                             <th scope="col" class="px-3 py-2.5 text-[11px] font-bold uppercase tracking-[0.55px] text-ink-body text-left">ID Bayar</th>

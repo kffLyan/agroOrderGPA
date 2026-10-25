@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Armada;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\ArmadaService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,33 +12,19 @@ use Illuminate\Support\Facades\Auth;
 
 class DispatchController extends Controller
 {
+    public function __construct(
+        protected ArmadaService $armadaService
+    ) {}
+
     /**
      * Menampilkan Surat Jalan Digital & Rincian Muatan Supir
      */
     public function index(Request $request): View
     {
         $user = Auth::user();
+        $targetOrderId = $request->query('order_id') ? (int) $request->query('order_id') : null;
 
-        // Cari pesanan yang menjadi target surat jalan
-        $targetOrderId = $request->query('order_id');
-        $query = Order::with(['orderItems.product', 'user', 'driver', 'verifier']);
-
-        if ($targetOrderId) {
-            $currentOrder = $query->find($targetOrderId);
-        } else {
-            $currentOrder = $query->where(function ($q) use ($user) {
-                $q->where('driver_id', $user?->id)
-                  ->orWhereIn('status', ['DALAM_PENGIRIMAN', 'SIAP_KIRIM']);
-            })
-            ->whereNotIn('status', ['DRAFT', 'BATAL'])
-            ->latest()
-            ->first();
-        }
-
-        // Fallback jika belum ada pesanan aktif
-        if (!$currentOrder) {
-            $currentOrder = Order::with(['orderItems.product', 'user', 'driver', 'verifier'])->latest()->first();
-        }
+        $currentOrder = $this->armadaService->resolveCurrentDeliveryOrder($targetOrderId, $user);
 
         // Ambil daftar rute / multi-stops dari pesanan yang aktif hari ini
         $activeOrders = Order::with(['user', 'orderItems.product'])

@@ -3,66 +3,29 @@
 namespace App\Http\Controllers\Koordinator;
 
 use App\Http\Controllers\Controller;
-use App\Models\HarvestBatch;
 use App\Models\Product;
-use App\Services\GovernanceService;
-use App\Services\StockService;
+use App\Services\ProductService;
 use Exception;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
-    protected GovernanceService $governanceService;
-    protected StockService $stockService;
-
-    public function __construct(GovernanceService $governanceService, StockService $stockService)
-    {
-        $this->governanceService = $governanceService;
-        $this->stockService = $stockService;
-    }
+    public function __construct(
+        protected ProductService $productService
+    ) {}
 
     /**
      * Tampilkan daftar komoditas master hasil tani untuk Koordinator Lapangan.
      */
     public function index(Request $request): View
     {
-        $query = Product::with(['harvestBatches'])->orderBy('id', 'asc');
+        $data = $this->productService->getCatalogData($request);
 
-        if ($request->filled('search')) {
-            $s = $request->query('search');
-            $query->where(function ($q) use ($s) {
-                $q->where('name', 'like', "%{$s}%")
-                  ->orWhere('sku', 'like', "%{$s}%")
-                  ->orWhere('grade', 'like', "%{$s}%");
-            });
-        }
-
-        if ($request->filled('grade') && $request->grade !== 'all') {
-            $query->where('grade', $request->grade);
-        }
-
-        if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('is_active', $request->status === '1' || $request->status === 'active');
-        }
-
-        $products = $query->get();
-        $totalProducts = Product::count();
-        $activeProducts = Product::where('is_active', true)->count();
-        $avgPrice = Product::where('is_active', true)->avg('base_price') ?: 0;
-        $totalStockKg = (float) HarvestBatch::sum('available_quantity');
-
-        return view('koordinator.products.index', compact(
-            'products',
-            'totalProducts',
-            'activeProducts',
-            'avgPrice',
-            'totalStockKg'
-        ));
+        return view('koordinator.products.index', $data);
     }
 
     /**
@@ -70,8 +33,7 @@ class ProductController extends Controller
      */
     public function create(): View
     {
-        $nextId = (Product::max('id') ?: 0) + 1;
-        $suggestedSku = 'GPA-VGT-' . str_pad($nextId, 2, '0', STR_PAD_LEFT);
+        $suggestedSku = $this->productService->getSuggestedSku();
 
         return view('koordinator.products.create', compact('suggestedSku'));
     }
@@ -95,38 +57,13 @@ class ProductController extends Controller
         ]);
 
         try {
-            $imageUrl = null;
-
-            if ($request->hasFile('image_file')) {
-                $file = $request->file('image_file');
-                $filename = 'prod_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('products', $filename, 'public');
-                $imageUrl = 'storage/' . $path;
-            } elseif (!empty($validated['preset_image'])) {
-                $imageUrl = $validated['preset_image'];
-            }
-
-            $product = Product::create([
-                'sku'           => strtoupper(trim($validated['sku'])),
-                'name'          => trim($validated['name']),
-                'slug'          => Str::slug(trim($validated['name'])),
-                'unit'          => strtolower(trim($validated['unit'])),
-                'grade'         => trim($validated['grade']),
-                'base_price'    => $validated['base_price'],
-                'minimum_order' => $validated['minimum_order'],
-                'image_url'     => $imageUrl,
-                'description'   => $validated['description'] ?? null,
-                'is_active'     => (bool) $validated['is_active'],
-            ]);
-
-            $operatorName = Auth::user()?->name ?: 'Koordinator Lapangan';
-            $this->governanceService->addAuditLog(
-                'COMMODITY_CREATED_BY_KOORDINATOR',
-                'PRD-' . $product->id,
-                "Koordinator Lapangan ({$operatorName}) menambahkan komoditas baru '{$product->name}' (SKU: {$product->sku}) ke master produk.",
-                $operatorName,
-                'KL-SENTRA-01',
-                'VERIFIED'
+            $actorName = Auth::user()?->name ?: 'Koordinator Lapangan';
+            $product = $this->productService->storeProduct(
+                $validated,
+                $request->file('image_file'),
+                'KOORDINATOR',
+                $actorName,
+                'KL-SENTRA-01'
             );
 
             return redirect()->route('koordinator.products.index')
@@ -141,11 +78,9 @@ class ProductController extends Controller
      */
     public function show(Product $product): View
     {
-        $product->load(['harvestBatches.inputter']);
-        $availableStock = (float) $product->harvestBatches->sum('available_quantity');
-        $totalHarvested = (float) $product->harvestBatches->sum('initial_quantity');
+        $data = $this->productService->getProductDetailData($product);
 
-        return view('koordinator.products.show', compact('product', 'availableStock', 'totalHarvested'));
+        return view('koordinator.products.show', $data);
     }
 
     /**
@@ -175,79 +110,47 @@ class ProductController extends Controller
         ]);
 
         try {
-            $imageUrl = $product->image_url;
-
-            if ($request->hasFile('image_file')) {
-                $file = $request->file('image_file');
-                $filename = 'prod_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('products', $filename, 'public');
-                $imageUrl = 'storage/' . $path;
-            } elseif (!empty($validated['preset_image'])) {
-                $imageUrl = $validated['preset_image'];
-            }
-
-            $product->update([
-                'sku'           => strtoupper(trim($validated['sku'])),
-                'name'          => trim($validated['name']),
-                'slug'          => Str::slug(trim($validated['name'])),
-                'unit'          => strtolower(trim($validated['unit'])),
-                'grade'         => trim($validated['grade']),
-                'base_price'    => $validated['base_price'],
-                'minimum_order' => $validated['minimum_order'],
-                'image_url'     => $imageUrl,
-                'description'   => $validated['description'] ?? null,
-                'is_active'     => (bool) $validated['is_active'],
-            ]);
-
-            $operatorName = Auth::user()?->name ?: 'Koordinator Lapangan';
-            $this->governanceService->addAuditLog(
-                'COMMODITY_UPDATED_BY_KOORDINATOR',
-                'PRD-' . $product->id,
-                "Koordinator Lapangan ({$operatorName}) memperbarui komoditas '{$product->name}' (SKU: {$product->sku}).",
-                $operatorName,
-                'KL-SENTRA-01',
-                'VERIFIED'
+            $actorName = Auth::user()?->name ?: 'Koordinator Lapangan';
+            $this->productService->updateProduct(
+                $product,
+                $validated,
+                $request->file('image_file'),
+                'KOORDINATOR',
+                $actorName,
+                'KL-SENTRA-01'
             );
 
             return redirect()->route('koordinator.products.index')
                 ->with('success', "Data komoditas '{$product->name}' berhasil diperbarui.");
         } catch (Exception $e) {
-            return back()->withInput()->with('error', 'Gagal memperbarui komoditas: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Gagal memperbarui data komoditas: ' . $e->getMessage());
         }
     }
 
     /**
-     * Beralih status aktif/nonaktif komoditas (Katalog Publik Terupdate Real-Time).
+     * Beralih status aktif / non-aktif komoditas secara cepat.
      */
     public function toggleStatus(Product $product): RedirectResponse
     {
-        $newStatus = !$product->is_active;
-        $product->update(['is_active' => $newStatus]);
-
+        $actorName = Auth::user()?->name ?: 'Koordinator Lapangan';
+        $newStatus = $this->productService->toggleStatus($product, 'KOORDINATOR', $actorName, 'KL-SENTRA-01');
         $statusText = $newStatus ? 'diaktifkan' : 'dinonaktifkan';
-        $operatorName = Auth::user()?->name ?: 'Koordinator Lapangan';
 
-        $this->governanceService->addAuditLog(
-            'COMMODITY_STATUS_TOGGLED_BY_KOORDINATOR',
-            'PRD-' . $product->id,
-            "Koordinator Lapangan ({$operatorName}) {$statusText} komoditas '{$product->name}'.",
-            $operatorName,
-            'KL-SENTRA-01',
-            'VERIFIED'
-        );
-
-        return redirect()->back()->with('success', "Status komoditas '{$product->name}' berhasil {$statusText}. Katalog publik terupdate.");
+        return back()->with('success', "Status komoditas '{$product->name}' berhasil {$statusText}.");
     }
 
     /**
-     * Hapus / nonaktifkan komoditas.
+     * Hapus komoditas master jika belum ada relasi transaksi.
      */
     public function destroy(Product $product): RedirectResponse
     {
-        $name = $product->name;
-        $product->update(['is_active' => false]);
+        try {
+            $actorName = Auth::user()?->name ?: 'Koordinator Lapangan';
+            $result = $this->productService->deleteProduct($product, 'KOORDINATOR', $actorName, 'KL-SENTRA-01');
 
-        return redirect()->route('koordinator.products.index')
-            ->with('success', "Komoditas '{$name}' telah dinonaktifkan dari katalog operasional.");
+            return redirect()->route('koordinator.products.index')->with('success', $result['message']);
+        } catch (Exception $e) {
+            return back()->with('error', 'Gagal menghapus komoditas: ' . $e->getMessage());
+        }
     }
 }

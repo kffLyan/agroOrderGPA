@@ -200,7 +200,7 @@ class GovernanceService
     }
 
     /**
-     * Kanal pembayaran default resmi Koperasi/PT Guntur Pandu Agro (GPA)
+     * Kanal pembayaran default resmi Koperasi/PT Green Pasundan Agriculture (GPA)
      */
     public function defaultPaymentChannels(): array
     {
@@ -211,7 +211,7 @@ class GovernanceService
                 'name'           => 'Bank BCA',
                 'bank_code'      => 'BCA',
                 'account_number' => '8210-992-3841',
-                'account_name'   => 'PT Guntur Pandu Agro (Divisi Keuangan B2B)',
+                'account_name'   => 'PT Green Pasundan Agriculture (Divisi Keuangan B2B)',
                 'description'    => 'Rekening Virtual & Giro Korporat Utama',
                 'instructions'   => 'Sertakan Nomor Faktur di berita transfer untuk rekonsiliasi otomatis perbankan.',
                 'image_url'      => null,
@@ -224,7 +224,7 @@ class GovernanceService
                 'name'           => 'Bank Mandiri',
                 'bank_code'      => 'MANDIRI',
                 'account_number' => '137-00-1928374-1',
-                'account_name'   => 'PT Guntur Pandu Agro',
+                'account_name'   => 'PT Green Pasundan Agriculture',
                 'description'    => 'Giro Korporat & Mandiri Cash Management (MCM)',
                 'instructions'   => 'Transfer via Mandiri Livin, Kopra by Mandiri, atau Kliring SKN/BI-FAST.',
                 'image_url'      => null,
@@ -237,7 +237,7 @@ class GovernanceService
                 'name'           => 'Bank BRI',
                 'bank_code'      => 'BRI',
                 'account_number' => '0341-01-001928-30-2',
-                'account_name'   => 'PT Guntur Pandu Agro',
+                'account_name'   => 'PT Green Pasundan Agriculture',
                 'description'    => 'Rekening Operasional Agribisnis & BritAma Bisnis',
                 'instructions'   => 'Transfer via BRImo, Cash Management BRI, atau Teller BRI seluruh Indonesia.',
                 'image_url'      => null,
@@ -250,7 +250,7 @@ class GovernanceService
                 'name'           => 'Bank BNI',
                 'bank_code'      => 'BNI',
                 'account_number' => '0819-283-746',
-                'account_name'   => 'PT Guntur Pandu Agro',
+                'account_name'   => 'PT Green Pasundan Agriculture',
                 'description'    => 'Rekening Giro Bisnis & BNI Direct',
                 'instructions'   => 'Transfer via BNI Direct, BNI Mobile Banking, atau ATM BNI.',
                 'image_url'      => null,
@@ -263,7 +263,7 @@ class GovernanceService
                 'name'           => 'Bank Syariah Indonesia (BSI)',
                 'bank_code'      => 'BSI',
                 'account_number' => '719-283-9481',
-                'account_name'   => 'PT Guntur Pandu Agro',
+                'account_name'   => 'PT Green Pasundan Agriculture',
                 'description'    => 'Rekening Giro Wadiah Syariah Bebas Riba',
                 'instructions'   => 'Transfer via BSI Mobile, BSI Net Banking, atau Kliring BI-FAST.',
                 'image_url'      => null,
@@ -276,7 +276,7 @@ class GovernanceService
                 'name'           => 'QRIS GPA (Semua E-Wallet & Mobile Banking)',
                 'bank_code'      => 'QRIS',
                 'account_number' => 'ID1020039182948',
-                'account_name'   => 'PT GUNTUR PANDU AGRO',
+                'account_name'   => 'PT GREEN PASUNDAN AGRICULTURE',
                 'description'    => 'Pindai QRIS via BCA Mobile, Livin, BRImo, GoPay, OVO, ShopeePay, DANA',
                 'instructions'   => 'Scan barcode QRIS resmi GPA di bawah dan simpan bukti tangkapan layar transaksi.',
                 'image_url'      => '/storage/payment-channels/qris-gpa-default.png',
@@ -289,9 +289,9 @@ class GovernanceService
                 'name'           => 'Dompet Digital Bisnis (GoPay & DANA GPA)',
                 'bank_code'      => 'EWALLET',
                 'account_number' => '0812-8888-9281',
-                'account_name'   => 'PT GUNTUR PANDU AGRO',
+                'account_name'   => 'PT GREEN PASUNDAN AGRICULTURE',
                 'description'    => 'Merchant Dompet Digital Resmi Terverifikasi',
-                'instructions'   => 'Transfer saldo dompet digital ke nomor merchant resmi PT Guntur Pandu Agro.',
+                'instructions'   => 'Transfer saldo dompet digital ke nomor merchant resmi PT Green Pasundan Agriculture.',
                 'image_url'      => null,
                 'logo_url'       => '/images/payments/ewallet.svg',
                 'is_active'      => true,

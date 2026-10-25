@@ -568,7 +568,7 @@
                     </header>
 
                     <div class="gpa-scroll-x">
-                        <table class="w-full min-w-[36rem] border-collapse text-left">
+                        <table class="w-full border-collapse text-left">
                             <thead>
                                 <tr class="border-b border-line-hair bg-surface-muted text-xs font-bold uppercase text-ink-body">
                                     <th class="px-4 py-3">Komoditas</th>

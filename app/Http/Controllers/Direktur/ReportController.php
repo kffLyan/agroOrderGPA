@@ -9,6 +9,7 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\GovernanceService;
+use App\Services\ReportPrintService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -55,52 +56,45 @@ class ReportController extends Controller
         $shrinkageClaim = (float) OrderItem::whereNotNull('returned_weight')->sum(DB::raw('returned_weight * unit_price'));
         $tolerancePercent = $totalRevenue > 0 ? round(($shrinkageClaim / $totalRevenue) * 100, 2) : 0;
 
-        $products = Product::all();
-        $commodityList = [];
-        foreach ($products->take(5) as $p) {
-            $items = OrderItem::where('product_id', $p->id)->get();
-            $poKg = (float) $items->sum('ordered_qty');
-            $teraKg = $poKg;
-            $price = (float) $p->base_price;
-            $margin = 25.0; // standard margin
-            $commodityList[] = [
-                'name'    => $p->name,
-                'po_kg'   => $poKg,
-                'tera_kg' => $teraKg,
-                'price'   => $price,
-                'margin'  => $margin,
-            ];
-        }
+        $products = Product::take(5)->withSum('orderItems', 'ordered_qty')->get();
+        $cAnalytics = $this->buildCommodityAnalytics($products);
 
         $clients = User::where('role', 'KLIEN')->with(['orders.orderItems', 'invoices', 'contracts'])->get();
-        $clientList = [];
-        foreach ($clients as $client) {
-            $clientOrders = $client->orders->whereNotIn('status', ['BATAL']);
-            $poCount = $clientOrders->count();
-            $volumeKg = (float) $clientOrders->sum(fn ($o) => $o->orderItems->sum('ordered_qty'));
-            $gross = (float) $clientOrders->sum('grand_total');
-            $settled = (float) $client->invoices->where('status', 'PAID')->sum('grand_total');
-            $contract = $client->contracts->first();
-            $termDays = $contract ? (int) $contract->top_days : 30;
-            $earliestDue = $client->invoices->whereIn('status', ['UNPAID', 'OVERDUE'])->min('due_date');
-            $dueLabel = $earliestDue ? ('JT: ' . \Carbon\Carbon::parse($earliestDue)->translatedFormat('d M')) : 'Lancar';
-
-            $clientList[] = [
-                'name'      => $client->company_name ?: $client->name,
-                'code'      => $contract ? $contract->contract_number : ('CLI-' . str_pad($client->id, 3, '0', STR_PAD_LEFT)),
-                'po_count'  => $poCount,
-                'volume_kg' => $volumeKg,
-                'gross'     => $gross,
-                'settled'   => $settled,
-                'term_days' => $termDays,
-                'due_label' => $dueLabel,
-            ];
-        }
+        $clAnalytics = $this->buildClientAnalytics($clients);
 
         $orders = Order::with(['user', 'orderItems.product'])->latest()->take(20)->get();
 
+        $lockPeriod = $periodLock['period'] ?? 'Kuartal IV 2026 (Okt - Des 2026)';
+        $lockedAt = $periodLock['locked_at'] ?? '24 Okt 2026 23:59:59 WIB';
+        $lockedBy = $periodLock['locked_by'] ?? (Auth::user()?->name ?: 'Direktur GPA');
+        $sha256Hash = $periodLock['sha256_hash'] ?? '0x8F9C4A217B1E90D4CC67F814E32A0B7D18C992E5F67104B8A293CD0891DE33';
+
+        $auditEntries = $this->buildAuditEntries($cAnalytics['teraTotal'], $openReceivables, $lockedBy);
+        $sealData = $this->buildSealData($sha256Hash, $lockedBy);
+
+        $commodityList = $cAnalytics['list'];
+        $cList = $commodityList;
+        $poTotal = $cAnalytics['poTotal'];
+        $teraTotal = $cAnalytics['teraTotal'];
+        $shrinkageTotal = $cAnalytics['shrinkageTotal'];
+        $commRev = $cAnalytics['commRev'];
+        $marginTotal = $cAnalytics['marginTotal'];
+
+        $clientList = $clAnalytics['list'];
+        $clList = $clientList;
+        $cPoTotal = $clAnalytics['cPoTotal'];
+        $cVolTotal = $clAnalytics['cVolTotal'];
+        $cGrossTotal = $clAnalytics['cGrossTotal'];
+        $cSettledTotal = $clAnalytics['cSettledTotal'];
+        $cRecTotal = $clAnalytics['cRecTotal'];
+        $avgTerm = $clAnalytics['avgTerm'];
+
         return view('direktur.report', compact(
             'periodLock',
+            'lockPeriod',
+            'lockedAt',
+            'lockedBy',
+            'sha256Hash',
             'totalRevenue',
             'totalTonnageKg',
             'cashInflow',
@@ -111,9 +105,198 @@ class ReportController extends Controller
             'shrinkageClaim',
             'tolerancePercent',
             'commodityList',
+            'cList',
+            'poTotal',
+            'teraTotal',
+            'shrinkageTotal',
+            'commRev',
+            'marginTotal',
             'clientList',
+            'clList',
+            'cPoTotal',
+            'cVolTotal',
+            'cGrossTotal',
+            'cSettledTotal',
+            'cRecTotal',
+            'avgTerm',
+            'auditEntries',
+            'sealData',
             'orders'
         ));
+    }
+
+    /**
+     * Format dan hitung analitik komoditas untuk laporan eksekutif.
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection  $products
+     * @return array<string, mixed>
+     */
+    protected function buildCommodityAnalytics($products): array
+    {
+        $raw = [];
+        $commRev = 0;
+        foreach ($products as $p) {
+            $poKg = (float) ($p->order_items_sum_ordered_qty ?? 0);
+            $teraKg = $poKg;
+            $price = (float) $p->base_price;
+            $omzet = (int) round($teraKg * $price);
+            $commRev += $omzet;
+
+            $raw[] = [
+                'name'    => $p->name,
+                'po_kg'   => $poKg,
+                'tera_kg' => $teraKg,
+                'price'   => $price,
+                'omzet'   => $omzet,
+                'margin'  => 25.0,
+            ];
+        }
+
+        $poTotal = array_sum(array_column($raw, 'po_kg'));
+        $teraTotal = array_sum(array_column($raw, 'tera_kg'));
+        $shrinkageTotal = $poTotal - $teraTotal;
+        $marginTotal = array_sum(array_column($raw, 'margin'));
+
+        $list = [];
+        foreach ($raw as $row) {
+            $shrinkage = $row['po_kg'] - $row['tera_kg'];
+            $dev = round(($shrinkage / ($row['po_kg'] ?: 1)) * 100, 2);
+            $row['po_label']           = number_format($row['po_kg'], 0, ',', '.');
+            $row['tera_label']         = number_format($row['tera_kg'], 0, ',', '.');
+            $row['shrinkage_kg']       = $shrinkage;
+            $row['deviation']          = $dev;
+            $row['deviation_label']    = '-' . number_format($shrinkage, 0, ',', '.') . ' kg (-' . $dev . '%)';
+            $row['price_label']        = 'Rp ' . number_format($row['price'], 0, ',', '.');
+            $row['revenue']            = $row['omzet'];
+            $row['revenue_label']      = 'Rp ' . number_format($row['omzet'], 0, ',', '.');
+            $row['contribution']       = round(($row['omzet'] / ($commRev ?: 1)) * 100, 2);
+            $row['contribution_label'] = number_format(($row['omzet'] / ($commRev ?: 1)) * 100, 2, '.', '') . '%';
+            $row['margin_label']       = number_format($row['margin'], 1, '.', '') . '%';
+            $list[] = $row;
+        }
+
+        return [
+            'list'           => $list,
+            'commRev'        => $commRev,
+            'poTotal'        => $poTotal,
+            'teraTotal'      => $teraTotal,
+            'shrinkageTotal' => $shrinkageTotal,
+            'marginTotal'    => $marginTotal,
+        ];
+    }
+
+    /**
+     * Format dan hitung analitik penjualan klien B2B untuk laporan eksekutif.
+     *
+     * @param  \Illuminate\Database\Eloquent\Collection  $clients
+     * @return array<string, mixed>
+     */
+    protected function buildClientAnalytics($clients): array
+    {
+        $list = [];
+        foreach ($clients as $client) {
+            $clientOrders = $client->orders->whereNotIn('status', ['BATAL']);
+            $poCount = $clientOrders->count();
+            $volumeKg = (float) $clientOrders->sum(fn ($o) => $o->orderItems->sum('ordered_qty'));
+            $gross = (float) $clientOrders->sum('grand_total');
+            $settled = (float) $client->invoices->where('status', 'PAID')->sum('grand_total');
+            $contract = $client->contracts->first();
+            $termDays = $contract ? (int) $contract->top_days : 30;
+            $earliestDue = $client->invoices->whereIn('status', ['UNPAID', 'OVERDUE'])->min('due_date');
+            $dueLabel = $earliestDue ? ('JT: ' . \Carbon\Carbon::parse($earliestDue)->translatedFormat('d M')) : 'Lancar';
+            $rec = $gross - $settled;
+
+            $list[] = [
+                'name'             => $client->company_name ?: $client->name,
+                'code'             => $contract ? $contract->contract_number : ('CLI-' . str_pad($client->id, 3, '0', STR_PAD_LEFT)),
+                'po_count'         => $poCount,
+                'volume_kg'        => $volumeKg,
+                'gross'            => $gross,
+                'settled'          => $settled,
+                'term_days'        => $termDays,
+                'due_label'        => $dueLabel,
+                'volume_label'     => number_format($volumeKg, 0, ',', '.') . ' kg',
+                'po_label'         => $poCount . ' PO',
+                'gross_label'      => 'Rp ' . number_format($gross, 0, ',', '.'),
+                'settled_label'    => 'Rp ' . number_format($settled, 0, ',', '.'),
+                'receivable'       => $rec,
+                'receivable_label' => $rec > 0 ? 'Rp ' . number_format($rec, 0, ',', '.') : 'Rp 0',
+                'term_label'       => $termDays > 0 ? 'TOP ' . $termDays . ' Hari' : $dueLabel,
+                'status'           => $termDays > 0 ? 'LANCAR' : 'LUNAS',
+                'status_label'     => $termDays > 0 ? 'LANCAR (' . $dueLabel . ')' : 'LUNAS 100%',
+                'status_tone'      => $termDays > 0 ? 'lancar' : 'lunas',
+            ];
+        }
+
+        $cPoTotal = array_sum(array_column($list, 'po_count'));
+        $cVolTotal = array_sum(array_column($list, 'volume_kg'));
+        $cGrossTotal = array_sum(array_column($list, 'gross'));
+        $cSettledTotal = array_sum(array_column($list, 'settled'));
+        $cRecTotal = $cGrossTotal - $cSettledTotal;
+        $cTerms = array_values(array_filter(array_column($list, 'term_days')));
+        $avgTerm = !empty($cTerms) ? round(array_sum($cTerms) / count($cTerms), 1) : 0.0;
+
+        return [
+            'list'          => $list,
+            'cPoTotal'      => $cPoTotal,
+            'cVolTotal'     => $cVolTotal,
+            'cGrossTotal'   => $cGrossTotal,
+            'cSettledTotal' => $cSettledTotal,
+            'cRecTotal'     => $cRecTotal,
+            'avgTerm'       => $avgTerm,
+        ];
+    }
+
+    /**
+     * Siapkan entri log audit forensik penguncian laporan.
+     *
+     * @param  float  $teraTotal
+     * @param  float  $openReceivables
+     * @param  string  $lockedBy
+     * @return array<int, array<string, mixed>>
+     */
+    protected function buildAuditEntries(float $teraTotal, float $openReceivables, string $lockedBy): array
+    {
+        return [
+            [
+                'timestamp' => '[2026-10-24 23:45:10 WIB]',
+                'tag'       => '> SYS_VERIFY:',
+                'message'   => '5 komoditas timbangan tera gudang tuntas dicocokkan (' . number_format($teraTotal, 0, ',', '.') . ' kg).',
+            ],
+            [
+                'timestamp' => '[2026-10-24 23:51:22 WIB]',
+                'tag'       => '> AR_CLEARING:',
+                'message'   => 'Piutang berjalan Rp ' . number_format($openReceivables, 0, ',', '.') . ' diverifikasi terhadap 4 kontrak aktif.',
+            ],
+            [
+                'timestamp' => '[2026-10-24 23:58:05 WIB]',
+                'tag'       => '> DIR_AUTH:',
+                'message'   => $lockedBy . ' memasukkan token kunci otorisasi biometric.',
+            ],
+            [
+                'timestamp'   => '[2026-10-24 23:59:59 WIB]',
+                'tag'         => '> STATUS_LOCK_ENGAGED:',
+                'message'     => 'Record disahkan. SHA-256 dibuat.',
+                'trailing'    => 'Write-access dicabut permanen.',
+                'highlighted' => true,
+            ],
+        ];
+    }
+
+    /**
+     * Siapkan data sertifikat digital penutup laporan.
+     *
+     * @param  string  $sha256Hash
+     * @param  string  $lockedBy
+     * @return array<string, string>
+     */
+    protected function buildSealData(string $sha256Hash, string $lockedBy): array
+    {
+        return [
+            'certificate' => 'GPA-AUDIT-CERT-2026-Q4',
+            'hash'        => $sha256Hash,
+            'signatory'   => $lockedBy,
+        ];
     }
 
     /**
@@ -147,54 +330,15 @@ class ReportController extends Controller
     /**
      * Tampilan Siap Cetak Dokumen Pengesahan Resmi (.PDF / Print View)
      */
-    public function download(Request $request)
+    public function download(Request $request, ReportPrintService $service): View
     {
-        $startDate = $request->query('start_date', now()->subMonths(3)->startOfMonth()->toDateString());
-        $endDate = $request->query('end_date', now()->toDateString());
-        $clientFilter = $request->query('client_id');
-        $clientFilterName = null;
+        $data = $service->buildPrintData(
+            $request->query('start_date'),
+            $request->query('end_date'),
+            $request->query('client_id') ? (int) $request->query('client_id') : null
+        );
 
-        $query = Order::with(['user', 'orderItems.product'])
-            ->whereDate('created_at', '>=', $startDate)
-            ->whereDate('created_at', '<=', $endDate);
-
-        if ($clientFilter) {
-            $query->where('user_id', $clientFilter);
-            $client = User::find($clientFilter);
-            $clientFilterName = $client ? ($client->company_name ?: $client->name) : null;
-        }
-
-        $orders = $query->orderBy('created_at', 'desc')->get();
-
-        $totalRevenue = (float) $orders->sum('grand_total');
-        $totalTonnageKg = (float) OrderItem::whereIn('order_id', $orders->pluck('id'))
-            ->sum('ordered_qty');
-
-        $commoditySummary = OrderItem::whereIn('order_id', $orders->pluck('id'))
-            ->select(
-                'product_id',
-                DB::raw('SUM(ordered_qty) as total_weight'),
-                DB::raw('SUM(subtotal) as total_sales')
-            )
-            ->groupBy('product_id')
-            ->with('product')
-            ->get();
-
-        $periodName = 'Kuartal IV (Okt - Des 2026)';
-        $settings = $this->governanceService->getSettings();
-        $periodLock = $settings['period_lock'] ?? [];
-
-        return view('direktur.reports.print', compact(
-            'startDate',
-            'endDate',
-            'clientFilterName',
-            'totalRevenue',
-            'totalTonnageKg',
-            'orders',
-            'commoditySummary',
-            'periodName',
-            'periodLock'
-        ));
+        return view('prints.report', $data);
     }
 
     /**

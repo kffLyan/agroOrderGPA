@@ -5,9 +5,15 @@
 
     <div class="max-w-3xl space-y-4">
         <div class="flex items-center justify-between">
-            <a href="{{ route('direktur.contracts.index') }}" class="text-xs text-[#153a01] hover:underline font-semibold flex items-center gap-1">
-                &larr; Kembali ke Daftar Kontrak
-            </a>
+            <div class="flex items-center gap-2.5">
+                <a href="{{ route('direktur.contracts.approval') }}" class="text-xs text-[#153a01] hover:underline font-bold flex items-center gap-1">
+                    &larr; Kembali ke Persetujuan Kontrak
+                </a>
+                <span class="text-gray-300">|</span>
+                <a href="{{ route('direktur.contracts.index') }}" class="text-xs text-gray-500 hover:underline flex items-center gap-1">
+                    Arsip Kontrak
+                </a>
+            </div>
         </div>
         @if($errors->any())
             <div class="p-4 bg-red-50 border-l-4 border-red-500 text-red-900 text-xs rounded-r-lg shadow-sm">
@@ -126,7 +132,7 @@
                 </div>
 
                 <div class="pt-4 border-t border-gray-100 flex items-center justify-end space-x-2">
-                    <a href="{{ route('direktur.contracts.index') }}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold transition">
+                    <a href="{{ route('direktur.contracts.approval') }}" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-bold transition">
                         Batal
                     </a>
                     <button type="submit" class="px-5 py-2 bg-[#153a01] hover:bg-[#0f2801] text-white rounded-lg font-bold shadow-sm transition">

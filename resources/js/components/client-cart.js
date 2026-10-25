@@ -221,9 +221,19 @@ export default function clientCart(commodities = [], demoLines = [], defaults = 
 
             const step = line.step || 1;
             const limit = line.stock ?? Number.MAX_SAFE_INTEGER;
-            const next = Math.max(0, Math.min(limit, Number(value) || 0));
+            const raw = Number(value) || 0;
 
-            line.qty = Math.max(0, Math.min(limit, Math.round(next / step) * step));
+            if (raw > limit) {
+                this.$dispatch('gpa:toast', {
+                    title: 'Stok Tidak Mencukupi',
+                    message: `Sisa stok ${line.name} hanya tersedia ${limit} kg (diminta: ${raw} kg).`,
+                    tone: 'danger',
+                });
+                line.qty = limit;
+            } else {
+                line.qty = Math.max(0, Math.round(raw / step) * step);
+            }
+
             line.total = line.qty * line.price;
 
             this.persist();

@@ -558,7 +558,7 @@
             </div>
 
             <div class="gpa-scroll-x">
-                <table class="w-full min-w-[60rem] border-collapse">
+                <table class="w-full border-collapse">
                     <caption class="sr-only">Daftar pesanan berjalan beserta status pemenuhan komoditas</caption>
                     <thead>
                         <tr class="border-b border-line-soft bg-surface-shell">
@@ -784,16 +784,20 @@
                 x-transition:leave-end="opacity-0">
                 
                 <div @click.away="showContractModal = false"
-                    class="relative my-auto flex max-h-[90vh] w-full max-w-lg flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl outline outline-1 outline-line-board/50"
+                    class="relative my-auto flex max-h-[92vh] w-full max-w-xl flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl outline outline-1 outline-line-board/50"
                     x-transition:enter="transition ease-out duration-200"
                     x-transition:enter-start="opacity-0 scale-95"
                     x-transition:enter-end="opacity-100 scale-100">
                     
                     <header class="flex shrink-0 items-start justify-between border-b border-line-hair pb-3.5">
                         <div class="flex flex-col gap-1">
-                            <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-success-deep">Formulir Kemitraan Resmi GPA</span>
-                            <h3 class="text-lg font-bold text-ink">Pengajuan Kontrak B2B Kemitraan</h3>
-                            <p class="text-xs text-ink-body">Pengajuan ini akan langsung ditinjau dan disahkan oleh Direktur Utama GPA.</p>
+                            <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-success-deep">
+                                FORMULIR PERJANJIAN KERJA SAMA (PKS) B2B &bull; RESMI GPA
+                            </span>
+                            <h3 class="text-lg font-bold text-ink">Pengajuan Kontrak Kemitraan B2B &amp; Plafon Tempo</h3>
+                            <p class="text-xs text-ink-body">
+                                Lengkapi keterangan entitas usaha, penanggung jawab (PIC), dan nomor WhatsApp aktif untuk verifikasi langsung Direktur Utama GPA.
+                            </p>
                         </div>
                         <button type="button" @click="showContractModal = false" class="rounded-lg p-1 text-ink-quiet hover:bg-surface-disabled hover:text-ink">
                             <x-gpa.icon name="x" class="h-5 w-5" />
@@ -802,50 +806,139 @@
 
                     <form action="{{ route('klien.contracts.propose') }}" method="POST" class="mt-3 flex flex-1 flex-col gap-3.5 overflow-y-auto pr-1 gpa-scrollbar">
                         @csrf
-                        <div>
-                            <label class="mb-1 block font-mono text-xs font-semibold text-ink">Komoditas Utama yang Dikontrakkan *</label>
-                            <select name="product_id" required class="h-10 w-full rounded-lg border border-line-strong bg-surface px-3 text-xs text-ink focus:border-brand focus:ring-0">
-                                <option value="">-- Pilih Komoditas --</option>
-                                @foreach ($allAvailableProducts as $prod)
-                                    <option value="{{ $prod->id }}">
-                                        {{ $prod->name }} (Rp {{ number_format($prod->base_price, 0, ',', '.') }}/kg) - Min Order {{ $prod->minimum_order }} kg
-                                    </option>
-                                @endforeach
-                            </select>
+
+                        {{-- SEKSI 1: IDENTITAS ENTITAS USAHA (Tabel users) --}}
+                        <div class="rounded-xl border border-line-hair bg-surface-shell/40 p-3.5 space-y-2.5">
+                            <div class="flex items-center gap-1.5 border-b border-line-hair pb-1.5">
+                                <x-gpa.icon name="building" class="h-3.5 w-3.5 text-brand-deep" />
+                                <h4 class="font-mono text-xs font-bold uppercase tracking-wider text-ink">1. Identitas Badan Usaha / Pemohon</h4>
+                            </div>
+
+                            <div>
+                                <label class="mb-1 block font-mono text-xs font-semibold text-ink">
+                                    Nama Resmi Badan Usaha / Perusahaan <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="company_name" required
+                                    value="{{ old('company_name', Auth::user()->company_name) }}"
+                                    placeholder="Contoh: PT Boga Mandiri Sejahtera / Hotel Grand Pasundan / Resto Dapur Nusantara"
+                                    class="h-9 w-full rounded-lg border border-line-strong bg-surface px-3 text-xs text-ink focus:border-brand focus:ring-0">
+                            </div>
+
+                            <div>
+                                <label class="mb-1 block font-mono text-xs font-semibold text-ink">
+                                    Alamat Kantor / Titik Bongkar Muat Utama <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" name="address" required
+                                    value="{{ old('address', Auth::user()->address) }}"
+                                    placeholder="Contoh: Jl. Sukajadi No. 128, Bandung, Jawa Barat (Gudang Central Kitchen)"
+                                    class="h-9 w-full rounded-lg border border-line-strong bg-surface px-3 text-xs text-ink focus:border-brand focus:ring-0">
+                            </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="mb-1 block font-mono text-xs font-semibold text-ink">Estimasi Komitmen Volume (Kg) *</label>
-                                <input type="number" name="committed_volume_per_cycle" min="50" step="10" required placeholder="Contoh: 500"
-                                    class="h-10 w-full rounded-lg border border-line-strong bg-surface px-3 font-mono text-xs text-ink focus:border-brand focus:ring-0">
-                                <span class="mt-1 block text-[10px] text-ink-quiet">Minimal 50 kg per siklus kirim</span>
+                        {{-- SEKSI 2: KREDENSIAL PIC & NO WHATSAPP (Tabel users) --}}
+                        <div class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3.5 space-y-2.5">
+                            <div class="flex items-center justify-between border-b border-emerald-200 pb-1.5">
+                                <div class="flex items-center gap-1.5">
+                                    <x-gpa.icon name="user-check" class="h-3.5 w-3.5 text-emerald-800" />
+                                    <h4 class="font-mono text-xs font-bold uppercase tracking-wider text-emerald-950">2. Penanggung Jawab (PIC) &amp; Verifikasi WhatsApp</h4>
+                                </div>
+                                <span class="rounded bg-emerald-200/80 px-2 py-0.5 font-mono text-[9px] font-extrabold text-emerald-900">
+                                    WAJIB AKTIF
+                                </span>
                             </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="mb-1 block font-mono text-xs font-semibold text-ink">
+                                        Nama PIC Pengadaan <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="text" name="pic_name" required
+                                        value="{{ old('pic_name', Auth::user()->pic_name ?? Auth::user()->name) }}"
+                                        placeholder="Contoh: Hendra Kusuma (Purchasing)"
+                                        class="h-9 w-full rounded-lg border border-line-strong bg-surface px-3 text-xs text-ink focus:border-brand focus:ring-0">
+                                </div>
+
+                                <div>
+                                    <label class="mb-1 block font-mono text-xs font-semibold text-ink">
+                                        Nomor WhatsApp PIC <span class="text-danger">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <input type="text" name="pic_phone" required
+                                            value="{{ old('pic_phone', Auth::user()->pic_phone ?? Auth::user()->phone) }}"
+                                            placeholder="Contoh: 081234567890"
+                                            class="h-9 w-full rounded-lg border border-line-strong bg-surface pl-3 pr-8 font-mono text-xs text-ink focus:border-brand focus:ring-0">
+                                        <x-gpa.icon name="phone" class="pointer-events-none absolute right-2.5 top-2.5 h-3.5 w-3.5 text-emerald-700" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="text-[10px] text-emerald-900 leading-tight">
+                                &bull; Nomor WhatsApp di atas akan dihubungi oleh Tim Kemitraan GPA dalam 1x24 jam untuk verifikasi draf PKS dan kelayakan fasilitas tempo.
+                            </p>
+                        </div>
+
+                        {{-- SEKSI 3: KLAUSUL PASOKAN & TERMIN (Tabel contracts) --}}
+                        <div class="rounded-xl border border-line-hair bg-surface-shell/40 p-3.5 space-y-2.5">
+                            <div class="flex items-center gap-1.5 border-b border-line-hair pb-1.5">
+                                <x-gpa.icon name="package" class="h-3.5 w-3.5 text-brand-deep" />
+                                <h4 class="font-mono text-xs font-bold uppercase tracking-wider text-ink">3. Klausul Pasokan Komoditas &amp; Finansial</h4>
+                            </div>
+
                             <div>
-                                <label class="mb-1 block font-mono text-xs font-semibold text-ink">Term of Payment (TOP) *</label>
-                                <select name="top_days" required class="h-10 w-full rounded-lg border border-line-strong bg-surface px-3 text-xs text-ink focus:border-brand focus:ring-0">
-                                    <option value="14">TOP 14 Hari Kalender</option>
-                                    <option value="30" selected>TOP 30 Hari Kalender (Standar)</option>
-                                    <option value="45">TOP 45 Hari (Kemitraan Khusus)</option>
+                                <label class="mb-1 block font-mono text-xs font-semibold text-ink">Komoditas Utama yang Dikontrakkan <span class="text-danger">*</span></label>
+                                <select name="product_id" required class="h-9 w-full rounded-lg border border-line-strong bg-surface px-3 text-xs text-ink focus:border-brand focus:ring-0">
+                                    <option value="">-- Pilih Komoditas --</option>
+                                    @foreach ($allAvailableProducts as $prod)
+                                        <option value="{{ $prod->id }}">
+                                            {{ $prod->name }} (Rp {{ number_format($prod->base_price, 0, ',', '.') }}/kg) - Min Order {{ $prod->minimum_order }} kg
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
+
+                            <div class="grid grid-cols-2 gap-2.5">
+                                <div>
+                                    <label class="mb-1 block font-mono text-xs font-semibold text-ink">Estimasi Komitmen Volume (Kg) <span class="text-danger">*</span></label>
+                                    <input type="number" name="committed_volume_per_cycle" min="50" step="10" required placeholder="Contoh: 500"
+                                        class="h-9 w-full rounded-lg border border-line-strong bg-surface px-3 font-mono text-xs text-ink focus:border-brand focus:ring-0">
+                                    <span class="mt-0.5 block text-[10px] text-ink-quiet">Minimal 50 kg per siklus kirim</span>
+                                </div>
+                                <div>
+                                    <label class="mb-1 block font-mono text-xs font-semibold text-ink">Term of Payment (TOP) <span class="text-danger">*</span></label>
+                                    <select name="top_days" required class="h-9 w-full rounded-lg border border-line-strong bg-surface px-3 text-xs text-ink focus:border-brand focus:ring-0">
+                                        <option value="14">TOP 14 Hari Kalender</option>
+                                        <option value="30" selected>TOP 30 Hari Kalender (Standar)</option>
+                                        <option value="45">TOP 45 Hari (Kemitraan Khusus)</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="rounded-xl bg-surface-shell p-3 text-xs text-ink-body">
-                            <p class="font-medium text-ink">Ketentuan Perjanjian Kemitraan (PKS):</p>
-                            <ul class="mt-1 list-disc pl-4 space-y-0.5 text-[11px] text-ink-quiet">
-                                <li>Harga komoditas dikunci tetap selama masa perjanjian kemitraan berlangsung.</li>
-                                <li>Fasilitas plafon tempo aktif setelah diverifikasi dan disahkan Direktur Utama.</li>
-                            </ul>
+                        {{-- SEKSI 4: HOTLINE WHATSAPP KEMITRAAN GPA --}}
+                        <div class="flex items-center justify-between rounded-xl border border-line-hair bg-surface-pill p-2.5 text-xs">
+                            <div class="flex items-center gap-2">
+                                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
+                                    <x-gpa.icon name="message-square" class="h-3.5 w-3.5 text-white" />
+                                </span>
+                                <div>
+                                    <p class="font-bold text-ink">Hotline WhatsApp Tim Kemitraan GPA</p>
+                                    <p class="text-[10px] text-ink-body">Konsultasi langsung PKS: <strong>+62 811-1223-3445</strong></p>
+                                </div>
+                            </div>
+                            <a href="https://wa.me/6281112233445?text=Halo%20Tim%20Kemitraan%20GPA,%20saya%20ingin%20berkonsultasi%20mengenai%20kontrak%20B2B" target="_blank" rel="noopener noreferrer"
+                                class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-surface px-2.5 py-1 font-mono text-[10px] font-bold text-emerald-800 border border-emerald-300 hover:bg-emerald-50 transition">
+                                <x-gpa.icon name="phone" class="h-3 w-3 text-emerald-700" />
+                                <span>Hubungi GPA</span>
+                            </a>
                         </div>
 
                         <footer class="mt-2 flex shrink-0 items-center justify-end gap-2 border-t border-line-hair pt-3">
-                            <button type="button" @click="showContractModal = false" class="rounded-lg bg-surface-disabled px-4 py-2 font-mono text-xs font-semibold text-ink hover:bg-surface-muted">
+                            <button type="button" @click="showContractModal = false" class="rounded-lg bg-surface-disabled px-4 py-2 font-mono text-xs font-semibold text-ink hover:bg-surface-muted transition">
                                 Batal
                             </button>
-                            <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-ink px-4 py-2 font-mono text-xs font-bold text-accent shadow-sm hover:bg-brand-deep">
+                            <button type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-ink px-4 py-2 font-mono text-xs font-bold text-accent shadow-sm hover:bg-brand-deep transition">
                                 <x-gpa.icon name="send" class="h-3.5 w-3.5 text-accent" />
-                                Kirim Proposal ke Direktur
+                                <span>Kirim Proposal ke Direktur</span>
                             </button>
                         </footer>
                     </form>

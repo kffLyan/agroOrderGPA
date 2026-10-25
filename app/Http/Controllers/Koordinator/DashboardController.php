@@ -56,16 +56,13 @@ class DashboardController extends Controller
             ];
         })->values()->all();
 
-        // Staging Pasokan Masuk Petani (Incoming Harvest Batches)
-        $recentBatchesForStaging = HarvestBatch::with('product')
-            ->latest()
-            ->take(8)
-            ->get();
+        // Ambil batch panen terkini satu kali untuk staging dan gate intake logs
+        $recentBatches = HarvestBatch::with('product')->latest()->take(10)->get();
 
-        $packingOrders = $recentBatchesForStaging->map(function ($batch, $index) {
+        $packingOrders = $recentBatches->take(8)->values()->map(function ($batch, $index) {
             $prodName = $batch->product?->name ?? 'Komoditas Sayur';
             $supplier = $batch->supplier_name ?: 'Kelompok Tani Binaan';
-            $batchCode = 'LOT-' . strtoupper(substr($prodName, 0, 3)) . '-' . str_pad($batch->id, 4, '0', STR_PAD_LEFT);
+            $batchCode = 'LOT-' . strtoupper(substr($prodName, 0, 3)) . '-' . str_pad((string) $batch->id, 4, '0', STR_PAD_LEFT);
             $qty = (float) $batch->available_quantity;
             $timeStr = $batch->created_at ? $batch->created_at->format('d M H:i') : date('d M H:i');
 
@@ -82,7 +79,6 @@ class DashboardController extends Controller
         })->values()->all();
 
         // Gate Intake Logs
-        $recentBatches = HarvestBatch::with('product')->latest()->take(10)->get();
         $gateLogs = $recentBatches->map(function ($batch) {
             $gross = (float) $batch->initial_quantity + 20.0;
             $net = (float) $batch->initial_quantity;

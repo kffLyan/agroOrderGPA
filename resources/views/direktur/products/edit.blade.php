@@ -121,7 +121,7 @@
                 {{-- Minimum Order (MOQ) --}}
                 <div>
                     <label for="minimum_order" class="block font-bold text-ink mb-1">Min. Order (MOQ) *</label>
-                    <input type="number" id="minimum_order" name="minimum_order" value="{{ old('minimum_order', (int)$product->minimum_order) }}" min="0.1" step="0.5" required
+                    <input type="number" id="minimum_order" name="minimum_order" value="{{ old('minimum_order', (int)$product->minimum_order) }}" min="0.1" step="any" required
                         class="w-full rounded border-line-board bg-surface-shell px-3 py-2 text-xs font-mono font-bold text-ink focus:border-brand focus:ring-1 focus:ring-brand">
                 </div>
             </div>

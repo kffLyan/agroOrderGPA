@@ -295,7 +295,7 @@
 
     {{-- MODAL TEMPLATE PKS --}}
     <x-gpa.modal name="template-pks" title="Format Template Perjanjian Kerja Sama (PKS)"
-        description="Ringkasan klausul pokok dalam draf kontrak pasokan komersial PT Agro Pasti Ada.">
+        description="Ringkasan klausul pokok dalam draf kontrak pasokan komersial PT Green Pasundan Agriculture.">
         <ul class="divide-y divide-line-faint overflow-hidden rounded-lg border border-line">
             <li class="flex items-start gap-2.5 bg-surface px-3 py-2.5">
                 <x-gpa.icon name="check-circle" class="mt-px h-4 w-4 shrink-0 text-success" />

@@ -3,83 +3,45 @@
 namespace App\Http\Controllers\Direktur;
 
 use App\Http\Controllers\Controller;
-use App\Models\HarvestBatch;
 use App\Models\Product;
-use App\Services\GovernanceService;
-use App\Services\StockService;
+use App\Services\ProductService;
+use Exception;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use Exception;
 
 class ProductController extends Controller
 {
-    protected GovernanceService $governanceService;
-    protected StockService $stockService;
+    public function __construct(
+        protected ProductService $productService
+    ) {}
 
-    public function __construct(GovernanceService $governanceService, StockService $stockService)
+    /**
+     * Tampilkan seluruh katalog komoditas & penetapan harga dasar GPA.
+     */
+    public function index(Request $request): View
     {
-        $this->governanceService = $governanceService;
-        $this->stockService = $stockService;
+        $data = $this->productService->getCatalogData($request);
+
+        return view('direktur.products.index', $data);
     }
 
     /**
-     * Tampilkan seluruh katalog komoditas & manajemen stok metrologi GPA
+     * Formulir penambahan komoditas baru ke katalog resmi.
      */
-    public function index(Request $request)
+    public function create(): View
     {
-        // Query produk dengan filter
-        $query = Product::with(['harvestBatches', 'contracts'])->orderBy('id', 'asc');
-
-        if ($request->filled('search')) {
-            $s = $request->query('search');
-            $query->where(function ($q) use ($s) {
-                $q->where('name', 'like', "%{$s}%")
-                  ->orWhere('sku', 'like', "%{$s}%")
-                  ->orWhere('grade', 'like', "%{$s}%");
-            });
-        }
-
-        if ($request->filled('grade') && $request->grade !== 'all') {
-            $query->where('grade', $request->grade);
-        }
-
-        if ($request->filled('status') && $request->status !== 'all') {
-            $query->where('is_active', $request->status === '1' || $request->status === 'active');
-        }
-
-        $products = $query->get();
-        $totalProducts = Product::count();
-        $activeProducts = Product::where('is_active', true)->count();
-        $avgPrice = Product::where('is_active', true)->avg('base_price') ?: 0;
-        $totalStockKg = (float) HarvestBatch::sum('available_quantity');
-
-        return view('direktur.products.index', compact(
-            'products',
-            'totalProducts',
-            'activeProducts',
-            'avgPrice',
-            'totalStockKg'
-        ));
-    }
-
-    /**
-     * Formulir penambahan komoditas baru ke katalog
-     */
-    public function create()
-    {
-        // Hitung perkiraan SKU berikutnya
-        $nextId = (Product::max('id') ?: 0) + 1;
-        $suggestedSku = 'GPA-VGT-' . str_pad($nextId, 2, '0', STR_PAD_LEFT);
+        $suggestedSku = $this->productService->getSuggestedSku();
 
         return view('direktur.products.create', compact('suggestedSku'));
     }
 
     /**
-     * Simpan komoditas baru ke basis data
+     * Simpan komoditas baru ke basis data.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'sku'           => ['required', 'string', 'max:30', 'unique:products,sku'],
@@ -95,37 +57,13 @@ class ProductController extends Controller
         ]);
 
         try {
-            $imageUrl = null;
-
-            // Handle upload gambar jika ada file
-            if ($request->hasFile('image_file')) {
-                $file = $request->file('image_file');
-                $filename = 'prod_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('products', $filename, 'public');
-                $imageUrl = 'storage/' . $path;
-            } elseif (!empty($validated['preset_image'])) {
-                $imageUrl = $validated['preset_image'];
-            }
-
-            $product = Product::create([
-                'sku'           => strtoupper(trim($validated['sku'])),
-                'name'          => trim($validated['name']),
-                'unit'          => strtolower(trim($validated['unit'])),
-                'grade'         => trim($validated['grade']),
-                'base_price'    => $validated['base_price'],
-                'minimum_order' => $validated['minimum_order'],
-                'image_url'     => $imageUrl,
-                'description'   => $validated['description'] ?? null,
-                'is_active'     => (bool) $validated['is_active'],
-            ]);
-
-            $this->governanceService->addAuditLog(
-                'COMMODITY_CATALOG_CREATED',
-                'PRD-' . $product->id,
-                "Penambahan komoditas baru '{$product->name}' (SKU: {$product->sku}, Grade: {$product->grade}, Harga: Rp " . number_format($product->base_price, 0, ',', '.') . ") ke katalog resmi oleh Direktur Utama.",
-                Auth::user()?->name ?: 'Direktur Utama',
-                'DIR-01 [ROOT-ACCESS]',
-                'SEALED'
+            $directorName = Auth::user()?->name ?: 'Direktur Utama';
+            $product = $this->productService->storeProduct(
+                $validated,
+                $request->file('image_file'),
+                'DIREKTUR',
+                $directorName,
+                'DIR-01 [ROOT-ACCESS]'
             );
 
             return redirect()->route('direktur.products.index')
@@ -136,29 +74,27 @@ class ProductController extends Controller
     }
 
     /**
-     * Tampilkan detail rincian komoditas, stok riil panen & kontrak terikat
+     * Tampilkan detail rincian komoditas, stok riil panen & kontrak terikat.
      */
-    public function show(Product $product)
+    public function show(Product $product): View
     {
-        $product->load(['harvestBatches', 'contracts.user']);
-        $availableStock = (float) $product->harvestBatches->sum('available_quantity');
-        $totalHarvested = (float) $product->harvestBatches->sum('initial_quantity');
+        $data = $this->productService->getProductDetailData($product);
 
-        return view('direktur.products.show', compact('product', 'availableStock', 'totalHarvested'));
+        return view('direktur.products.show', $data);
     }
 
     /**
-     * Formulir penyuntingan komoditas
+     * Formulir penyuntingan komoditas.
      */
-    public function edit(Product $product)
+    public function edit(Product $product): View
     {
         return view('direktur.products.edit', compact('product'));
     }
 
     /**
-     * Perbarui data komoditas
+     * Perbarui data komoditas.
      */
-    public function update(Request $request, Product $product)
+    public function update(Request $request, Product $product): RedirectResponse
     {
         $validated = $request->validate([
             'sku'           => ['required', 'string', 'max:30', Rule::unique('products', 'sku')->ignore($product->id)],
@@ -174,37 +110,14 @@ class ProductController extends Controller
         ]);
 
         try {
-            $imageUrl = $product->image_url;
-
-            // Handle upload gambar jika ada file baru
-            if ($request->hasFile('image_file')) {
-                $file = $request->file('image_file');
-                $filename = 'prod_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('products', $filename, 'public');
-                $imageUrl = 'storage/' . $path;
-            } elseif ($request->filled('preset_image')) {
-                $imageUrl = $validated['preset_image'];
-            }
-
-            $product->update([
-                'sku'           => strtoupper(trim($validated['sku'])),
-                'name'          => trim($validated['name']),
-                'unit'          => strtolower(trim($validated['unit'])),
-                'grade'         => trim($validated['grade']),
-                'base_price'    => $validated['base_price'],
-                'minimum_order' => $validated['minimum_order'],
-                'image_url'     => $imageUrl,
-                'description'   => $validated['description'] ?? null,
-                'is_active'     => (bool) $validated['is_active'],
-            ]);
-
-            $this->governanceService->addAuditLog(
-                'COMMODITY_CATALOG_UPDATED',
-                'PRD-' . $product->id,
-                "Pembaruan data komoditas '{$product->name}' (SKU: {$product->sku}, Harga: Rp " . number_format($product->base_price, 0, ',', '.') . ") oleh Direktur Utama.",
-                Auth::user()?->name ?: 'Direktur Utama',
-                'DIR-01 [ROOT-ACCESS]',
-                'SEALED'
+            $directorName = Auth::user()?->name ?: 'Direktur Utama';
+            $product = $this->productService->updateProduct(
+                $product,
+                $validated,
+                $request->file('image_file'),
+                'DIREKTUR',
+                $directorName,
+                'DIR-01 [ROOT-ACCESS]'
             );
 
             return redirect()->route('direktur.products.index')
@@ -215,70 +128,28 @@ class ProductController extends Controller
     }
 
     /**
-     * Hapus komoditas atau nonaktifkan jika memiliki transaksi terikat
+     * Hapus komoditas atau nonaktifkan jika memiliki transaksi terikat.
      */
-    public function destroy(Product $product)
+    public function destroy(Product $product): RedirectResponse
     {
         try {
-            $hasBatches = $product->harvestBatches()->exists();
-            $hasOrderItems = $product->orderItems()->exists();
-            $hasContracts = $product->contracts()->exists();
+            $directorName = Auth::user()?->name ?: 'Direktur Utama';
+            $result = $this->productService->deleteProduct($product, 'DIREKTUR', $directorName, 'DIR-01 [ROOT-ACCESS]');
 
-            $name = $product->name;
-
-            if ($hasBatches || $hasOrderItems || $hasContracts) {
-                // Jangan hapus paksa agar tidak merusak relasi integritas database
-                $product->update(['is_active' => false]);
-
-                $this->governanceService->addAuditLog(
-                    'COMMODITY_DEACTIVATED',
-                    'PRD-' . $product->id,
-                    "Komoditas '{$name}' dinonaktifkan dari katalog B2B karena memiliki riwayat panen/pesanan/kontrak.",
-                    Auth::user()?->name ?: 'Direktur Utama',
-                    'DIR-01 [ROOT-ACCESS]',
-                    'SEALED'
-                );
-
-                return redirect()->route('direktur.products.index')
-                    ->with('success', "Komoditas {$name} memiliki riwayat transaksi/kontrak, status berhasil diubah menjadi NON-AKTIF untuk menjaga integritas data.");
-            }
-
-            $product->delete();
-
-            $this->governanceService->addAuditLog(
-                'COMMODITY_DELETED',
-                'PRD-' . $product->id,
-                "Penghapusan permanen komoditas '{$name}' dari basis data oleh Direktur Utama.",
-                Auth::user()?->name ?: 'Direktur Utama',
-                'DIR-01 [ROOT-ACCESS]',
-                'SEALED'
-            );
-
-            return redirect()->route('direktur.products.index')
-                ->with('success', "Komoditas {$name} berhasil dihapus dari sistem.");
+            return redirect()->route('direktur.products.index')->with('success', $result['message']);
         } catch (Exception $e) {
             return back()->with('error', 'Gagal memproses penghapusan: ' . $e->getMessage());
         }
     }
 
     /**
-     * Beralih status aktif / non-aktif secara cepat
+     * Beralih status aktif / non-aktif secara cepat.
      */
-    public function toggleStatus(Product $product)
+    public function toggleStatus(Product $product): RedirectResponse
     {
-        $newStatus = !$product->is_active;
-        $product->update(['is_active' => $newStatus]);
-
+        $directorName = Auth::user()?->name ?: 'Direktur Utama';
+        $newStatus = $this->productService->toggleStatus($product, 'DIREKTUR', $directorName, 'DIR-01 [ROOT-ACCESS]');
         $statusText = $newStatus ? 'diaktifkan' : 'dinonaktifkan';
-
-        $this->governanceService->addAuditLog(
-            'COMMODITY_STATUS_TOGGLED',
-            'PRD-' . $product->id,
-            "Komoditas {$product->name} {$statusText} oleh Direktur Utama.",
-            Auth::user()?->name ?: 'Direktur Utama',
-            'DIR-01 [ROOT-ACCESS]',
-            'SEALED'
-        );
 
         return back()->with('success', "Status komoditas {$product->name} berhasil {$statusText}.");
     }

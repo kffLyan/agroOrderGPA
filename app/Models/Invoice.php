@@ -74,4 +74,20 @@ class Invoice extends Model
             ? $latestPayment
             : null;
     }
+
+    /**
+     * Format total tagihan faktur ke format mata uang Rupiah
+     */
+    public function getFormattedGrandTotalAttribute(): string
+    {
+        return 'Rp ' . number_format((float) ($this->grand_total ?? 0), 0, ',', '.');
+    }
+
+    /**
+     * Format subtotal tagihan ke format mata uang Rupiah
+     */
+    public function getFormattedSubtotalAttribute(): string
+    {
+        return 'Rp ' . number_format((float) ($this->subtotal_amount ?? 0), 0, ',', '.');
+    }
 }

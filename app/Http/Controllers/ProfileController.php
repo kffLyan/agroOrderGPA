@@ -27,12 +27,16 @@ class ProfileController extends Controller
                 ?? $user->contracts()->latest()->first();
         }
 
+        $isB2b = ($user->client_type === 'B2B_KONTRAK' || $contract !== null);
+
         $creditLimit = 0.0;
-        if ($contract && $contract->fixed_price_per_kg && $contract->committed_volume_per_cycle) {
-            $creditLimit = (float) ($contract->fixed_price_per_kg * $contract->committed_volume_per_cycle * 2);
-        }
-        if ($creditLimit <= 0) {
-            $creditLimit = 500000000.0;
+        if ($isB2b) {
+            if ($contract && $contract->fixed_price_per_kg && $contract->committed_volume_per_cycle) {
+                $creditLimit = (float) ($contract->fixed_price_per_kg * $contract->committed_volume_per_cycle * 2);
+            }
+            if ($creditLimit <= 0) {
+                $creditLimit = 500000000.0;
+            }
         }
 
         $unpaidInvoicesSum = (float) \App\Models\Invoice::where('user_id', $user->id)
@@ -40,18 +44,19 @@ class ProfileController extends Controller
             ->sum('grand_total');
 
         $availableCredit = max(0, $creditLimit - $unpaidInvoicesSum);
-        $creditPercent = $creditLimit > 0 ? min(100, max(0, ($availableCredit / $creditLimit) * 100)) : 100.0;
+        $creditPercent = $creditLimit > 0 ? min(100, max(0, ($availableCredit / $creditLimit) * 100)) : 0.0;
 
         $clientId = 'BYR-KPN-' . str_pad($user->id, 3, '0', STR_PAD_LEFT);
-        $contractNumber = $contract?->contract_number ?? ('PKS-GPA-KPN/2026/' . str_pad($user->id, 3, '0', STR_PAD_LEFT));
-        $topDays = $contract?->top_days ?? 30;
-        $accountType = ($user->client_type === 'B2B_KONTRAK' || $contract)
+        $contractNumber = $contract?->contract_number ?? ($isB2b ? ('PKS-GPA-KPN/2026/' . str_pad($user->id, 3, '0', STR_PAD_LEFT)) : '-');
+        $topDays = $contract?->top_days ?? ($isB2b ? 30 : 0);
+        $accountType = $isB2b
             ? "Klien Kontrak B2B (TOP {$topDays} Hari)"
-            : "Klien Reguler Harian";
+            : "Klien Reguler (Spot Market)";
 
         return view('profile.edit', compact(
             'user',
             'contract',
+            'isB2b',
             'creditLimit',
             'unpaidInvoicesSum',
             'availableCredit',

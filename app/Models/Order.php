@@ -49,9 +49,12 @@ class Order extends Model
         return $this->belongsTo(User::class, 'driver_id');
     }
 
+    /**
+     * Alias untuk relasi orderItems() demi kompatibilitas antarmuka
+     */
     public function items(): HasMany
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->orderItems();
     }
 
     public function orderItems(): HasMany
@@ -62,6 +65,14 @@ class Order extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * Mengambil instance enum OrderStatus yang bertipe kuat
+     */
+    public function getStatusEnumAttribute(): ?\App\Enums\OrderStatus
+    {
+        return \App\Enums\OrderStatus::tryFrom((string) $this->status);
     }
 
     /**
@@ -139,6 +150,38 @@ class Order extends Model
         }
 
         return asset('storage/' . $this->pod_photo_url);
+    }
+
+    /**
+     * Format nilai grand total ke format mata uang Rupiah
+     */
+    public function getFormattedGrandTotalAttribute(): string
+    {
+        return 'Rp ' . number_format((float) ($this->grand_total ?? 0), 0, ',', '.');
+    }
+
+    /**
+     * Hitung total kuantitas seluruh komoditas yang dipesan dalam kilogram
+     */
+    public function getTotalOrderedQtyAttribute(): float
+    {
+        return (float) $this->orderItems->sum('ordered_qty');
+    }
+
+    /**
+     * Format total kuantitas pesanan dengan satuan kg
+     */
+    public function getFormattedTotalOrderedQtyAttribute(): string
+    {
+        return number_format($this->total_ordered_qty, 1, ',', '.') . ' kg';
+    }
+
+    /**
+     * Nama entitas pembeli/klien yang representatif
+     */
+    public function getClientNameAttribute(): string
+    {
+        return $this->user?->company_name ?: ($this->user?->name ?: 'Mitra Klien');
     }
 }
 

@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -29,7 +29,8 @@ class User extends Authenticatable
         'address',
         'pic_name',
         'pic_phone',
-        'is_active'
+        'is_active',
+        'email_verified_at',
     ];
 
     /**
@@ -56,9 +57,15 @@ class User extends Authenticatable
         ];
     }
 
-    public function hasRole(string ...$roles): bool
+    public function hasRole(string|\App\Enums\UserRole ...$roles): bool
     {
-        return in_array($this->role, $roles, true);
+        $roleStrings = array_map(fn($r) => $r instanceof \App\Enums\UserRole ? $r->value : $r, $roles);
+        return in_array($this->role, $roleStrings, true);
+    }
+
+    public function getRoleEnumAttribute(): ?\App\Enums\UserRole
+    {
+        return \App\Enums\UserRole::tryFrom((string) $this->role);
     }
 
     public function invoices(): \Illuminate\Database\Eloquent\Relations\HasMany

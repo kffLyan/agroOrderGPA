@@ -6,9 +6,13 @@
     <div class="space-y-6">
         <!-- Bar Aksi Kontrak -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-            <div>
-                <a href="{{ route('direktur.contracts.index') }}" class="text-xs text-[#153a01] hover:underline font-semibold flex items-center gap-1">
-                    &larr; Kembali ke Daftar Kontrak
+            <div class="flex items-center gap-2.5">
+                <a href="{{ route('direktur.contracts.approval') }}" class="text-xs text-[#153a01] hover:underline font-bold flex items-center gap-1">
+                    &larr; Kembali ke Persetujuan Kontrak
+                </a>
+                <span class="text-gray-300">|</span>
+                <a href="{{ route('direktur.contracts.index') }}" class="text-xs text-gray-500 hover:underline flex items-center gap-1">
+                    Arsip Semua Kontrak
                 </a>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -101,11 +105,33 @@
                         <span class="col-span-2 text-gray-700">{{ $contract->user->email }}</span>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-2">
+                    <div class="grid grid-cols-3 gap-2 items-center">
                         <span class="text-gray-500">Kontak Person (PIC):</span>
-                        <span class="col-span-2 font-semibold text-gray-800">
-                            {{ $contract->user->pic_name ?? $contract->user->name }} ({{ $contract->user->pic_phone ?? $contract->user->phone }})
-                        </span>
+                        <div class="col-span-2 flex flex-wrap items-center gap-2">
+                            <span class="font-semibold text-gray-800">
+                                {{ $contract->user->pic_name ?? $contract->user->name }}
+                            </span>
+                            @php
+                                $rawPh = $contract->user->pic_phone ?? $contract->user->phone;
+                                $clPh = preg_replace('/[^0-9]/', '', (string)$rawPh);
+                                if (str_starts_with($clPh, '0')) {
+                                    $waNo = '62' . substr($clPh, 1);
+                                } elseif (str_starts_with($clPh, '62')) {
+                                    $waNo = $clPh;
+                                } else {
+                                    $waNo = $clPh ? '62' . $clPh : null;
+                                }
+                            @endphp
+                            @if($waNo)
+                                <a href="https://wa.me/{{ $waNo }}?text={{ urlencode('Halo Bapak/Ibu ' . ($contract->user->pic_name ?? $contract->user->name) . ', kami dari Direksi PT Giri Purwa Agro terkait Kontrak ' . $contract->contract_number) }}"
+                                   target="_blank" rel="noopener noreferrer"
+                                   class="inline-flex items-center gap-1 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 text-[10px] font-bold hover:bg-emerald-200 transition">
+                                    <span>WhatsApp PIC: {{ $rawPh }}</span>
+                                </a>
+                            @else
+                                <span class="text-gray-600 font-mono">({{ $rawPh ?: '-' }})</span>
+                            @endif
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-3 gap-2">

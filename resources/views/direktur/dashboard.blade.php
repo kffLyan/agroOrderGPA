@@ -184,35 +184,39 @@
                     <ul class="flex flex-wrap items-center gap-3">
                         <li class="flex items-center gap-1.5">
                             <span class="h-2.5 w-2 shrink-0 rounded bg-brand" aria-hidden="true"></span>
-                            <span class="gpa-note text-ink">Omzet</span>
-                        </li>
-                        <li class="flex items-center gap-1.5">
-                            <span class="h-2.5 w-2 shrink-0 rounded bg-accent-edge" aria-hidden="true"></span>
-                            <span class="gpa-note text-ink">Target</span>
+                            <span class="gpa-note text-ink">Omzet Selesai</span>
                         </li>
                         <li class="flex items-center gap-1.5">
                             <span class="h-2.5 w-2 shrink-0 rounded bg-accent-deep" aria-hidden="true"></span>
-                            <span class="gpa-note text-ink">Panen (ton)</span>
+                            <span class="gpa-note text-ink">Minggu Berjalan</span>
+                        </li>
+                        <li class="flex items-center gap-1.5">
+                            <span class="h-2.5 w-2 shrink-0 rounded bg-surface-disabled border border-line-board" aria-hidden="true"></span>
+                            <span class="gpa-note text-ink">Kapasitas Target</span>
                         </li>
                     </ul>
                 </header>
 
                 <div class="flex flex-col gap-4">
                     @forelse ($weeklyTrends as $wt)
-                        <div class="flex flex-col gap-1">
-                            <div class="flex flex-wrap items-start justify-between gap-2">
+                        <div class="flex flex-col gap-2">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
                                 <p class="gpa-meta-lg font-bold text-ink">
-                                    {{ $wt['week'] }}{{ $wt['is_running'] ? ' (berjalan)' : '' }}: Panen {{ number_format($wt['harvest_ton'], 1, ',', '.') }} ton | Target Rp {{ number_format($wt['target'] / 1000000, 0) }} juta
+                                    {{ $wt['week'] }}{{ $wt['is_running'] ? ' (berjalan)' : '' }}
+                                    <span class="font-normal text-ink-muted">&bull; Panen {{ number_format($wt['harvest_ton'], 1, ',', '.') }} ton &bull; Target Rp {{ number_format($wt['target'] / 1000000, 0) }} jt</span>
                                 </p>
-                                <p class="gpa-meta-lg font-bold text-success-deep">
-                                    Omzet: Rp {{ number_format($wt['revenue'], 0, ',', '.') }} ({{ $wt['pct'] }}%)
-                                </p>
-                            </div>
-                            <div class="relative flex h-7 items-center rounded-lg p-1 bg-surface-shell">
-                                <div class="flex items-center whitespace-nowrap rounded px-2 pb-px text-[14px] font-semibold text-white {{ $wt['is_running'] ? 'bg-success' : 'bg-brand' }}"
-                                    style="width: {{ max(4, min(100, $wt['pct'])) }}%">
-                                    Rp {{ number_format($wt['revenue'] / 1000000, 1, ',', '.') }} jt
+                                <div class="flex items-center gap-2">
+                                    <span class="gpa-meta font-bold text-ink">
+                                        Omzet: Rp {{ number_format($wt['revenue'], 0, ',', '.') }}
+                                    </span>
+                                    <span class="inline-flex items-center rounded-md px-2 py-0.5 text-xs font-bold font-mono {{ $wt['pct'] >= 100 ? 'bg-success-soft text-success-deep' : ($wt['pct'] > 0 ? 'bg-accent/40 text-brand' : 'bg-surface-disabled text-ink-body') }}">
+                                        {{ $wt['pct'] }}%
+                                    </span>
                                 </div>
+                            </div>
+                            <div class="h-2.5 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
+                                <div class="h-full rounded-full transition-all duration-300 {{ $wt['is_running'] ? 'bg-accent-deep' : 'bg-brand' }}"
+                                    style="width: {{ min(100, $wt['pct']) }}%"></div>
                             </div>
                         </div>
                     @empty

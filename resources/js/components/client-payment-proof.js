@@ -51,7 +51,7 @@ export default function clientPaymentProof(defaults = {}) {
                 type: 'BANK',
                 name: 'Bank BCA',
                 account_number: '8210-992-3841',
-                account_name: 'PT Guntur Pandu Agro (Divisi Keuangan B2B)',
+                account_name: 'PT Green Pasundan Agriculture (Divisi Keuangan B2B)',
                 instructions: 'Sertakan nomor faktur di berita transfer.',
             };
         },

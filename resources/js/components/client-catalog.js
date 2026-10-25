@@ -156,11 +156,8 @@ export default function clientCatalog(items = []) {
                 return;
             }
 
-            const step = item.step || 1;
-            const next = Math.max(0, Math.min(item.stock, Number(value) || 0));
-            const rounded = Math.round(next / step) * step;
-
-            this.quantities[key] = Math.max(0, Math.min(item.stock, rounded));
+            const raw = Number(value);
+            this.quantities[key] = isNaN(raw) ? 0 : Math.max(0, raw);
         },
 
         stepBy(key, direction) {
@@ -170,7 +167,29 @@ export default function clientCatalog(items = []) {
                 return;
             }
 
-            this.setQuantity(key, this.quantity(key) + (item.step || 1) * direction);
+            const step = item.step || 1;
+            const current = this.quantity(key);
+            const next = Math.max(0, current + step * direction);
+
+            if (direction > 0 && (item.stock ?? 0) <= 0) {
+                this.$dispatch('gpa:toast', {
+                    title: 'Stok Tidak Mencukupi',
+                    message: `Stok ${item.name} saat ini kosong / habis terpesan.`,
+                    tone: 'danger',
+                });
+                return;
+            }
+
+            if (direction > 0 && next > (item.stock ?? 0)) {
+                this.$dispatch('gpa:toast', {
+                    title: 'Stok Tidak Mencukupi',
+                    message: `Volume melebihi sisa stok ${item.name} (${item.stock} kg).`,
+                    tone: 'danger',
+                });
+                return;
+            }
+
+            this.quantities[key] = next;
         },
 
         estimatedTotal(key) {
@@ -187,20 +206,59 @@ export default function clientCatalog(items = []) {
                 return;
             }
 
-            if (qty < item.moq) {
+            // 1. Cek jika stok kosong / habis terpesan
+            if ((item.stock ?? 0) <= 0) {
                 this.$dispatch('gpa:toast', {
-                    title: 'Belum memenuhi MOQ',
-                    message: `Minimum order ${item.name} adalah ${item.moq} kg.`,
+                    title: 'Stok Tidak Mencukupi',
+                    message: `Stok ${item.name} saat ini kosong atau habis terpesan.`,
                     tone: 'danger',
                 });
+                return;
+            }
 
+            // 2. Cek jika kuantitas yang diminta melebihi sisa stok panen
+            if (qty > item.stock) {
+                this.$dispatch('gpa:toast', {
+                    title: 'Stok Tidak Mencukupi',
+                    message: `Kuantitas yang diinginkan (${qty} kg) melebihi sisa stok ${item.name} (${item.stock} kg).`,
+                    tone: 'danger',
+                });
+                return;
+            }
+
+            // 3. Cek jika sisa stok yang ada di bawah batas minimum pemesanan (MOQ)
+            if (item.stock < item.moq) {
+                this.$dispatch('gpa:toast', {
+                    title: 'Stok Tidak Mencukupi',
+                    message: `Sisa stok ${item.name} (${item.stock} kg) belum mencukupi batas minimum order (${item.moq} kg).`,
+                    tone: 'danger',
+                });
+                return;
+            }
+
+            // 4. Cek apakah kuantitas yang diinput memenuhi batas minimum order (MOQ)
+            if (qty < item.moq) {
+                this.$dispatch('gpa:toast', {
+                    title: 'Belum Memenuhi MOQ',
+                    message: `Minimum order ${item.name} adalah ${item.moq} kg. Silakan sesuaikan volume pemesanan.`,
+                    tone: 'warning',
+                });
                 return;
             }
 
             const line = this.draft.find((entry) => entry.key === key);
 
             if (line) {
-                line.qty = Math.min(item.stock, line.qty + qty);
+                const combined = line.qty + qty;
+                if (combined > item.stock) {
+                    this.$dispatch('gpa:toast', {
+                        title: 'Stok Tidak Mencukupi',
+                        message: `Total volume di draft (${combined} kg) melebihi sisa stok ${item.name} (${item.stock} kg).`,
+                        tone: 'danger',
+                    });
+                    return;
+                }
+                line.qty = combined;
                 line.total = line.qty * item.price;
             } else {
                 const pkg = item.packaging || 'Krat Plastik Higienis 10 kg';

@@ -38,4 +38,22 @@ class Payment extends Model
     {
         return $this->belongsTo(User::class, 'verified_by');
     }
+
+    public function getStatusEnumAttribute(): ?\App\Enums\PaymentStatus
+    {
+        return \App\Enums\PaymentStatus::tryFrom((string) $this->status);
+    }
+
+    public function getMethodEnumAttribute(): ?\App\Enums\PaymentMethod
+    {
+        return \App\Enums\PaymentMethod::tryFrom((string) $this->payment_method);
+    }
+
+    /**
+     * Format nominal pembayaran ke format mata uang Rupiah
+     */
+    public function getFormattedAmountAttribute(): string
+    {
+        return 'Rp ' . number_format((float) ($this->amount ?? 0), 0, ',', '.');
+    }
 }

@@ -1,0 +1,446 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.6 Chrome/144.0.7559.236 Electron/40.8.4 Safari/537.36" version="29.6.6" pages="3">
+  <diagram name="AD-01 Pemesanan &amp; Penerbitan Invoice" id="9DUR8il3TN_Qex4hNyf-">
+    <mxGraphModel dx="1489" dy="963" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ad1_lane_kl" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;fontStyle=1;fontSize=16;align=center;" value="Partisi Aktor: Klien" vertex="1">
+          <mxGeometry height="1200" width="480" x="40" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_k1" parent="ad1_lane_kl" style="ellipse;whiteSpace=wrap;html=1;fontStyle=1;align=center;" value="Mulai" vertex="1">
+          <mxGeometry height="40" width="100" x="190" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_k2" parent="ad1_lane_kl" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Buka Katalog Publik &amp;amp; Pilih Sayuran" vertex="1">
+          <mxGeometry height="50" width="200" x="140" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_ke1" edge="1" parent="ad1_lane_kl" source="ad1_k1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad1_k2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_k3" parent="ad1_lane_kl" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;align=center;" value="Input Kuantitas kg &amp;amp; Tgl Kirim" vertex="1">
+          <mxGeometry height="50" width="200" x="140" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_ke2" edge="1" parent="ad1_lane_kl" source="ad1_k2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad1_k3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_k4" parent="ad1_lane_kl" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Klik &#39;Checkout / Buat Pesanan&#39;" vertex="1">
+          <mxGeometry height="50" width="190" x="145" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_ke3" edge="1" parent="ad1_lane_kl" source="ad1_k3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad1_k4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_s_err" parent="ad1_lane_kl" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Alert: Kuantitas di Bawah Min Order / Stok Kurang" vertex="1">
+          <mxGeometry height="50" width="200" x="140" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_e_loop1" edge="1" parent="ad1_lane_kl" source="ad1_s_err" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.5;align=center;" target="ad1_k3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="100" y="405" />
+              <mxPoint x="100" y="235" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ad1_k_batal" parent="ad1_lane_kl" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Terima Notifikasi: Pesanan Batal" vertex="1">
+          <mxGeometry height="50" width="200" x="140" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_k_end_batal" parent="ad1_lane_kl" style="ellipse;whiteSpace=wrap;html=1;align=center;" value="Selesai (Batal)" vertex="1">
+          <mxGeometry height="40" width="100" x="190" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_ke_batal_end" edge="1" parent="ad1_lane_kl" source="ad1_k_batal" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad1_k_end_batal">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_k_recv_inv" parent="ad1_lane_kl" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Terima Berkas Invoice Tagihan &amp;amp; Rincian Bayar" vertex="1">
+          <mxGeometry height="60" width="210" x="135" y="890" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_k_end_inv" parent="ad1_lane_kl" style="ellipse;whiteSpace=wrap;html=1;fontStyle=1;align=center;" value="Selesai (Siap Bayar)" vertex="1">
+          <mxGeometry height="40" width="130" x="175" y="990" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_ke_inv_end" edge="1" parent="ad1_lane_kl" source="ad1_k_recv_inv" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad1_k_end_inv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_lane_sys" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;fontStyle=1;fontSize=16;align=center;" value="Partisi Sistem (Laravel &amp;amp; DB)" vertex="1">
+          <mxGeometry height="1200" width="560" x="520" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_s1" parent="ad1_lane_sys" style="rhombus;whiteSpace=wrap;html=1;align=center;" value="Kuantitas &amp;gt;= Min Order &amp;amp;&amp;nbsp;&lt;div&gt;Stok Cukup?&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="210" x="175" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_s2" parent="ad1_lane_sys" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Kunci Alokasi Kuota Stok Sementara (Row-Lock)" vertex="1">
+          <mxGeometry height="60" width="200" x="180" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_se_yes" edge="1" parent="ad1_lane_sys" source="ad1_s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad1_s2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_se_yes_lbl" connectable="0" parent="ad1_se_yes" style="align=center;labelBackgroundColor=default;" value="Ya" vertex="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_s3" parent="ad1_lane_sys" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=10;whiteSpace=wrap;html=1;align=center;" value="Simpan Pesanan: Status MENUNGGU_VERIFIKASI" vertex="1">
+          <mxGeometry height="70" width="200" x="180" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_se2" edge="1" parent="ad1_lane_sys" source="ad1_s2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad1_s3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_s_batal" parent="ad1_lane_sys" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Update Status: BATAL &amp;amp; Lepas Kuncian Stok" vertex="1">
+          <mxGeometry height="60" width="200" x="190" y="705" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_s_inv" parent="ad1_lane_sys" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;align=center;" value="Update Status: MENUNGGU_PEMBAYARAN &amp;amp; Generate Dokumen Invoice PDF" vertex="1">
+          <mxGeometry height="80" width="250" x="160" y="880" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_lane_sk" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;fontStyle=1;fontSize=16;align=center;" value="Partisi Aktor: Sekretaris" vertex="1">
+          <mxGeometry height="1200" width="460" x="1080" y="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_sk1" parent="ad1_lane_sk" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Buka Antrean Pesanan Masuk di Dasbor" vertex="1">
+          <mxGeometry height="60" width="200" x="130" y="495" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_sk2" parent="ad1_lane_sk" style="rhombus;whiteSpace=wrap;html=1;align=center;" value="Tinjau Rincian Pesanan&amp;nbsp;&lt;div&gt;Masuk &amp;amp; Keputusan?&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="180" x="140" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_ske1" edge="1" parent="ad1_lane_sk" source="ad1_sk1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad1_sk2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_sk_no" parent="ad1_lane_sk" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Klik &#39;Tolak Pesanan&#39;" vertex="1">
+          <mxGeometry height="50" width="160" x="60" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_ske_no" edge="1" parent="ad1_lane_sk" source="ad1_sk2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="ad1_sk_no">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="120" y="635" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ad1_ske_no_lbl" connectable="0" parent="ad1_ske_no" style="align=center;labelBackgroundColor=default;" value="Ditolak" vertex="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_sk_yes" parent="ad1_lane_sk" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Klik &#39;Verifikasi Pesanan&#39;" vertex="1">
+          <mxGeometry height="50" width="170" x="260" y="710" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_ske_yes" edge="1" parent="ad1_lane_sk" source="ad1_sk2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="ad1_sk_yes">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="345" y="635" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ad1_ske_yes_lbl" connectable="0" parent="ad1_ske_yes" style="align=center;labelBackgroundColor=default;" value="Disetujui" vertex="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_e_kl_to_sys" edge="1" parent="1" source="ad1_k4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad1_s1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_se_no" edge="1" parent="1" source="ad1_s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=1;entryY=0.5;align=center;exitX=0;exitY=1;exitDx=0;exitDy=0;" target="ad1_s_err">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="418" />
+              <mxPoint x="600" y="485" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ad1_se_no_lbl" connectable="0" parent="ad1_se_no" style="align=center;labelBackgroundColor=default;" value="Tidak" vertex="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_e_sys_to_sk" edge="1" parent="1" source="ad1_s3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad1_sk1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_e_sk_to_sbatal" edge="1" parent="1" source="ad1_sk_no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad1_s_batal">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_e_sbatal_to_kbatal" edge="1" parent="1" source="ad1_s_batal" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad1_k_batal">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad1_e_skyes_to_sinv" edge="1" parent="1" source="ad1_sk_yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad1_s_inv">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1425" y="990" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ad1_e_sinv_to_kinv" edge="1" parent="1" source="ad1_s_inv" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad1_k_recv_inv">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="W9UQzL2ZzAhOlJqn5pnk-1" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=40;" value="AD-01 Pemesanan &amp;amp; Penerbitan Invoice" vertex="1">
+          <mxGeometry height="30" width="810" x="400" y="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="AD-02 Pembayaran &amp; Verifikasi Pembayaran" id="qQ52w9y_vuWBNvIPpyv7">
+    <mxGraphModel dx="1603" dy="1037" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ad3_lane_kl" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;fontStyle=1;fontSize=16;" value="Partisi Aktor: Klien" vertex="1">
+          <mxGeometry height="1200" width="480" x="40" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_start" parent="ad3_lane_kl" style="ellipse;whiteSpace=wrap;html=1;fontStyle=1;" value="Mulai: Invoice Diterima" vertex="1">
+          <mxGeometry height="40" width="170" x="155" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_k1" parent="ad3_lane_kl" style="rounded=0;whiteSpace=wrap;html=1;" value="Buka Menu &#39;Tagihan Saya&#39; &amp; Cek Nomor Rekening" vertex="1">
+          <mxGeometry height="50" width="210" x="135" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_ke1" edge="1" parent="ad3_lane_kl" source="ad3_start" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="ad3_k1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_k2" parent="ad3_lane_kl" style="rounded=0;whiteSpace=wrap;html=1;" value="Lakukan Transfer Bank / Scan QRIS Manual di Luar Web" vertex="1">
+          <mxGeometry height="60" width="210" x="135" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_ke2" edge="1" parent="ad3_lane_kl" source="ad3_k1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="ad3_k2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_k3" parent="ad3_lane_kl" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;" value="Unggah Foto Struk Transfer /&amp;nbsp;&lt;div&gt;Resi QRIS &amp;amp; Input No. Ref&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="230" x="125" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_ke3" edge="1" parent="ad3_lane_kl" source="ad3_k2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="ad3_k3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_k_retry" parent="ad3_lane_kl" style="rounded=0;whiteSpace=wrap;html=1;" value="Lihat Catatan Penolakan &amp; Koreksi Unggah Ulang Bukti" vertex="1">
+          <mxGeometry height="50" width="210" x="135" y="615" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_e_retry_loop" edge="1" parent="ad3_lane_kl" source="ad3_k_retry" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="ad3_k3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_k_receipt" parent="ad3_lane_kl" style="rounded=0;whiteSpace=wrap;html=1;" value="Unduh Dokumen Kuitansi Lunas Digital PDF" vertex="1">
+          <mxGeometry height="60" width="210" x="135" y="810" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_end" parent="ad3_lane_kl" style="ellipse;whiteSpace=wrap;html=1;fontStyle=1;" value="Selesai: Terverifikasi Lunas (Kunci Surat Jalan Terbuka)" vertex="1">
+          <mxGeometry height="50" width="220" x="130" y="910" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_ke4" edge="1" parent="ad3_lane_kl" source="ad3_k_receipt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="ad3_end">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_lane_sys" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;fontStyle=1;fontSize=16;" value="Partisi Sistem (Laravel &amp; DB)" vertex="1">
+          <mxGeometry height="1200" width="560" x="520" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_s1" parent="ad3_lane_sys" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=10;whiteSpace=wrap;html=1;" value="Insert payments: Simpan Berkas &amp; Set Status &#39;MENUNGGU_VERIFIKASI&#39;" vertex="1">
+          <mxGeometry height="70" width="240" x="160" y="295" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_s2" parent="ad3_lane_sys" style="rounded=0;whiteSpace=wrap;html=1;" value="Kirim Notifikasi Pembayaran Baru ke Dasbor Sekre" vertex="1">
+          <mxGeometry height="50" width="230" x="165" y="400" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_se1" edge="1" parent="ad3_lane_sys" source="ad3_s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="ad3_s2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_s_approve" parent="ad3_lane_sys" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=10;whiteSpace=wrap;html=1;" value="Update invoices &amp; payments: status=&#39;LUNAS&#39;, paid_at=NOW" vertex="1">
+          <mxGeometry height="70" width="240" x="30" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_s_receipt" parent="ad3_lane_sys" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;" value="Generate Dokumen Kuitansi Digital Lunas PDF &amp; Buka Kunci Cetak Surat Jalan" vertex="1">
+          <mxGeometry height="80" width="240" x="30" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_se2" edge="1" parent="ad3_lane_sys" source="ad3_s_approve" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="ad3_s_receipt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_s_reject" parent="ad3_lane_sys" style="rounded=0;whiteSpace=wrap;html=1;" value="Update payments: status=&#39;DITOLAK&#39; &amp; Catat verification_note" vertex="1">
+          <mxGeometry height="60" width="200" x="300" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_lane_sk" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;fontStyle=1;fontSize=16;" value="Partisi Aktor: Sekretaris" vertex="1">
+          <mxGeometry height="1200" width="460" x="1080" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_sk1" parent="ad3_lane_sk" style="rounded=0;whiteSpace=wrap;html=1;" value="Buka Mutasi Rekening Bank / QRIS Koperasi GPA" vertex="1">
+          <mxGeometry height="60" width="210" x="125" y="395" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_sk2" parent="ad3_lane_sk" style="rhombus;whiteSpace=wrap;html=1;" value="Dana Masuk Sesuai&amp;nbsp;&lt;div&gt;Nominal Tagihan?&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="180" x="140" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_ske1" edge="1" parent="ad3_lane_sk" source="ad3_sk1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="ad3_sk2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_sk_no" parent="ad3_lane_sk" style="rounded=0;whiteSpace=wrap;html=1;" value="Klik &#39;Tolak&#39; &amp; Masukkan Catatan Alasan" vertex="1">
+          <mxGeometry height="50" width="170" x="30" y="615" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_ske_no" edge="1" parent="ad3_lane_sk" source="ad3_sk2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="ad3_sk_no">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_ske_no_lbl" connectable="0" parent="ad3_ske_no" value="Tidak" vertex="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_sk_yes" parent="ad3_lane_sk" style="rounded=0;whiteSpace=wrap;html=1;" value="Klik &#39;Verifikasi &amp; Setujui&#39;" vertex="1">
+          <mxGeometry height="50" width="170" x="260" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_ske_yes" edge="1" parent="ad3_lane_sk" source="ad3_sk2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="ad3_sk_yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_ske_yes_lbl" connectable="0" parent="ad3_ske_yes" value="Ya" vertex="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_e_k_to_s1" edge="1" parent="1" source="ad3_k3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="ad3_s1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_e_s2_to_sk1" edge="1" parent="1" source="ad3_s2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="ad3_sk1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_e_skno_to_srej" edge="1" parent="1" source="ad3_sk_no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="ad3_s_reject">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_e_srej_to_kretry" edge="1" parent="1" source="ad3_s_reject" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="ad3_k_retry">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad3_e_srec_to_krec" edge="1" parent="1" source="ad3_s_receipt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" target="ad3_k_receipt">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="2kK69wE07HsmGPc7Fc2C-1" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=40;" value="AD-02 Pembayaran &amp;amp; Verifikasi Pembayaran" vertex="1">
+          <mxGeometry height="30" width="850" x="375" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="2kK69wE07HsmGPc7Fc2C-2" edge="1" parent="1" source="ad3_sk_yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" target="ad3_s_approve" value="">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1425" y="825" />
+            </Array>
+            <mxPoint x="1130" y="725" as="sourcePoint" />
+            <mxPoint x="670" y="790" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="AD-03 Penerbitan Surat Jalan, Pengiriman &amp; PoD" id="qn_c59yemQrhZ63TA49h">
+    <mxGraphModel dx="1097" dy="709" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1400" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ad4_lane_sk" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;fontStyle=1;fontSize=16;align=center;" value="Partisi Aktor: Sekretaris" vertex="1">
+          <mxGeometry height="1200" width="460" x="40" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_start" parent="ad4_lane_sk" style="ellipse;whiteSpace=wrap;html=1;fontStyle=1;align=center;" value="Mulai: Pesanan Berstatus LUNAS" vertex="1">
+          <mxGeometry height="40" width="190" x="135" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_sk1" parent="ad4_lane_sk" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Buka Antrean Pesanan Berstatus LUNAS" vertex="1">
+          <mxGeometry height="50" width="200" x="130" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_ske1" edge="1" parent="ad4_lane_sk" source="ad4_start" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_sk1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_sk2" parent="ad4_lane_sk" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;align=center;" value="Pilih Supir &amp;amp; Masukkan Nomor Plat Kendaraan" vertex="1">
+          <mxGeometry height="50" width="220" x="120" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_ske2" edge="1" parent="ad4_lane_sk" source="ad4_sk1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_sk2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_sk3" parent="ad4_lane_sk" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Klik &#39;Terbitkan Surat Jalan&#39;" vertex="1">
+          <mxGeometry height="50" width="170" x="145" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_ske3" edge="1" parent="ad4_lane_sk" source="ad4_sk2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_sk3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_sk_print" parent="ad4_lane_sk" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Cetak Lembar Fisik Surat Jalan &amp;amp; Serahkan ke Supir" vertex="1">
+          <mxGeometry height="60" width="200" x="130" y="475" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_lane_sys" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;fontStyle=1;fontSize=16;align=center;" value="Partisi Sistem (Laravel &amp;amp; DB)" vertex="1">
+          <mxGeometry height="1200" width="580" x="500" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_s1" parent="ad4_lane_sys" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;align=center;" value="Generate Dokumen PDF Surat Jalan (Format: SJ-GPA-XXXX)" vertex="1">
+          <mxGeometry height="80" width="240" x="30" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_s2" parent="ad4_lane_sys" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=10;whiteSpace=wrap;html=1;align=center;" value="Update Status orders: &#39;SIAP_KIRIM&#39; &amp;amp; Tautkan ID Supir" vertex="1">
+          <mxGeometry height="70" width="220" x="40" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_se1" edge="1" parent="ad4_lane_sys" source="ad4_s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_s2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_s3" parent="ad4_lane_sys" style="rounded=1;whiteSpace=wrap;html=1;align=center;" value="Update Status: &#39;DALAM_PENGIRIMAN&#39; &amp;amp; Catat departure_time = NOW" vertex="1">
+          <mxGeometry height="60" width="230" x="320" y="565" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_s4" parent="ad4_lane_sys" style="shape=cylinder3;boundedLbl=1;backgroundOutline=1;size=10;whiteSpace=wrap;html=1;align=center;" value="Simpan Foto PoD, arrival_time=NOW, Update: SELESAI / SELESAI_CATATAN" vertex="1">
+          <mxGeometry height="70" width="250" x="310" y="1000" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_lane_ar" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;fontStyle=1;fontSize=16;align=center;" value="Partisi Aktor: Armada Logistik" vertex="1">
+          <mxGeometry height="1200" width="460" x="1080" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_ar1" parent="ad4_lane_ar" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Buka Daftar Tugas Kirim di HP (Status SIAP_KIRIM)" vertex="1">
+          <mxGeometry height="60" width="200" x="130" y="475" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_ar2" parent="ad4_lane_ar" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;align=center;" value="Muat Barang ke Mobil &amp;amp; Klik &#39;Mulai Pengiriman&#39; di HP" vertex="1">
+          <mxGeometry height="60" width="220" x="120" y="565" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_are1" edge="1" parent="ad4_lane_ar" source="ad4_ar1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_ar2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_ar3" parent="ad4_lane_ar" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Mengemudi Menuju Alamat Klien / Lokasi Mitra" vertex="1">
+          <mxGeometry height="50" width="200" x="130" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_ar4" parent="ad4_lane_ar" style="rounded=0;whiteSpace=wrap;html=1;align=center;" value="Tiba di Lokasi &amp;amp; Serah Terima Barang dengan PIC Klien" vertex="1">
+          <mxGeometry height="55" width="210" x="125" y="740" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_are2" edge="1" parent="ad4_lane_ar" source="ad4_ar3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_ar4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_ar5" parent="ad4_lane_ar" style="rhombus;whiteSpace=wrap;html=1;align=center;" value="Ada Sayur Rusak / Retur?" vertex="1">
+          <mxGeometry height="80" width="160" x="280" y="830" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_are3" edge="1" parent="ad4_lane_ar" source="ad4_ar4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_ar5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="360" y="768" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ad4_ar_ret" parent="ad4_lane_ar" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;align=center;" value="Ketik Jumlah kg Retur&amp;nbsp;&lt;div&gt;&amp;amp; Alasan di Form HP&lt;/div&gt;" vertex="1">
+          <mxGeometry height="50" width="180" x="20" y="845" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_are_ret_yes" edge="1" parent="ad4_lane_ar" source="ad4_ar5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_ar_ret">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_are_ret_yes_lbl" connectable="0" parent="ad4_are_ret_yes" style="align=center;labelBackgroundColor=default;" value="Ya" vertex="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_ar6" parent="ad4_lane_ar" style="rounded=1;whiteSpace=wrap;html=1;align=center;" value="PIC Klien Tanda Tangan &amp;amp; Cap Basah Surat Jalan Fisik" vertex="1">
+          <mxGeometry height="50" width="210" x="125" y="930" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_are_ret_no" edge="1" parent="ad4_lane_ar" source="ad4_ar5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_ar6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="360" y="950" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ad4_are_ret_no_lbl" connectable="0" parent="ad4_are_ret_no" style="align=center;labelBackgroundColor=default;" value="Tidak" vertex="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_are_ret_back" edge="1" parent="ad4_lane_ar" source="ad4_ar_ret" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.5;align=center;" target="ad4_ar6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="80" y="955" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ad4_ar7" parent="ad4_lane_ar" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;align=center;" value="Foto Fisik Surat Jalan &amp;amp;&amp;nbsp;&lt;div&gt;Upload Bukti PoD ke Sistem&lt;/div&gt;" vertex="1">
+          <mxGeometry height="50" width="220" x="120" y="1010" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_are4" edge="1" parent="ad4_lane_ar" source="ad4_ar6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_ar7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_end" parent="ad4_lane_ar" style="ellipse;whiteSpace=wrap;html=1;fontStyle=1;align=center;" value="Selesai: Transaksi Ditutup" vertex="1">
+          <mxGeometry height="40" width="160" x="150" y="1100" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_e_sk_to_s1" edge="1" parent="1" source="ad4_sk3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_s1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_e_s2_to_skprint" edge="1" parent="1" source="ad4_s2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_sk_print">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_e_sk_to_ar1" edge="1" parent="1" source="ad4_sk_print" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_ar1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_e_ar2_to_s3" edge="1" parent="1" source="ad4_ar2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_s3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_e_s3_to_ar3" edge="1" parent="1" source="ad4_s3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_ar3">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="935" y="760" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ad4_e_ar7_to_s4" edge="1" parent="1" source="ad4_ar7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_s4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ad4_e_s4_to_end" edge="1" parent="1" source="ad4_s4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;align=center;" target="ad4_end">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="935" y="1190" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="4dEyFCLzNmemnHpYysAc-1" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=40;" value="AD-03 Penerbitan Surat Jalan, Pengiriman &amp;amp; PoD" vertex="1">
+          <mxGeometry height="30" width="1030" x="280" y="20" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

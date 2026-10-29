@@ -36,10 +36,15 @@ class StoreOrderRequest extends FormRequest
         $validator->after(function ($validator) {
             // 1. Cek Sakelar Darurat Master Freeze dari Direktur Utama
             $gov = app(\App\Services\GovernanceService::class);
-            $settings = $gov->getSettings();
-            if (!empty($settings['master_freeze_active'])) {
-                $reason = $settings['master_freeze_reason'] ?? 'Darurat Operasional';
+            if ($gov->isMasterFreezeActive()) {
+                $reason = $gov->getMasterFreezeReason() ?? 'Darurat Operasional';
                 $validator->errors()->add('general', "Sistem pemesanan sedang dibekukan sementara oleh Direktur Utama ({$reason}).");
+                return;
+            }
+
+            // 2. Cek Pembekuan Plafon Kredit Klien
+            if ($this->user() && $gov->isClientFrozen((int) $this->user()->id)) {
+                $validator->errors()->add('general', 'Plafon kredit Anda sedang dibekukan sementara oleh Direktur Utama. Pengajuan pesanan baru tidak dapat diproses.');
                 return;
             }
 

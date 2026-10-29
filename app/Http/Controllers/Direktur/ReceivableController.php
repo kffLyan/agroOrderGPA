@@ -59,7 +59,10 @@ class ReceivableController extends Controller
         }
 
         // 2. Buku Besar Faktur Konsolidasi per Klien B2B via ReceivableLedgerResource
-        $frozenClients = session('frozen_clients', []);
+        $frozenClients = $this->governanceService->getFrozenClients();
+        if (session()->has('frozen_clients')) {
+            $frozenClients = array_merge($frozenClients, session('frozen_clients', []));
+        }
 
         $dbClients = User::where('role', 'KLIEN')
             ->with(['invoices.orders', 'contracts'])
@@ -109,21 +112,20 @@ class ReceivableController extends Controller
         $client = User::find($id);
         $name = $client ? ($client->company_name ?: $client->name) : 'Klien B2B #' . $id;
 
-        $frozenClients = session('frozen_clients', []);
+        // Simpan status pembekuan secara persisten ke GovernanceService
+        $isLocked = $this->governanceService->toggleClientFreeze($id);
 
-        if (!empty($frozenClients[$id])) {
-            unset($frozenClients[$id]);
-            $msg = "Status pembekuan PO untuk {$name} berhasil dicabut (Dispensasi Direktur).";
-            $status = 'UNFREEZE';
-            $isLocked = false;
-        } else {
-            $frozenClients[$id] = true;
+        // Sinkronkan ke session untuk kompatibilitas tampilan tab browser
+        $frozenClients = $this->governanceService->getFrozenClients();
+        session(['frozen_clients' => $frozenClients]);
+
+        if ($isLocked) {
             $msg = "Plafon kredit {$name} berhasil dikunci permanen. Penerbitan Surat Jalan baru ditolak otomatis.";
             $status = 'LOCKED';
-            $isLocked = true;
+        } else {
+            $msg = "Status pembekuan PO untuk {$name} berhasil dicabut (Dispensasi Direktur).";
+            $status = 'UNFREEZE';
         }
-
-        session(['frozen_clients' => $frozenClients]);
 
         $this->governanceService->addAuditLog(
             'CREDIT_LIMIT_' . $status,
@@ -171,8 +173,10 @@ class ReceivableController extends Controller
         }
 
         $clientId = $client?->id ?: $id;
-        $frozenClients = session('frozen_clients', []);
-        unset($frozenClients[$clientId]);
+
+        // Cabut status pembekuan kredit klien
+        $this->governanceService->unfreezeClient($clientId);
+        $frozenClients = $this->governanceService->getFrozenClients();
         session(['frozen_clients' => $frozenClients]);
 
         $msg = "Restrukturisasi tagihan {$name} berhasil disahkan. Tenor TOP diperpanjang +{$extendDays} hari dan lockdown PO dicabut.";

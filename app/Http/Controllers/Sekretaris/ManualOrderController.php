@@ -143,6 +143,25 @@ class ManualOrderController extends Controller
             $client = User::where('role', 'KLIEN')->first() ?? $secretary;
         }
 
+        // Kepatuhan Tata Kelola: Cek Master Freeze & Kunci Kredit Klien
+        $governanceService = app(\App\Services\GovernanceService::class);
+        if ($governanceService->isMasterFreezeActive()) {
+            $reason = $governanceService->getMasterFreezeReason() ?? 'Darurat Operasional';
+            $msg = "Sistem pemesanan sedang dibekukan sementara oleh Direktur Utama ({$reason}).";
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return back()->withErrors(['general' => $msg]);
+        }
+
+        if ($client && $governanceService->isClientFrozen((int) $client->id)) {
+            $msg = "Plafon kredit klien ini sedang dibekukan oleh Direktur Utama. Tidak dapat membuat pesanan baru.";
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return back()->withErrors(['client_id' => $msg]);
+        }
+
         $orderStatus = $validated['status'] ?? 'MENUNGGU_VERIFIKASI';
 
         $order = DB::transaction(function () use ($validated, $secretary, $client, $orderStatus, $request) {

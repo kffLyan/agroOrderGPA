@@ -65,6 +65,16 @@ class DispatchController extends Controller
             ]);
         }
 
+        // Kepatuhan Tata Kelola: Tolak penerbitan Surat Jalan jika plafon kredit klien dibekukan
+        $governanceService = app(\App\Services\GovernanceService::class);
+        if ($governanceService->isClientFrozen((int) $order->user_id)) {
+            $msg = "Penerbitan Surat Jalan DITOLAK: Plafon kredit klien pemilik pesanan ini sedang dibekukan oleh Direktur Utama.";
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return back()->withErrors(['error' => $msg]);
+        }
+
         $driverId = $request->input('driver_id') ?: ($order->driver_id ?: User::where('role', 'ARMADA')->first()?->id);
         $plate = $request->input('vehicle_plate_number') ?: ($order->vehicle_plate_number ?: 'B 9014 KPA');
 
@@ -77,6 +87,10 @@ class DispatchController extends Controller
                 $seq = ((int) substr($lastSj->surat_jalan_number, -4)) + 1;
             }
             $sjNumber = $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+            while (Order::where('surat_jalan_number', $sjNumber)->exists()) {
+                $seq++;
+                $sjNumber = $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+            }
         }
 
         $order->update([

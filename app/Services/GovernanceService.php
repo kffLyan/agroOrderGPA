@@ -38,6 +38,7 @@ class GovernanceService
                 'master_freeze_active' => false,
                 'master_freeze_reason' => null,
                 'master_freeze_engaged_at' => null,
+                'frozen_clients' => [],
                 'plt_active' => false,
                 'plt_delegate_name' => null,
                 'plt_ceiling_amount' => 100000000,
@@ -171,6 +172,81 @@ class GovernanceService
             'DIR-01 [ROOT-ACCESS]',
             $freeze ? 'FREEZE_ACTIVE' : 'SYSTEM_NORMAL'
         );
+
+        return true;
+    }
+
+    /**
+     * Memeriksa apakah sakelar darurat Master Freeze sedang aktif
+     */
+    public function isMasterFreezeActive(): bool
+    {
+        $settings = $this->getSettings();
+        return !empty($settings['master_freeze_active']);
+    }
+
+    /**
+     * Mengambil alasan pengaktifan Master Freeze
+     */
+    public function getMasterFreezeReason(): ?string
+    {
+        $settings = $this->getSettings();
+        return $settings['master_freeze_reason'] ?? null;
+    }
+
+    /**
+     * Mengambil daftar ID klien yang dibekukan plafon kreditnya
+     */
+    public function getFrozenClients(): array
+    {
+        $settings = $this->getSettings();
+        return $settings['frozen_clients'] ?? [];
+    }
+
+    /**
+     * Memeriksa apakah klien tertentu dibekukan plafon kreditnya
+     */
+    public function isClientFrozen(int $clientId): bool
+    {
+        $frozen = $this->getFrozenClients();
+        return !empty($frozen[$clientId]);
+    }
+
+    /**
+     * Mengubah status pembekuan klien (toggle) dan menyimpannya secara persisten
+     */
+    public function toggleClientFreeze(int $clientId): bool
+    {
+        $settings = $this->getSettings();
+        $frozen = $settings['frozen_clients'] ?? [];
+
+        if (!empty($frozen[$clientId])) {
+            unset($frozen[$clientId]);
+            $isLocked = false;
+        } else {
+            $frozen[$clientId] = true;
+            $isLocked = true;
+        }
+
+        $settings['frozen_clients'] = $frozen;
+        $this->updateSettings($settings);
+
+        return $isLocked;
+    }
+
+    /**
+     * Membuka blokir pembekuan klien (misal saat restrukturisasi disahkan)
+     */
+    public function unfreezeClient(int $clientId): bool
+    {
+        $settings = $this->getSettings();
+        $frozen = $settings['frozen_clients'] ?? [];
+
+        if (isset($frozen[$clientId])) {
+            unset($frozen[$clientId]);
+            $settings['frozen_clients'] = $frozen;
+            $this->updateSettings($settings);
+        }
 
         return true;
     }

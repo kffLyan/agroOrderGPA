@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\HarvestBatch;
+use App\Models\Product;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -67,6 +68,22 @@ class StockService
 
             $batch->decrement('available_quantity', $deduction);
             $remainingToDeduct -= $deduction;
+        }
+
+        // Pengaman anti-underselling: jika stok fisik batch panen tidak mencukupi, batalkan transaksi
+        if ($remainingToDeduct > 0) {
+            $product = Product::find($productId);
+            $productName = $product?->name ?? "ID #{$productId}";
+            throw new \Exception("Stok fisik komoditas {$productName} di gudang tidak mencukupi untuk dialokasikan.");
+        }
+    }
+
+    // Kembalikan alokasi kuota stok ke batch panen aktif jika pesanan dibatalkan
+    public function restoreStock(int $productId, float $qty): void
+    {
+        $batch = HarvestBatch::where('product_id', $productId)->latest('id')->first();
+        if ($batch) {
+            $batch->increment('available_quantity', $qty);
         }
     }
 }

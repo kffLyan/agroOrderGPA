@@ -269,8 +269,15 @@ class OrderService
         return DB::transaction(function () use ($orderId, $secretaryId, $reason) {
             $order = Order::lockForUpdate()->findOrFail($orderId);
 
-            if ($order->status !== OrderStatus::MENUNGGU_VERIFIKASI->value) {
-                throw new Exception("Hanya pesanan berstatus MENUNGGU_VERIFIKASI yang dapat dibatalkan.");
+            if ($order->status !== OrderStatus::MENUNGGU_VERIFIKASI->value && $order->status !== OrderStatus::MENUNGGU_PEMBAYARAN->value) {
+                throw new Exception("Hanya pesanan yang belum lunas yang dapat dibatalkan.");
+            }
+
+            // Jika pesanan sebelumnya telah disetujui (kuota stok sudah terpotong), kembalikan stoknya ke gudang
+            if ($order->status === OrderStatus::MENUNGGU_PEMBAYARAN->value) {
+                foreach ($order->orderItems as $item) {
+                    $this->stockService->restoreStock($item->product_id, (float) $item->ordered_qty);
+                }
             }
 
             $order->update([

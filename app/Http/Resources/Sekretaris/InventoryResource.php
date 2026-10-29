@@ -28,12 +28,12 @@ class InventoryResource extends JsonResource
 
         $totalProdStock = $binawanQty + $bufferQty;
 
-        // Stok terkunci murni dari pesanan aktif klien yang belum selesai/batal
+        // Stok terkunci dari antrean pesanan masuk yang belum diverifikasi Sekretaris (mencegah pengurangan ganda)
         $lockedQty = (float) $prod->orderItems
-            ->filter(fn ($item) => $item->order && in_array($item->order->status, ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN']))
+            ->filter(fn ($item) => $item->order && $item->order->status === 'MENUNGGU_VERIFIKASI')
             ->sum('ordered_qty');
 
-        // Available to Promise (ATP)
+        // Available to Promise (ATP): Sisa stok fisik gudang dikurangi antrean pesanan yang belum disetujui
         $atpQty = max(0, $totalProdStock - $lockedQty);
 
         $binawanPercent = $totalProdStock > 0 ? round(($binawanQty / $totalProdStock) * 100, 1) : 0;

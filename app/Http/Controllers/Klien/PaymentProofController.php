@@ -111,13 +111,31 @@ class PaymentProofController extends Controller
             return back()->withInput()->withErrors(['invoice_po' => 'Nomor tagihan tidak ditemukan pada akun Anda.']);
         }
 
+        // Pencegahan dobel unggah bukti transfer yang masih mengantre dalam 60 detik terakhir
+        $existingPendingPayment = Payment::where('invoice_id', $invoice->id)
+            ->where('status', 'MENUNGGU_VERIFIKASI')
+            ->where('created_at', '>=', now()->subSeconds(60))
+            ->first();
+
+        if ($existingPendingPayment) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success'    => true,
+                    'message'    => 'Bukti pembayaran Anda sudah diterima dan sedang dalam antrean verifikasi.',
+                    'payment_id' => $existingPendingPayment->id,
+                ]);
+            }
+
+            return redirect()->route('klien.documents')->with('info', 'Bukti pembayaran faktur ' . $validated['invoice_po'] . ' sudah diajukan sebelumnya dan sedang dalam antrean verifikasi.');
+        }
+
         $proofPath = null;
         if ($request->hasFile('proof_file')) {
             $proofPath = $request->file('proof_file')->store('payments', 'public');
         }
 
         $paidAt = Carbon::now();
-        if (! empty($validated['transfer_at'])) {
+        if (! empty($validated['transfer_at'] ?? null)) {
             try {
                 $paidAt = Carbon::createFromFormat('d/m/Y H:i', $validated['transfer_at']);
             } catch (\Exception $e) {
@@ -135,13 +153,13 @@ class PaymentProofController extends Controller
             $payment = Payment::create([
                 'invoice_id' => $invoice?->id,
                 'order_id' => $invoice?->orders()->first()?->id,
-                'payment_reference' => $validated['reference'] ?: 'PAY-' . strtoupper(Str::random(8)),
+                'payment_reference' => (!empty($validated['reference'] ?? null)) ? $validated['reference'] : ('PAY-' . strtoupper(Str::random(8))),
                 'payment_method' => $paymentMethod,
                 'amount' => $validated['amount'],
                 'proof_url' => $proofPath,
                 'status' => 'MENUNGGU_VERIFIKASI',
                 'paid_at' => $paidAt,
-                'verification_note' => $validated['note'] ?: ('Unggahan bukti bayar oleh ' . $user->name),
+                'verification_note' => (!empty($validated['note'] ?? null)) ? $validated['note'] : ('Unggahan bukti bayar oleh ' . $user->name),
             ]);
 
             DB::commit();

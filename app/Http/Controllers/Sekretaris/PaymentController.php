@@ -83,11 +83,31 @@ class PaymentController extends Controller
     {
         $note = $request->input('note', 'Mutasi rekening bank telah diverifikasi cocok dengan rekening koran.');
 
+        $orderService = app(\App\Services\OrderService::class);
+        $order = $payment->order;
+
+        // Jika pesanan masih berstatus MENUNGGU_VERIFIKASI, alokasikan stok FIFO & terbitkan invoice terlebih dahulu
+        if ($order && $order->status === 'MENUNGGU_VERIFIKASI') {
+            try {
+                $order = $orderService->approveOrder($order->id, Auth::id() ?: 1);
+            } catch (\Exception $e) {
+                if ($request->wantsJson() || $request->ajax()) {
+                    return response()->json(['success' => false, 'message' => 'Gagal menyetujui pesanan: ' . $e->getMessage()], 422);
+                }
+                return back()->withErrors(['error' => 'Gagal mengalokasikan stok pesanan: ' . $e->getMessage()]);
+            }
+        }
+
+        if (!$payment->invoice_id && $order?->invoice_id) {
+            $payment->invoice_id = $order->invoice_id;
+        }
+
         $payment->update([
             'status'            => 'LUNAS',
             'verified_by'       => Auth::id(),
             'paid_at'           => now(),
             'verification_note' => $note,
+            'invoice_id'        => $payment->invoice_id,
         ]);
 
         if ($payment->invoice_id && $payment->invoice) {
@@ -98,8 +118,8 @@ class PaymentController extends Controller
                 ->update(['status' => 'LUNAS']);
         }
 
-        if ($payment->order_id && $payment->order && in_array($payment->order->status, ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN'])) {
-            $payment->order->update([
+        if ($order && in_array($order->status, ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN'])) {
+            $order->update([
                 'status'      => 'LUNAS',
                 'verified_by' => Auth::id(),
             ]);

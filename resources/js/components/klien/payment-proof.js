@@ -276,6 +276,10 @@ export default function clientPaymentProof(defaults = {}) {
         },
 
         async submit() {
+            if (this.sending) {
+                return;
+            }
+
             if (! this.hasFile) {
                 this.reject('Lampirkan slip transfer atau screenshot m-banking sebelum mengirim bukti.');
 

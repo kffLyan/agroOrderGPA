@@ -12,6 +12,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\StockService;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
@@ -25,21 +26,32 @@ class OrderService
         $this->stockService = $stockService;
     }
 
-    // Buat nomor pesanan otomatis berurutan (contoh: ORD-GPA-202610-0001)
+    // Buat nomor pesanan otomatis berurutan dengan proteksi anti-bentrok (contoh: ORD-GPA-202610-0001)
     public function generateOrderNumber(): string
     {
         $prefix = 'ORD-GPA-' . date('Ym') . '-';
-        $lastOrder = Order::where('order_number', 'LIKE', $prefix . '%')
-            ->orderBy('id', 'desc')
-            ->first();
 
-        $nextNumber = 1;
-        if ($lastOrder) {
-            $lastSequence = (int) substr($lastOrder->order_number, -4);
-            $nextNumber = $lastSequence + 1;
-        }
+        return Cache::lock('order_number_sequence_lock', 5)->block(3, function () use ($prefix) {
+            $lastOrder = Order::where('order_number', 'LIKE', $prefix . '%')
+                ->orderBy('id', 'desc')
+                ->first();
 
-        return $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            $nextNumber = 1;
+            if ($lastOrder) {
+                $lastSequence = (int) substr($lastOrder->order_number, -4);
+                $nextNumber = $lastSequence + 1;
+            }
+
+            $candidate = $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+            // Pengaman ekstra: Jika nomor sudah terpakai di database, cari urutan berikutnya
+            while (Order::where('order_number', $candidate)->exists()) {
+                $nextNumber++;
+                $candidate = $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            }
+
+            return $candidate;
+        });
     }
 
     // Resolusi harga satuan: Harga Kontrak B2B aktif vs Harga Katalog
@@ -107,16 +119,25 @@ class OrderService
             $estimatedTotal = 0.0;
             $itemsToInsert = [];
 
-            // 1. Validasi ketersediaan stok panen bebas dan kalkulasi estimasi biaya
+            // 1. Validasi ketersediaan stok panen bebas (diagregasikan per produk agar tidak bisa diakali dengan item duplikat)
+            $productTotals = [];
             foreach ($data['items'] as $itemData) {
-                $product = Product::findOrFail($itemData['product_id']);
-                $requestedQty = (float) $itemData['quantity'];
+                $pid = (int) $itemData['product_id'];
+                $qty = (float) $itemData['quantity'];
+                $productTotals[$pid] = ($productTotals[$pid] ?? 0.0) + $qty;
+            }
 
-                if (!$this->stockService->isStockSufficient($product->id, $requestedQty)) {
+            foreach ($productTotals as $productId => $totalRequestedQty) {
+                $product = Product::findOrFail($productId);
+                if (!$this->stockService->isStockSufficient($product->id, $totalRequestedQty)) {
                     $availableStock = $this->stockService->getAvailableStock($product->id);
                     throw new Exception("Sisa panen komoditas {$product->name} tidak mencukupi. Kuota tersedia: {$availableStock} {$product->unit}.");
                 }
+            }
 
+            foreach ($data['items'] as $itemData) {
+                $product = Product::findOrFail($itemData['product_id']);
+                $requestedQty = (float) $itemData['quantity'];
                 $unitPrice = $this->resolveUnitPrice($user, $product);
                 $subtotal = $unitPrice * $requestedQty;
                 $estimatedTotal += $subtotal;

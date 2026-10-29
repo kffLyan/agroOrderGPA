@@ -25,17 +25,48 @@ class StoreOrderRequest extends FormRequest
             'payment_method'       => ['required', 'in:TRANSFER_BANK,QRIS,COD,TEMPO_TOP'],
             'payment_proof'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,pdf', 'max:5120'], // Ukuran maks 5MB
             'items'                => ['required', 'array', 'min:1'],
-            'items.*.product_id'   => ['required', 'exists:products,id'],
+            'items.*.product_id'   => ['required', 'distinct', 'exists:products,id'],
             'items.*.quantity'     => ['required', 'numeric', 'min:0.1'],
         ];
     }
 
-    //  Pemeriksaan stok dan batas minimum pemesanan komoditas
+    // Pemeriksaan stok, pencegahan item ganda, dan status Master Freeze
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
+            // 1. Cek Sakelar Darurat Master Freeze dari Direktur Utama
+            $gov = app(\App\Services\GovernanceService::class);
+            $settings = $gov->getSettings();
+            if (!empty($settings['master_freeze_active'])) {
+                $reason = $settings['master_freeze_reason'] ?? 'Darurat Operasional';
+                $validator->errors()->add('general', "Sistem pemesanan sedang dibekukan sementara oleh Direktur Utama ({$reason}).");
+                return;
+            }
+
             $items = $this->input('items', []);
             $stockService = app(\App\Services\StockService::class);
+
+            // 2. Agregasi total kuantitas per komoditas untuk mencegah eksploitasi pecahan kuota
+            $aggregatedQuantities = [];
+            foreach ($items as $item) {
+                if (isset($item['product_id'], $item['quantity'])) {
+                    $pid = (int) $item['product_id'];
+                    $aggregatedQuantities[$pid] = ($aggregatedQuantities[$pid] ?? 0.0) + (float) $item['quantity'];
+                }
+            }
+
+            foreach ($aggregatedQuantities as $productId => $totalRequestedQty) {
+                $product = Product::find($productId);
+                if ($product) {
+                    $availableStock = (float) $stockService->getAvailableStock($product->id);
+                    if ($totalRequestedQty > $availableStock) {
+                        $validator->errors()->add(
+                            'items',
+                            "Total kuantitas untuk {$product->name} ({$totalRequestedQty} {$product->unit}) melebihi kuota panen yang tersedia ({$availableStock} {$product->unit})."
+                        );
+                    }
+                }
+            }
 
             foreach ($items as $index => $item) {
                 if (isset($item['product_id'], $item['quantity'])) {

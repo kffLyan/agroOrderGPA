@@ -354,9 +354,6 @@ export default function clientCart(commodities = [], demoLines = [], defaults = 
 
             this.isSubmitting = true;
 
-            // Segera bersihkan storage draft agar jika browser reload/kembali tidak terjadi submit ganda
-            this.clearDraftStorage();
-
             if (typeof window.showGpaLoader === 'function') {
                 window.showGpaLoader('Mengajukan PO...', 'Sedang memproses dan mengamankan kuota pesanan ke server...');
             }

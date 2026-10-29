@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+// Mengatur alur pesanan dari sisi pembeli (riwayat belanja, checkout keranjang, detail)
 class OrderController extends Controller
 {
     protected OrderService $orderService;
@@ -32,12 +33,15 @@ class OrderController extends Controller
     {
         $userId = Auth::guard('web')->id();
 
-        $rawOrders = Order::where('user_id', $userId)
+        $orders = Order::where('user_id', $userId)
             ->with(['orderItems.product', 'driver', 'verifier', 'invoice', 'payments'])
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('klien.orders.index', compact('rawOrders'));
+        return view('klien.orders.index', [
+            'rawOrders' => $orders,
+            'orders'    => $orders,
+        ]);
     }
 
     /**
@@ -49,14 +53,14 @@ class OrderController extends Controller
     }
 
     /**
-     * Menyimpan transaksi pesanan baru dalam siklus ACID dengan proteksi idempotency & anti-duplikasi
+     * Menyimpan transaksi pesanan baru dari keranjang klien
      */
     public function store(StoreOrderRequest $request)
     {
         $user = Auth::guard('web')->user();
         $submissionToken = $request->input('submission_token');
 
-        // 1. Pemeriksaan Idempotency Token via Cache (mencegah klik ganda / browser resubmit)
+        // 1. Cek token pesanan untuk mencegah klik ganda (idempotency)
         if ($submissionToken) {
             $tokenCacheKey = "order_submission_token_{$user->id}_{$submissionToken}";
             if (Cache::has($tokenCacheKey)) {
@@ -69,30 +73,10 @@ class OrderController extends Controller
             }
         }
 
-        // 2. Kunci Atomic Per-User untuk mencegah balapan konkurensi (rapid multiple clicks)
-        $lockKey = "order_create_lock_user_{$user->id}";
-        $lock = Cache::lock($lockKey, 10);
-
-        if (! $lock->get()) {
-            sleep(1);
-            $recentOrder = Order::where('user_id', $user->id)
-                ->where('created_at', '>=', now()->subSeconds(30))
-                ->orderBy('id', 'desc')
-                ->first();
-
-            if ($recentOrder) {
-                return redirect()->route('klien.orders.show', $recentOrder->id)
-                    ->with('success', "Pesanan {$recentOrder->order_number} berhasil diajukan.");
-            }
-
-            return redirect()->route('klien.orders.index')
-                ->with('info', 'Pengajuan pesanan Anda sedang diproses. Silakan periksa daftar riwayat pesanan.');
-        }
-
         try {
             $validatedData = $request->validated();
 
-            // 3. Deteksi duplikasi pesanan identik dalam kurun waktu 90 detik terakhir
+            // 2. Deteksi apakah ada pesanan duplikat identik dalam kurun 90 detik terakhir
             $recentOrder = $this->orderService->findRecentDuplicateOrder($user, $validatedData);
             if ($recentOrder) {
                 if ($submissionToken) {
@@ -103,17 +87,20 @@ class OrderController extends Controller
                     ->with('info', "Pesanan {$recentOrder->order_number} sudah berhasil diajukan sebelumnya (menghindari duplikasi).");
             }
 
+            // 3. Simpan file foto bukti pembayaran jika ada
             $proofPath = null;
             if ($request->hasFile('payment_proof')) {
                 $proofPath = $request->file('payment_proof')->store('payments', 'public');
             }
 
+            // 4. Buat pesanan baru melalui OrderService
             $order = $this->orderService->createOrder(
                 $user,
                 $validatedData,
                 $proofPath
             );
 
+            // 5. Simpan token ke cache agar form tidak bisa dikirim ulang
             if ($submissionToken) {
                 Cache::put("order_submission_token_{$user->id}_{$submissionToken}", $order->id, now()->addMinutes(15));
             }
@@ -122,8 +109,6 @@ class OrderController extends Controller
                 ->with('success', "Pesanan {$order->order_number} berhasil diajukan dan sedang masuk antrean verifikasi Sekretaris.");
         } catch (Exception $e) {
             return back()->withInput()->withErrors(['error' => $e->getMessage()]);
-        } finally {
-            $lock->release();
         }
     }
 

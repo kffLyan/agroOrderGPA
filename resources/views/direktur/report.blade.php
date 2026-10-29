@@ -37,10 +37,10 @@
                         oleh <span class="font-semibold text-accent">{{ $lockedBy }}</span>,
                         Direktur Utama. Seluruh transaksi, Surat Jalan, Timbangan Aktual, dan
                         Faktur Tempo berstatus <span class="font-semibold text-white">read-only</span> dan
-                        dilindungi hash kriptografi:
+                        dilindungi kode verifikasi integritas data:
                     </p>
                     <p class="{{ $ledgerFont }} max-w-4xl break-all rounded-lg bg-brand-deep px-3 py-2 text-[11px] text-accent">
-                        SHA-256: {{ $sha256Hash }}
+                        KODE INTEGRITAS: {{ $sha256Hash }}
                     </p>
                 </div>
 
@@ -58,7 +58,7 @@
                     <button type="button" @click="revealAudit()"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-[11px] font-bold tracking-[0.88px] text-white transition-colors hover:bg-white/20 gpa-meta">
                         <x-gpa.icon name="clipboard" class="h-3.5 w-3.5" />
-                        LIHAT LOG AUDIT FORENSIK
+                        LIHAT LOG RIWAYAT AUDIT
                     </button>
                     <button type="button" @click="verifyIntegrity()"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-[11px] font-bold tracking-[0.88px] text-white transition-colors hover:bg-white/20 gpa-meta">
@@ -505,14 +505,14 @@
                     </div>
                 </div>
 
-                {{-- Kolom 2: Integritas Kriptografis --}}
+                {{-- Kolom 2: Integritas Data --}}
                 <div class="space-y-3 lg:col-span-5">
                     <div>
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">Sertifikasi &amp; Standar Enkripsi</span>
-                        <p class="mt-0.5 text-xs font-semibold text-ink">X.509 v3 / RSA 4096-bit (SHA-256 Digest)</p>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">Sertifikasi &amp; Standar Validasi</span>
+                        <p class="mt-0.5 text-xs font-semibold text-ink">Verifikasi Hash Integritas (SHA-256 Digest)</p>
                     </div>
                     <div>
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">Hash Kriptografis Konsolidasi</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">Hash Integritas Konsolidasi</span>
                         <div class="mt-1 flex items-center gap-2">
                             <span class="min-w-0 flex-1 truncate rounded-xl border border-line bg-surface-muted/60 px-3 py-2 text-xs font-mono font-semibold text-ink-strong" title="{{ $sha256Hash }}">
                                 {{ $sha256Hash }}

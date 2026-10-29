@@ -10,7 +10,7 @@
     ];
 
     $title = $hero['title'] ?? 'Katalog Komoditas Agribisnis';
-    $lead = $hero['lead'] ?? 'Ketersediaan pasokan panen segar langsung dari Petani Binaan & Buffer Stock Terpadu PT Green Pasundan Agriculture. Harga transparan per kilogram franco packhouse terverifikasi.';
+    $lead = $hero['lead'] ?? 'Ketersediaan pasokan panen segar langsung dari Petani Binaan & Buffer Stock Terpadu Green Pasundan Agriculture. Harga transparan per kilogram franco packhouse terverifikasi.';
     $assurances = $hero['assurances'] ?? [
         'Harga Franco Gudang / siap muat',
         'Sinkronisasi stok packhouse real-time',

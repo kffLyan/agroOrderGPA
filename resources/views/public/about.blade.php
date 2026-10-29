@@ -24,7 +24,7 @@
                 </h1>
 
                 <p class="max-w-3xl text-base leading-relaxed text-white/90 md:text-lg">
-                    Latar belakang pendirian PT Green Pasundan Agriculture (AgroOrder GPA) sebagai solusi atas masalah struktural rantai pasok agribisnis: fluktuasi pasokan liar, susut timbangan diam-diam (<em class="text-white font-bold">phantom weight</em>), dan mutasi kualitas komoditas segar di sektor HORECA (Hotel, Restaurant, Catering) dan ritel modern.
+                    Latar belakang pendirian Green Pasundan Agriculture (AgroOrder GPA) sebagai solusi atas masalah struktural rantai pasok agribisnis: fluktuasi pasokan liar, susut timbangan diam-diam (<em class="text-white font-bold">phantom weight</em>), dan mutasi kualitas komoditas segar di sektor HORECA (Hotel, Restaurant, Catering) dan ritel modern.
                 </p>
 
                 <ul class="flex flex-wrap gap-2">

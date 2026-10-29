@@ -85,7 +85,7 @@
                 <div class="rounded-lg bg-surface-shell p-3 border border-line-faint text-xs">
                     <h3 class="font-bold text-ink mb-1">Standar Mutu &amp; Keterangan Produk:</h3>
                     <p class="text-ink-body leading-relaxed">
-                        {{ $product->description ?: 'Komoditas hortikultura segar unggulan binaan PT Green Pasundan Agriculture bersertifikat standar higienis dan bebas residu pestisida.' }}
+                        {{ $product->description ?: 'Komoditas hortikultura segar unggulan binaan Green Pasundan Agriculture bersertifikat standar higienis dan bebas residu pestisida.' }}
                     </p>
                 </div>
             </div>

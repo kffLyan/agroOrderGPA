@@ -75,7 +75,7 @@ class ContractApprovalResource extends JsonResource
             $waPhone = $cleanPhone ? ('62' . $cleanPhone) : null;
         }
 
-        $waText = urlencode("Halo Bapak/Ibu {$submittedBy} ({$clientName}), kami dari Manajemen PT Giri Purwa Agro terkait verifikasi pengajuan Kontrak Kemitraan B2B {$c->contract_number} ({$prodName}).");
+        $waText = urlencode("Halo Bapak/Ibu {$submittedBy} ({$clientName}), kami dari Manajemen Green Pasundan Agriculture terkait verifikasi pengajuan Kontrak Kemitraan B2B {$c->contract_number} ({$prodName}).");
         $waLink = $waPhone ? "https://wa.me/{$waPhone}?text={$waText}" : null;
 
         return [

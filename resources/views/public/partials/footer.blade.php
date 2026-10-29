@@ -16,7 +16,7 @@
                     </p>
 
                     <dl class="space-y-1 pt-2 gpa-mono-xs">
-                        <dd class="text-white/80">PT GREEN PASUNDAN AGRICULTURE</dd>
+                        <dd class="text-white/80">GREEN PASUNDAN AGRICULTURE</dd>
                         <dd class="text-white/80">Badan Hukum Kemenkumham RI No. AHU-0029141.AH.01.01.TAHUN 2023</dd>
                         <dd class="text-white/80">NIB: 1908230048192 | KBLI 46311 (Perdagangan Besar Buah & Sayur)</dd>
                     </dl>
@@ -83,7 +83,7 @@
 
             <div
                 class="flex flex-col gap-4 border-t border-white/10 pt-8 text-2xs text-white/60 sm:flex-row sm:items-center sm:justify-between">
-                <p>Hak Cipta © {{ date('Y') }} PT Green Pasundan Agriculture. Dilindungi Undang-Undang.</p>
+                <p>Hak Cipta © {{ date('Y') }} Green Pasundan Agriculture. Dilindungi Undang-Undang.</p>
                 <p>Metrologi Tera Sah Balai Standardisasi Metrologi Legal Kementerian Perdagangan RI.</p>
             </div>
         </div>

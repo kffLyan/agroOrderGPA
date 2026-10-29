@@ -22,10 +22,8 @@ class RegisteredUserController extends Controller
     
     public function store(Request $request): RedirectResponse
     {
-        $businessName = $request->input('business_name', $request->input('company_name'));
-        if ($businessName && ! $request->has('company_name')) {
-            $request->merge(['company_name' => $businessName]);
-        }
+        $businessName = trim((string) $request->input('business_name', $request->input('company_name')));
+        $request->merge(['company_name' => $businessName !== '' ? $businessName : null]);
 
         $emailRule = app()->environment('testing') ? 'email:rfc' : 'email:rfc,dns';
 

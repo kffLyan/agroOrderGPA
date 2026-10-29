@@ -191,9 +191,9 @@
                             <div>
                                 <label for="business_name-mobile"
                                     class="mb-1.5 block font-mono text-[11px] font-medium uppercase tracking-wider text-ink">
-                                    Nama Usaha / PT *
+                                    Nama Usaha / PT <span class="font-normal text-ink-subtle">(Opsional)</span>
                                 </label>
-                                <input id="business_name-mobile" name="business_name" type="text" required
+                                <input id="business_name-mobile" name="business_name" type="text"
                                     autocomplete="organization" value="{{ old('business_name') }}"
                                     placeholder="Contoh: PT Kuliner Prima Nusantara"
                                     class="h-10 w-full rounded-sm border-line-strong bg-surface px-3 font-mono text-xs text-ink placeholder:font-mono placeholder:text-[11px] placeholder:text-ink-subtle focus:border-brand focus:ring-0">
@@ -279,12 +279,12 @@
     </div>
 
     {{-- DESKTOP: split grid view --}}
-    <main class="hidden min-h-screen w-full flex-col lg:flex">
-        <div class="grid w-full flex-grow grid-cols-1 border-b border-line lg:grid-cols-12">
+    <main class="hidden min-h-screen w-full flex-col lg:flex lg:h-screen lg:min-h-0 lg:overflow-hidden">
+        <div class="grid w-full flex-grow grid-cols-1 border-b border-line lg:grid-cols-12 lg:h-full lg:overflow-hidden">
 
             {{-- LEFT PANEL: Corporate & Security Trust Column --}}
-            <section
-                class="relative flex flex-col justify-center overflow-hidden border-b border-[#245204] bg-brand p-8 md:p-12 lg:col-span-5 lg:border-b-0 lg:border-r lg:p-14">
+            <section id="register-left-panel"
+                class="relative flex flex-col justify-center overflow-hidden border-b border-[#245204] bg-brand p-8 md:p-12 lg:col-span-5 lg:h-full lg:overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:border-b-0 lg:border-r lg:px-12 lg:py-8">
                 <div class="pointer-events-none absolute left-[244px] top-[-96px] h-96 w-96 rounded-full bg-[rgba(78,122,3,0.20)] blur-[32px]"
                     aria-hidden="true"></div>
                 <div class="pointer-events-none absolute left-0 top-[491px] h-80 w-80 rounded-full bg-[rgba(170,189,6,0.10)] blur-[20px]"
@@ -370,9 +370,9 @@
             </section>
 
             {{-- RIGHT PANEL: Registration Form --}}
-            <section
-                class="flex flex-col items-center justify-center bg-surface px-6 py-10 md:px-12 md:py-14 lg:col-span-7">
-                <div class="mx-auto flex w-full max-w-xl flex-col">
+            <section id="register-right-panel"
+                class="flex flex-col items-center bg-surface px-6 py-10 md:px-12 md:py-14 lg:col-span-7 lg:h-full lg:overflow-y-auto lg:justify-start">
+                <div class="mx-auto flex w-full max-w-xl flex-col my-auto">
                     <div>
                         <div class="mb-6">
                             <h2 class="text-xl font-semibold tracking-tight text-ink">
@@ -532,9 +532,9 @@
                             <div>
                                 <label for="business_name"
                                     class="mb-1.5 block font-mono text-[11px] font-medium uppercase tracking-wider text-ink">
-                                    Nama Usaha / PT *
+                                    Nama Usaha / PT <span class="font-normal text-ink-subtle">(Opsional)</span>
                                 </label>
-                                <input id="business_name" name="business_name" type="text" required
+                                <input id="business_name" name="business_name" type="text"
                                     autocomplete="organization" value="{{ old('business_name') }}"
                                     placeholder="Contoh: PT Kuliner Prima Nusantara"
                                     class="h-10 w-full rounded-sm border-line-strong bg-surface px-3 font-mono text-xs text-ink placeholder:font-mono placeholder:text-[11px] placeholder:text-ink-subtle focus:border-brand focus:ring-0">
@@ -764,6 +764,18 @@
                 }
             };
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const leftPanel = document.getElementById('register-left-panel');
+            const rightPanel = document.getElementById('register-right-panel');
+            if (leftPanel && rightPanel) {
+                leftPanel.addEventListener('wheel', (e) => {
+                    if (leftPanel.scrollHeight <= leftPanel.clientHeight) {
+                        rightPanel.scrollTop += e.deltaY;
+                    }
+                }, { passive: true });
+            }
+        });
     </script>
 </body>
 

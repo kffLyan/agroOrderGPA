@@ -115,7 +115,7 @@
                 </div>
                 <div>
                     <h1 class="text-sm font-extrabold uppercase tracking-wide text-ink">
-                        PT GREEN PASUNDAN AGRICULTURE
+                        GREEN PASUNDAN AGRICULTURE
                     </h1>
                     <p class="text-[7.5pt] text-ink-body">
                         Divisi Distribusi Rantai Pasok Sayuran Segar &amp; Kemitraan Agribisnis B2B<br>
@@ -298,7 +298,7 @@
             <ol class="mt-0.5 list-decimal list-inside space-y-0.5">
                 <li>Data bobot netto sah merupakan hasil penimbangan digital terkalibrasi di Packing House Lembang yang tercantum pada Surat Jalan resmi fisik.</li>
                 <li>Untuk pesanan Klien Kontrak B2B dengan termin <em>Term of Payment (TOP)</em>, seluruh nominal tagihan sah diagregasi ke dalam Faktur Bulanan Konsolidasi.</li>
-                <li>Batas toleransi deviasi susut perjalanan cold-chain maksimum 0.5% sesuai standar garansi mutu PT Green Pasundan Agriculture.</li>
+                <li>Batas toleransi deviasi susut perjalanan cold-chain maksimum 0.5% sesuai standar garansi mutu Green Pasundan Agriculture.</li>
             </ol>
         </section>
 
@@ -331,7 +331,7 @@
 
                 <div>
                     <p class="text-ink-muted">Otorisasi Keuangan &amp; Faktur</p>
-                    <p class="font-bold text-brand">PT Green Pasundan Agriculture</p>
+                    <p class="font-bold text-brand">Green Pasundan Agriculture</p>
                     <div class="h-12 flex items-center justify-center">
                         <div class="rounded border border-brand/60 px-2 py-0.5 text-center">
                             <span class="block font-mono text-[6pt] font-extrabold tracking-wider text-brand">GPA FINANCE VERIFIED</span>

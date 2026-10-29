@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
+// Mengatur verifikasi pesanan masuk oleh Sekretaris (menyetujui atau menolak pesanan)
 class OrderVerificationController extends Controller
 {
     protected OrderService $orderService;
@@ -52,7 +53,7 @@ class OrderVerificationController extends Controller
             $secretaryId = Auth::guard('web')->id();
             $order = $this->orderService->approveOrder($order->id, $secretaryId);
 
-            $message = "Pesanan {$order->order_number} berhasil disetujui. Kuota stok panen telah dikunci, Invoice tagihan PDF telah diterbitkan, dan status pesanan kini MENUNGGU_PEMBAYARAN.";
+            $message = "Pesanan {$order->order_number} berhasil disetujui. Kuota stok panen telah dikunci, Invoice tagihan PDF telah diterbitkan, dan status pesanan kini Menunggu Pembayaran.";
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([

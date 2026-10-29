@@ -123,7 +123,7 @@
                                 }
                             @endphp
                             @if($waNo)
-                                <a href="https://wa.me/{{ $waNo }}?text={{ urlencode('Halo Bapak/Ibu ' . ($contract->user->pic_name ?? $contract->user->name) . ', kami dari Direksi PT Giri Purwa Agro terkait Kontrak ' . $contract->contract_number) }}"
+                                <a href="https://wa.me/{{ $waNo }}?text={{ urlencode('Halo Bapak/Ibu ' . ($contract->user->pic_name ?? $contract->user->name) . ', kami dari Direksi Green Pasundan Agriculture terkait Kontrak ' . $contract->contract_number) }}"
                                    target="_blank" rel="noopener noreferrer"
                                    class="inline-flex items-center gap-1 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 text-[10px] font-bold hover:bg-emerald-200 transition">
                                     <span>WhatsApp PIC: {{ $rawPh }}</span>

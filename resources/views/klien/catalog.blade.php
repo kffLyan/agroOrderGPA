@@ -92,7 +92,7 @@
                 </h1>
 
                 <p class="max-w-3xl text-sm leading-5 text-ink-body">
-                    Ketersediaan panen langsung dari Petani Binaan &amp; Buffer Stock resmi PT Green Pasundan
+                    Ketersediaan panen langsung dari Petani Binaan &amp; Buffer Stock resmi Green Pasundan
                     Agriculture. Harga franco gudang penerima, terintegrasi dengan validasi kuota kontrak B2B
                     dan jadwal pengiriman subuh.
                 </p>

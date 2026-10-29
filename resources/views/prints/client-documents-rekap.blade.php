@@ -115,7 +115,7 @@
                 </div>
                 <div>
                     <h1 class="text-sm font-extrabold uppercase tracking-wide text-ink">
-                        PT GREEN PASUNDAN AGRICULTURE
+                        GREEN PASUNDAN AGRICULTURE
                     </h1>
                     <p class="text-[7.5pt] text-ink-body">
                         Divisi Administrasi Penagihan, Faktur Konsolidasi &amp; Pajak Pertanian B2B<br>
@@ -143,7 +143,7 @@
                     REKAPITULASI RESMI FAKTUR KONSOLIDASI &amp; STATUS TAGIHAN TEMPO
                 </h2>
                 <p class="text-[7.5pt] text-ink-body">
-                    Arsip Digital Penagihan Bulanan Sah, Berita Acara Timbang Gudang &amp; Bukti Rekonsiliasi Bank PT Green Pasundan Agriculture
+                    Arsip Digital Penagihan Bulanan Sah, Berita Acara Timbang Gudang &amp; Bukti Rekonsiliasi Bank Green Pasundan Agriculture
                 </p>
             </div>
             <div class="text-right">
@@ -276,10 +276,10 @@
         {{-- Instruksi Pembayaran Bank & Pajak Pertanian --}}
         <section class="mt-3 grid grid-cols-2 gap-3 text-[7pt] text-ink-body">
             <div class="rounded border border-line-board bg-surface-shell/50 p-2">
-                <h4 class="font-bold uppercase tracking-wider text-brand">Rekening Penerima Resmi PT Green Pasundan Agriculture:</h4>
+                <h4 class="font-bold uppercase tracking-wider text-brand">Rekening Penerima Resmi Green Pasundan Agriculture:</h4>
                 <p class="mt-0.5">
                     <strong>Bank Central Asia (BCA)</strong> &bull; No. Rekening: <span class="font-mono font-bold text-ink">840-552-1920</span><br>
-                    Atas Nama: <strong>PT Green Pasundan Agriculture</strong> (Kantor Cabang Lembang)<br>
+                    Atas Nama: <strong>Green Pasundan Agriculture</strong> (Kantor Cabang Lembang)<br>
                     <span class="text-[6.5pt] text-ink-muted">Cantumkan Nomor Faktur pada berita transfer bank untuk rekonsiliasi otomatis.</span>
                 </p>
             </div>
@@ -320,7 +320,7 @@
 
                 <div>
                     <p class="text-ink-muted">Otorisasi Keuangan Pusat</p>
-                    <p class="font-bold text-brand">PT Green Pasundan Agriculture</p>
+                    <p class="font-bold text-brand">Green Pasundan Agriculture</p>
                     <div class="h-12 flex items-center justify-center">
                         <div class="rounded border border-brand/60 px-2 py-0.5 text-center">
                             <span class="block font-mono text-[6pt] font-extrabold tracking-wider text-brand">LEGAL INVOICE PASUNDAN</span>

@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Verifikasi Alamat Email &middot; PT Green Pasundan Agriculture</title>
+    <title>Verifikasi Alamat Email &middot; Green Pasundan Agriculture</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,7 +33,7 @@
                     
                     {{-- Logo & Brand --}}
                     <div class="mb-5 flex flex-col items-center">
-                        <img src="{{ asset('gpaleaves.png') }}" alt="PT Green Pasundan Agriculture"
+                        <img src="{{ asset('gpaleaves.png') }}" alt="Green Pasundan Agriculture"
                             class="mb-3 h-14 w-14 object-contain">
                         <span class="inline-flex items-center gap-1.5 rounded-full bg-accent/20 px-3 py-1 font-mono text-[11px] font-bold text-brand uppercase tracking-wider">
                             <span class="h-1.5 w-1.5 rounded-full bg-brand"></span>
@@ -100,7 +100,7 @@
         </main>
 
         <footer class="relative z-10 py-4 text-center font-mono text-2xs text-white/70">
-            &copy; {{ date('Y') }} PT Green Pasundan Agriculture &middot; Rantai Pasok Terstandarisasi Horeka &amp; Ritel
+            &copy; {{ date('Y') }} Green Pasundan Agriculture &middot; Rantai Pasok Terstandarisasi Horeka &amp; Ritel
         </footer>
     </div>
 

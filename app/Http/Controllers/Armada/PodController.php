@@ -42,6 +42,11 @@ class PodController extends Controller
     {
         $user = Auth::user();
 
+        // Anti-IDOR: Jika pesanan sudah ditugaskan ke supir lain, tolak aksesnya
+        if ($order->driver_id && $order->driver_id !== $user->id) {
+            abort(403, 'Akses Ditolak: Pesanan ini ditugaskan kepada supir armada lain.');
+        }
+
         $condition = $request->input('condition', 'clear');
         $receiverName = $request->input('received_by_name');
 

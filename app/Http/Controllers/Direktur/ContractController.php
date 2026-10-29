@@ -74,15 +74,15 @@ class ContractController extends Controller
                 $this->governanceService->addAuditLog(
                     'BATCH_APPROVAL_KONTRAK',
                     $contract->contract_number,
-                    "Persetujuan batch kontrak B2B {$contract->contract_number} ({$clientName}). TTD Kriptografi BSrE disahkan.",
+                    "Persetujuan kontrak kemitraan B2B {$contract->contract_number} ({$clientName}) disahkan oleh Direktur Utama.",
                     $directorName,
-                    'DIR-01 [CLEARANCE L4]',
-                    'SEALED'
+                    'DIR-01',
+                    'APPROVED'
                 );
             }
         }
 
-        $msg = "Sebanyak {$approvedCount} kontrak kemitraan B2B berhasil disetujui secara serentak dengan TTD Digital SHA-256.";
+        $msg = "Sebanyak {$approvedCount} kontrak kemitraan B2B berhasil disetujui secara serentak.";
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['success' => true, 'message' => $msg, 'count' => $approvedCount]);
         }

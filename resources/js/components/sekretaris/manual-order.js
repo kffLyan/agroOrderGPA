@@ -79,7 +79,7 @@ export default function secretaryManualOrder(
                 type: 'BANK',
                 name: 'Bank BCA',
                 account_number: '8210-992-3841',
-                account_name: 'PT Green Pasundan Agriculture (Divisi Keuangan B2B)',
+                account_name: 'Green Pasundan Agriculture (Divisi Keuangan B2B)',
                 instructions: 'Sertakan nomor referensi pesanan di berita transfer.',
                 logo_url: '/images/payments/bca.svg',
             };

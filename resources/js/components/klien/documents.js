@@ -253,13 +253,13 @@ export default function clientDocuments(defaults = {}) {
 
                 this.$dispatch('gpa:toast', {
                     title: 'Rekening Settlement GPA',
-                    message: 'BCA: 840-552-1920 • a.n. PT Green Pasundan Agriculture tersalin ke papan klip.',
+                    message: 'BCA: 840-552-1920 • a.n. Green Pasundan Agriculture tersalin ke papan klip.',
                     tone: 'success',
                 });
             } catch {
                 this.$dispatch('gpa:toast', {
                     title: 'Rekening Settlement GPA',
-                    message: 'BCA: 840-552-1920 • a.n. PT Green Pasundan Agriculture — salin manual bila papan klip dibatasi browser.',
+                    message: 'BCA: 840-552-1920 • a.n. Green Pasundan Agriculture — salin manual bila papan klip dibatasi browser.',
                     tone: 'info',
                 });
             }

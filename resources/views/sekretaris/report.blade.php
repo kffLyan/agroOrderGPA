@@ -669,7 +669,7 @@
                         </div>
 
                         <p class="mt-2 max-w-4xl text-xs leading-5 text-ink-body">
-                            Laporan ini merupakan rekapitulasi resmi transaksi PT Green Pasundan Agriculture yang siap diserahkan kepada Direksi.
+                            Laporan ini merupakan rekapitulasi resmi transaksi Green Pasundan Agriculture yang siap diserahkan kepada Direksi.
                         </p>
                     </div>
                 </div>

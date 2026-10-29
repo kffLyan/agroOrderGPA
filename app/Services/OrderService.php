@@ -15,6 +15,7 @@ use App\Services\StockService;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
+// Layanan utama proses pemesanan (buat pesanan, verifikasi, potong stok, faktur)
 class OrderService
 {
     protected StockService $stockService;
@@ -24,7 +25,7 @@ class OrderService
         $this->stockService = $stockService;
     }
 
-    // Membuat nomor transaksi unik dengan pola ORD-GPA-YYYYMM-XXXX
+    // Buat nomor pesanan otomatis berurutan (contoh: ORD-GPA-202610-0001)
     public function generateOrderNumber(): string
     {
         $prefix = 'ORD-GPA-' . date('Ym') . '-';
@@ -170,8 +171,8 @@ class OrderService
     }
 
     /**
-     * Persetujuan pesanan oleh Sekretaris & pemotongan kuota stok via Pessimistic Row Locking
-     * Sesuai MODELING_SUMMARY.md: Menerbitkan Invoice PDF & status berubah menjadi MENUNGGU_PEMBAYARAN
+     * Persetujuan pesanan oleh Sekretaris & pemotongan kuota stok
+     * Sesuai alur: Terbitkan Faktur (Invoice) & status berubah menjadi MENUNGGU_PEMBAYARAN
      *
      * @throws Exception
      */

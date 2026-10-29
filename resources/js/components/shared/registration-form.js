@@ -237,7 +237,6 @@ export default function registrationForm(initial = {}) {
         completion() {
             const checks = [
                 this.name,
-                this.business_name,
                 this.phoneValid() && this.otp.state === 'verified',
                 this.address,
                 this.delivery_zone,

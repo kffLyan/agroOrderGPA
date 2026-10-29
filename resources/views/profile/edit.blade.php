@@ -191,7 +191,7 @@
                         {{-- Nama Usaha / Badan Hukum PT --}}
                         <div>
                             <label for="company_name" class="block font-mono text-[11px] font-bold uppercase tracking-wider text-ink">
-                                Nama Usaha / Badan Hukum PT <span class="text-red-500">*</span>
+                                Nama Usaha / Badan Hukum PT <span class="font-normal text-ink-subtle">(Opsional)</span>
                             </label>
                             <input id="company_name" name="company_name" type="text"
                                 value="{{ old('company_name', $user->company_name ?? 'PT Kuliner Prima Nusantara') }}"

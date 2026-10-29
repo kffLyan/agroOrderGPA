@@ -6,9 +6,10 @@ use App\Models\HarvestBatch;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
+// Layanan untuk mengelola stok panen komoditas di gudang
 class StockService
 {
-    // Dapatkan sisa kuota stok panen tersedia untuk suatu produk.
+    // Hitung total sisa stok yang tersedia untuk satu produk
     public function getAvailableStock(int $productId): float
     {
         return (float) HarvestBatch::where('product_id', $productId)
@@ -16,12 +17,7 @@ class StockService
             ->sum('available_quantity');
     }
 
-    /**
-     * Dapatkan peta kuota stok panen tersedia untuk banyak produk dalam 1 query efisien (mencegah N+1).
-     *
-     * @param array<int> $productIds
-     * @return array<int, float>
-     */
+    // Ambil stok banyak produk sekaligus (1 query, hemat & bebas N+1)
     public function getAvailableStockMap(array $productIds): array
     {
         if (empty($productIds)) {
@@ -43,24 +39,20 @@ class StockService
         return $result;
     }
 
-    // Periksa apakah kuota stok mencukupi untuk jumlah yang diminta
+    // Cek apakah stok cukup untuk memenuhi pesanan
     public function isStockSufficient(int $productId, float $requestedQty): bool
     {
         return $this->getAvailableStock($productId) >= $requestedQty;
     }
 
-    /**
-     * Alokasikan (potong) stok panen secara FIFO dengan pessimistic lock.
-     *
-     * @throws Exception
-     */
+    // Potong stok pakai metode FIFO (panen terlama dipotong duluan) & dikunci agar tidak bentrok
     public function allocateStock(int $productId, float $qty): void
     {
         $batches = HarvestBatch::where('product_id', $productId)
             ->where('available_quantity', '>', 0)
-            ->orderBy('batch_date', 'asc')
+            ->orderBy('batch_date', 'asc') // Urutan FIFO
             ->orderBy('id', 'asc')
-            ->lockForUpdate()
+            ->lockForUpdate() // Kunci baris agar tidak berebut stok di detik yang sama
             ->get();
 
         $remainingToDeduct = $qty;

@@ -181,8 +181,8 @@ Route::middleware(['auth', 'role:SEKRETARIS'])->prefix('sekretaris')->name('sekr
     Route::post('/pesanan-manual', [SekretarisManualOrderController::class, 'store'])->name('manual-order.store');
 });
 
-// Alias rute langsung untuk input pesanan manual (menghindari error URL prefix)
-Route::middleware(['auth'])->group(function () {
+// Rute langsung pesanan manual (Khusus staf Sekretaris dan Direktur)
+Route::middleware(['auth', 'role:SEKRETARIS,DIREKTUR'])->group(function () {
     Route::get('/pesanan-manual', [SekretarisManualOrderController::class, 'index']);
     Route::post('/pesanan-manual', [SekretarisManualOrderController::class, 'store']);
 });
@@ -313,7 +313,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/cetak/surat-jalan', SuratJalanController::class)->name('prints.surat-jalan');
     Route::get('/cetak/faktur/{invoice}', PrintsSecretaryInvoiceController::class)->name('prints.invoice');
     Route::get('/cetak/berita-acara-retur', ReturnActController::class)->name('prints.return-act');
-    Route::get('/cetak/laporan-eksekutif', ReportPrintController::class)->name('prints.report');
+
+    // Laporan rekap eksekutif hanya boleh diakses Direktur & Sekretaris
+    Route::get('/cetak/laporan-eksekutif', ReportPrintController::class)
+        ->middleware('role:DIREKTUR,SEKRETARIS')
+        ->name('prints.report');
 });
 
 // Fallback rute untuk file bukti serah terima PoD agar tidak terblokir 403

@@ -29,6 +29,24 @@ class RegistrationTest extends TestCase
 
         $this->assertAuthenticated();
         $this->assertEquals('REGULER', auth()->user()->client_type);
+        $this->assertNull(auth()->user()->company_name);
+        $response->assertRedirect(route('dashboard', absolute: false));
+    }
+
+    public function test_registration_succeeds_when_business_name_is_empty(): void
+    {
+        $response = $this->post('/register', [
+            'name'                  => 'Perorangan User',
+            'email'                 => 'perorangan@example.com',
+            'phone'                 => '081234567891',
+            'business_name'         => '',
+            'address'               => 'Jl. Perkebunan Sayur No. 2, Ciwidey',
+            'password'              => 'password',
+            'password_confirmation' => 'password',
+        ]);
+
+        $this->assertAuthenticated();
+        $this->assertNull(auth()->user()->company_name);
         $response->assertRedirect(route('dashboard', absolute: false));
     }
 

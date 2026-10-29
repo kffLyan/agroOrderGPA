@@ -2,6 +2,7 @@
 
 namespace App\Enums;
 
+// Daftar status pesanan resmi (memakai Enum PHP 8 agar pilihan status terkunci dan bebas typo)
 enum OrderStatus: string
 {
     case MENUNGGU_VERIFIKASI  = 'MENUNGGU_VERIFIKASI';

@@ -150,7 +150,7 @@
                     </span>
                 </div>
                 <p class="max-w-[56rem] text-sm leading-5 text-ink-body">
-                    Arsip digital dokumen penagihan bulanan, faktur pajak, dan surat jalan penimbangan sah PT Green Pasundan Agriculture.
+                    Arsip digital dokumen penagihan bulanan, faktur pajak, dan surat jalan penimbangan sah Green Pasundan Agriculture.
                 </p>
             </div>
 
@@ -633,7 +633,7 @@
                             <p class="text-[10px] font-bold uppercase leading-5 text-ink-body">Rekening Penerima Resmi</p>
                             <p class="text-xs font-bold leading-4 text-ink">Bank Central Asia (BCA)</p>
                             <p class="text-xs font-semibold leading-4 tracking-[0.6px] text-ink">840-552-1920</p>
-                            <p class="text-[10px] leading-5 text-ink-body">PT Green Pasundan Agriculture</p>
+                            <p class="text-[10px] leading-5 text-ink-body">Green Pasundan Agriculture</p>
                         </div>
                         <a href="{{ route('klien.payment-proof', ['tagihan' => $invoice['po']]) }}"
                             class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-ink transition-colors hover:bg-accent-deep">

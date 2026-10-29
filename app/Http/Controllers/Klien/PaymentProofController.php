@@ -93,8 +93,23 @@ class PaymentProofController extends Controller
         ]);
 
         $invoice = Invoice::where('user_id', $user->id)
-            ->where('invoice_number', $validated['invoice_po'])
+            ->where(function ($q) use ($validated) {
+                $q->where('invoice_number', $validated['invoice_po'])
+                  ->orWhere('id', $validated['invoice_po']);
+            })
             ->first();
+
+        // Anti-IDOR: Pastikan tagihan yang dibayar adalah milik Klien yang sedang login
+        if (!$invoice) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tagihan atau faktur tidak ditemukan pada akun Anda.',
+                ], 403);
+            }
+
+            return back()->withInput()->withErrors(['invoice_po' => 'Nomor tagihan tidak ditemukan pada akun Anda.']);
+        }
 
         $proofPath = null;
         if ($request->hasFile('proof_file')) {

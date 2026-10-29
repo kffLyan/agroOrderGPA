@@ -272,7 +272,7 @@
                                 </x-gpa.btn>
 
                                 <p class="text-center text-xs leading-relaxed text-ink-subtle">
-                                    Data Anda terlindungi oleh kebijakan kerahasiaan komersial PT Green Pasundan Agriculture.
+                                    Data Anda terlindungi oleh kebijakan kerahasiaan komersial Green Pasundan Agriculture.
                                 </p>
                             </div>
                         </form>

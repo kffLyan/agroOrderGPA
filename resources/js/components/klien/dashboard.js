@@ -1,4 +1,4 @@
-import { onDraftSynced, readDraft, setCartEmptied, writeDraft } from './draft-store';
+import { onDraftSynced, readDraft, setCartEmptied, writeDraft } from '../shared/draft-store';
 
 const rupiah = new Intl.NumberFormat('id-ID', {
     style: 'currency',

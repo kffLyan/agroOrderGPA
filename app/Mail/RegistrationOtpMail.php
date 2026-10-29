@@ -21,7 +21,7 @@ class RegistrationOtpMail extends Mailable
     public function envelope(): Envelope
     {
         $fromAddress = config('mail.from.address', 'kafkalyandra@gmail.com');
-        $fromName = config('mail.from.name', 'PT Green Pasundan Agriculture');
+        $fromName = config('mail.from.name', 'Green Pasundan Agriculture');
 
         return new Envelope(
             from: new Address($fromAddress, $fromName),

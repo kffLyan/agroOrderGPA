@@ -55,8 +55,8 @@ class GovernanceController extends Controller
             'CFG-MASTER-POLICY',
             "Direktur memperbarui parameter statutori: Batas Susut Maks {$validated['warehouse_loss_max_percent']}%, Plafon Default Rp " . number_format($validated['default_top_credit_ceiling'], 0, ',', '.') . ", Margin Min {$validated['min_margin_percent']}%.",
             $directorName,
-            'DIR-01 [ROOT-ACCESS]',
-            'SEALED'
+            'DIR-01',
+            'UPDATED'
         );
 
         return back()->with('success', 'Konfigurasi parameter dan kebijakan bisnis berhasil diperbarui.');
@@ -120,8 +120,8 @@ class GovernanceController extends Controller
             'SEC-PLT-MANDATE',
             "Mandat Plt Direktur {$statusStr}. Penerima: " . ($delegateName ?: '-') . ", Plafon: Rp " . number_format($ceiling ?? 0, 0, ',', '.'),
             $directorName,
-            'DIR-01 [ROOT-ACCESS]',
-            'SEALED'
+            'DIR-01',
+            'UPDATED'
         );
 
         return back()->with('success', "Konfigurasi mandat Plt Direksi berhasil disimpan ({$statusStr}).");
@@ -239,8 +239,8 @@ class GovernanceController extends Controller
             'CFG-PAYMENT-GATEWAY',
             "Direktur memperbarui konfigurasi kanal pembayaran resmi ({$activeCount} kanal aktif: Bank, QRIS, & Dompet Digital GPA).",
             $directorName,
-            'DIR-01 [ROOT-ACCESS]',
-            'SEALED'
+            'DIR-01',
+            'UPDATED'
         );
 
         if ($request->wantsJson()) {

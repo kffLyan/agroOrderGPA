@@ -305,7 +305,7 @@ class KlienModuleTest extends TestCase
         $response = $this->actingAs($klien)->get(route('klien.orders.print-rekap'));
         $response->assertStatus(200);
         $response->assertSee('REKAPITULASI RESMI TRANSAKSI PEMESANAN');
-        $response->assertSee('PT GREEN PASUNDAN AGRICULTURE');
+        $response->assertSee('GREEN PASUNDAN AGRICULTURE');
     }
 
     public function test_klien_can_view_documents_print_rekap_pdf(): void
@@ -319,7 +319,7 @@ class KlienModuleTest extends TestCase
         $response = $this->actingAs($klien)->get(route('klien.documents.print-rekap'));
         $response->assertStatus(200);
         $response->assertSee('REKAPITULASI RESMI FAKTUR KONSOLIDASI');
-        $response->assertSee('PT GREEN PASUNDAN AGRICULTURE');
+        $response->assertSee('GREEN PASUNDAN AGRICULTURE');
     }
 
     public function test_klien_can_export_orders_csv(): void

@@ -70,7 +70,7 @@
                     <tr>
                         <td align="center">
                             <p style="font-size: 11px; color: #94a3b8; margin: 0; line-height: 1.5;">
-                                &copy; {{ date('Y') }} PT Green Pasundan Agriculture. All Rights Reserved.
+                                &copy; {{ date('Y') }} Green Pasundan Agriculture. All Rights Reserved.
                             </p>
                         </td>
                     </tr>

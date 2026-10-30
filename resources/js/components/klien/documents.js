@@ -243,7 +243,7 @@ export default function clientDocuments(defaults = {}) {
         },
 
         /**
-         * Rekening settlement GPA bisa disalin langsung dari dropdown kop.
+         * Rekening pembayaran resmi GPA bisa disalin langsung dari dropdown kop.
          */
         async copySettlementAccount() {
             this.proofMenuOpen = false;
@@ -252,13 +252,13 @@ export default function clientDocuments(defaults = {}) {
                 await navigator.clipboard.writeText('840-552-1920');
 
                 this.$dispatch('gpa:toast', {
-                    title: 'Rekening Settlement GPA',
+                    title: 'Rekening Pembayaran GPA',
                     message: 'BCA: 840-552-1920 • a.n. Green Pasundan Agriculture tersalin ke papan klip.',
                     tone: 'success',
                 });
             } catch {
                 this.$dispatch('gpa:toast', {
-                    title: 'Rekening Settlement GPA',
+                    title: 'Rekening Pembayaran GPA',
                     message: 'BCA: 840-552-1920 • a.n. Green Pasundan Agriculture — salin manual bila papan klip dibatasi browser.',
                     tone: 'info',
                 });
@@ -267,8 +267,8 @@ export default function clientDocuments(defaults = {}) {
 
         contactFinance() {
             this.$dispatch('gpa:toast', {
-                title: 'Kontak Tim Finance',
-                message: 'SLA Hotline 24/7 GPA Finance siap membantu rekonsiliasi tagihan.',
+                title: 'Kontak Tim Keuangan',
+                message: 'Layanan Keuangan GPA siap membantu rekonsiliasi tagihan Anda.',
                 tone: 'info',
             });
         },

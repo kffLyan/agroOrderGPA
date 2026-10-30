@@ -10,9 +10,9 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\GovernanceService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Exception;
 
 class ContractController extends Controller
 {

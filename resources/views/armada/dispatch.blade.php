@@ -304,7 +304,7 @@
                 </div>
 
                 <span class="rounded bg-accent px-2 py-0.5 font-mono text-[10px] font-bold text-ink">
-                    EXP: <span x-text="expired() ? 'EXPIRED' : expiryLabel()">45:00</span>
+                    BERLAKU: <span x-text="expired() ? 'KEDALUWARSA' : expiryLabel()">45:00</span>
                 </span>
             </header>
 
@@ -312,8 +312,8 @@
                 <div class="flex h-20 w-20 items-center justify-center rounded-xl bg-ink text-accent">
                     <x-gpa.icon name="qrcode" class="h-12 w-12" />
                 </div>
-                <p class="pt-2 font-mono text-xs font-bold text-ink">TOKEN: GPA-{{ $currentOrder?->id ?? '1' }}-SEC</p>
-                <p class="text-[10px] text-ink-body">Tunjukkan ke pos security gerbang sentral hub & dock penerima.</p>
+                <p class="pt-2 font-mono text-xs font-bold text-ink">KODE GERBANG: GPA-{{ $currentOrder?->id ?? '1' }}-SEC</p>
+                <p class="text-[10px] text-ink-body">Tunjukkan ke pos keamanan gerbang hub utama &amp; dok penerima.</p>
             </div>
 
             <button type="button" @click="verifySeal()"

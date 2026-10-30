@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Sekretaris;
 
 use App\Http\Controllers\Controller;
-use App\Models\Invoice;
+use App\Http\Requests\Sekretaris\RejectPaymentRequest;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Services\GovernanceService;
@@ -66,6 +66,7 @@ class PaymentController extends Controller
         )->all();
 
         return view('sekretaris.payment', [
+            'operatorCode'  => $operatorCode,
             'queueRows'     => $queueRows,
             'auditRows'     => $auditRows,
             'pendingCount'  => $pendingCount,
@@ -137,7 +138,7 @@ class PaymentController extends Controller
     /**
      * Menolak bukti pembayaran yang tidak sesuai
      */
-    public function reject(\App\Http\Requests\Sekretaris\RejectPaymentRequest $request, Payment $payment)
+    public function reject(RejectPaymentRequest $request, Payment $payment)
     {
         $note = $request->input('rejection_note') ?: $request->input('note', 'Bukti transfer tidak valid atau dana belum masuk rekening koran.');
 

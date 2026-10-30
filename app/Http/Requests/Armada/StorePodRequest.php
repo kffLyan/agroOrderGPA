@@ -22,6 +22,7 @@ class StorePodRequest extends FormRequest
             'received_by_name'          => ['nullable', 'string', 'max:255'],
             'manifest_photo'            => ['nullable', 'image', 'max:10240'],
             'dock_photo'                => ['nullable', 'image', 'max:10240'],
+            'pod_photo'                 => ['nullable', 'image', 'max:10240'],
             'returns'                   => ['nullable', 'array'],
             'returns.*.returned_weight' => ['nullable', 'numeric', 'min:0'],
             'returns.*.return_reason'   => ['nullable', 'string', 'max:255'],

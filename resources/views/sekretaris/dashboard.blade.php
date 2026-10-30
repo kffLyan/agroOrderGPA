@@ -65,7 +65,7 @@
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-faint pt-3">
                     <p class="gpa-note text-ink-body">Target Layanan</p>
-                    <span class="gpa-meta-lg font-bold tracking-[0.28px] text-success-deep">SLA &lt; 2 Jam</span>
+                    <span class="gpa-meta-lg font-bold tracking-[0.28px] text-success-deep">Target &lt; 2 Jam</span>
                 </div>
             </article>
 
@@ -176,7 +176,7 @@
                             </h2>
                         </div>
                         <span class="shrink-0 rounded bg-surface-pill px-2 py-1 gpa-micro text-ink-body">
-                            Prioritas SLA Hari Ini
+                            Prioritas Pengiriman Hari Ini
                         </span>
                     </div>
 
@@ -382,7 +382,7 @@
                     <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line-faint pt-3">
                         <p class="flex items-center gap-1.5">
                             <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
-                            <span class="gpa-note text-ink-body">Kepatuhan SLA Subuh GPA:</span>
+                            <span class="gpa-note text-ink-body">Ketepatan Pengiriman Subuh GPA:</span>
                             <span class="gpa-note text-ink">99.4% On-Time</span>
                         </p>
                         <p class="gpa-note text-ink">Window Bongkar: 04.00 - 06.00 WIB</p>
@@ -453,7 +453,7 @@
                                         Mendekati Batas Cut-Off Subuh (16:00 WIB)
                                     </p>
                                 </div>
-                                <span class="shrink-0 gpa-note font-bold text-warning-deep">SLA Alert</span>
+                                <span class="shrink-0 gpa-note font-bold text-warning-deep">Perhatian Jadwal</span>
                             </div>
                             <p class="mt-1 pl-6 text-xs leading-[1.375rem] text-ink-body">
                                 Terdapat {{ $pendingOrdersCount ?? 3 }} pesanan masuk yang belum diverifikasi. Harap segera kunci stok sebelum jadwal sortasi malam.
@@ -473,7 +473,7 @@
                                         Pencocokan Bukti Transfer Manual
                                     </p>
                                 </div>
-                                <span class="shrink-0 gpa-note font-bold text-success-deep">{{ $pendingPaymentsCount ?? 2 }} Pending</span>
+                                <span class="shrink-0 gpa-note font-bold text-success-deep">{{ $pendingPaymentsCount ?? 2 }} Menunggu Verifikasi</span>
                             </div>
                             <p class="mt-1 pl-6 text-xs leading-[1.375rem] text-ink-body">
                                 Unggahan bukti transfer klien reguler memerlukan konfirmasi pencocokan dengan mutasi rekening giro BCA GPA.

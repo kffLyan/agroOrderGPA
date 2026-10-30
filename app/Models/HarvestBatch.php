@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class HarvestBatch extends Model
 {
     use HasFactory;
+    use \App\Models\Concerns\PresentsHarvestBatchDetails;
 
     protected $fillable = [
         'product_id', 'source_type', 'supplier_name',
@@ -24,6 +25,19 @@ class HarvestBatch extends Model
             'available_quantity' => 'decimal:2',
         ];
     }
+
+    protected $appends = [
+        'ticket',
+        'time_formatted',
+        'gross',
+        'tare',
+        'net',
+        'qc',
+        'note',
+        'source_label',
+        'name',
+        'commodity',
+    ];
 
     public function product(): BelongsTo
     {

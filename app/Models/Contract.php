@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class Contract extends Model
 {
     use HasFactory;
+    use \App\Models\Concerns\PresentsContractDetails;
 
     protected $fillable = [
         'user_id',
@@ -20,6 +21,18 @@ class Contract extends Model
         'status',
         'approved_by',
         'approved_at',
+    ];
+
+    protected $appends = [
+        'client_display_name',
+        'product_name',
+        'committed_volume_ton',
+        'fixed_price_formatted',
+        'status_label',
+        'name',
+        'sentra',
+        'commitment',
+        'priority',
     ];
 
     protected $casts = [
@@ -42,10 +55,5 @@ class Contract extends Model
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
-    }
-
-    public function getStatusEnumAttribute(): ?\App\Enums\ContractStatus
-    {
-        return \App\Enums\ContractStatus::tryFrom((string) $this->status);
     }
 }

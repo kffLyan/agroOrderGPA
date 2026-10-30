@@ -9,11 +9,26 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Payment extends Model
 {
     use HasFactory;
+    use \App\Models\Concerns\PresentsPaymentDetails;
 
     protected $fillable = [
         'order_id', 'invoice_id', 'payment_reference',
         'payment_method', 'amount', 'proof_url', 'status',
         'verified_by', 'paid_at', 'verification_note',
+    ];
+
+    protected $appends = [
+        'code',
+        'status_label',
+        'status_tone',
+        'receipt_code',
+        'date_formatted',
+        'amount_formatted',
+        'receipt_pending',
+        'row_tone',
+        'amount_class',
+        'status_class',
+        'timestamp',
     ];
 
     protected function casts(): array
@@ -37,23 +52,5 @@ class Payment extends Model
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
-    }
-
-    public function getStatusEnumAttribute(): ?\App\Enums\PaymentStatus
-    {
-        return \App\Enums\PaymentStatus::tryFrom((string) $this->status);
-    }
-
-    public function getMethodEnumAttribute(): ?\App\Enums\PaymentMethod
-    {
-        return \App\Enums\PaymentMethod::tryFrom((string) $this->payment_method);
-    }
-
-    /**
-     * Format nominal pembayaran ke format mata uang Rupiah
-     */
-    public function getFormattedAmountAttribute(): string
-    {
-        return 'Rp ' . number_format((float) ($this->amount ?? 0), 0, ',', '.');
     }
 }

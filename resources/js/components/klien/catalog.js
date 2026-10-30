@@ -303,6 +303,49 @@ export default function clientCatalog(items = []) {
             this.writeDraft();
         },
 
+        adjustDraftQty(key, delta) {
+            const line = this.draft.find((entry) => entry.key === key);
+
+            if (!line) {
+                return;
+            }
+
+            const item = this.find(key);
+            const step = line.step || item?.step || 1;
+            const moq = line.moq || item?.moq || step;
+            const stock = line.stock ?? item?.stock ?? 0;
+
+            let nextQty = line.qty + delta * step;
+
+            if (nextQty <= 0) {
+                this.removeFromDraft(key);
+                return;
+            }
+
+            if (nextQty < moq) {
+                this.$dispatch('gpa:toast', {
+                    title: 'Belum Memenuhi MOQ',
+                    message: `Minimum order ${line.name} adalah ${moq} kg.`,
+                    tone: 'warning',
+                });
+                return;
+            }
+
+            if (nextQty > stock) {
+                this.$dispatch('gpa:toast', {
+                    title: 'Stok Tidak Mencukupi',
+                    message: `Volume melebihi sisa stok ${line.name} (${stock} kg).`,
+                    tone: 'danger',
+                });
+                return;
+            }
+
+            line.qty = nextQty;
+            line.total = line.qty * line.price;
+
+            this.writeDraft();
+        },
+
         draftCount() {
             return this.draft.length;
         },

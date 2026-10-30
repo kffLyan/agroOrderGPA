@@ -1,6 +1,13 @@
 @props([
     'cart' => null,
+    'showAction' => true,
+    'actionLabel' => 'Lanjutkan ke Pemesanan Resmi',
+    'actionHref' => null,
 ])
+
+@php
+    $actionHref = $actionHref ?? (auth()->check() ? route('klien.cart') : route('login'));
+@endphp
 
 <section class="gpa-panel p-4 sm:p-5">
     <header class="flex items-center justify-between gap-3 border-b border-line-hair pb-3">
@@ -26,14 +33,30 @@
                     <p class="text-xs font-semibold text-ink" x-text="line.name"></p>
                     <p class="text-xs font-extrabold text-brand-strong" x-text="money(line.total)"></p>
                 </div>
-                <div class="mt-1 flex items-center justify-between gap-3">
+                <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
                     <p class="gpa-mono-xs text-ink-subtle">
-                        <span x-text="line.qty + ' ' + (line.unit || 'kg') + ' @ ' + money(line.price)"></span>
+                        <span x-text="money(line.price) + ' / kg'"></span>
                     </p>
-                    <button type="button" @click="removeFromDraft(line.key)"
-                        class="gpa-mono-xs font-semibold uppercase tracking-wider text-danger hover:underline">
-                        Hapus
-                    </button>
+                    <div class="flex items-center gap-2">
+                        <div class="flex h-8 items-center rounded border border-line-board bg-surface">
+                            <button type="button" @click="adjustDraftQty(line.key, -1)"
+                                :aria-label="'Kurangi jumlah ' + line.name"
+                                class="flex h-full w-7 items-center justify-center text-ink transition-colors hover:bg-surface-shell">
+                                &minus;
+                            </button>
+                            <span class="w-10 border-x border-line-faint text-center gpa-mono-xs text-ink" x-text="line.qty"></span>
+                            <button type="button" @click="adjustDraftQty(line.key, 1)"
+                                :aria-label="'Tambah jumlah ' + line.name"
+                                class="flex h-full w-7 items-center justify-center text-ink transition-colors hover:bg-surface-shell">
+                                +
+                            </button>
+                        </div>
+                        <span class="gpa-mono-xs text-ink-subtle" x-text="line.unit || 'kg'"></span>
+                        <button type="button" @click="removeFromDraft(line.key)"
+                            class="gpa-mono-xs font-semibold uppercase tracking-wider text-danger hover:underline">
+                            Hapus
+                        </button>
+                    </div>
                 </div>
             </li>
         </template>
@@ -45,9 +68,10 @@
             <span class="text-base font-extrabold text-brand-strong" x-text="money(draftTotal())">Rp0</span>
         </p>
 
-        <a href="{{ auth()->check() ? route('klien.cart') : route('login') }}"
-            class="flex w-full items-center justify-center rounded-xl bg-accent px-4 py-2.5 font-mono text-xs font-bold text-brand shadow-sm transition hover:bg-accent-deep">
-            Lanjutkan ke Pemesanan Resmi
-        </a>
+        @if ($showAction)
+            <x-gpa.btn :href="$actionHref" variant="accent" size="md" block>
+                {{ $actionLabel }}
+            </x-gpa.btn>
+        @endif
     </div>
 </section>

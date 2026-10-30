@@ -207,7 +207,6 @@ Route::middleware(['auth', 'role:KOORDINATOR'])->prefix('koordinator')->name('ko
     // 3. Suplai Pasokan Stok Panen (Quick Intake Ledger) & Neraca Gudang
     Route::get('/stok', [KoordinatorStockController::class, 'index'])->name('stock');
     Route::post('/stok', [KoordinatorStockController::class, 'storeBatch'])->name('stock.store');
-    Route::post('/stok/batch', [KoordinatorStockController::class, 'storeBatch'])->name('stock.batch');
 });
 
 
@@ -281,16 +280,11 @@ Route::middleware(['auth', 'role:DIREKTUR'])->prefix('direktur')->name('direktur
 
     // 7. Pengaturan Tata Kelola, Kebijakan Bisnis & Audit Trail
     Route::get('/governance', [GovernanceController::class, 'index'])->name('governance.index');
-    Route::post('/governance/parameters', [GovernanceController::class, 'updateParameters'])->name('governance.parameters');
-    Route::post('/governance/freeze', [GovernanceController::class, 'toggleMasterFreeze'])->name('governance.freeze');
-    Route::post('/governance/plt', [GovernanceController::class, 'configurePlt'])->name('governance.plt');
-    Route::post('/governance/payment-channels', [GovernanceController::class, 'updatePaymentChannels'])->name('governance.payment-channels');
-    Route::get('/governance/export-audit', [GovernanceController::class, 'exportAuditLog'])->name('governance.export-audit');
-
-    // Governance route aliases
     Route::post('/governance/update-parameters', [GovernanceController::class, 'updateParameters'])->name('governance.update-parameters');
     Route::post('/governance/master-freeze', [GovernanceController::class, 'toggleMasterFreeze'])->name('governance.master-freeze');
     Route::post('/governance/delegate-plt', [GovernanceController::class, 'configurePlt'])->name('governance.delegate-plt');
+    Route::post('/governance/payment-channels', [GovernanceController::class, 'updatePaymentChannels'])->name('governance.payment-channels');
+    Route::get('/governance/export-audit', [GovernanceController::class, 'exportAuditLog'])->name('governance.export-audit');
 
     // 8. Manajemen Hak Akses, Akun Pengguna & Matriks RBAC
     Route::get('/users/rbac/export', [UserController::class, 'exportRbacCsv'])->name('users.rbac.export');

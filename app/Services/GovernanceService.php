@@ -173,7 +173,7 @@ class GovernanceService
             $freeze ? 'FREEZE_ACTIVE' : 'SYSTEM_NORMAL'
         );
 
-        return true;
+        return $freeze;
     }
 
     /**
@@ -209,23 +209,30 @@ class GovernanceService
     public function isClientFrozen(int $clientId): bool
     {
         $frozen = $this->getFrozenClients();
-        return !empty($frozen[$clientId]);
+        return !empty($frozen[$clientId]) || !empty($frozen[(string) $clientId]);
     }
 
     /**
-     * Mengubah status pembekuan klien (toggle) dan menyimpannya secara persisten
+     * Mengubah status pembekuan klien (toggle / set langsung) dan menyimpannya secara persisten
      */
-    public function toggleClientFreeze(int $clientId): bool
+    public function toggleClientFreeze(int $clientId, ?bool $targetState = null): bool
     {
         $settings = $this->getSettings();
         $frozen = $settings['frozen_clients'] ?? [];
 
-        if (!empty($frozen[$clientId])) {
-            unset($frozen[$clientId]);
-            $isLocked = false;
+        $currentlyLocked = !empty($frozen[$clientId]) || !empty($frozen[(string) $clientId]);
+
+        if ($targetState !== null) {
+            $isLocked = $targetState;
         } else {
+            $isLocked = !$currentlyLocked;
+        }
+
+        if ($isLocked) {
+            $frozen[(string) $clientId] = true;
             $frozen[$clientId] = true;
-            $isLocked = true;
+        } else {
+            unset($frozen[$clientId], $frozen[(string) $clientId]);
         }
 
         $settings['frozen_clients'] = $frozen;
@@ -242,11 +249,10 @@ class GovernanceService
         $settings = $this->getSettings();
         $frozen = $settings['frozen_clients'] ?? [];
 
-        if (isset($frozen[$clientId])) {
-            unset($frozen[$clientId]);
-            $settings['frozen_clients'] = $frozen;
-            $this->updateSettings($settings);
-        }
+        unset($frozen[$clientId], $frozen[(string) $clientId]);
+
+        $settings['frozen_clients'] = $frozen;
+        $this->updateSettings($settings);
 
         return true;
     }

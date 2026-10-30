@@ -6,7 +6,7 @@
 <div class="mx-auto max-w-3xl space-y-6">
     {{-- Header --}}
     <div class="border-b border-slate-200 pb-4">
-        <h1 class="text-xl font-bold text-slate-900">Tambah Komoditas Baru (Uji Coba Backend)</h1>
+        <h1 class="text-xl font-bold text-slate-900">Tambah Komoditas Baru</h1>
         <p class="text-xs text-slate-500">Form pengisian master komoditas hasil tani untuk katalog pesanan.</p>
     </div>
 

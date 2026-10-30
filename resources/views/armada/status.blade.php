@@ -238,7 +238,7 @@
                 </div>
 
                 <div class="flex flex-col gap-1 rounded-xl p-3 min-h-[95px] justify-between bg-surface-shell text-success-deep outline outline-1 -outline-offset-1 outline-line-board">
-                    <span class="font-mono text-[9px] font-bold uppercase">KETEPATAN WAKTU (SLA)</span>
+                    <span class="font-mono text-[9px] font-bold uppercase">KETEPATAN WAKTU PENGIRIMAN</span>
                     <span class="font-inter text-base font-bold text-ink">100% Tepat</span>
                     <span class="text-[9px] text-ink-body font-mono">Pengantaran Sesuai &bull; Jadwal Pagi</span>
                 </div>

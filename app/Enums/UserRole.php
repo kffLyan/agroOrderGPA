@@ -31,4 +31,26 @@ enum UserRole: string
             self::KLIEN       => 'klien.dashboard',
         };
     }
+
+    public function roleKey(): string
+    {
+        return match ($this) {
+            self::DIREKTUR    => 'director',
+            self::SEKRETARIS  => 'admin',
+            self::KOORDINATOR => 'coordinator',
+            self::ARMADA      => 'driver',
+            self::KLIEN       => 'client',
+        };
+    }
+
+    public function badgeCode(): string
+    {
+        return match ($this) {
+            self::DIREKTUR    => 'DIR',
+            self::SEKRETARIS  => 'ADM',
+            self::KOORDINATOR => 'KRD',
+            self::ARMADA      => 'DVR',
+            self::KLIEN       => 'KLN',
+        };
+    }
 }

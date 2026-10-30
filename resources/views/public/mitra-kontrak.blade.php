@@ -11,28 +11,25 @@
             aria-hidden="true"></div>
 
         <div class="relative mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 md:py-16">
-            <div class="max-w-3xl space-y-6">
-                <span class="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-brand-deep px-3 py-1 font-mono text-[11px] font-bold text-accent">
-                    ENTERPRISE B2B ACCREDITATION REGISTRY
-                </span>
+            <div class="mx-auto max-w-3xl space-y-6 text-center md:mx-0 md:text-left">
 
-                <h1 class="text-3xl font-extrabold leading-tight sm:text-4xl md:text-5xl md:leading-[1.05]">
+                <h1 class="text-center text-3xl font-extrabold leading-tight sm:text-3xl md:text-left md:text-5xl md:leading-[1.05]">
                     <span class="block text-white">Portofolio Kemitraan & Klien Kontrak Terverifikasi</span>
                     <span class="block text-accent underline underline-offset-4">AgroOrder GPA</span>
                 </h1>
 
-                <p class="max-w-3xl text-base leading-relaxed text-white/90 md:text-lg">
+                <p class="mx-auto max-w-3xl text-center text-sm leading-relaxed text-white/90 sm:text-base md:mx-0 md:text-left md:text-lg">
                     Daftar klien korporat dan kelompok tani binaan yang berjalan dengan kontrak terverifikasi. Kepatuhan pasokan, mutu komoditas, dan ketepatan kirim dipantau lewat indikator berkala.
                 </p>
 
-                <div class="flex flex-wrap items-center gap-3 pt-1">
-                    <x-gpa.btn :href="route('register')" variant="accent" size="lg">
+                <div class="flex w-full max-w-sm flex-col gap-3 pt-1">
+                    <x-gpa.btn :href="route('register')" variant="accent" size="xl" block>
                         <x-slot:icon>
                             <x-gpa.icon name="navigation" />
                         </x-slot:icon>
                         Ajukan Draf Kontrak B2B
                     </x-gpa.btn>
-                    <x-gpa.btn type="button" variant="inverse" size="lg"
+                    <x-gpa.btn type="button" variant="inverse" size="xl" block
                         x-on:click="$dispatch('gpa-modal-open', 'template-pks')">
                         <x-slot:icon>
                             <x-gpa.icon name="file-text" />
@@ -54,7 +51,7 @@
 
                 <dl class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <div class="rounded-xl border border-white/10 bg-brand/70 p-4">
-                        <dt class="gpa-micro-bold tracking-wider text-white/60">Fulfillment SLA</dt>
+                        <dt class="gpa-micro-bold tracking-wider text-white/60">Tingkat Ketepatan Pengiriman</dt>
                         <dd class="mt-2 text-2xl font-extrabold leading-tight text-accent">99.8%</dd>
                         <p class="mt-1 gpa-mono-xs text-white/70">Realisasi pasokan subuh</p>
                     </div>
@@ -84,91 +81,72 @@
     {{-- KLIEN & KONTRAK AKTIF (DYNAMIC FROM DATABASE) --}}
     <section id="klien" class="scroll-mt-36 border-b border-line-hair bg-canvas">
         <div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-12 sm:px-6 md:py-14">
-            <div class="flex flex-col gap-3 border-b-2 border-brand-strong pb-3 md:flex-row md:items-end md:justify-between">
-                <div>
-                    <h2 class="mt-1 text-xl font-extrabold uppercase leading-tight text-ink-strong md:text-2xl">
-                        Klien & Kontrak Aktif Terdaftar
-                    </h2>
-                    <p class="mt-2 max-w-2xl text-xs leading-relaxed text-ink-body">
-                        Entitas bisnis mitra resmi yang berjalan dengan komitmen pasokan terikat, jaminan harga kontrak flat, dan syarat pembayaran tempo.
-                    </p>
-                </div>
-
-                <div class="flex shrink-0 flex-wrap items-center gap-2">
-                    <span class="inline-flex w-fit items-center rounded-full border border-line-hair bg-surface px-3 py-1 gpa-mono-xs text-ink-body">
-                        {{ $clients->count() }} Klien B2B Kontrak
-                    </span>
-                    <span class="inline-flex w-fit items-center rounded-full border border-line-hair bg-surface px-3 py-1 gpa-mono-xs text-success font-bold">
-                        100% Terverifikasi
-                    </span>
-                </div>
+            <div class="flex flex-col items-center gap-2 border-b-2 border-brand-strong pb-3 text-center">
+                <h2 class="text-xl font-extrabold uppercase leading-tight text-ink-strong md:text-2xl">
+                    Klien & Kontrak Aktif Terdaftar
+                </h2>
+                <span class="inline-flex w-fit items-center rounded-full border border-line-hair bg-surface px-3 py-1 gpa-mono-xs text-ink-body">
+                    {{ $clients->count() }} Klien B2B Kontrak • 100% Terverifikasi
+                </span>
             </div>
 
-            <ol class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                @forelse ($clients as $index => $client)
+            <div class="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4 lg:grid-cols-6">
+                @php
+                    $clientLogos = [
+                        'aeon' => 'images/clients/aeon.jpg',
+                        'aerofood' => 'images/clients/aerofood.jpg',
+                        'bogarasa' => 'images/clients/bogarasa.jpg',
+                        'nusantara' => 'images/clients/nusantara.jpg',
+                        'pangrango' => 'images/clients/pangrango.jpg',
+                        'resto-sunda' => 'images/clients/resto-sunda.jpg',
+                        'restosunda' => 'images/clients/resto-sunda.jpg',
+                        'ritelindo' => 'images/clients/ritelindo.jpg',
+                    ];
+                @endphp
+                @forelse ($clients as $client)
                     @php
                         $clientName = $client->company_name ?: $client->name;
-                        $firstContract = $client->contracts->first();
-                        $contractNumber = $firstContract?->contract_number ?? ('KTR-' . date('Y') . '-00' . $client->id);
-                        $productsList = $client->contracts->pluck('product.name')->filter()->unique()->join(', ') ?: 'Aneka Hortikultura';
-                        $totalCommitted = $client->contracts->sum('committed_volume_per_cycle');
-                        $topDays = $firstContract?->top_days ?? 30;
+                        $logo = $client->logo ?? $client->logo_url ?? $client->image ?? $client->brand_logo ?? null;
+                        $key = strtolower(str_replace([' ', '.', '-', '_'], '', $clientName));
+                        if (str_contains($key, 'aerofood')) {
+                            $logo = 'images/clients/aerofood.jpg';
+                        } elseif (!$logo) {
+                            foreach ($clientLogos as $k => $path) {
+                                if (str_contains($key, str_replace([' ', '.', '-', '_'], '', $k))) {
+                                    $logo = $path;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!$logo && isset($client->id)) {
+                            $files = ['aeon.jpg', 'aerofood.jpg', 'bogarasa.jpg', 'nusantara.jpg', 'pangrango.jpg', 'resto-sunda.jpg', 'ritelindo.jpg'];
+                            $logo = 'images/clients/' . $files[($client->id - 1) % count($files)];
+                        }
                     @endphp
-                    <li class="flex flex-col justify-between gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub">
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between gap-2 border-b border-line-hair pb-3">
-                                <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-strong gpa-mono-xs font-bold text-accent">
-                                    {{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}
-                                </span>
-                                <span class="gpa-mono-xs text-ink-subtle">{{ $contractNumber }}</span>
-                            </div>
-
-                            <h3 class="text-base font-bold leading-snug text-ink-strong">{{ $clientName }}</h3>
-                            <p class="text-xs leading-relaxed text-ink-body">
-                                Kemitraan pasokan resmi komoditas hortikultura terstandarisasi untuk operasional {{ $clientName }}.
-                            </p>
-
-                            <dl class="space-y-1.5 rounded-lg border border-line-hair bg-canvas px-3 py-2.5">
-                                <div class="flex items-baseline justify-between gap-3">
-                                    <dt class="gpa-mono-xs text-ink-subtle">Komoditas Kontrak:</dt>
-                                    <dd class="gpa-mono-xs text-right font-semibold text-ink-strong">{{ $productsList }}</dd>
-                                </div>
-                                <div class="flex items-baseline justify-between gap-3">
-                                    <dt class="gpa-mono-xs text-ink-subtle">Volume Komitmen:</dt>
-                                    <dd class="gpa-mono-xs text-right font-semibold text-ink-strong">
-                                        {{ $totalCommitted > 0 ? number_format($totalCommitted, 0, ',', '.') : '0' }} kg / siklus
-                                    </dd>
-                                </div>
-                                <div class="flex items-baseline justify-between gap-3">
-                                    <dt class="gpa-mono-xs text-ink-subtle">Term Pembayaran:</dt>
-                                    <dd class="gpa-mono-xs text-right font-semibold text-success">TOP {{ $topDays }} Hari</dd>
-                                </div>
-                            </dl>
-                        </div>
-
-                        <div class="mt-auto flex items-center justify-between gap-2 border-t border-line-hair pt-3">
-                            <span class="inline-flex items-center gap-1.5 rounded-full bg-success-soft px-2.5 py-1 gpa-micro-bold text-success-deep">
-                                <span class="h-1.5 w-1.5 rounded-full bg-success" aria-hidden="true"></span>
-                                Kontrak Aktif
+                    <div class="flex h-32 items-center justify-center rounded-xl border border-line-hair bg-white p-3 transition hover:shadow-card sm:h-36 md:h-38 lg:h-40">
+                        @if ($logo)
+                            <img src="{{ asset($logo) }}" alt="{{ $clientName }}" class="max-h-24 w-auto object-contain sm:max-h-26 md:max-h-28 lg:max-h-30" loading="lazy">
+                        @else
+                            <span class="text-center text-[11px] font-semibold uppercase tracking-wide text-ink-body sm:text-xs">
+                                {{ \Illuminate\Support\Str::limit($clientName, 14) }}
                             </span>
-                            <span class="gpa-mono-xs font-bold text-brand">SLA 99.8%</span>
-                        </div>
-                    </li>
+                        @endif
+                    </div>
                 @empty
-                    <li class="col-span-full rounded-xl border border-line-hair bg-surface p-8 text-center text-ink-subtle text-sm">
+                    <div class="col-span-full rounded-lg border border-line-hair bg-surface p-6 text-center text-xs text-ink-subtle">
                         Belum ada daftar mitra kontrak yang aktif saat ini.
-                    </li>
+                    </div>
                 @endforelse
-            </ol>
+            </div>
         </div>
     </section>
 
     {{-- KELOMPOK TANI BINAAN (DYNAMIC FROM DATABASE) --}}
     <section id="petani" class="scroll-mt-36 border-b border-line-hair bg-surface-muted">
         <div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-12 sm:px-6 md:py-14">
-            <div class="flex flex-col gap-3 border-b-2 border-brand-strong pb-3 md:flex-row md:items-end md:justify-between">
+            <div class="flex flex-col items-center gap-3 border-b-2 border-brand-strong pb-3 text-center">
                 <div>
-                    <h2 class="mt-1 text-xl font-extrabold uppercase leading-tight text-ink-strong md:text-2xl">
+                    <h2 class="mt-1 text-center text-xl font-extrabold uppercase leading-tight text-ink-strong md:text-2xl">
                         Jaringan Kelompok Tani Binaan GPA
                     </h2>
                     <p class="mt-2 max-w-2xl text-xs leading-relaxed text-ink-body">
@@ -176,7 +154,7 @@
                     </p>
                 </div>
 
-                <div class="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border border-line-hair bg-surface px-3 py-1 gpa-mono-xs text-ink-body">
+                <div class="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border border-line-hair bg-surface px-3 py-1 gpa-mono-xs text-ink-body mx-auto md:mx-0">
                     Total Sentra Binaan: <span class="font-bold text-ink-strong">{{ $poktan->count() }} Kelompok</span>
                 </div>
             </div>
@@ -238,9 +216,9 @@
     {{-- ALUR ONBOARDING KONTRAK --}}
     <section id="alur-kontrak" class="scroll-mt-36 bg-canvas">
         <div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-12 sm:px-6 md:py-14">
-            <div class="flex flex-col gap-3 border-b-2 border-brand-strong pb-3 md:flex-row md:items-end md:justify-between">
+            <div class="flex flex-col items-center gap-3 border-b-2 border-brand-strong pb-3 text-center">
                 <div>
-                    <h2 class="mt-1 text-xl font-extrabold uppercase leading-tight text-ink-strong md:text-2xl">
+                    <h2 class="mt-1 text-center text-xl font-extrabold uppercase leading-tight text-ink-strong md:text-2xl">
                         Alur 4 Langkah Onboarding Kemitraan Kontrak
                     </h2>
                     <p class="mt-2 max-w-2xl text-xs leading-relaxed text-ink-body">
@@ -248,7 +226,7 @@
                     </p>
                 </div>
 
-                <span class="inline-flex w-fit shrink-0 items-center rounded-full border border-line-hair bg-surface px-3 py-1 gpa-mono-xs text-ink-body">
+                <span class="inline-flex w-fit shrink-0 items-center rounded-full border border-line-hair bg-surface px-3 py-1 gpa-mono-xs text-ink-body mx-auto md:mx-0">
                     SOP B2B ONBOARDING
                 </span>
             </div>
@@ -285,7 +263,7 @@
                     <div class="space-y-3">
                         <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-strong gpa-mono-xs font-bold text-accent">04</span>
                         <h3 class="text-sm font-bold leading-snug text-ink-strong">Pengiriman Subuh Perdana</h3>
-                        <p class="text-xs leading-relaxed text-ink-body">Armada reefer mulai rute terjadwal dengan integrasi aplikasi driver dan penerimaan e-PoD.</p>
+                        <p class="text-xs leading-relaxed text-ink-body">Armada reefer mulai rute terjadwal dengan integrasi aplikasi driver dan bukti serah terima digital (e-PoD).</p>
                     </div>
                     <p class="border-t border-line-hair pt-3 gpa-mono-xs text-success font-semibold">AKTIF OPERASIONAL</p>
                 </li>
@@ -295,7 +273,7 @@
 
     {{-- MODAL TEMPLATE PKS --}}
     <x-gpa.modal name="template-pks" title="Format Template Perjanjian Kerja Sama (PKS)"
-        description="Ringkasan klausul pokok dalam draf kontrak pasokan komersial Green Pasundan Agriculture.">
+        description="Ringkasan klausul pokok dalam draf kontrak pasokan komersial PT Green Pasundan Agriculture.">
         <ul class="divide-y divide-line-faint overflow-hidden rounded-lg border border-line">
             <li class="flex items-start gap-2.5 bg-surface px-3 py-2.5">
                 <x-gpa.icon name="check-circle" class="mt-px h-4 w-4 shrink-0 text-success" />

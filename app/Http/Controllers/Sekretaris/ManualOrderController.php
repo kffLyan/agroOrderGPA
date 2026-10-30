@@ -3,15 +3,13 @@
 namespace App\Http\Controllers\Sekretaris;
 
 use App\Http\Controllers\Controller;
-use App\Models\Contract;
-use App\Models\Invoice;
+use App\Http\Requests\Sekretaris\StoreManualOrderRequest;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\OrderService;
-use Exception;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -51,26 +49,16 @@ class ManualOrderController extends Controller
         }
 
         $clients = $allClients->map(function ($c) {
-            $creditLimit = (float) $c->contracts->sum(
-                fn ($ct) => ($ct->committed_volume_per_cycle ?: 0) * ($ct->fixed_price_per_kg ?: 0)
-            );
-
-            if ($creditLimit <= 0) {
-                $creditLimit = 150000000.0; // Plafon standar B2B 150 Juta
-            }
-
-            $usedCredit = (float) $c->invoices->sum('grand_total');
-
             return [
                 'id'           => $c->id,
-                'code'         => 'CLI-' . str_pad((string) $c->id, 4, '0', STR_PAD_LEFT),
+                'code'         => $c->code,
                 'name'         => $c->company_name ?: $c->name,
-                'contact'      => $c->pic_name ?: $c->name,
+                'contact'      => $c->contact,
                 'phone'        => $c->phone ?: '0812-3456-7890',
                 'address'      => $c->address ?: 'Sentra Operasional Klien, Jawa Barat',
                 'type'         => $c->client_type ?: 'B2B_KONTRAK',
-                'credit_limit' => $creditLimit,
-                'credit_used'  => $usedCredit,
+                'credit_limit' => $c->credit_limit,
+                'credit_used'  => $c->credit_used,
             ];
         })->values()->all();
 
@@ -85,32 +73,21 @@ class ManualOrderController extends Controller
             $dbProducts = Product::with(['harvestBatches' => fn($q) => $q->where('available_quantity', '>', 0)])->get();
         }
 
-        $catalog = [];
-        foreach ($dbProducts as $prod) {
-            $stockBud = (float) $prod->harvestBatches
-                ->where('source_type', 'PETANI_BINAAN')
-                ->sum('available_quantity');
-
-            $stockBuffer = (float) $prod->harvestBatches
-                ->where('source_type', 'BUFFER_LUAR')
-                ->sum('available_quantity');
-
-            $totalStock = $stockBud + $stockBuffer;
-
-            $catalog[] = [
+        $catalog = $dbProducts->map(function ($prod) {
+            return [
                 'key'          => 'prod-' . $prod->id,
                 'product_id'   => $prod->id,
                 'name'         => $prod->name,
                 'sku'          => $prod->sku ?: ('GPA-VEG-' . str_pad((string) $prod->id, 3, '0', STR_PAD_LEFT)),
                 'grade'        => $prod->grade ?: 'Grade A Pilihan',
-                'unit'         => 'kg',
+                'unit'         => $prod->unit ?: 'kg',
                 'min_order'    => (float) ($prod->minimum_order ?: 5),
-                'stock'        => $totalStock,
-                'stock_bud'    => $stockBud,
-                'stock_buffer' => $stockBuffer,
-                'price'        => (float) $prod->base_price,
+                'stock'        => $prod->stock,
+                'stock_bud'    => $prod->stock_bud,
+                'stock_buffer' => $prod->stock_buffer,
+                'price'        => $prod->price,
             ];
-        }
+        })->values()->all();
 
         $governanceService = app(\App\Services\GovernanceService::class);
         $paymentChannels = $governanceService->getActivePaymentChannels();
@@ -118,19 +95,78 @@ class ManualOrderController extends Controller
             $paymentChannels = $governanceService->defaultPaymentChannels();
         }
 
+        // View Models (Prinsip MVC: Controller mengolah data & logika tampilan)
+        $user = Auth::user();
+        $code = $user ? 'SK-' . str_pad((string) $user->id, 4, '0', STR_PAD_LEFT) : 'SK-001';
+        $firstClient = $clients[0] ?? null;
+
+        $sourceData = [
+            'reference'       => 'MANUAL-' . date('Ymd') . '-' . str_pad((string) ($clientUser?->id ?? 1), 3, '0', STR_PAD_LEFT),
+            'received'        => now()->format('d M Y, H:i') . ' WIB',
+            'active'          => 'whatsapp',
+            'channels'        => [
+                ['key' => 'whatsapp', 'label' => 'WhatsApp Bisnis GPA', 'note' => 'Pesan teks / dokumen PDF'],
+                ['key' => 'telepon', 'label' => 'Telepon Langsung', 'note' => 'Konfirmasi lisan via call center'],
+                ['key' => 'email', 'label' => 'Email Resmi', 'note' => 'Lampiran purchase order'],
+            ],
+            'reference_label' => 'Nomor Referensi / Chat',
+            'reference_hint'  => 'Contoh: WA-' . date('Ym') . '-001',
+            'received_label'  => 'Waktu Diterima',
+            'validator_label' => 'Petugas yang Mencatat',
+            'validator'       => ($user?->name ?: 'Sekretaris') . ' (' . $code . ')',
+            'warehouse_label' => 'Lokasi Gudang',
+            'warehouse'       => 'Gudang Konsolidasi Ciwidey',
+        ];
+
+        $clientData = [
+            'id'          => $clientUser?->id,
+            'code'        => $firstClient['code'] ?? ($clientUser ? ('CLI-' . str_pad((string) $clientUser->id, 4, '0', STR_PAD_LEFT)) : '—'),
+            'name'        => $firstClient['name'] ?? ($clientUser?->company_name ?: ($clientUser?->name ?: '—')),
+            'contact'     => $firstClient['contact'] ?? ($clientUser?->pic_name ?: ($clientUser?->name ?: '—')),
+            'phone'       => $firstClient['phone'] ?? ($clientUser?->phone ?: '—'),
+            'address'     => $firstClient['address'] ?? ($clientUser?->address ?: '—'),
+            'active_mode' => 'registered',
+            'credit'      => [
+                'limit' => $firstClient['credit_limit'] ?? 0.0,
+                'used'  => $firstClient['credit_used'] ?? 0.0,
+            ],
+        ];
+
+        $logisticsData = [
+            'date'    => now()->addDay()->format('Y-m-d'),
+            'arrival' => 'Pagi Hari (05:00 - 08:00 WIB)',
+            'route'   => 'Rute Koridor Pengantaran GPA',
+            'fleet'   => 'Armada Reefer Chilled',
+            'notes'   => '',
+            'fee'     => 0,
+        ];
+
+        $paymentData = [
+            'active'    => 'transfer',
+            'file'      => '',
+            'size'      => '',
+            'hash'      => 'VERIF-' . date('Ymd'),
+            'hash_note' => 'Menunggu Dokumen',
+        ];
+
         return view('sekretaris.manual-order', [
             'clientUser'      => $clientUser,
             'clients'         => $clients,
             'commodities'     => [],
             'catalog'         => $catalog,
             'paymentChannels' => $paymentChannels,
+            'source'          => $sourceData,
+            'sourceData'      => $sourceData,
+            'clientData'      => $clientData,
+            'logisticsData'   => $logisticsData,
+            'paymentData'     => $paymentData,
         ]);
     }
 
     /**
      * Menyimpan pesanan manual baru ke database secara riil
      */
-    public function store(\App\Http\Requests\Sekretaris\StoreManualOrderRequest $request): JsonResponse|RedirectResponse
+    public function store(StoreManualOrderRequest $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validated();
 
@@ -141,25 +177,6 @@ class ManualOrderController extends Controller
         $client = $clientId ? User::find($clientId) : null;
         if (!$client) {
             $client = User::where('role', 'KLIEN')->first() ?? $secretary;
-        }
-
-        // Kepatuhan Tata Kelola: Cek Master Freeze & Kunci Kredit Klien
-        $governanceService = app(\App\Services\GovernanceService::class);
-        if ($governanceService->isMasterFreezeActive()) {
-            $reason = $governanceService->getMasterFreezeReason() ?? 'Darurat Operasional';
-            $msg = "Sistem pemesanan sedang dibekukan sementara oleh Direktur Utama ({$reason}).";
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['success' => false, 'message' => $msg], 422);
-            }
-            return back()->withErrors(['general' => $msg]);
-        }
-
-        if ($client && $governanceService->isClientFrozen((int) $client->id)) {
-            $msg = "Plafon kredit klien ini sedang dibekukan oleh Direktur Utama. Tidak dapat membuat pesanan baru.";
-            if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['success' => false, 'message' => $msg], 422);
-            }
-            return back()->withErrors(['client_id' => $msg]);
         }
 
         $orderStatus = $validated['status'] ?? 'MENUNGGU_VERIFIKASI';
@@ -219,18 +236,12 @@ class ManualOrderController extends Controller
                 $proofPath = $request->file('payment_proof')->store('payments', 'public');
             }
 
-            // Buat pencatatan pembayaran/termin yang dipilih
-            $payMethodRaw = strtolower((string) ($validated['payment_method'] ?? 'transfer'));
-            $channelId = strtolower((string) ($validated['payment_channel_id'] ?? ''));
-
-            $paymentMethodEnum = match (true) {
-                $payMethodRaw === 'cash' || $payMethodRaw === 'tunai' || $channelId === 'cash' => 'CASH',
-                $payMethodRaw === 'qris' || $channelId === 'qris' => 'QRIS',
-                $payMethodRaw === 'cod'                            => 'COD',
-                $payMethodRaw === 'top14', $payMethodRaw === 'tempo_top' => 'TEMPO_TOP',
-                $payMethodRaw === 'custom', $payMethodRaw === 'sk_direktur' => 'SK_DIREKTUR',
-                default                                            => 'TRANSFER_BANK',
-            };
+            // Buat pencatatan pembayaran/termin yang dipilih via Enum
+            $paymentMethod = \App\Enums\PaymentMethod::fromRaw(
+                $validated['payment_method'] ?? null,
+                $validated['payment_channel_id'] ?? null
+            );
+            $paymentMethodEnum = $paymentMethod->value;
 
             // Catatan verifikasi / detail kanal pembayaran resmi
             $senderBank = $validated['sender_bank'] ?? null;
@@ -272,7 +283,7 @@ class ManualOrderController extends Controller
                 'amount'            => $total,
                 'proof_url'         => $proofPath ?: ($request->input('proof_url') ?: null),
                 'status'            => ($orderStatus === 'DRAFT') ? 'MENUNGGU_VERIFIKASI' : 'LUNAS',
-                'verified_by'       => ($orderStatus === 'MENUNGGU_VERIFIKASI' && $secretary) ? $secretary->id : ($secretary?->id),
+                'verified_by'       => $secretary?->id,
                 'verification_note' => $finalNote,
                 'paid_at'           => now(),
             ]);

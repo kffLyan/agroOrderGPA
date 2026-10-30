@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Enums\UserRole;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -12,6 +14,8 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
+    use \App\Models\Concerns\PresentsUserProfile;
+    use \App\Models\Concerns\HasCreditProfile;
 
     /**
      * The attributes that are mass assignable.
@@ -57,29 +61,38 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    public function hasRole(string|\App\Enums\UserRole ...$roles): bool
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var list<string>
+     */
+    protected $appends = [
+        'role_key',
+        'badge',
+        'division',
+        'hub',
+        'code',
+        'nik',
+    ];
+
+    public function hasRole(string|UserRole ...$roles): bool
     {
-        $roleStrings = array_map(fn($r) => $r instanceof \App\Enums\UserRole ? $r->value : $r, $roles);
+        $roleStrings = array_map(fn($r) => $r instanceof UserRole ? $r->value : $r, $roles);
         return in_array($this->role, $roleStrings, true);
     }
 
-    public function getRoleEnumAttribute(): ?\App\Enums\UserRole
-    {
-        return \App\Enums\UserRole::tryFrom((string) $this->role);
-    }
-
-    public function invoices(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(Invoice::class);
-    }
-
-    public function orders(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
     }
 
-    public function contracts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function contracts(): HasMany
     {
         return $this->hasMany(Contract::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
     }
 }

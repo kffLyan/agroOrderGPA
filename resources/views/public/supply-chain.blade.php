@@ -12,28 +12,25 @@
             aria-hidden="true"></div>
 
         <div class="relative mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 md:py-16">
-            <div class="max-w-4xl space-y-6">
-                <span class="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-brand-deep px-3 py-1 font-mono text-[11px] font-bold text-accent">
-                    COLD-CHAIN LOGISTICS & HARVEST INTEGRATION
-                </span>
+            <div class="mx-auto max-w-4xl space-y-6 text-center md:mx-0 md:text-left">
 
-                <h1 class="text-3xl font-extrabold leading-tight sm:text-4xl md:text-5xl md:leading-[1.05]">
+                <h1 class="text-center text-4xl font-extrabold leading-tight sm:text-4xl md:text-left md:text-5xl md:leading-[1.05]">
                     <span class="block text-white">Rantai Pasok Terintegrasi Hulu-ke-Hilir</span>
                     <span class="block text-accent underline underline-offset-4">AgroOrder GPA</span>
                 </h1>
 
-                <p class="max-w-3xl text-base leading-relaxed text-white/90 md:text-lg">
+                <p class="mx-auto max-w-3xl text-center text-base leading-relaxed text-white/90 md:mx-0 md:text-left md:text-lg">
                     Sistem logistik rantai dingin dan standardisasi panen yang menjamin kesegaran komoditas hortikultura dari lahan binaan di Ciwidey dan Lembang hingga tiba di kitchen klien komersial Anda.
                 </p>
 
-                <div class="flex flex-wrap items-center gap-3 pt-2">
-                    <x-gpa.btn :href="route('public.catalog')" variant="accent" size="lg">
+                <div class="flex w-full max-w-sm flex-col gap-3 pt-2">
+                    <x-gpa.btn :href="route('public.catalog')" variant="accent" size="xl" block>
                         <x-slot:icon>
                             <x-gpa.icon name="navigation" />
                         </x-slot:icon>
-                        Lihat Katalog Komoditas
+                        Lihat Katalog
                     </x-gpa.btn>
-                    <x-gpa.btn :href="route('register')" variant="inverse" size="lg">
+                    <x-gpa.btn :href="route('register')" variant="inverse" size="xl" block>
                         <x-slot:icon>
                             <x-gpa.icon name="clipboard" />
                         </x-slot:icon>
@@ -47,7 +44,7 @@
                 class="mt-8 space-y-4 rounded-2xl border-2 border-accent/50 bg-brand-deep/90 p-5 shadow-pop md:p-6">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
                     <h2 id="blueprint-heading"
-                        class="flex items-center gap-2 gpa-mono-xs font-bold uppercase tracking-wider text-white/90">
+                        class="flex items-center justify-center gap-2 gpa-mono-xs font-bold uppercase tracking-wider text-center text-white/90">
                         <span class="h-2.5 w-2.5 rounded-full bg-accent" aria-hidden="true"></span>
                         BLUEPRINT ARSITEKTUR RANTAI PASOK DINGIN
                     </h2>
@@ -140,7 +137,7 @@
 
                 <div class="gpa-panel p-4 shadow-sub">
                     <div class="flex items-center justify-between gap-2">
-                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Fulfillment SLA</dt>
+                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Tingkat Ketepatan Pengiriman</dt>
                         <x-gpa.icon name="clipboard" class="h-3.5 w-3.5 shrink-0 text-success" />
                     </div>
                     <dd class="mt-2 text-2xl font-extrabold leading-tight text-brand-strong">99.8%</dd>
@@ -151,60 +148,54 @@
     </section>
 
     {{-- DIAGRAM 6 TAHAP --}}
-    <section id="alur-pasok" class="scroll-mt-36 border-b border-line-hair bg-surface-muted">
-        <div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-12 sm:px-6 md:py-14">
-            <div class="flex flex-col gap-3 border-b-2 border-brand-strong pb-3 md:flex-row md:items-end md:justify-between">
+    <section id="alur-pasok" class="scroll-mt-36 border-y border-accent-deep/20 bg-brand-deep/80">
+        <div class="mx-auto w-full max-w-6xl space-y-8 px-4 py-12 sm:px-6 md:py-14">
+            <div class="flex flex-col gap-3 pb-5 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <h2 class="mt-1 text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
-                        Diagram Alur Eksekusi Rantai Pasok Terintegrasi
+                    <h2 class="mt-2 text-2xl font-extrabold leading-tight text-white sm:text-3xl">
+                        Alur Eksekusi Rantai Pasok Terintegrasi
                     </h2>
-                    <p class="mt-1 text-xs text-ink-body">Tahapan hulu ke hilir yang dipantau real-time oleh sistem AgroOrder GPA.</p>
+                    <p class="mt-2 max-w-3xl text-sm leading-6 text-[#D9E4C0]">Tahapan hulu ke hilir yang dipantau real-time oleh sistem AgroOrder GPA.</p>
                 </div>
-
-                <span class="inline-flex w-fit shrink-0 items-center rounded-full border border-line-hair bg-surface px-3 py-1 gpa-mono-xs text-ink-body">
-                    6 Tahap Terverifikasi Sistem
-                </span>
             </div>
 
-            <ol class="flex flex-col gap-2 lg:flex-row lg:items-stretch lg:gap-1.5">
-                <li class="flex flex-1 items-center gap-3 rounded-xl border border-brand-strong bg-brand-strong text-white shadow-sub px-3 py-3">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gpa-mono-xs font-bold bg-accent text-brand-deep">01</span>
-                    <span class="text-xs font-bold leading-snug text-white">Petik &amp; Sortasi Kebun</span>
+            <ol class="relative grid gap-6 lg:grid-cols-6 lg:gap-5">
+                <li aria-hidden="true" class="absolute left-2 right-2 top-[7px] hidden h-px bg-white/25 lg:block"></li>
+                <li class="relative pt-8">
+                    <span class="absolute left-0 top-0 h-4 w-4 rounded-full bg-accent-deep" aria-hidden="true"></span>
+                    <p class="font-mono text-sm font-bold leading-5 text-accent-deep">01</p>
+                    <h3 class="mt-2 text-sm font-bold leading-5 text-white">Petik &amp; Sortasi Kebun</h3>
+                    <p class="mt-1 text-xs leading-5 text-[#D9E4C0]">Panen dan seleksi awal langsung di sentra tani.</p>
                 </li>
-                <li class="hidden items-center justify-center text-ink-subtle lg:flex" aria-hidden="true">
-                    <x-gpa.icon name="chevron-right" class="h-4 w-4" />
+                <li class="relative pt-8">
+                    <span class="absolute left-0 top-0 h-4 w-4 rounded-full bg-accent-deep" aria-hidden="true"></span>
+                    <p class="font-mono text-sm font-bold leading-5 text-accent-deep">02</p>
+                    <h3 class="mt-2 text-sm font-bold leading-5 text-white">Pre-Cooling Hub</h3>
+                    <p class="mt-1 text-xs leading-5 text-[#D9E4C0]">Panas lapang dikurangi untuk menjaga kesegaran.</p>
                 </li>
-                <li class="flex flex-1 items-center gap-3 rounded-xl border border-line-hair bg-surface px-3 py-3">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gpa-mono-xs font-bold bg-surface-muted text-brand-strong">02</span>
-                    <span class="text-xs font-bold leading-snug text-brand-strong">Pre-Cooling Hub</span>
+                <li class="relative pt-8">
+                    <span class="absolute left-0 top-0 h-4 w-4 rounded-full bg-accent-deep" aria-hidden="true"></span>
+                    <p class="font-mono text-sm font-bold leading-5 text-accent-deep">03</p>
+                    <h3 class="mt-2 text-sm font-bold leading-5 text-white">QC &amp; Tera Timbang</h3>
+                    <p class="mt-1 text-xs leading-5 text-[#D9E4C0]">Mutu dan bobot diverifikasi sebelum penyimpanan.</p>
                 </li>
-                <li class="hidden items-center justify-center text-ink-subtle lg:flex" aria-hidden="true">
-                    <x-gpa.icon name="chevron-right" class="h-4 w-4" />
+                <li class="relative pt-8">
+                    <span class="absolute left-0 top-0 h-4 w-4 rounded-full bg-accent-deep" aria-hidden="true"></span>
+                    <p class="font-mono text-sm font-bold leading-5 text-accent-deep">04</p>
+                    <h3 class="mt-2 text-sm font-bold leading-5 text-white">Buffer Cold Storage</h3>
+                    <p class="mt-1 text-xs leading-5 text-[#D9E4C0]">Stok disimpan terkontrol hingga jadwal kirim.</p>
                 </li>
-                <li class="flex flex-1 items-center gap-3 rounded-xl border border-line-hair bg-surface px-3 py-3">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gpa-mono-xs font-bold bg-surface-muted text-brand-strong">03</span>
-                    <span class="text-xs font-bold leading-snug text-brand-strong">QC &amp; Tera Timbang</span>
+                <li class="relative pt-8">
+                    <span class="absolute left-0 top-0 h-4 w-4 rounded-full bg-accent-deep" aria-hidden="true"></span>
+                    <p class="font-mono text-sm font-bold leading-5 text-accent-deep">05</p>
+                    <h3 class="mt-2 text-sm font-bold leading-5 text-white">Distribusi Reefer</h3>
+                    <p class="mt-1 text-xs leading-5 text-[#D9E4C0]">Pengiriman dengan suhu kargo terjaga.</p>
                 </li>
-                <li class="hidden items-center justify-center text-ink-subtle lg:flex" aria-hidden="true">
-                    <x-gpa.icon name="chevron-right" class="h-4 w-4" />
-                </li>
-                <li class="flex flex-1 items-center gap-3 rounded-xl border border-line-hair bg-surface px-3 py-3">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gpa-mono-xs font-bold bg-surface-muted text-brand-strong">04</span>
-                    <span class="text-xs font-bold leading-snug text-brand-strong">Buffer Cold Storage</span>
-                </li>
-                <li class="hidden items-center justify-center text-ink-subtle lg:flex" aria-hidden="true">
-                    <x-gpa.icon name="chevron-right" class="h-4 w-4" />
-                </li>
-                <li class="flex flex-1 items-center gap-3 rounded-xl border border-line-hair bg-surface px-3 py-3">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gpa-mono-xs font-bold bg-surface-muted text-brand-strong">05</span>
-                    <span class="text-xs font-bold leading-snug text-brand-strong">Distribusi Reefer</span>
-                </li>
-                <li class="hidden items-center justify-center text-ink-subtle lg:flex" aria-hidden="true">
-                    <x-gpa.icon name="chevron-right" class="h-4 w-4" />
-                </li>
-                <li class="flex flex-1 items-center gap-3 rounded-xl border border-line-hair bg-surface px-3 py-3">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gpa-mono-xs font-bold bg-surface-muted text-brand-strong">06</span>
-                    <span class="text-xs font-bold leading-snug text-brand-strong">e-PoD &amp; Docking Klien</span>
+                <li class="relative pt-8">
+                    <span class="absolute left-0 top-0 h-4 w-4 rounded-full bg-accent-deep" aria-hidden="true"></span>
+                    <p class="font-mono text-sm font-bold leading-5 text-accent-deep">06</p>
+                    <h3 class="mt-2 text-sm font-bold leading-5 text-white">Bukti Serah Terima &amp; Dok Klien</h3>
+                    <p class="mt-1 text-xs leading-5 text-[#D9E4C0]">Serah terima dan bukti digital di lokasi klien.</p>
                 </li>
             </ol>
         </div>
@@ -213,17 +204,17 @@
     {{-- RINCIAN EKSEKUSI TAHAP --}}
     <section id="tahap-pasok" class="scroll-mt-36 bg-canvas">
         <div class="mx-auto w-full max-w-6xl space-y-5 px-4 py-12 sm:px-6 md:py-14">
-            <div class="flex flex-col gap-2 border-b-2 border-brand-strong pb-3 md:flex-row md:items-end md:justify-between">
-                <h2 class="text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
+            <div class="flex flex-col items-center gap-2 border-b-2 border-brand-strong pb-3 text-center">
+                <h2 class="text-center text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
                     Rincian Eksekusi Enam Tahap Hulu-ke-Hilir
                 </h2>
-                <span class="gpa-mono-xs text-ink-subtle">STANDAR OPERASIONAL PROSEDUR (SOP)</span>
+                <span class="gpa-mono-xs text-center text-ink-subtle">STANDAR OPERASIONAL PROSEDUR (SOP)</span>
             </div>
 
-            <ol class="grid gap-4 xl:grid-cols-2">
+            <ol class="grid auto-rows-fr items-stretch gap-4 xl:grid-cols-2">
                 {{-- STAGE 01 --}}
-                <li>
-                    <article class="flex flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub">
+                <li class="h-full">
+                    <article class="flex h-full flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub">
                         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line-hair pb-3">
                             <span class="flex h-7 w-7 items-center justify-center rounded-lg gpa-mono-xs font-bold uppercase bg-brand-strong text-accent">01</span>
                             <p class="gpa-mono-xs font-semibold uppercase tracking-wide text-success">HARVEST &amp; SORT 05:00 WIB</p>
@@ -250,8 +241,8 @@
                 </li>
 
                 {{-- STAGE 02 --}}
-                <li>
-                    <article class="flex flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub">
+                <li class="h-full">
+                    <article class="flex h-full flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub">
                         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line-hair pb-3">
                             <span class="flex h-7 w-7 items-center justify-center rounded-lg gpa-mono-xs font-bold uppercase bg-brand-strong text-accent">02</span>
                             <p class="gpa-mono-xs font-semibold uppercase tracking-wide text-success">PRE-COOLING BLAST</p>
@@ -278,40 +269,40 @@
                 </li>
 
                 {{-- STAGE 03 (CRITICAL) --}}
-                <li>
-                    <article class="flex flex-col gap-4 rounded-xl border-2 border-accent bg-brand-deep text-white shadow-pop p-5">
+                <li class="h-full">
+                    <article class="flex h-full flex-col gap-4 rounded-xl border-2 border-accent bg-brand-deep p-5 text-white shadow-pop">
                         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
                             <span class="flex h-7 w-7 items-center justify-center rounded-lg gpa-mono-xs font-bold uppercase bg-accent text-brand-deep">03</span>
-                            <p class="gpa-mono-xs font-semibold uppercase tracking-wide text-accent">CRITICAL GATE // TERA SAH</p>
+                            <p class="gpa-mono-xs font-semibold uppercase tracking-wide text-accent">CRITICAL GATE // QC INSPECTION</p>
                         </div>
                         <p class="inline-flex w-fit items-center gap-1.5 rounded-full bg-accent px-2.5 py-1 gpa-micro-bold text-brand-deep">
                             <x-gpa.icon name="alert-triangle" class="h-3 w-3" />
-                            Critical Checkpoint Mutu
+                            Pemeriksaan Mutu
                         </p>
-                        <h3 class="text-base font-bold leading-snug text-white">Inspeksi QC &amp; Tera Timbangan Digital</h3>
+                        <h3 class="text-base font-bold leading-snug text-white">Inspeksi QC Produk</h3>
                         <p class="text-xs leading-relaxed text-white/85">
-                            Pemeriksaan organoleptik, uji kadar air, ukuran lingkar, bebas ulat/hama, dan penimbangan dengan alat tera legal bersertifikasi metrologi.
+                            Pemeriksaan visual dan organoleptik untuk menilai kesegaran, kematangan, ukuran, kebersihan, serta kondisi produk sebelum dikemas.
                         </p>
                         <div class="rounded-lg border border-accent/30 bg-brand/85 px-3 py-2.5">
-                            <p class="gpa-mono-xs font-bold uppercase tracking-wider text-accent">SERTIFIKASI TERA METROLOGI</p>
-                            <p class="mt-1 gpa-mono-xs text-white/75">Toleransi susut 0%. Faktur ditagihkan hanya berdasarkan bobot riil saat timbang.</p>
+                            <p class="gpa-mono-xs font-bold uppercase tracking-wider text-accent">STANDAR INSPEKSI QC</p>
+                            <p class="mt-1 gpa-mono-xs text-white/75">Produk cacat, rusak, atau tidak sesuai spesifikasi dipisahkan sebelum proses berikutnya.</p>
                         </div>
                         <dl class="mt-auto space-y-1.5 border-t border-white/10 pt-3">
                             <div class="flex items-baseline justify-between gap-3">
-                                <dt class="gpa-mono-xs text-white/60">Toleransi Cacat:</dt>
-                                <dd class="gpa-mono-xs text-right font-semibold text-accent">&le; 2% Maksimal</dd>
+                                <dt class="gpa-mono-xs text-white/60">Fokus Pemeriksaan:</dt>
+                                <dd class="gpa-mono-xs text-right font-semibold text-accent">Kesegaran &amp; Kondisi</dd>
                             </div>
                             <div class="flex items-baseline justify-between gap-3">
-                                <dt class="gpa-mono-xs text-white/60">Status Tera:</dt>
-                                <dd class="gpa-mono-xs text-right font-semibold text-white">Segel Metrologi Valid 2026</dd>
+                                <dt class="gpa-mono-xs text-white/60">Tindak Lanjut:</dt>
+                                <dd class="gpa-mono-xs text-right font-semibold text-white">Sortasi Produk</dd>
                             </div>
                         </dl>
                     </article>
                 </li>
 
                 {{-- STAGE 04 --}}
-                <li>
-                    <article class="flex flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub">
+                <li class="h-full">
+                    <article class="flex h-full flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub">
                         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line-hair pb-3">
                             <span class="flex h-7 w-7 items-center justify-center rounded-lg gpa-mono-xs font-bold uppercase bg-brand-strong text-accent">04</span>
                             <p class="gpa-mono-xs font-semibold uppercase tracking-wide text-success">FIFO BUFFER LOT STORAGE</p>
@@ -338,8 +329,8 @@
                 </li>
 
                 {{-- STAGE 05 --}}
-                <li>
-                    <article class="flex flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub">
+                <li class="h-full">
+                    <article class="flex h-full flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub">
                         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line-hair pb-3">
                             <span class="flex h-7 w-7 items-center justify-center rounded-lg gpa-mono-xs font-bold uppercase bg-brand-strong text-accent">05</span>
                             <p class="gpa-mono-xs font-semibold uppercase tracking-wide text-success">FLEET DISPATCH 03:00 WIB</p>
@@ -366,13 +357,13 @@
                 </li>
 
                 {{-- STAGE 06 --}}
-                <li>
-                    <article class="flex flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub">
+                <li class="h-full">
+                    <article class="flex h-full flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub">
                         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line-hair pb-3">
                             <span class="flex h-7 w-7 items-center justify-center rounded-lg gpa-mono-xs font-bold uppercase bg-brand-strong text-accent">06</span>
-                            <p class="gpa-mono-xs font-semibold uppercase tracking-wide text-success">DIGITAL E-POD RECEIPT</p>
+                            <p class="gpa-mono-xs font-semibold uppercase tracking-wide text-success">BUKTI SERAH TERIMA DIGITAL</p>
                         </div>
-                        <h3 class="text-base font-bold leading-snug text-brand-strong">Serah Terima Dock &amp; e-PoD Klien</h3>
+                        <h3 class="text-base font-bold leading-snug text-brand-strong">Serah Terima Dok &amp; Bukti Kirim Digital</h3>
                         <p class="text-xs leading-relaxed text-ink-body">
                             Chef/Purchasing klien memeriksa mutu bersama driver, menandatangani bukti terima digital (e-PoD), dan klaim retur parsial seketika jika ada temuan.
                         </p>
@@ -399,12 +390,12 @@
     {{-- KONTROL MUTU & RETUR PARSIAL --}}
     <section id="retur-parsial" class="scroll-mt-36 border-t border-line-hair bg-canvas">
         <div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-12 sm:px-6 md:py-14">
-            <div class="flex flex-col gap-3 border-b-2 border-brand-strong pb-3 md:flex-row md:items-end md:justify-between">
+            <div class="flex flex-col items-center gap-3 border-b-2 border-brand-strong pb-3 text-center">
                 <div>
-                    <h2 class="mt-1 text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
+                    <h2 class="mt-1 text-center text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
                         Protokol Retur Parsial &amp; Klaim Mutu Seketika
                     </h2>
-                    <p class="mt-1 text-xs text-ink-body">Perlindungan 100% risiko untuk klien Horeca saat penerimaan pesanan di loading dock.</p>
+                    <p class="mx-auto mt-1 max-w-3xl text-center text-xs text-ink-body">Perlindungan 100% risiko untuk klien Horeca saat penerimaan pesanan di loading dock.</p>
                 </div>
             </div>
 
@@ -422,7 +413,7 @@
                 <li class="flex flex-col gap-3 rounded-xl border border-line-hair bg-surface p-5 shadow-sub">
                     <div class="flex items-center gap-3 border-b border-line-hair pb-3">
                         <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-strong gpa-mono-xs font-bold text-accent">02</span>
-                        <h3 class="text-sm font-bold leading-snug text-brand-strong">Input Retur Parsial Langsung di e-PoD</h3>
+                        <h3 class="text-sm font-bold leading-snug text-brand-strong">Catat Retur Parsial di Bukti Kirim Digital</h3>
                     </div>
                     <p class="text-xs leading-relaxed text-ink-body">
                         Bila terdapat krat komoditas yang tidak memenuhi standar mutu, kuantitas tersebut langsung ditandai pada aplikasi driver tanpa harus menolak seluruh kiriman.
@@ -447,7 +438,7 @@
                 </div>
                 <p class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-brand-strong px-3 py-1 gpa-mono-xs font-bold text-accent">
                     <x-gpa.icon name="badge-check" class="h-3.5 w-3.5" />
-                    SOP ZERO DISPUTE POLICY
+                    STANDAR JAMINAN TANPA SENGKETA
                 </p>
             </div>
         </div>
@@ -457,10 +448,10 @@
     <section id="infrastruktur" class="scroll-mt-36 border-y border-line-hair bg-surface-muted">
         <div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-12 text-center sm:px-6 md:py-14">
             <div class="mx-auto max-w-2xl space-y-2">
-                <h2 class="text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
+                <h2 class="text-center text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
                     Fasilitas &amp; Kapasitas Infrastruktur Kami
                 </h2>
-                <p class="text-sm text-ink-body">Infrastruktur terpusat di Ciwidey dan armada logistik berpendingin yang menjamin ketepatan pasokan harian.</p>
+                <p class="text-center text-sm text-ink-body">Infrastruktur terpusat di Ciwidey dan armada logistik berpendingin yang menjamin ketepatan pasokan harian.</p>
             </div>
 
             <dl class="grid gap-4 text-left md:grid-cols-3">
@@ -511,25 +502,27 @@
                     aria-hidden="true"></div>
 
                 <div class="relative mx-auto max-w-3xl space-y-4 text-center">
-                    <h2 class="text-2xl font-extrabold leading-tight md:text-3xl">Ingin Menjamin Pasokan Sayur Segar untuk Dapur Usaha Anda?</h2>
+                    <h2 class="text-center text-2xl font-extrabold leading-tight md:text-3xl">Ingin Menjamin Pasokan Sayur Segar untuk Dapur Usaha Anda?</h2>
                     <p class="text-sm leading-relaxed text-white/90 md:text-base">
                         Bergabunglah dengan puluhan hotel, restoran, katering, dan supermarket yang mempercayakan pengadaan hortikultura kepada AgroOrder GPA.
                     </p>
                 </div>
 
-                <div class="relative mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-white/10 pt-6">
-                    <x-gpa.btn :href="route('register')" variant="accent" size="lg">
-                        <x-slot:icon>
-                            <x-gpa.icon name="send" />
-                        </x-slot:icon>
-                        Daftar Sebagai Klien B2B
-                    </x-gpa.btn>
-                    <x-gpa.btn :href="route('public.kontak')" variant="inverse" size="lg">
-                        <x-slot:icon>
-                            <x-gpa.icon name="navigation" />
-                        </x-slot:icon>
-                        Hubungi Tim Pasokan Kami
-                    </x-gpa.btn>
+                <div class="relative mt-8 flex flex-col items-center gap-3 border-t border-white/10 pt-6">
+                    <div class="flex w-full max-w-sm flex-col gap-3">
+                        <x-gpa.btn :href="route('register')" variant="accent" size="xl" block>
+                            <x-slot:icon>
+                                <x-gpa.icon name="send" />
+                            </x-slot:icon>
+                            Daftar Sebagai Klien B2B
+                        </x-gpa.btn>
+                        <x-gpa.btn :href="route('public.kontak')" variant="inverse" size="xl" block>
+                            <x-slot:icon>
+                                <x-gpa.icon name="navigation" />
+                            </x-slot:icon>
+                            Hubungi Tim Pasokan Kami
+                        </x-gpa.btn>
+                    </div>
                 </div>
             </div>
         </div>

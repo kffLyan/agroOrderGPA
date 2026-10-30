@@ -10,7 +10,7 @@
     ];
 
     $title = $hero['title'] ?? 'Katalog Komoditas Agribisnis';
-    $lead = $hero['lead'] ?? 'Ketersediaan pasokan panen segar langsung dari Petani Binaan & Buffer Stock Terpadu Green Pasundan Agriculture. Harga transparan per kilogram franco packhouse terverifikasi.';
+    $lead = $hero['lead'] ?? 'Ketersediaan pasokan panen segar langsung dari Petani Binaan & Buffer Stock Terpadu PT Green Pasundan Agriculture. Harga transparan per kilogram franco packhouse terverifikasi.';
     $assurances = $hero['assurances'] ?? [
         'Harga Franco Gudang / siap muat',
         'Sinkronisasi stok packhouse real-time',
@@ -19,8 +19,8 @@
     $sync = $hero['sync'] ?? [
         'label' => 'Sinkronisasi Stok',
         'status' => 'LIVE',
-        'age' => 'Realtime DB',
-        'nodeLabel' => 'Node',
+        'age' => 'Terbaru',
+        'nodeLabel' => 'Sentra Pasokan',
         'node' => 'Ciwidey, Pacet & Lembang',
     ];
 @endphp
@@ -47,12 +47,12 @@
         </nav>
 
         <div class="mt-5 overflow-hidden rounded-2xl bg-gradient-to-br from-brand to-brand-deep text-white shadow-pop">
-            <div class="flex flex-col gap-6 p-6 md:flex-row md:items-start md:justify-between md:p-8">
-                <div class="max-w-2xl space-y-4">
-                    <h1 class="text-3xl font-extrabold leading-tight sm:text-4xl">{{ $title }}</h1>
-                    <p class="text-sm leading-relaxed text-white/85 md:text-base">{{ $lead }}</p>
+            <div class="flex flex-col gap-6 p-5 sm:p-6 md:flex-row md:items-start md:justify-between md:p-8">
+                <div class="mx-auto max-w-2xl space-y-4 text-center md:mx-0 md:text-left">
+                    <h1 class="text-center text-3xl font-extrabold leading-tight sm:text-3xl md:text-left md:text-4xl">{{ $title }}</h1>
+                    <p class="text-center text-sm leading-relaxed text-white/85 md:text-left md:text-base">{{ $lead }}</p>
 
-                    <ul class="flex flex-wrap gap-2 pt-1">
+                    <ul class="flex flex-wrap justify-center gap-2 pt-1 md:justify-start">
                         @foreach ($assurances as $assurance)
                             <li
                                 class="inline-flex items-center gap-1.5 rounded border border-white/15 bg-white/5 px-2 py-1 gpa-mono-xs text-white/85">
@@ -63,7 +63,7 @@
                     </ul>
                 </div>
 
-                <div class="shrink-0 rounded-xl border border-white/15 bg-brand-deep/70 p-4 md:w-64">
+                <div class="w-full shrink-0 rounded-xl border border-white/15 bg-brand-deep/70 p-4 sm:w-auto md:w-64">
                     <p class="gpa-mono-xs font-semibold uppercase tracking-wider text-white/60">
                         {{ $sync['label'] }}
                     </p>

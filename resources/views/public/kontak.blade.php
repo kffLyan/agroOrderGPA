@@ -13,17 +13,14 @@
 
         <div class="relative mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 md:py-16">
             <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_384px] lg:items-start">
-                <div class="flex flex-col items-start gap-6">
-                    <span class="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-brand-deep px-3 py-1 font-mono text-[11px] font-bold text-accent">
-                        COMMERCIAL PROCUREMENT &amp; PARTNERSHIP
-                    </span>
+                <div class="flex flex-col items-center gap-6 text-center md:items-start md:text-left">
 
-                    <h1 class="text-3xl font-extrabold leading-tight sm:text-4xl md:text-5xl md:leading-[1.05]">
+                    <h1 class="text-center text-3xl font-extrabold leading-tight sm:text-3xl md:text-left md:text-5xl md:leading-[1.05]">
                         <span class="block text-white">Konsultasi Pasokan Komersial &amp; Kemitraan</span>
                         <span class="block text-accent underline underline-offset-4">AgroOrder GPA</span>
                     </h1>
 
-                    <p class="max-w-3xl text-base leading-relaxed text-white/90 md:text-lg">
+                    <p class="max-w-3xl text-sm leading-relaxed text-white/90 sm:text-base md:text-left md:text-lg">
                         Diskusikan kebutuhan hortikultura berkala dapur usaha Anda bersama tim procurement kami. Kami siap menyusun jadwal kirim, uji sampel mutu, dan penetapan harga kontrak flat kuartalan.
                     </p>
                 </div>
@@ -31,7 +28,7 @@
                 <aside aria-label="Komitmen waktu tanggap" class="rounded-2xl border border-white/15 bg-brand-deep/70 p-5 sm:p-6">
                     <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
                         <p class="gpa-mono-xs font-bold uppercase tracking-wider text-accent">
-                            SLA RESPON CEPAT
+                            RESPON CEPAT TANGGAP
                         </p>
                         <span class="flex items-center gap-1.5 gpa-mono-xs font-bold uppercase tracking-wider text-white">
                             <span class="h-1.5 w-1.5 rounded-full bg-accent" aria-hidden="true"></span>
@@ -54,8 +51,8 @@
 
                 {{-- KOLOM KIRI: DIREKTORI KANTOR & HUB --}}
                 <div class="flex flex-col gap-4">
-                    <div class="flex flex-col gap-3 border-b-2 border-brand-strong pb-3 md:flex-row md:items-end md:justify-between">
-                        <h2 class="text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
+                    <div class="flex flex-col items-center gap-3 border-b-2 border-brand-strong pb-3 text-center">
+                        <h2 class="text-center text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
                             Direktori Kantor &amp; Hub Operasional
                         </h2>
                     </div>
@@ -144,7 +141,7 @@
                             <span class="rounded-full bg-success-soft px-2.5 py-0.5 gpa-micro-bold text-success-deep">
                                 FORMULIR PERMOHONAN RESMI
                             </span>
-                            <h2 class="text-lg font-extrabold leading-snug text-brand-strong md:text-xl">
+                            <h2 class="text-center text-lg font-extrabold leading-snug text-brand-strong md:text-xl">
                                 Ajukan Permohonan Pasokan &amp; Kontrak
                             </h2>
                             <p class="text-sm leading-relaxed text-ink-body">
@@ -154,7 +151,7 @@
 
                         <form class="flex flex-col gap-5"
                             x-on:submit.prevent="$dispatch('gpa:toast', { title: 'Permohonan Kemitraan Terkirim', message: 'Tim representatif GPA akan menghubungi Anda dalam waktu maksimal 2 jam kerja.', tone: 'success' })">
-                            
+
                             <div class="flex flex-col gap-4 sm:flex-row">
                                 <div class="sm:flex-1">
                                     <label for="kontak-pic" class="gpa-mono-xs block font-bold uppercase tracking-wider text-[#5E6953]">
@@ -272,7 +269,7 @@
                                 </x-gpa.btn>
 
                                 <p class="text-center text-xs leading-relaxed text-ink-subtle">
-                                    Data Anda terlindungi oleh kebijakan kerahasiaan komersial Green Pasundan Agriculture.
+                                    Data Anda terlindungi oleh kebijakan kerahasiaan komersial PT Green Pasundan Agriculture.
                                 </p>
                             </div>
                         </form>
@@ -286,53 +283,59 @@
     {{-- DENAH AKSES LOGISTIK --}}
     <section id="denah" class="scroll-mt-36 bg-canvas">
         <div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-12 sm:px-6 md:py-14">
-            <div class="flex flex-col gap-3 border-b-2 border-brand-strong pb-3 md:flex-row md:items-end md:justify-between">
-                <h2 class="text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
+            <div class="flex flex-col items-center gap-3 border-b-2 border-brand-strong pb-3 text-center">
+                <h2 class="text-center text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
                     Skema Rute Pengiriman &amp; Akses Logistik Subuh
                 </h2>
-                <span class="gpa-mono-xs text-ink-subtle">ESTIMASI WAKTU LOGISTIK</span>
+                <span class="gpa-mono-xs text-center text-ink-subtle">ESTIMASI WAKTU LOGISTIK</span>
             </div>
 
             <div class="rounded-2xl border border-line-hair bg-white p-5 shadow-sub md:p-8">
-                <div class="rounded-xl border-2 border-success/40 bg-[#EFF4DC]/40 p-4 md:p-6">
-                    <div class="flex flex-col items-stretch gap-3 md:flex-row md:items-center md:gap-0">
-                        {{-- NODE 1 --}}
-                        <div class="rounded-xl border-2 border-success bg-white p-4 md:w-52 md:shrink-0">
-                            <p class="gpa-mono-xs font-bold uppercase tracking-wider text-success">04:30 WIB</p>
-                            <p class="mt-2 text-sm font-extrabold leading-snug text-brand-strong">Kebun Ciwidey</p>
-                            <p class="mt-1 text-xs leading-relaxed text-ink-body">Petik daun &amp; sortasi lapang</p>
-                            <p class="mt-2.5 rounded border border-line-hair bg-canvas px-2 py-1 gpa-mono-xs font-semibold text-ink-subtle">Mitra Petani GAP</p>
+                <ol class="flex flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-0">
+                    <li class="flex-1 rounded-2xl border border-success/30 bg-[#F7F9F1] p-5">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-success gpa-mono-xs font-bold text-white">01</span>
+                            <span class="rounded-full bg-white px-3 py-1 gpa-mono-xs font-bold text-success">04:30 WIB</span>
                         </div>
+                        <h3 class="mt-4 text-base font-extrabold leading-6 text-brand-strong">Kebun Ciwidey</h3>
+                        <p class="mt-1 text-xs leading-relaxed text-ink-body">Petik daun dan sortasi lapang oleh mitra petani GAP.</p>
+                        <p class="mt-4 inline-flex rounded-lg border border-success/20 bg-white px-3 py-1.5 gpa-mono-xs font-semibold text-success">Mitra Petani GAP</p>
+                    </li>
 
-                        <div class="flex flex-col items-center gap-1 px-2 py-1 md:w-28 md:shrink-0 md:px-0">
-                            <span class="gpa-mono-xs text-center font-semibold text-ink-body">60 Menit</span>
-                            <span class="font-mono text-sm font-bold tracking-widest text-success">════►</span>
-                            <span class="gpa-mono-xs text-center text-ink-subtle">Insulasi</span>
-                        </div>
+                    <li aria-hidden="true" class="flex shrink-0 flex-col items-center justify-center gap-1 py-1 lg:w-28 lg:px-3 lg:py-0">
+                        <span class="rounded-full bg-[#EFF4DC] px-3 py-1 gpa-mono-xs font-bold text-brand-strong">60 Menit</span>
+                        <span class="font-mono text-xl font-bold leading-none text-success lg:hidden">↓</span>
+                        <span class="hidden h-px w-full bg-success/40 lg:block"></span>
+                        <span class="gpa-mono-xs text-ink-subtle">Insulasi</span>
+                    </li>
 
-                        {{-- NODE 2 --}}
-                        <div class="rounded-xl border-2 border-brand-deep bg-brand p-4 md:w-52 md:shrink-0">
-                            <p class="gpa-mono-xs font-bold uppercase tracking-wider text-accent">06:00 - 15:00 WIB</p>
-                            <p class="mt-2 text-sm font-extrabold leading-snug text-white">Hub Konsolidasi</p>
-                            <p class="mt-1 text-xs leading-relaxed text-white/80">Pre-cooling, QC &amp; Tera Timbang</p>
-                            <p class="mt-2.5 rounded border border-white/20 bg-white/10 px-2 py-1 gpa-mono-xs font-semibold text-white/80">Cold Room 4°C</p>
+                    <li class="flex-1 rounded-2xl border-2 border-brand bg-brand p-5 text-white shadow-sub">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-accent gpa-mono-xs font-bold text-brand-deep">02</span>
+                            <span class="rounded-full border border-white/15 bg-white/10 px-3 py-1 gpa-mono-xs font-bold text-accent">06:00 - 15:00 WIB</span>
                         </div>
+                        <h3 class="mt-4 text-base font-extrabold leading-6">Hub Konsolidasi</h3>
+                        <p class="mt-1 text-xs leading-relaxed text-white/80">Pre-cooling, inspeksi QC, dan persiapan produk untuk dikirim.</p>
+                        <p class="mt-4 inline-flex rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 gpa-mono-xs font-semibold text-white/85">Cold Room 4°C</p>
+                    </li>
 
-                        <div class="flex flex-col items-center gap-1 px-2 py-1 md:w-28 md:shrink-0 md:px-0">
-                            <span class="gpa-mono-xs text-center font-semibold text-ink-body">Dispatch 03:00</span>
-                            <span class="font-mono text-sm font-bold tracking-widest text-success">════►</span>
-                            <span class="gpa-mono-xs text-center text-ink-subtle">Reefer Truck</span>
-                        </div>
+                    <li aria-hidden="true" class="flex shrink-0 flex-col items-center justify-center gap-1 py-1 lg:w-28 lg:px-3 lg:py-0">
+                        <span class="rounded-full bg-[#EFF4DC] px-3 py-1 gpa-mono-xs font-bold text-brand-strong">Dispatch 03:00</span>
+                        <span class="font-mono text-xl font-bold leading-none text-success lg:hidden">↓</span>
+                        <span class="hidden h-px w-full bg-success/40 lg:block"></span>
+                        <span class="gpa-mono-xs text-ink-subtle">Reefer Truck</span>
+                    </li>
 
-                        {{-- NODE 3 --}}
-                        <div class="rounded-xl border-2 border-success bg-white p-4 md:w-52 md:shrink-0">
-                            <p class="gpa-mono-xs font-bold uppercase tracking-wider text-success">05:30 - 06:30 WIB</p>
-                            <p class="mt-2 text-sm font-extrabold leading-snug text-brand-strong">Dock Kitchen Klien</p>
-                            <p class="mt-1 text-xs leading-relaxed text-ink-body">Serah terima &amp; e-PoD digital</p>
-                            <p class="mt-2.5 rounded border border-line-hair bg-canvas px-2 py-1 gpa-mono-xs font-semibold text-ink-subtle">Hotel &amp; Resto</p>
+                    <li class="flex-1 rounded-2xl border border-success/30 bg-[#F7F9F1] p-5">
+                        <div class="flex items-center justify-between gap-3">
+                            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-success gpa-mono-xs font-bold text-white">03</span>
+                            <span class="rounded-full bg-white px-3 py-1 gpa-mono-xs font-bold text-success">05:30 - 06:30 WIB</span>
                         </div>
-                    </div>
-                </div>
+                        <h3 class="mt-4 text-base font-extrabold leading-6 text-brand-strong">Dock Kitchen Klien</h3>
+                        <p class="mt-1 text-xs leading-relaxed text-ink-body">Serah terima produk disertai bukti serah terima digital (e-PoD).</p>
+                        <p class="mt-4 inline-flex rounded-lg border border-success/20 bg-white px-3 py-1.5 gpa-mono-xs font-semibold text-success">Hotel &amp; Resto</p>
+                    </li>
+                </ol>
 
                 <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <div class="rounded-xl border border-line-hair bg-canvas/40 p-4">

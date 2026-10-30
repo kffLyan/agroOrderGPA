@@ -54,6 +54,34 @@ class OrderService
         });
     }
 
+    // Buat nomor faktur / invoice otomatis berurutan dengan proteksi anti-bentrok (contoh: INV-GPA-202610-0001)
+    public function generateInvoiceNumber(): string
+    {
+        $prefix = 'INV-GPA-' . date('Ym') . '-';
+
+        return Cache::lock('invoice_number_sequence_lock', 5)->block(3, function () use ($prefix) {
+            $lastInv = Invoice::where('invoice_number', 'LIKE', $prefix . '%')
+                ->orderBy('id', 'desc')
+                ->first();
+
+            $nextNumber = 1;
+            if ($lastInv) {
+                $lastSequence = (int) substr($lastInv->invoice_number, -4);
+                $nextNumber = $lastSequence + 1;
+            }
+
+            $candidate = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
+
+            // Pengaman ekstra: Jika nomor sudah terpakai di database, cari urutan berikutnya
+            while (Invoice::where('invoice_number', $candidate)->exists()) {
+                $nextNumber++;
+                $candidate = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
+            }
+
+            return $candidate;
+        });
+    }
+
     // Resolusi harga satuan: Harga Kontrak B2B aktif vs Harga Katalog
     public function resolveUnitPrice(User $user, Product $product): float
     {
@@ -213,15 +241,7 @@ class OrderService
 
             // 1. Buat / Terbitkan Invoice Tagihan PDF resmi jika belum ada
             if (!$order->invoice_id) {
-                $prefix = 'INV-GPA-' . date('Ym') . '-';
-                $lastInv = Invoice::where('invoice_number', 'LIKE', $prefix . '%')
-                    ->orderBy('id', 'desc')
-                    ->first();
-                $seq = 1;
-                if ($lastInv) {
-                    $seq = ((int) substr($lastInv->invoice_number, -4)) + 1;
-                }
-                $invNumber = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+                $invNumber = $this->generateInvoiceNumber();
 
                 // Periksa TOP days jika klien kontrak B2B
                 $clientContract = Contract::where('user_id', $order->user_id)

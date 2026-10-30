@@ -22,22 +22,23 @@ class StockController extends Controller
      */
     public function index(Request $request): View
     {
-        $activeStatuses = ['MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'];
+        // Antrean pesanan masuk yang belum diverifikasi Sekretaris (belum memotong available_quantity pada batch panen)
+        $pendingStatuses = ['MENUNGGU_VERIFIKASI'];
 
         // Eager-load harvest batches dan agregasi order items dalam 1 kueri (Bebas N+1 Query)
         $products = Product::where('is_active', true)
             ->with('harvestBatches')
-            ->withSum(['orderItems as reserved_po_qty' => function ($q) use ($activeStatuses) {
-                $q->whereHas('order', fn ($o) => $o->whereIn('status', $activeStatuses));
+            ->withSum(['orderItems as reserved_po_qty' => function ($q) use ($pendingStatuses) {
+                $q->whereHas('order', fn ($o) => $o->whereIn('status', $pendingStatuses));
             }], 'ordered_qty')
             ->get();
 
         $totalBinaan   = (float) HarvestBatch::where('source_type', 'PETANI_BINAAN')->sum('available_quantity');
         $totalBuffer   = (float) HarvestBatch::where('source_type', 'BUFFER_LUAR')->sum('available_quantity');
         $totalStock    = $totalBinaan + $totalBuffer;
-        $totalReserved = (float) OrderItem::whereHas('order', fn ($q) => $q->whereIn('status', $activeStatuses))->sum('ordered_qty');
+        $totalReserved = (float) OrderItem::whereHas('order', fn ($q) => $q->whereIn('status', $pendingStatuses))->sum('ordered_qty');
         $freeStock     = max(0, $totalStock - $totalReserved);
-        $activePoCount = Order::whereIn('status', $activeStatuses)->count();
+        $activePoCount = Order::whereIn('status', $pendingStatuses)->count();
 
         // Transformasi ke API Resource terstruktur
         $commodities = StockCommodityResource::collection($products)->resolve();

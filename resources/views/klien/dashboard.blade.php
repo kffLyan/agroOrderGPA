@@ -4,78 +4,11 @@
 
 @php
     $user = auth()->user();
-    $contractNumber = $contract ? $contract->contract_number : ($isContractClient ? ('CTR-B2B-' . str_pad($user->id, 4, '0', STR_PAD_LEFT)) : 'REGULER-HARIAN');
-    $dockName = 'DOCK UTAMA — ' . ($user->company_name ?: ($user->name ?: 'KLIEN GPA'));
-    $creditBarWidth = max(0, min(100, $creditPercent)) . '%';
-
-    $ordersTable = [];
-    if (isset($recentOrders) && $recentOrders->isNotEmpty()) {
-        foreach ($recentOrders as $ord) {
-            $itemNames = $ord->items->map(fn ($it) => ($it->product?->name ?: 'Komoditas') . ' (' . (int) $it->ordered_qty . ' kg)')->join(', ');
-            $totalQty = $ord->items->sum('ordered_qty');
-            $driverName = $ord->driver?->name ?: 'Armada Logistik GPA';
-            $sjNumber = $ord->surat_jalan_number ?: 'SJ-' . str_pad($ord->id, 5, '0', STR_PAD_LEFT);
-
-            $ordersTable[] = [
-                'po' => $ord->order_number,
-                'date' => $ord->created_at->format('d/m/Y'),
-                'commodities' => $itemNames ?: 'Sayuran & Komoditas Agro',
-                'packaging' => $ord->delivery_address ?: 'Dock Logistik Mitra',
-                'weight' => (int) $totalQty > 0 ? number_format($totalQty, 0, ',', '.') . ' kg' : null,
-                'weight_note' => in_array($ord->status, ['SELESAI', 'SELESAI_CATATAN']) ? '(Netto Sah)' : '(Estimasi PO)',
-                'scale_note' => in_array($ord->status, ['SELESAI', 'SELESAI_CATATAN']) ? 'Timbang Tera SAH' : (in_array($ord->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN']) ? 'Netto Sah Siap Kirim' : 'Menunggu Tera Akhir'),
-                'driver' => in_array($ord->status, ['DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? $driverName : null,
-                'sj' => in_array($ord->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? $sjNumber : null,
-                'driver_note' => in_array($ord->status, ['DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? ($ord->vehicle_plate_number ?: 'Chiller Truck Ready') : 'Menunggu Alokasi Supir',
-                'status' => match ($ord->status) {
-                    'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi',
-                    'MENUNGGU_PEMBAYARAN' => 'Menunggu Pembayaran',
-                    'LUNAS'               => 'Lunas Terverifikasi',
-                    'SIAP_KIRIM'          => 'Surat Jalan Terbit',
-                    'DALAM_PENGIRIMAN'    => 'Dalam Perjalanan',
-                    'SELESAI'             => 'Tiba di Dock',
-                    'SELESAI_CATATAN'     => 'Selesai (Catatan Retur)',
-                    'BATAL'               => 'Dibatalkan',
-                    default               => $ord->status,
-                },
-                'status_tone' => match ($ord->status) {
-                    'SELESAI', 'SELESAI_CATATAN', 'DALAM_PENGIRIMAN', 'LUNAS' => 'accent',
-                    'SIAP_KIRIM'                                             => 'accent',
-                    'MENUNGGU_PEMBAYARAN'                                    => 'brand',
-                    'BATAL'                                                  => 'warning',
-                    default                                                  => 'warning',
-                },
-                'url' => route('klien.orders.show', $ord->id),
-            ];
-        }
-    }
-
-    $reorderData = [];
-    if (isset($products) && $products->isNotEmpty()) {
-        foreach ($products as $p) {
-            $unitPrice = (float) $p->base_price;
-            if ($isContractClient) {
-                $userContract = \App\Models\Contract::where('user_id', $user->id)
-                    ->where('product_id', $p->id)
-                    ->where('status', 'ACTIVE')
-                    ->first();
-                if ($userContract && $userContract->fixed_price_per_kg) {
-                    $unitPrice = (float) $userContract->fixed_price_per_kg;
-                }
-            }
-            $reorderData[] = [
-                'key' => (string) $p->id,
-                'id' => $p->id,
-                'sku' => $p->sku ?? ('SKU-' . $p->id),
-                'name' => $p->name,
-                'grade' => 'Grade ' . ($p->grade ?: 'Super A'),
-                'price' => $unitPrice,
-                'remaining' => 2500,
-                'step' => 50,
-                'initial_qty' => 100,
-            ];
-        }
-    }
+    $contractNumber = $contractNumber ?? ($contract ? $contract->contract_number : ($isContractClient ? ('CTR-B2B-' . str_pad($user->id, 4, '0', STR_PAD_LEFT)) : 'REGULER-HARIAN'));
+    $dockName = $dockName ?? ('DOCK UTAMA — ' . ($user->company_name ?: ($user->name ?: 'KLIEN GPA')));
+    $creditBarWidth = $creditBarWidth ?? (max(0, min(100, $creditPercent ?? 0)) . '%');
+    $ordersTable = $ordersTable ?? collect();
+    $reorderData = $reorderData ?? [];
 @endphp
 
 @section('content')
@@ -342,11 +275,11 @@
             <article class="gpa-card flex flex-col justify-between gap-4 p-5 xl:p-6">
                 <div class="flex flex-col gap-1">
                     <div class="flex items-start justify-between gap-2">
-                        <h2 class="gpa-micro text-ink-body">Kepatuhan SLA &amp; Mutu Cold-Chain</h2>
+                        <h2 class="gpa-micro text-ink-body">Ketepatan Waktu &amp; Mutu Pasokan Segar</h2>
                         <x-gpa.icon name="shield" class="h-4 w-4 shrink-0 text-success-deep" />
                     </div>
                     <p class="gpa-figure pt-1 text-success-deep">100%</p>
-                    <p class="gpa-body text-ink-body">On-Time In-Full Delivery (OTIF)</p>
+                    <p class="gpa-body text-ink-body">Pengiriman Tepat Waktu &amp; Lengkap</p>
                 </div>
                 <div class="border-t border-line-soft/60 pt-3">
                     <dl class="flex flex-col gap-1">

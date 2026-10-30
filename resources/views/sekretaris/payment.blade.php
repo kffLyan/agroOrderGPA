@@ -5,7 +5,7 @@
 @section('content')
     @php
         $user = auth()->user();
-        $operatorCode = $user ? 'SK-' . str_pad($user->id, 4, '0', STR_PAD_LEFT) : 'SK-001';
+        $operatorCode = $operatorCode ?? ($user ? 'SK-' . str_pad($user->id, 4, '0', STR_PAD_LEFT) : 'SK-001');
         $queueRows = $queueRows ?? [];
         $auditRows = $auditRows ?? [];
         $default = $queueRows[0] ?? null;
@@ -269,7 +269,7 @@
                                     <span @if ($loop->first) style="display:none" @endif
                                         x-show="paymentId !== @js($row['id']) && ! isSettled(@js($row)) && ! isRejected(@js($row))"
                                         class="rounded-full bg-surface-pill px-2.5 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-ink-body outline outline-1 outline-line-board">
-                                        Pending
+                                        Menunggu Verifikasi
                                     </span>
                                 </span>
 
@@ -571,34 +571,34 @@
 
                     <tbody class="divide-y divide-line-soft">
                         @forelse ($auditRows as $row)
-                            <tr @class(['transition-colors hover:bg-surface-shell/50', $row['status'] === 'rejected' ? 'bg-danger-soft/20' : ''])>
+                            <tr @class(['transition-colors hover:bg-surface-shell/50', ($row->status ?? ($row['status'] ?? '')) === 'rejected' ? 'bg-danger-soft/20' : ''])>
                                 <td class="px-4 py-4 font-mono text-2xs font-medium tracking-[0.88px] text-ink-quiet">
-                                    {{ $row['timestamp'] }}
+                                    {{ $row->timestamp ?? $row['timestamp'] }}
                                 </td>
 
-                                <td class="px-4 py-4 font-mono text-xs font-bold tracking-[0.88px] text-ink">{{ $row['id'] }}</td>
+                                <td class="px-4 py-4 font-mono text-xs font-bold tracking-[0.88px] text-ink">{{ $row->code ?? $row['id'] }}</td>
 
-                                <td class="px-4 py-4 font-mono text-2xs font-medium tracking-[0.88px] text-ink-body">{{ $row['invoice'] }}</td>
+                                <td class="px-4 py-4 font-mono text-2xs font-medium tracking-[0.88px] text-ink-body">{{ $row->invoice_code ?? $row['invoice'] }}</td>
 
-                                <td class="px-4 py-4 font-sans text-sm font-semibold leading-5 text-ink">{{ $row['client'] }}</td>
+                                <td class="px-4 py-4 font-sans text-sm font-semibold leading-5 text-ink">{{ $row->client_name ?? $row['client'] }}</td>
 
-                                <td class="px-4 py-4 font-mono text-xs font-bold tracking-[0.88px] {{ $row['amount_class'] }}">
-                                    {{ $row['amount_label'] }}
+                                <td class="px-4 py-4 font-mono text-xs font-bold tracking-[0.88px] {{ $row->amount_class ?? ($row['amount_class'] ?? 'text-ink') }}">
+                                    {{ $row->amount_formatted ?? $row['amount_label'] }}
                                 </td>
 
                                 <td class="px-4 py-4">
                                     <span @class([
                                         'inline-flex rounded-full px-2.5 py-1 gpa-micro-bold uppercase tracking-[1.08px]',
-                                        $row['status_class'],
-                                    ])>{{ $row['status_label'] }}</span>
+                                        $row->status_class ?? ($row['status_class'] ?? ''),
+                                    ])>{{ $row->status_label ?? $row['status_label'] }}</span>
                                 </td>
 
-                                <td class="px-4 py-4 font-mono text-2xs font-bold tracking-[0.88px] text-ink-body">{{ $row['operator'] }}</td>
+                                <td class="px-4 py-4 font-mono text-2xs font-bold tracking-[0.88px] text-ink-body">{{ $row->operator ?? $row['operator'] }}</td>
 
                                 <td @class([
                                     'px-4 py-4 gpa-note leading-5',
-                                    $row['status'] === 'rejected' ? 'text-danger' : 'text-ink-body',
-                                ])>{{ $row['note'] }}</td>
+                                    ($row->status ?? ($row['status'] ?? '')) === 'rejected' ? 'text-danger' : 'text-ink-body',
+                                ])>{{ $row->verification_note ?? ($row['note'] ?? '—') }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -697,7 +697,7 @@
                         <div class="flex flex-col items-center gap-2 p-8 text-center text-white/80">
                             <x-gpa.icon name="alert-triangle" class="h-12 w-12 text-warning-caution" />
                             <p class="font-bold text-sm">Pratinjau Berkas Belum Tersedia</p>
-                            <p class="text-xs text-white/60">Klien belum melampirkan berkas foto fisik transfer atau file tidak ditemukan di server.</p>
+                            <p class="text-xs text-white/60">Klien belum melampirkan berkas foto fisik transfer atau bukti belum tersedia di sistem.</p>
                         </div>
                     </template>
                 </div>

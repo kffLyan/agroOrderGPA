@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Klien;
 use App\Http\Controllers\Controller;
 use App\Models\Contract;
 use App\Models\Invoice;
+use App\Models\Order;
 use App\Models\Payment;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -29,16 +30,18 @@ class PaymentProofController extends Controller
             ->latest('due_date')
             ->get();
 
-        // Ambil kontrak aktif untuk plafon kredit
+        // 2. Ambil kontrak aktif untuk plafon kredit
         $contract = Contract::where('user_id', $user->id)
             ->where('status', 'ACTIVE')
             ->first();
+
+        $creditLimit = $contract ? (float) $contract->credit_limit : 50000000.0;
 
         $outstandingTotal = (float) Invoice::where('user_id', $user->id)
             ->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])
             ->sum('grand_total');
 
-        // Riwayat Pembayaran (History)
+        // 3. Riwayat Pembayaran (History)
         $dbPayments = Payment::with(['invoice', 'order', 'verifier'])
             ->where(function ($query) use ($user) {
                 $query->whereHas('invoice', fn ($q) => $q->where('user_id', $user->id))
@@ -53,26 +56,134 @@ class PaymentProofController extends Controller
 
         // Jika tagihan kosong atau diberikan order_id, cari invoice terkait pesanan tersebut
         if ($orderIdParam) {
-            $relatedOrder = \App\Models\Order::with('invoice')->where('user_id', $user->id)->find($orderIdParam);
+            $relatedOrder = Order::with('invoice')->where('user_id', $user->id)->find($orderIdParam);
             if ($relatedOrder && $relatedOrder->invoice) {
                 $tagihanParam = $relatedOrder->invoice->invoice_number;
             }
         }
+
+        // 4. Format data invoices untuk UI & Alpine.js (Prinsip MVC: Controller mengolah Logika)
+        $invoices = $this->formatInvoices($dbInvoices, $dbPayments);
+
+        // Tentukan invoice yang sedang dipilih (selected)
+        $selectedPo = $tagihanParam ?? ($invoices[0]['po'] ?? '');
+        $selectedExists = collect($invoices)->contains('po', $selectedPo);
+        if (! $selectedExists && ! empty($invoices)) {
+            $selectedPo = $invoices[0]['po'];
+        }
+        $selected = $selectedPo;
+
+        // Deteksi apakah tagihan yang dipilih sudah memiliki bukti pembayaran yang sedang diverifikasi Sekretaris
+        $pendingPaymentForSelected = $dbPayments->first(function ($p) use ($selectedPo) {
+            $invNum = $p->invoice?->invoice_number ?: ($p->order?->order_number ?: '');
+            return $invNum === $selectedPo 
+                && $p->status === 'MENUNGGU_VERIFIKASI' 
+                && ! empty($p->proof_url);
+        });
+
+        // Deteksi bukti pembayaran terbaru untuk tagihan yang dipilih
+        $latestPaymentForSelected = $dbPayments->first(function ($p) use ($selectedPo) {
+            $invNum = $p->invoice?->invoice_number ?: ($p->order?->order_number ?: '');
+            return $invNum === $selectedPo;
+        });
+
+        // Apakah pembayaran terbaru ditolak dan belum ada pembayaran pengganti yang sedang diverifikasi
+        $rejectedPaymentForSelected = ($latestPaymentForSelected && in_array($latestPaymentForSelected->status, ['DITOLAK', 'REJECTED']))
+            ? $latestPaymentForSelected
+            : null;
+
+        $form = [
+            'sender_bank' => '',
+            'sender_account' => $user?->phone ?: '',
+            'transfer_at' => Carbon::now()->format('d/m/Y H:i'),
+            'reference' => '',
+            'note' => '',
+        ];
+
+        $history = $dbPayments;
 
         // Ambil kanal pembayaran resmi yang telah disetel oleh Direktur
         $governanceService = app(\App\Services\GovernanceService::class);
         $paymentChannels = $governanceService->getActivePaymentChannels();
 
         return view('klien.payment-proof', compact(
-            'dbInvoices',
+            'invoices',
+            'selected',
             'contract',
+            'creditLimit',
             'outstandingTotal',
-            'dbPayments',
+            'pendingPaymentForSelected',
+            'rejectedPaymentForSelected',
+            'form',
+            'history',
             'user',
             'tagihanParam',
             'paymentChannels'
         ));
     }
+
+    /**
+     * Format koleksi invoice menjadi array view model siap pakai untuk Blade & Alpine.js.
+     */
+    private function formatInvoices($dbInvoices, $dbPayments): array
+    {
+        $invoices = [];
+        foreach ($dbInvoices as $inv) {
+            $gross = (float) ($inv->subtotal_amount ?: $inv->grand_total);
+            $net = (float) $inv->grand_total;
+            $creditAdjustment = max(0, $gross - $net);
+
+            $latestPayment = $inv->payments?->sortByDesc('id')->first()
+                ?: $dbPayments->first(function ($p) use ($inv) {
+                    $invNum = $p->invoice?->invoice_number ?: ($p->order?->order_number ?: '');
+                    return $p->invoice_id === $inv->id || $invNum === $inv->invoice_number;
+                });
+
+            $isPaid = ($inv->status === 'PAID') || ($latestPayment && in_array($latestPayment->status, ['LUNAS', 'VERIFIED']));
+            $isRejected = ($latestPayment && in_array($latestPayment->status, ['DITOLAK', 'REJECTED']));
+            $isPending = (($latestPayment && in_array($latestPayment->status, ['MENUNGGU_VERIFIKASI', 'PENDING'])) || $inv->has_pending_proof) && ! $isPaid;
+
+            $verificationStage = $isPaid ? 3 : ($isPending ? 2 : 1);
+            $verificationStatus = $isPaid ? 'LUNAS' : ($isPending ? 'MENUNGGU_VERIFIKASI' : ($isRejected ? 'DITOLAK' : 'BELUM_BAYAR'));
+
+            $invoices[] = [
+                'po' => $inv->invoice_number,
+                'option_label' => sprintf(
+                    '%s — Periode %s (Rp %s)',
+                    $inv->invoice_number,
+                    $inv->period_start ? $inv->period_start->format('d/m/Y') : '-',
+                    number_format($net, 0, ',', '.')
+                ),
+                'status_chip' => match ($inv->status) {
+                    'PAID' => 'Lunas Sah',
+                    'OVERDUE' => 'Lewat Jatuh Tempo',
+                    'PARTIAL' => 'Terbayar Sebagian',
+                    default => ($inv->has_pending_proof ? 'Menunggu Verifikasi Pembayaran' : 'Menunggu Pembayaran'),
+                },
+                'due_note' => $inv->due_date ? 'Jatuh tempo pada: ' . $inv->due_date->translatedFormat('d F Y') : 'Jatuh tempo TOP 30 Hari',
+                'gross_label' => 'Rp ' . number_format($gross, 0, ',', '.'),
+                'credit_label' => 'Penyesuaian Kredit / Retur:',
+                'credit_value' => $creditAdjustment > 0 ? '- Rp ' . number_format($creditAdjustment, 0, ',', '.') : 'Rp 0',
+                'credit_value_label' => $creditAdjustment > 0 ? '- Rp ' . number_format($creditAdjustment, 0, ',', '.') : 'Rp 0',
+                'has_credit' => $creditAdjustment > 0,
+                'payable' => (int) $net,
+                'payable_label' => 'Rp ' . number_format($net, 0, ',', '.'),
+                'payable_digits' => (string) (int) $net,
+                'verification_stage' => $verificationStage,
+                'verification_status' => $verificationStatus,
+                'payment_ref' => $latestPayment ? ($latestPayment->payment_reference ?: 'PAY-' . str_pad($latestPayment->id, 5, '0', STR_PAD_LEFT)) : '-',
+                'payment_method' => $latestPayment?->payment_method ?: 'TRANSFER_BANK',
+                'paid_at' => $latestPayment?->paid_at ? $latestPayment->paid_at->translatedFormat('d F Y H:i') : ($latestPayment?->created_at ? $latestPayment->created_at->translatedFormat('d F Y H:i') : null),
+                'verifier_name' => $latestPayment?->verifier?->name ?: 'Staf Sekretariat Keuangan GPA',
+                'verification_note' => $latestPayment?->verification_note,
+                'receipt_number' => $isPaid ? ('KWT-' . str_pad($latestPayment?->id ?? $inv->id, 5, '0', STR_PAD_LEFT)) : null,
+                'proof_url' => $latestPayment?->proof_url ? asset('storage/' . $latestPayment->proof_url) : null,
+            ];
+        }
+
+        return $invoices;
+    }
+
 
     /**
      * Proses unggah bukti pembayaran oleh Klien.

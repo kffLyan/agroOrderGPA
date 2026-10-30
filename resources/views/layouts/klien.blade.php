@@ -161,7 +161,7 @@
                     <a href="tel:+622150550088"
                         class="flex items-center gap-2 rounded-lg px-3 py-2 gpa-body text-ink-quiet transition-colors hover:bg-surface-shell hover:text-ink">
                         <x-gpa.icon name="headset" class="h-3.5 w-3.5 shrink-0" />
-                        SLA Hotline 24/7
+                        Layanan Bantuan 24/7
                     </a>
                     @auth
                         <form method="POST" action="{{ route('logout') }}">

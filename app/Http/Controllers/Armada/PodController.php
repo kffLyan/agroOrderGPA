@@ -50,17 +50,24 @@ class PodController extends Controller
         $condition = $request->input('condition', 'clear');
         $receiverName = $request->input('received_by_name');
 
-        $podPath = null;
+        $uploadedPhotos = [];
         if ($request->hasFile('manifest_photo')) {
             $file = $request->file('manifest_photo');
             $filename = 'pod_' . $order->id . '_' . time() . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('uploads/pod'), $filename);
-            $podPath = 'uploads/pod/' . $filename;
-        } elseif ($request->hasFile('dock_photo')) {
+            $uploadedPhotos[] = 'uploads/pod/' . $filename;
+        } elseif ($request->hasFile('pod_photo')) {
+            $file = $request->file('pod_photo');
+            $filename = 'pod_' . $order->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/pod'), $filename);
+            $uploadedPhotos[] = 'uploads/pod/' . $filename;
+        }
+
+        if ($request->hasFile('dock_photo')) {
             $file = $request->file('dock_photo');
             $filename = 'dock_' . $order->id . '_' . time() . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('uploads/pod'), $filename);
-            $podPath = 'uploads/pod/' . $filename;
+            $uploadedPhotos[] = 'uploads/pod/' . $filename;
         }
 
         $hasReturn = false;
@@ -85,8 +92,8 @@ class PodController extends Controller
         if ($receiverName) {
             $order->received_by_name = $receiverName;
         }
-        if ($podPath) {
-            $order->pod_photo_url = $podPath;
+        if (!empty($uploadedPhotos)) {
+            $order->pod_photo_url = implode(',', $uploadedPhotos);
         }
         if (!$order->driver_id && $user) {
             $order->driver_id = $user->id;

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Direktur;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
 use App\Services\ProductService;
 use Exception;
@@ -10,7 +12,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
 
 class ProductController extends Controller
 {
@@ -41,20 +42,9 @@ class ProductController extends Controller
     /**
      * Simpan komoditas baru ke basis data.
      */
-    public function store(Request $request): RedirectResponse
+    public function store(StoreProductRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'sku'           => ['required', 'string', 'max:30', 'unique:products,sku'],
-            'name'          => ['required', 'string', 'max:100'],
-            'unit'          => ['required', 'string', 'max:20'],
-            'grade'         => ['required', 'string', 'max:20'],
-            'base_price'    => ['required', 'numeric', 'min:0'],
-            'minimum_order' => ['required', 'numeric', 'min:0.1'],
-            'image_file'    => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
-            'preset_image'  => ['nullable', 'string', 'max:255'],
-            'description'   => ['nullable', 'string', 'max:1000'],
-            'is_active'     => ['required'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $directorName = Auth::user()?->name ?: 'Direktur Utama';
@@ -94,20 +84,9 @@ class ProductController extends Controller
     /**
      * Perbarui data komoditas.
      */
-    public function update(Request $request, Product $product): RedirectResponse
+    public function update(UpdateProductRequest $request, Product $product): RedirectResponse
     {
-        $validated = $request->validate([
-            'sku'           => ['required', 'string', 'max:30', Rule::unique('products', 'sku')->ignore($product->id)],
-            'name'          => ['required', 'string', 'max:100'],
-            'unit'          => ['required', 'string', 'max:20'],
-            'grade'         => ['required', 'string', 'max:20'],
-            'base_price'    => ['required', 'numeric', 'min:0'],
-            'minimum_order' => ['required', 'numeric', 'min:0.1'],
-            'image_file'    => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
-            'preset_image'  => ['nullable', 'string', 'max:255'],
-            'description'   => ['nullable', 'string', 'max:1000'],
-            'is_active'     => ['required'],
-        ]);
+        $validated = $request->validated();
 
         try {
             $directorName = Auth::user()?->name ?: 'Direktur Utama';

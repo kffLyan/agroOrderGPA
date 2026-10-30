@@ -1,164 +1,193 @@
 @extends('layouts.coordinator')
 
-@section('title', 'Uji Coba CRUD Komoditas')
+@section('title', 'Manajemen Komoditas // Koordinator')
 
 @section('content')
-<div class="space-y-6">
-    {{-- Header --}}
-    <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 pb-4">
-        <div>
-            <h1 class="text-xl font-bold text-slate-900">Manajemen Komoditas (CRUD)</h1>
-            <p class="text-xs text-slate-500">Uji coba penambahan, pengubahan, toggle status katalog, dan hapus master data komoditas.</p>
-        </div>
-        <a href="{{ route('koordinator.products.create') }}" class="rounded bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700">
-            + Tambah Komoditas Baru
-        </a>
-    </div>
+    <div class="mx-auto flex max-w-shell flex-col gap-6">
+        {{-- Header --}}
+        <section class="flex flex-col gap-4">
+            <header class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
+                <div class="min-w-0 space-y-1">
+                    <p class="gpa-micro-bold uppercase tracking-wider text-ink-body">Manajemen Komoditas</p>
+                    <h1 class="font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
+                        Daftar Komoditas Katalog
+                    </h1>
+                    <p class="text-xs text-ink-body max-w-2xl">
+                        Pengelolaan master data komoditas, status katalog, harga dasar, dan pemantauan stok riil.
+                    </p>
+                </div>
 
-    {{-- Filter & Ringkasan Bar --}}
-    <div class="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-        <form method="GET" action="{{ route('koordinator.products.index') }}" class="flex flex-wrap items-center gap-2 text-xs">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari nama atau SKU..."
-                class="rounded border border-slate-300 px-3 py-1.5 text-xs focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600">
+                <div class="flex shrink-0 flex-wrap items-center gap-2">
+                    <a href="{{ route('koordinator.products.create') }}"
+                        class="inline-flex items-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-ink text-accent shadow-sub">
+                        <x-gpa.icon name="plus" class="h-3.5 w-3.5 shrink-0" />
+                        Tambah Komoditas Baru
+                    </a>
+                </div>
+            </header>
 
-            <select name="grade" class="rounded border border-slate-300 px-3 py-1.5 text-xs focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600">
-                <option value="all">Semua Grade</option>
-                @foreach (['Grade A', 'Grade A+', 'Grade B', 'Grade C'] as $g)
-                    <option value="{{ $g }}" {{ request('grade') === $g ? 'selected' : '' }}>{{ $g }}</option>
-                @endforeach
-            </select>
+            {{-- Filter & Ringkasan --}}
+            <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-surface p-4 shadow-card">
+                <form method="GET" action="{{ route('koordinator.products.index') }}" class="flex flex-wrap items-center gap-2">
+                    <label class="relative flex items-center">
+                        <span class="sr-only">Cari nama atau SKU</span>
+                        <x-gpa.icon name="search" class="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-ink-body" />
+                        <input type="search" name="search" value="{{ request('search') }}" placeholder="Cari nama atau SKU..."
+                            class="w-56 rounded bg-surface-shell py-1.5 pl-8 pr-2.5 text-[11px] leading-4 text-ink outline outline-1 -outline-offset-1 outline-line-board placeholder:text-ink-body/70 focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">
+                    </label>
 
-            <select name="status" class="rounded border border-slate-300 px-3 py-1.5 text-xs focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600">
-                <option value="all">Semua Status</option>
-                <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Aktif</option>
-                <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Nonaktif</option>
-            </select>
+                    <select name="grade" class="rounded bg-surface-shell py-1.5 px-2.5 text-[11px] leading-4 text-ink outline outline-1 -outline-offset-1 outline-line-board focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">
+                        <option value="all">Semua Grade</option>
+                        @foreach (['Grade A', 'Grade A+', 'Grade B', 'Grade C'] as $g)
+                            <option value="{{ $g }}" {{ request('grade') === $g ? 'selected' : '' }}>{{ $g }}</option>
+                        @endforeach
+                    </select>
 
-            <button type="submit" class="rounded bg-slate-800 px-3 py-1.5 font-medium text-white hover:bg-slate-700">
-                Filter
-            </button>
+                    <select name="status" class="rounded bg-surface-shell py-1.5 px-2.5 text-[11px] leading-4 text-ink outline outline-1 -outline-offset-1 outline-line-board focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">
+                        <option value="all">Semua Status</option>
+                        <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Aktif</option>
+                        <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Nonaktif</option>
+                    </select>
 
-            @if (request('search') || (request('grade') && request('grade') !== 'all') || (request('status') && request('status') !== 'all'))
-                <a href="{{ route('koordinator.products.index') }}" class="text-slate-500 hover:text-slate-800 underline">
-                    Reset
-                </a>
-            @endif
-        </form>
+                    <button type="submit" class="inline-flex items-center gap-1.5 rounded bg-surface-shell px-2.5 py-1.5 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                        <x-gpa.icon name="filter" class="h-3 w-3 shrink-0" />
+                        Filter
+                    </button>
 
-        <div class="flex gap-4 text-xs font-mono">
-            <div>Total: <span class="font-bold text-slate-900">{{ $totalProducts ?? count($products) }}</span></div>
-            <div>Aktif: <span class="font-bold text-emerald-700">{{ $activeProducts ?? 0 }}</span></div>
-            <div>Stok Fisik: <span class="font-bold text-slate-900">{{ number_format($totalStockKg ?? 0, 1) }} KG</span></div>
-        </div>
-    </div>
+                    @if (request('search') || (request('grade') && request('grade') !== 'all') || (request('status') && request('status') !== 'all'))
+                        <a href="{{ route('koordinator.products.index') }}" class="gpa-note font-semibold text-ink-body hover:text-ink">
+                            Reset
+                        </a>
+                    @endif
+                </form>
 
-    {{-- Tabel Komoditas --}}
-    <div class="rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-                <thead class="border-b border-slate-200 bg-slate-100 font-semibold text-slate-700">
-                    <tr>
-                        <th class="px-4 py-3">No</th>
-                        <th class="px-4 py-3">Foto</th>
-                        <th class="px-4 py-3">SKU</th>
-                        <th class="px-4 py-3">Nama Komoditas</th>
-                        <th class="px-4 py-3">Grade</th>
-                        <th class="px-4 py-3">Satuan</th>
-                        <th class="px-4 py-3 text-right">Harga Dasar</th>
-                        <th class="px-4 py-3 text-right">Min. Order</th>
-                        <th class="px-4 py-3 text-right">Stok Riil (KG)</th>
-                        <th class="px-4 py-3 text-center">Status Katalog</th>
-                        <th class="px-4 py-3 text-center">Aksi Backend</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 text-slate-600">
-                    @forelse ($products as $idx => $prod)
-                        @php
-                            $stokTersedia = (float) $prod->harvestBatches->sum('available_quantity');
-                        @endphp
-                        <tr class="hover:bg-slate-50">
-                            <td class="px-4 py-3 text-slate-400">{{ $idx + 1 }}</td>
-                            <td class="px-4 py-3">
-                                @if ($prod->image_url)
-                                    <img src="{{ asset($prod->image_url) }}" alt="{{ $prod->name }}" class="h-10 w-10 rounded border border-slate-200 object-cover">
-                                @else
-                                    <div class="h-10 w-10 rounded border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center text-2xs text-slate-400">
-                                        No pic
-                                    </div>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 font-mono font-medium text-slate-800">{{ $prod->sku }}</td>
-                            <td class="px-4 py-3 font-semibold text-slate-900">
-                                <a href="{{ route('koordinator.products.show', $prod) }}" class="hover:underline hover:text-emerald-700">
-                                    {{ $prod->name }}
-                                </a>
-                            </td>
-                            <td class="px-4 py-3">
-                                <span class="rounded bg-slate-100 px-1.5 py-0.5 text-2xs font-mono font-medium text-slate-700">
-                                    {{ $prod->grade ?? '—' }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-3 font-mono text-slate-500">{{ $prod->unit }}</td>
-                            <td class="px-4 py-3 text-right font-mono text-slate-800">
-                                Rp {{ number_format($prod->base_price, 0, ',', '.') }}
-                            </td>
-                            <td class="px-4 py-3 text-right font-mono text-slate-600">
-                                {{ number_format($prod->minimum_order, 1, ',', '.') }}
-                            </td>
-                            <td class="px-4 py-3 text-right font-mono font-bold text-slate-900">
-                                {{ number_format($stokTersedia, 1, ',', '.') }}
-                            </td>
-                            <td class="px-4 py-3 text-center">
-                                @if ($prod->is_active)
-                                    <span class="rounded bg-emerald-100 px-2 py-0.5 text-2xs font-bold text-emerald-800">
-                                        AKTIF
-                                    </span>
-                                @else
-                                    <span class="rounded bg-slate-200 px-2 py-0.5 text-2xs font-semibold text-slate-600">
-                                        NONAKTIF
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-4 py-3 text-center">
-                                <div class="inline-flex items-center gap-1">
-                                    {{-- Form Toggle Status --}}
-                                    <form method="POST" action="{{ route('koordinator.products.toggle-status', $prod) }}" class="inline">
-                                        @csrf
-                                        <button type="submit" title="Ubah status tampil di katalog"
-                                            class="rounded border border-slate-300 bg-white px-2 py-1 text-2xs font-medium text-slate-700 hover:bg-slate-100">
-                                            {{ $prod->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
-                                        </button>
-                                    </form>
+                <div class="flex flex-wrap items-center gap-3 text-[11px] leading-4">
+                    <span class="text-ink-body">Total: <span class="font-semibold text-ink">{{ $totalProducts ?? count($products) }}</span></span>
+                    <span class="text-ink-body">Aktif: <span class="font-semibold text-success-deep">{{ $activeProducts ?? 0 }}</span></span>
+                    <span class="text-ink-body">Stok Fisik: <span class="font-semibold text-ink">{{ number_format($totalStockKg ?? 0, 1, ',', '.') }} kg</span></span>
+                </div>
+            </div>
+        </section>
 
-                                    {{-- Link Edit --}}
-                                    <a href="{{ route('koordinator.products.edit', $prod) }}"
-                                        class="rounded bg-sky-50 px-2 py-1 text-2xs font-medium text-sky-700 border border-sky-200 hover:bg-sky-100">
-                                        Edit
+        {{-- Tabel Komoditas --}}
+        <section class="flex flex-col gap-3 rounded-2xl bg-surface shadow-card overflow-hidden">
+            <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 px-6 py-4">
+                <div class="min-w-0">
+                    <h2 class="gpa-section-title text-ink">Daftar Komoditas</h2>
+                    <p class="mt-1 text-xs text-ink-body">Kelola komoditas yang tampil di katalog klien</p>
+                </div>
+            </header>
+
+            <div class="gpa-scroll-x overflow-x-auto">
+                <table class="w-full border-collapse">
+                    <thead>
+                        <tr class="border-b border-line-board">
+                            <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">No</th>
+                            <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Foto</th>
+                            <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">SKU</th>
+                            <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Nama Komoditas</th>
+                            <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Grade</th>
+                            <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Satuan</th>
+                            <th scope="col" class="px-3 py-3 text-right text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Harga Dasar</th>
+                            <th scope="col" class="px-3 py-3 text-right text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Min. Order</th>
+                            <th scope="col" class="px-3 py-3 text-right text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Stok Riil</th>
+                            <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Status</th>
+                            <th scope="col" class="px-3 py-3 text-right text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-line-hair">
+                        @forelse ($products as $idx => $prod)
+                            @php
+                                $stokTersedia = (float) $prod->harvestBatches->sum('available_quantity');
+                            @endphp
+                            <tr class="align-top transition-colors hover:bg-surface-shell/50">
+                                <td class="px-3 py-3.5">
+                                    <span class="gpa-note text-ink-body">{{ $idx + 1 }}</span>
+                                </td>
+                                <td class="px-3 py-3.5">
+                                    @if ($prod->image_url)
+                                        <img src="{{ asset($prod->image_url) }}" alt="{{ $prod->name }}" class="h-9 w-9 rounded-lg border border-line-board object-cover">
+                                    @else
+                                        <div class="h-9 w-9 rounded-lg border border-line-board bg-surface-shell flex items-center justify-center">
+                                            <x-gpa.icon name="image" class="h-4 w-4 text-ink-body" />
+                                        </div>
+                                    @endif
+                                </td>
+                                <td class="px-3 py-3.5">
+                                    <span class="font-mono text-[11px] font-semibold leading-5 text-ink">{{ $prod->sku }}</span>
+                                </td>
+                                <td class="px-3 py-3.5">
+                                    <a href="{{ route('koordinator.products.show', $prod) }}" class="text-[12px] font-semibold leading-5 text-ink hover:underline">
+                                        {{ $prod->name }}
                                     </a>
-
-                                    {{-- Form Hapus --}}
-                                    <form method="POST" action="{{ route('koordinator.products.destroy', $prod) }}" class="inline"
-                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus komoditas {{ $prod->name }}?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="rounded bg-rose-50 px-2 py-1 text-2xs font-medium text-rose-700 border border-rose-200 hover:bg-rose-100">
-                                            Hapus
-                                        </button>
-                                    </form>
-                                </div>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="11" class="px-4 py-8 text-center text-slate-400 italic">
-                                Belum ada komoditas ditemukan. Silakan klik tombol "+ Tambah Komoditas Baru".
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
+                                </td>
+                                <td class="px-3 py-3.5">
+                                    <span class="inline-block rounded bg-surface-shell px-1.5 py-0.5 font-mono text-[10px] font-semibold leading-[15px] text-ink outline outline-1 -outline-offset-1 outline-line-board">{{ $prod->grade ?? '—' }}</span>
+                                </td>
+                                <td class="px-3 py-3.5">
+                                    <span class="text-[11px] leading-4 text-ink-body">{{ $prod->unit }}</span>
+                                </td>
+                                <td class="px-3 py-3.5 text-right">
+                                    <span class="font-mono text-[11px] leading-5 text-ink">Rp {{ number_format($prod->base_price, 0, ',', '.') }}</span>
+                                </td>
+                                <td class="px-3 py-3.5 text-right">
+                                    <span class="font-mono text-[11px] leading-5 text-ink-body">{{ number_format($prod->minimum_order, 1, ',', '.') }}</span>
+                                </td>
+                                <td class="px-3 py-3.5 text-right">
+                                    <span class="font-mono text-[12px] font-semibold leading-5 text-ink">{{ number_format($stokTersedia, 1, ',', '.') }} kg</span>
+                                </td>
+                                <td class="px-3 py-3.5 text-center">
+                                    @if ($prod->is_active)
+                                        <span class="inline-block rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">AKTIF</span>
+                                    @else
+                                        <span class="inline-block rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-surface-track text-ink-body outline outline-1 -outline-offset-1 outline-line-board">NONAKTIF</span>
+                                    @endif
+                                </td>
+                                <td class="px-3 py-3.5 text-right">
+                                    <div class="flex flex-wrap items-center justify-end gap-1.5">
+                                        <a href="{{ route('koordinator.products.show', $prod) }}"
+                                            title="Lihat Detail Komoditas"
+                                            class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                                            <x-gpa.icon name="eye" class="h-3 w-3 shrink-0" />
+                                            Detail
+                                        </a>
+                                        <form method="POST" action="{{ route('koordinator.products.toggle-status', $prod) }}" class="inline">
+                                            @csrf
+                                            <button type="submit" class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                                                {{ $prod->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
+                                            </button>
+                                        </form>
+                                        <a href="{{ route('koordinator.products.edit', $prod) }}"
+                                            class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                                            <x-gpa.icon name="settings" class="h-3 w-3 shrink-0" />
+                                            Edit
+                                        </a>
+                                        <form method="POST" action="{{ route('koordinator.products.destroy', $prod) }}" class="inline"
+                                            onsubmit="return confirm('Apakah Anda yakin ingin menghapus komoditas {{ $prod->name }}?');">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="inline-flex items-center gap-1 rounded bg-red-50 px-2 py-1 gpa-note font-semibold text-red-700 outline outline-1 -outline-offset-1 outline-red-200 transition-colors hover:bg-red-100">
+                                                <x-gpa.icon name="trash" class="h-3 w-3 shrink-0 text-red-600" />
+                                                Hapus
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="11" class="px-3 py-10 text-center">
+                                    <div class="mx-auto flex max-w-sm flex-col items-center gap-2">
+                                        <x-gpa.icon name="grid" class="h-7 w-7 text-ink-body" />
+                                        <p class="text-sm font-semibold text-ink">Belum ada komoditas ditemukan</p>
+                                        <p class="text-xs text-ink-body">Tambahkan komoditas baru untuk mulai mengelola katalog.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
     </div>
-</div>
 @endsection

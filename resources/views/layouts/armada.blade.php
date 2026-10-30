@@ -39,7 +39,7 @@
         $navigation = $navigation ?? [
             ['key' => 'tasks', 'label' => 'Tugas', 'icon' => 'clipboard'],
             ['key' => 'dispatch', 'label' => 'Surat Jalan', 'icon' => 'file-text'],
-            ['key' => 'pod', 'label' => 'Scan PoD', 'icon' => 'qrcode'],
+            ['key' => 'pod', 'label' => 'Bukti Kirim (PoD)', 'icon' => 'qrcode'],
             ['key' => 'fleet', 'label' => 'Armada', 'icon' => 'truck'],
             ['key' => 'profile', 'label' => 'Profil', 'icon' => 'user'],
         ];

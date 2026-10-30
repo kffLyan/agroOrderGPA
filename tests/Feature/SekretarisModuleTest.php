@@ -940,4 +940,178 @@ class SekretarisModuleTest extends TestCase
         $this->assertStringContainsString('Diterima Rp 200.000', $payment->verification_note);
         $this->assertStringContainsString('Kembalian Rp 50.000', $payment->verification_note);
     }
+
+    public function test_manual_order_rejects_duplicate_items(): void
+    {
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $product = Product::create([
+            'sku'           => 'GPA-VGT-DUP01',
+            'name'          => 'Kailan Organik',
+            'unit'          => 'kg',
+            'grade'         => 'Grade A',
+            'base_price'    => 12000,
+            'minimum_order' => 5,
+            'is_active'     => true,
+        ]);
+
+        $payload = [
+            'delivery_address'   => 'Jl. Test No. 1',
+            'target_delivery_date' => now()->addDay()->toDateString(),
+            'order_source'       => 'WHATSAPP_ADMIN',
+            'payment_method'     => 'cash',
+            'items'              => [
+                ['product_id' => $product->id, 'quantity' => 5, 'price' => 12000],
+                ['product_id' => $product->id, 'quantity' => 10, 'price' => 12000],
+            ],
+        ];
+
+        $response = $this->actingAs($sekretaris)->post('/sekretaris/pesanan-manual', $payload);
+        $response->assertSessionHasErrors(['items.0.product_id', 'items.1.product_id']);
+    }
+
+    public function test_manual_order_rejects_when_stock_insufficient(): void
+    {
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $product = Product::create([
+            'sku'           => 'GPA-VGT-STK01',
+            'name'          => 'Bayam Jepang',
+            'unit'          => 'kg',
+            'grade'         => 'Grade A',
+            'base_price'    => 10000,
+            'minimum_order' => 5,
+            'is_active'     => true,
+        ]);
+
+        \App\Models\HarvestBatch::create([
+            'product_id'         => $product->id,
+            'source_type'        => 'PETANI_BINAAN',
+            'supplier_name'      => 'Petani Ciwidey',
+            'batch_date'         => now()->toDateString(),
+            'initial_quantity'   => 20,
+            'available_quantity' => 20,
+            'inputted_by'        => $sekretaris->id,
+        ]);
+
+        $payload = [
+            'delivery_address'   => 'Jl. Test No. 2',
+            'target_delivery_date' => now()->addDay()->toDateString(),
+            'order_source'       => 'WHATSAPP_ADMIN',
+            'payment_method'     => 'cash',
+            'items'              => [
+                ['product_id' => $product->id, 'quantity' => 50, 'price' => 10000],
+            ],
+        ];
+
+        $response = $this->actingAs($sekretaris)->post('/sekretaris/pesanan-manual', $payload);
+        $response->assertSessionHasErrors(['items']);
+    }
+
+    public function test_manual_order_rejects_when_master_freeze_active(): void
+    {
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $product = Product::create([
+            'sku'           => 'GPA-VGT-FRZ01',
+            'name'          => 'Selada Keriting',
+            'unit'          => 'kg',
+            'grade'         => 'Grade A',
+            'base_price'    => 15000,
+            'minimum_order' => 5,
+            'is_active'     => true,
+        ]);
+
+        $gov = app(\App\Services\GovernanceService::class);
+        $gov->toggleMasterFreeze(true, 'Uji Coba Darurat', 'Direktur Utama');
+
+        $payload = [
+            'delivery_address'   => 'Jl. Test No. 3',
+            'target_delivery_date' => now()->addDay()->toDateString(),
+            'order_source'       => 'WHATSAPP_ADMIN',
+            'payment_method'     => 'cash',
+            'items'              => [
+                ['product_id' => $product->id, 'quantity' => 5, 'price' => 15000],
+            ],
+        ];
+
+        $response = $this->actingAs($sekretaris)->post('/sekretaris/pesanan-manual', $payload);
+        $response->assertSessionHasErrors(['general']);
+
+        // Kembalikan ke normal
+        $gov->toggleMasterFreeze(false, null, 'Direktur Utama');
+    }
+
+    public function test_manual_order_rejects_when_client_is_frozen(): void
+    {
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $klien = User::factory()->create([
+            'role'      => 'KLIEN',
+            'is_active' => true,
+        ]);
+
+        $product = Product::create([
+            'sku'           => 'GPA-VGT-CLF01',
+            'name'          => 'Pakcoy Super',
+            'unit'          => 'kg',
+            'grade'         => 'Grade A',
+            'base_price'    => 14000,
+            'minimum_order' => 5,
+            'is_active'     => true,
+        ]);
+
+        $gov = app(\App\Services\GovernanceService::class);
+        $gov->toggleClientFreeze($klien->id, true);
+
+        $payload = [
+            'client_id'          => $klien->id,
+            'delivery_address'   => 'Jl. Test No. 4',
+            'target_delivery_date' => now()->addDay()->toDateString(),
+            'order_source'       => 'WHATSAPP_ADMIN',
+            'payment_method'     => 'cash',
+            'items'              => [
+                ['product_id' => $product->id, 'quantity' => 5, 'price' => 14000],
+            ],
+        ];
+
+        $response = $this->actingAs($sekretaris)->post('/sekretaris/pesanan-manual', $payload);
+        $response->assertSessionHasErrors(['client_id']);
+
+        // Kembalikan ke normal
+        $gov->toggleClientFreeze($klien->id, false);
+    }
+
+    public function test_invoice_number_generator_produces_unique_sequential_numbers(): void
+    {
+        $orderService = app(\App\Services\OrderService::class);
+        $num1 = $orderService->generateInvoiceNumber();
+        $this->assertStringStartsWith('INV-GPA-' . date('Ym') . '-', $num1);
+
+        Invoice::create([
+            'invoice_number'  => $num1,
+            'user_id'         => User::factory()->create(['role' => 'KLIEN'])->id,
+            'period_start'    => now()->toDateString(),
+            'period_end'      => now()->toDateString(),
+            'subtotal_amount' => 100000,
+            'grand_total'     => 100000,
+            'due_date'        => now()->addDays(14)->toDateString(),
+            'status'          => 'UNPAID',
+        ]);
+
+        $num2 = $orderService->generateInvoiceNumber();
+        $this->assertNotEquals($num1, $num2);
+    }
 }

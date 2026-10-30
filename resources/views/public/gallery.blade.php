@@ -13,28 +13,25 @@
 
         <div class="relative mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 md:py-16">
             <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_448px] lg:items-start">
-                <div class="flex flex-col items-start gap-6">
-                    <span class="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-brand-deep px-3 py-1 font-mono text-[11px] font-bold text-accent">
-                        FIELD &amp; COLD-CHAIN DOCUMENTATION
-                    </span>
+                <div class="flex flex-col items-center gap-6 text-center md:items-start md:text-left">
 
-                    <h1 class="text-3xl font-extrabold leading-tight sm:text-4xl md:text-5xl md:leading-[1.05]">
+                    <h1 class="text-center text-4xl font-extrabold leading-tight sm:text-4xl md:text-left md:text-5xl md:leading-[1.05]">
                         <span class="block text-white">Arsip Dokumentasi Operasional</span>
                         <span class="block text-accent underline underline-offset-4">AgroOrder GPA</span>
                     </h1>
 
-                    <p class="max-w-3xl text-base leading-relaxed text-white/90 md:text-lg">
+                    <p class="mx-auto max-w-3xl text-center text-base leading-relaxed text-white/90 md:mx-0 md:text-left md:text-lg">
                         Rekaman visual aktivitas hulu hingga hilir: jadwal petik kebun binaan di Ciwidey, penanganan pra-pendinginan, audit kontrol mutu, dan pengiriman armada reefer bersuhu terjaga.
                     </p>
 
-                    <div class="flex flex-wrap items-center gap-3 pt-2">
-                        <x-gpa.btn href="#arsip" variant="accent" size="lg">
+                    <div class="flex w-full max-w-sm flex-col gap-3 pt-2">
+                        <x-gpa.btn href="#arsip" variant="accent" size="xl" block>
                             <x-slot:icon>
                                 <x-gpa.icon name="search" />
                             </x-slot:icon>
                             Jelajahi Arsip Foto
                         </x-gpa.btn>
-                        <x-gpa.btn :href="route('public.catalog')" variant="inverse" size="lg">
+                        <x-gpa.btn :href="route('public.catalog')" variant="inverse" size="xl" block>
                             <x-slot:icon>
                                 <x-gpa.icon name="navigation" />
                             </x-slot:icon>
@@ -119,7 +116,7 @@
 
                 <div class="gpa-panel p-4 shadow-sub">
                     <div class="flex items-center justify-between gap-2">
-                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Tingkat Ketepatan SLA</dt>
+                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Tingkat Ketepatan Pengiriman</dt>
                         <x-gpa.icon name="badge-check" class="h-3.5 w-3.5 shrink-0 text-success" />
                     </div>
                     <dd class="mt-2 text-2xl font-extrabold leading-tight text-brand-strong">99.8%</dd>
@@ -130,15 +127,20 @@
     </section>
 
     {{-- ARSIP DOKUMENTASI & FILTER ALPINE --}}
-    <section id="arsip" class="scroll-mt-36 bg-surface-muted" x-data="{
+    <section id="arsip" class="scroll-mt-36 bg-surface" x-data="{
         activeTab: 'semua',
         searchQuery: '',
+        activeItem: null,
+        init() {
+            this.$watch('activeTab', () => { this.activeItem = null; });
+            this.$watch('searchQuery', () => { this.activeItem = null; });
+        },
         matches(category, tags) {
             const matchesCat = this.activeTab === 'semua' || this.activeTab === category;
             const matchesSearch = this.searchQuery.trim() === '' || tags.toLowerCase().includes(this.searchQuery.toLowerCase());
             return matchesCat && matchesSearch;
         }
-    }">
+    }" x-on:click.self="activeItem = null" x-on:keydown.escape.window="activeItem = null">
         <div class="border-b border-line-hair bg-surface">
             <div class="mx-auto flex w-full max-w-6xl flex-col gap-3 px-4 py-3.5 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
                 <div class="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0">
@@ -188,118 +190,211 @@
                 <span class="gpa-mono-xs text-ink-subtle">AGROORDER GPA ARCHIVES</span>
             </div>
 
-            <ul class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div class="mt-6 grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3">
                 {{-- CARD 1: KEBUN --}}
-                <li class="flex flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub"
-                    x-show="matches('kebun', 'kebun panen selada hidroponik ciwidey')" x-transition.opacity>
-                    <div class="relative h-48 overflow-hidden rounded-xl border border-line-hair bg-surface-muted">
-                        <img src="{{ asset('lettuce.jpg') }}" alt="Panen Selada Hidroponik Ciwidey" class="h-full w-full object-cover" />
-                        <span class="absolute bottom-2 left-2 rounded-md bg-brand-deep/80 px-2 py-0.5 gpa-mono-xs text-accent">
-                            Ciwidey · 1.300 mdpl
-                        </span>
+                <article class="relative overflow-hidden cursor-pointer md:group"
+                    x-show="matches('kebun', 'kebun panen selada hidroponik ciwidey')" x-transition.opacity
+                    @click.stop="activeItem = activeItem === 1 ? null : 1">
+                    <div class="relative aspect-[4/3] w-full overflow-hidden">
+                        <img src="{{ asset('lettuce.jpg') }}" alt="Panen Selada Hidroponik Ciwidey" class="h-full w-full object-cover transition duration-500 md:group-hover:scale-105" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+                        <div class="absolute inset-x-0 bottom-0 p-4 transition-all duration-300"
+                            :class="activeItem === 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:group-hover:opacity-100 md:group-hover:translate-y-0'">
+                            <div class="mb-2 flex items-center justify-between gap-2">
+                                <span class="rounded bg-brand-deep/90 px-2 py-0.5 gpa-mono-xs text-accent">Ciwidey · 1.300 mdpl</span>
+                                <span class="rounded-full bg-success-soft px-2 py-0.5 gpa-micro-bold text-success-deep">Kebun</span>
+                            </div>
+                            <h3 class="text-sm font-bold leading-snug text-white sm:text-base">Panen Selada &amp; Daun Salad di Lahan Ciwidey</h3>
+                            <p class="mt-1 text-xs leading-relaxed text-white/90">
+                                Pemetikan selada keriting dan romaine dilakukan pada pagi hari sebelum sinar matahari terik untuk menjaga kadar air sel tanaman tetap maksimal.
+                            </p>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-between gap-3">
-                        <span class="gpa-mono-xs text-ink-subtle">SOP PANEN SUBUH · 05:00 WIB</span>
-                        <span class="rounded-full bg-success-soft px-2 py-0.5 gpa-micro-bold text-success-deep">Kebun</span>
-                    </div>
-                    <h3 class="text-base font-bold leading-snug text-brand-strong">Panen Selada &amp; Daun Salad di Lahan Ciwidey</h3>
-                    <p class="text-xs leading-relaxed text-ink-body">
-                        Pemetikan selada keriting dan romaine dilakukan pada pagi hari sebelum sinar matahari terik untuk menjaga kadar air sel tanaman tetap maksimal.
-                    </p>
-                </li>
+                </article>
 
                 {{-- CARD 2: KEBUN --}}
-                <li class="flex flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub"
-                    x-show="matches('kebun', 'brokoli sayur brasika lembang kebun')" x-transition.opacity>
-                    <div class="relative h-48 overflow-hidden rounded-xl border border-line-hair bg-surface-muted">
-                        <img src="{{ asset('broccoli.jpg') }}" alt="Kebun Brokoli Lembang" class="h-full w-full object-cover" />
-                        <span class="absolute bottom-2 left-2 rounded-md bg-brand-deep/80 px-2 py-0.5 gpa-mono-xs text-accent">
-                            Lembang · 1.350 mdpl
-                        </span>
+                <article class="relative overflow-hidden cursor-pointer md:group"
+                    x-show="matches('kebun', 'brokoli sayur brasika lembang kebun')" x-transition.opacity
+                    @click.stop="activeItem = activeItem === 2 ? null : 2">
+                    <div class="relative aspect-[4/3] w-full overflow-hidden">
+                        <img src="{{ asset('broccoli.jpg') }}" alt="Kebun Brokoli Lembang" class="h-full w-full object-cover transition duration-500 md:group-hover:scale-105" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+                        <div class="absolute inset-x-0 bottom-0 p-4 transition-all duration-300"
+                            :class="activeItem === 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:group-hover:opacity-100 md:group-hover:translate-y-0'">
+                            <div class="mb-2 flex items-center justify-between gap-2">
+                                <span class="rounded bg-brand-deep/90 px-2 py-0.5 gpa-mono-xs text-accent">Lembang · 1.350 mdpl</span>
+                                <span class="rounded-full bg-success-soft px-2 py-0.5 gpa-micro-bold text-success-deep">Kebun</span>
+                            </div>
+                            <h3 class="text-sm font-bold leading-snug text-white sm:text-base">Sentra Brokoli &amp; Brasika Mitra Lembang</h3>
+                            <p class="mt-1 text-xs leading-relaxed text-white/90">
+                                Kelompok tani binaan menerapkan Good Agricultural Practices (GAP) dengan pengawasan jadwal tanam agar masa panen tidak saling tumpang tindih.
+                            </p>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-between gap-3">
-                        <span class="gpa-mono-xs text-ink-subtle">KULTIVASI GAP · BEBAS RESIDU</span>
-                        <span class="rounded-full bg-success-soft px-2 py-0.5 gpa-micro-bold text-success-deep">Kebun</span>
-                    </div>
-                    <h3 class="text-base font-bold leading-snug text-brand-strong">Sentra Brokoli &amp; Brasika Mitra Lembang</h3>
-                    <p class="text-xs leading-relaxed text-ink-body">
-                        Kelompok tani binaan menerapkan Good Agricultural Practices (GAP) dengan pengawasan jadwal tanam agar masa panen tidak saling tumpang tindih.
-                    </p>
-                </li>
+                </article>
 
                 {{-- CARD 3: KEBUN / BUAH --}}
-                <li class="flex flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub"
-                    x-show="matches('kebun', 'tomat beef greenhouse ciwidey')" x-transition.opacity>
-                    <div class="relative h-48 overflow-hidden rounded-xl border border-line-hair bg-surface-muted">
-                        <img src="{{ asset('tomato.jpg') }}" alt="Tomat Beef Greenhouse" class="h-full w-full object-cover" />
-                        <span class="absolute bottom-2 left-2 rounded-md bg-brand-deep/80 px-2 py-0.5 gpa-mono-xs text-accent">
-                            Greenhouse · Ciwidey
-                        </span>
+                <article class="relative overflow-hidden cursor-pointer md:group"
+                    x-show="matches('kebun', 'tomat beef greenhouse ciwidey')" x-transition.opacity
+                    @click.stop="activeItem = activeItem === 3 ? null : 3">
+                    <div class="relative aspect-[4/3] w-full overflow-hidden">
+                        <img src="{{ asset('tomato.jpg') }}" alt="Tomat Beef Greenhouse" class="h-full w-full object-cover transition duration-500 md:group-hover:scale-105" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+                        <div class="absolute inset-x-0 bottom-0 p-4 transition-all duration-300"
+                            :class="activeItem === 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:group-hover:opacity-100 md:group-hover:translate-y-0'">
+                            <div class="mb-2 flex items-center justify-between gap-2">
+                                <span class="rounded bg-brand-deep/90 px-2 py-0.5 gpa-mono-xs text-accent">Greenhouse · Ciwidey</span>
+                                <span class="rounded-full bg-success-soft px-2 py-0.5 gpa-micro-bold text-success-deep">Kebun</span>
+                            </div>
+                            <h3 class="text-sm font-bold leading-snug text-white sm:text-base">Kultivasi Tomat Beef Berkualitas Restoran</h3>
+                            <p class="mt-1 text-xs leading-relaxed text-white/90">
+                                Tomat dipetik saat tingkat kematangan 80% dengan ketebalan daging buah terjamin agar tidak pecah selama distribusi logistik ke jaringan burger dan hotel.
+                            </p>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-between gap-3">
-                        <span class="gpa-mono-xs text-ink-subtle">SORTASI DAGING BUAH &amp; BRIX</span>
-                        <span class="rounded-full bg-success-soft px-2 py-0.5 gpa-micro-bold text-success-deep">Kebun</span>
-                    </div>
-                    <h3 class="text-base font-bold leading-snug text-brand-strong">Kultivasi Tomat Beef Berkualitas Restoran</h3>
-                    <p class="text-xs leading-relaxed text-ink-body">
-                        Tomat dipetik saat tingkat kematangan 80% dengan ketebalan daging buah terjamin agar tidak pecah selama distribusi logistik ke jaringan burger dan hotel.
-                    </p>
-                </li>
+                </article>
 
                 {{-- CARD 4: GUDANG --}}
-                <li class="flex flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub"
-                    x-show="matches('gudang', 'gudang pre-cooling cold storage hub ciwidey')" x-transition.opacity>
-                    <div class="relative flex h-48 flex-col items-center justify-center rounded-xl border border-line-hair bg-[linear-gradient(171deg,#F6F8F2_0%,#EAF2D7_100%)] p-4 text-center">
-                        <x-gpa.icon name="building" class="h-10 w-10 text-success" />
-                        <span class="mt-2 font-mono text-sm font-bold text-brand-strong">Hub Konsolidasi Ciwidey</span>
-                        <span class="font-mono text-xs text-success">Kapasitas 15 Ton / Hari</span>
+                <article class="relative overflow-hidden cursor-pointer md:group"
+                    x-show="matches('gudang', 'gudang pre-cooling cold storage hub ciwidey')" x-transition.opacity
+                    @click.stop="activeItem = activeItem === 4 ? null : 4">
+                    <div class="relative aspect-[4/3] w-full overflow-hidden bg-[linear-gradient(171deg,#F6F8F2_0%,#EAF2D7_100%)]">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+                            <x-gpa.icon name="building" class="h-10 w-10 text-success" />
+                            <span class="mt-2 font-mono text-sm font-bold text-brand-strong">Hub Konsolidasi Ciwidey</span>
+                            <span class="font-mono text-xs text-success">Kapasitas 15 Ton / Hari</span>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                        <div class="absolute inset-x-0 bottom-0 p-4 transition-all duration-300"
+                            :class="activeItem === 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:group-hover:opacity-100 md:group-hover:translate-y-0'">
+                            <div class="mb-2 flex items-center justify-between gap-2">
+                                <span class="rounded bg-brand-deep/90 px-2 py-0.5 gpa-mono-xs text-accent">PRE-COOLING BLAST CHAMBER</span>
+                                <span class="rounded-full bg-brand-strong/90 px-2 py-0.5 gpa-micro-bold text-accent">Gudang</span>
+                            </div>
+                            <h3 class="text-sm font-bold leading-snug text-white sm:text-base">Ruang Pra-Pendinginan Cepat &amp; Buffer Cold Storage</h3>
+                            <p class="mt-1 text-xs leading-relaxed text-white/90">
+                                Menurunkan panas lapang dari daun sayur dalam 90 menit setelah tiba dari ladang guna menghentikan degradasi nutrisi dan layu daun.
+                            </p>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-between gap-3">
-                        <span class="gpa-mono-xs text-ink-subtle">PRE-COOLING BLAST CHAMBER</span>
-                        <span class="rounded-full bg-brand-strong/10 px-2 py-0.5 gpa-micro-bold text-brand-strong">Gudang</span>
-                    </div>
-                    <h3 class="text-base font-bold leading-snug text-brand-strong">Ruang Pra-Pendinginan Cepat &amp; Buffer Cold Storage</h3>
-                    <p class="text-xs leading-relaxed text-ink-body">
-                        Menurunkan panas lapang dari daun sayur dalam 90 menit setelah tiba dari ladang guna menghentikan degradasi nutrisi dan layu daun.
-                    </p>
-                </li>
+                </article>
 
                 {{-- CARD 5: MUTU --}}
-                <li class="flex flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub"
-                    x-show="matches('mutu', 'qc tera timbangan inspeksi mutu metrologi')" x-transition.opacity>
-                    <div class="relative flex h-48 flex-col items-center justify-center rounded-xl border border-line-hair bg-[linear-gradient(171deg,#F6F8F2_0%,#EAF2D7_100%)] p-4 text-center">
-                        <x-gpa.icon name="gauge" class="h-10 w-10 text-success" />
-                        <span class="mt-2 font-mono text-sm font-bold text-brand-strong">Stasiun Tera &amp; QC Mutu</span>
-                        <span class="font-mono text-xs text-success">Tera Sah Bersertifikat</span>
+                <article class="relative overflow-hidden cursor-pointer md:group"
+                    x-show="matches('mutu', 'qc tera timbangan inspeksi mutu metrologi')" x-transition.opacity
+                    @click.stop="activeItem = activeItem === 5 ? null : 5">
+                    <div class="relative aspect-[4/3] w-full overflow-hidden bg-[linear-gradient(171deg,#F6F8F2_0%,#EAF2D7_100%)]">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+                            <x-gpa.icon name="gauge" class="h-10 w-10 text-success" />
+                            <span class="mt-2 font-mono text-sm font-bold text-brand-strong">Stasiun Tera &amp; QC Mutu</span>
+                            <span class="font-mono text-xs text-success">Tera Sah Bersertifikat</span>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                        <div class="absolute inset-x-0 bottom-0 p-4 transition-all duration-300"
+                            :class="activeItem === 5 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:group-hover:opacity-100 md:group-hover:translate-y-0'">
+                            <div class="mb-2 flex items-center justify-between gap-2">
+                                <span class="rounded bg-brand-deep/90 px-2 py-0.5 gpa-mono-xs text-accent">TOLERANSI CACAT &le; 2%</span>
+                                <span class="rounded-full bg-accent/90 px-2 py-0.5 gpa-micro-bold text-brand-strong">Mutu QC</span>
+                            </div>
+                            <h3 class="text-sm font-bold leading-snug text-white sm:text-base">Inspeksi Grade A &amp; Penimbangan Digital Legal</h3>
+                            <p class="mt-1 text-xs leading-relaxed text-white/90">
+                                Setiap krat melalui uji organoleptik, pembersihan sisa akar, dan penimbangan dengan alat tera resmi yang disegel oleh dinas metrologi.
+                            </p>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-between gap-3">
-                        <span class="gpa-mono-xs text-ink-subtle">TOLERANSI CACAT &le; 2%</span>
-                        <span class="rounded-full bg-accent/20 px-2 py-0.5 gpa-micro-bold text-brand-strong">Mutu QC</span>
-                    </div>
-                    <h3 class="text-base font-bold leading-snug text-brand-strong">Inspeksi Grade A &amp; Penimbangan Digital Legal</h3>
-                    <p class="text-xs leading-relaxed text-ink-body">
-                        Setiap krat melalui uji organoleptik, pembersihan sisa akar, dan penimbangan dengan alat tera resmi yang disegel oleh dinas metrologi.
-                    </p>
-                </li>
+                </article>
 
                 {{-- CARD 6: LOGISTIK --}}
-                <li class="flex flex-col gap-4 rounded-xl border border-line-hair bg-surface p-5 shadow-sub"
-                    x-show="matches('logistik', 'armada mobil box pendingin reefer logistik')" x-transition.opacity>
-                    <div class="relative flex h-48 flex-col items-center justify-center rounded-xl border border-line-hair bg-[linear-gradient(171deg,#F6F8F2_0%,#EAF2D7_100%)] p-4 text-center">
-                        <x-gpa.icon name="truck" class="h-10 w-10 text-success" />
-                        <span class="mt-2 font-mono text-sm font-bold text-brand-strong">Armada Reefer Box Cold-Chain</span>
-                        <span class="font-mono text-xs text-success">Suhu Kargo 2°C - 4°C Terjaga</span>
+                <article class="relative overflow-hidden cursor-pointer md:group"
+                    x-show="matches('logistik', 'armada mobil box pendingin reefer logistik')" x-transition.opacity
+                    @click.stop="activeItem = activeItem === 6 ? null : 6">
+                    <div class="relative aspect-[4/3] w-full overflow-hidden bg-[linear-gradient(171deg,#F6F8F2_0%,#EAF2D7_100%)]">
+                        <div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
+                            <x-gpa.icon name="truck" class="h-10 w-10 text-success" />
+                            <span class="mt-2 font-mono text-sm font-bold text-brand-strong">Armada Reefer Box Cold-Chain</span>
+                            <span class="font-mono text-xs text-success">Suhu Kargo 2°C - 4°C Terjaga</span>
+                        </div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                        <div class="absolute inset-x-0 bottom-0 p-4 transition-all duration-300"
+                            :class="activeItem === 6 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:group-hover:opacity-100 md:group-hover:translate-y-0'">
+                            <div class="mb-2 flex items-center justify-between gap-2">
+                                <span class="rounded bg-brand-deep/90 px-2 py-0.5 gpa-mono-xs text-accent">DISPATCH SUBUH · BANDUNG - JKT</span>
+                                <span class="rounded-full bg-success-soft px-2 py-0.5 gpa-micro-bold text-success-deep">Logistik</span>
+                            </div>
+                            <h3 class="text-sm font-bold leading-snug text-white sm:text-base">Armada Mobil Box Berpendingin &amp; IoT Tracker</h3>
+                            <p class="mt-1 text-xs leading-relaxed text-white/90">
+                                Unit armada pengangkut dilengkapi unit pendingin thermo ganda dan sensor nirkabel yang memonitor suhu kargo hingga tiba di dock kitchen pelanggan.
+                            </p>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-between gap-3">
-                        <span class="gpa-mono-xs text-ink-subtle">DISPATCH SUBUH · BANDUNG - JKT</span>
-                        <span class="rounded-full bg-success-soft px-2 py-0.5 gpa-micro-bold text-success-deep">Logistik</span>
+                </article>
+
+                {{-- CARD 7: PANEN --}}
+                <article class="relative overflow-hidden cursor-pointer md:group"
+                    x-show="matches('kebun', 'panen selada segar kebun sayuran')" x-transition.opacity
+                    @click.stop="activeItem = activeItem === 7 ? null : 7">
+                    <div class="relative aspect-[4/3] w-full overflow-hidden">
+                        <img src="{{ asset('images/activities/panen.jpg') }}" alt="Panen Selada Segar"
+                            class="h-full w-full object-cover transition duration-500 md:group-hover:scale-105" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+                        <div class="absolute inset-x-0 bottom-0 p-4 transition-all duration-300"
+                            :class="activeItem === 7 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:group-hover:opacity-100 md:group-hover:translate-y-0'">
+                            <div class="mb-2 flex items-center justify-between gap-2">
+                                <span class="rounded bg-brand-deep/90 px-2 py-0.5 gpa-mono-xs text-accent">Kebun Sayuran</span>
+                                <span class="rounded-full bg-success-soft px-2 py-0.5 gpa-micro-bold text-success-deep">Panen</span>
+                            </div>
+                            <h3 class="text-sm font-bold leading-snug text-white sm:text-base">Panen Selada Segar</h3>
+                            <p class="mt-1 text-xs leading-relaxed text-white/90">
+                                Selada segar dipilih langsung dari kebun untuk menjaga kualitas daun sebelum memasuki proses penanganan berikutnya.
+                            </p>
+                        </div>
                     </div>
-                    <h3 class="text-base font-bold leading-snug text-brand-strong">Armada Mobil Box Berpendingin &amp; IoT Tracker</h3>
-                    <p class="text-xs leading-relaxed text-ink-body">
-                        Unit armada pengangkut dilengkapi unit pendingin thermo ganda dan sensor nirkabel yang memonitor suhu kargo hingga tiba di dock kitchen pelanggan.
-                    </p>
-                </li>
-            </ul>
+                </article>
+
+                {{-- CARD 8: LOGISTIK --}}
+                <article class="relative overflow-hidden cursor-pointer md:group"
+                    x-show="matches('logistik', 'pemuatan sayuran distribusi kendaraan angkut')" x-transition.opacity
+                    @click.stop="activeItem = activeItem === 8 ? null : 8">
+                    <div class="relative aspect-[4/3] w-full overflow-hidden">
+                        <img src="{{ asset('images/activities/muatan.jpg') }}" alt="Pemuatan Sayuran untuk Distribusi"
+                            class="h-full w-full object-cover transition duration-500 md:group-hover:scale-105" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+                        <div class="absolute inset-x-0 bottom-0 p-4 transition-all duration-300"
+                            :class="activeItem === 8 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:group-hover:opacity-100 md:group-hover:translate-y-0'">
+                            <div class="mb-2 flex items-center justify-between gap-2">
+                                <span class="rounded bg-brand-deep/90 px-2 py-0.5 gpa-mono-xs text-accent">Persiapan Distribusi</span>
+                                <span class="rounded-full bg-success-soft px-2 py-0.5 gpa-micro-bold text-success-deep">Logistik</span>
+                            </div>
+                            <h3 class="text-sm font-bold leading-snug text-white sm:text-base">Pemuatan Sayuran untuk Distribusi</h3>
+                            <p class="mt-1 text-xs leading-relaxed text-white/90">
+                                Sayuran yang sudah dikemas ditata pada kendaraan angkut sebagai bagian dari proses pengiriman kepada pelanggan.
+                            </p>
+                        </div>
+                    </div>
+                </article>
+
+                {{-- CARD 9: INSPEKSI --}}
+                <article class="relative overflow-hidden cursor-pointer md:group"
+                    x-show="matches('mutu', 'inspeksi tanaman area budidaya pemeriksaan')" x-transition.opacity
+                    @click.stop="activeItem = activeItem === 9 ? null : 9">
+                    <div class="relative aspect-[4/3] w-full overflow-hidden">
+                        <img src="{{ asset('images/activities/inspeksi.jpeg') }}" alt="Inspeksi Tanaman di Area Budidaya"
+                            class="h-full w-full object-cover transition duration-500 md:group-hover:scale-105" />
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+                        <div class="absolute inset-x-0 bottom-0 p-4 transition-all duration-300"
+                            :class="activeItem === 9 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:group-hover:opacity-100 md:group-hover:translate-y-0'">
+                            <div class="mb-2 flex items-center justify-between gap-2">
+                                <span class="rounded bg-brand-deep/90 px-2 py-0.5 gpa-mono-xs text-accent">Area Budidaya</span>
+                                <span class="rounded-full bg-accent/90 px-2 py-0.5 gpa-micro-bold text-brand-strong">Inspeksi</span>
+                            </div>
+                            <h3 class="text-sm font-bold leading-snug text-white sm:text-base">Inspeksi Tanaman di Area Budidaya</h3>
+                            <p class="mt-1 text-xs leading-relaxed text-white/90">
+                                Petugas memeriksa tanaman dan mencatat hasil pengamatan sebagai bagian dari pemantauan proses budidaya.
+                            </p>
+                        </div>
+                    </div>
+                </article>
+            </div>
         </div>
     </section>
 
@@ -308,25 +403,21 @@
         <div class="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 md:py-16">
             <div class="relative overflow-hidden rounded-3xl border-2 border-brand-strong bg-brand p-8 text-white shadow-pop md:p-12">
                 <div class="relative mx-auto max-w-3xl space-y-4 text-center">
-                    <h2 class="text-2xl font-extrabold leading-tight md:text-3xl">Tertarik Mengunjungi Sentra Produksi Kami?</h2>
+                    <h2 class="text-center text-2xl font-extrabold leading-tight md:text-3xl">Tertarik Mengunjungi Sentra Produksi Kami?</h2>
                     <p class="text-sm leading-relaxed text-white/90 md:text-base">
                         Klien B2B dan calon mitra korporat dapat menjadwalkan kunjungan lapangan (farm visit) dan audit hub konsolidasi bersama tim agraria AgroOrder GPA.
                     </p>
                 </div>
 
-                <div class="relative mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-white/10 pt-6">
-                    <x-gpa.btn :href="route('public.kontak')" variant="accent" size="lg">
-                        <x-slot:icon>
-                            <x-gpa.icon name="navigation" />
-                        </x-slot:icon>
-                        Jadwalkan Kunjungan / Hubungi Kami
-                    </x-gpa.btn>
-                    <x-gpa.btn :href="route('register')" variant="inverse" size="lg">
-                        <x-slot:icon>
-                            <x-gpa.icon name="clipboard" />
-                        </x-slot:icon>
-                        Daftar Klien Kontrak
-                    </x-gpa.btn>
+                <div class="relative mt-8 flex flex-col items-center gap-3 border-t border-white/10 pt-6">
+                    <div class="flex w-full max-w-sm flex-col gap-3">
+                        <x-gpa.btn :href="route('public.kontak')" variant="accent" size="xl" block>
+                            Hubungi Kami
+                        </x-gpa.btn>
+                        <x-gpa.btn :href="route('register')" variant="inverse" size="xl" block>
+                            Daftar Klien Kontrak
+                        </x-gpa.btn>
+                    </div>
                 </div>
             </div>
         </div>

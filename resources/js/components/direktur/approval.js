@@ -69,7 +69,7 @@ export default function directorApproval(rows = [], labels = {}) {
         },
 
         visibleLabel() {
-            return `Menampilkan ${this.visibleCount()} dari ${this.totalRows} Pengajuan Pending`;
+            return `Menampilkan ${this.visibleCount()} dari ${this.totalRows} Menunggu Persetujuan`;
         },
 
         filterClass(key) {

@@ -32,7 +32,7 @@
             ['label' => 'Verifikasi Pesanan', 'icon' => 'shield', 'href' => route('sekretaris.verification'), 'active' => request()->routeIs('sekretaris.verification*')],
             ['label' => 'Stok & Inventori', 'icon' => 'package', 'href' => route('sekretaris.inventory'), 'active' => request()->routeIs('sekretaris.inventory*')],
             ['label' => 'Surat Jalan & Armada', 'icon' => 'truck', 'href' => route('sekretaris.dispatch'), 'active' => request()->routeIs('sekretaris.dispatch*')],
-            ['label' => 'Monitoring PoD Armada', 'icon' => 'check-circle', 'href' => route('sekretaris.pod.index'), 'active' => request()->routeIs('sekretaris.pod*')],
+            ['label' => 'Monitoring Bukti Kirim (PoD)', 'icon' => 'check-circle', 'href' => route('sekretaris.pod.index'), 'active' => request()->routeIs('sekretaris.pod*')],
             ['label' => 'Faktur & Tagihan', 'icon' => 'invoice', 'href' => route('sekretaris.invoices'), 'active' => request()->routeIs('sekretaris.invoices*')],
             ['label' => 'Verifikasi Pembayaran', 'icon' => 'banknote', 'href' => route('sekretaris.payments'), 'active' => request()->routeIs('sekretaris.payments*')],
             ['label' => 'Rekap Laporan', 'icon' => 'chart', 'href' => route('sekretaris.reports'), 'active' => request()->routeIs('sekretaris.reports*')],

@@ -12,7 +12,7 @@
                     </div>
 
                     <p class="max-w-md text-sm leading-relaxed text-white/90">
-                        Mitra rantai pasok hortikultura terstandarisasi untuk Horeka, Katering Korporat, dan Ritel Modern dengan standar zero-phantom weight, metrologi legal, dan logistik subuh.
+                        Mitra rantai pasok hortikultura terstandarisasi untuk Horeka, Katering Korporat, dan Ritel Modern dengan standar jaminan berat riil anti-susut, metrologi legal, dan logistik subuh.
                     </p>
 
                     <dl class="space-y-1 pt-2 gpa-mono-xs">

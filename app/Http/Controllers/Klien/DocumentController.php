@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Klien;
 
 use App\Http\Controllers\Controller;
+use App\Models\Contract;
 use App\Models\Invoice;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,11 +20,33 @@ class DocumentController extends Controller
         $user = Auth::guard('web')->user();
 
         $rawInvoices = Invoice::where('user_id', $userId)
-            ->with(['orders.orderItems', 'payments'])
+            ->with(['orders.orderItems.product', 'payments'])
             ->orderBy('due_date', 'desc')
             ->get();
 
-        return view('klien.documents', compact('rawInvoices', 'user'));
+        // Hitung total metrik tagihan di controller sesuai standar arsitektur MVC
+        $unpaidAmount = (float) $rawInvoices->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])->sum('grand_total');
+        $settledAmount = (float) $rawInvoices->where('status', 'PAID')->sum('grand_total');
+
+        $activeContracts = Contract::where('user_id', $userId)
+            ->where('status', 'ACTIVE')
+            ->get();
+        $creditLimit = (float) $activeContracts->sum(function ($c) {
+            return (float) (($c->fixed_price_per_kg ?: 0) * ($c->committed_volume_per_cycle ?: 0) * 2);
+        });
+        if ($creditLimit <= 0) {
+            $creditLimit = 150000000.0;
+        }
+
+        $creditLimitRemaining = max(0, $creditLimit - $unpaidAmount);
+
+        return view('klien.documents', compact(
+            'rawInvoices',
+            'user',
+            'unpaidAmount',
+            'settledAmount',
+            'creditLimitRemaining'
+        ));
     }
 
     /**

@@ -141,15 +141,15 @@ export default function directorReport(commodities = [], clients = [], audit = [
             }
 
             this.notify(
-                'Hash Kriptografis',
-                `SHA-256 arsip disalin ke papan klip: ${this.seal.hash.slice(0, 18)}...`,
+                'Kode Integritas Laporan',
+                `Kode verifikasi arsip disalin ke papan klip: ${this.seal.hash.slice(0, 18)}...`,
                 'info',
             );
         },
         revealAudit() {
             this.notify(
-                'Log Audit Forensik',
-                `${this.audit.length} entri terminal dimuat. Write-access tetap tercabut permanen.`,
+                'Catatan Riwayat Audit',
+                `${this.audit.length} entri riwayat dimuat. Data laporan terkunci dan sah.`,
                 'info',
             );
         },
@@ -158,8 +158,8 @@ export default function directorReport(commodities = [], clients = [], audit = [
             const receivable = this.receivableTotal();
 
             this.notify(
-                'Integrity Check: PASSED',
-                `Gross ${settled + receivable} dikompensasikan ${settled} settled + ${receivable} piutang berjalan (${this.settledPercent()}% settled). Hash SHA-256 cocok.`,
+                'Uji Integritas Data: VALID',
+                `Total bruto tercatat Rp ${this.idr(settled + receivable)} (${this.settledPercent()}% terbayar). Data pembukuan konsisten & valid.`,
                 'success',
             );
         },

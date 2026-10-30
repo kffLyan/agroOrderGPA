@@ -119,7 +119,7 @@
             <article class="relative flex h-full flex-col justify-between overflow-hidden rounded-2xl p-6 bg-surface shadow-card">
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center justify-between gap-2">
-                        <h2 class="gpa-micro-bold text-success-deep">TINGKAT KETEPATAN (SLA)</h2>
+                        <h2 class="gpa-micro-bold text-success-deep">TINGKAT KETEPATAN WAKTU</h2>
                         <x-gpa.icon name="check-circle" class="h-4 w-4 shrink-0 text-success-deep" />
                     </div>
                     <p class="gpa-figure text-[30px] leading-9 text-ink">
@@ -128,9 +128,9 @@
                     </p>
                     <div class="flex flex-wrap items-center gap-1.5">
                         <span class="rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">
-                            SLA TERPENUHI
+                            TARGET TEPAT WAKTU
                         </span>
-                        <span class="gpa-meta-lg text-ink-body">Zero-Defect Armada &bull; Retur Lapangan {{ $returnCount > 0 ? '0.8%' : '0.0%' }}</span>
+                        <span class="gpa-meta-lg text-ink-body">Armada Prima &bull; Retur Lapangan {{ $returnCount > 0 ? '0.8%' : '0.0%' }}</span>
                     </div>
                 </div>
                 <div class="pt-4">
@@ -226,7 +226,7 @@
 
                 <footer>
                     <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-board pt-4">
-                        <p class="gpa-note font-bold text-ink">SUMBER DATA: DATABASE RIIL KOPERASI GPA</p>
+                        <p class="gpa-note font-bold text-ink">SUMBER DATA: SISTEM OPERASIONAL KOPERASI GPA</p>
                     </div>
                 </footer>
             </div>

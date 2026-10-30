@@ -112,5 +112,43 @@ class PrintsTest extends TestCase
         $docsPrint->assertViewIs('prints.client-documents-rekap');
         $docsPrint->assertSee('REKAPITULASI RESMI FAKTUR KONSOLIDASI');
     }
+
+    public function test_klien_cannot_view_other_clients_return_act(): void
+    {
+        $klienA = User::factory()->create(['role' => 'KLIEN', 'is_active' => true]);
+        $klienB = User::factory()->create(['role' => 'KLIEN', 'is_active' => true]);
+
+        $orderB = Order::create([
+            'order_number'         => 'ORD-TEST-RET-01',
+            'user_id'              => $klienB->id,
+            'order_source'         => 'WEB_PORTAL',
+            'status'               => 'SELESAI',
+            'target_delivery_date' => now()->toDateString(),
+            'delivery_address'     => 'Bandung',
+            'grand_total'          => 500000,
+        ]);
+
+        $response = $this->actingAs($klienA)->get(route('prints.return-act', ['order_id' => $orderB->id]));
+        $response->assertStatus(403);
+    }
+
+    public function test_klien_can_view_own_return_act(): void
+    {
+        $klienA = User::factory()->create(['role' => 'KLIEN', 'is_active' => true]);
+
+        $orderA = Order::create([
+            'order_number'         => 'ORD-TEST-RET-02',
+            'user_id'              => $klienA->id,
+            'order_source'         => 'WEB_PORTAL',
+            'status'               => 'SELESAI',
+            'target_delivery_date' => now()->toDateString(),
+            'delivery_address'     => 'Bandung',
+            'grand_total'          => 500000,
+        ]);
+
+        $response = $this->actingAs($klienA)->get(route('prints.return-act', ['order_id' => $orderA->id]));
+        $response->assertStatus(200);
+        $response->assertSee('BERITA ACARA RETUR &amp; SELISIH MUTU', false);
+    }
 }
 

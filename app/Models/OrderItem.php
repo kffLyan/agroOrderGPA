@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class OrderItem extends Model
 {
     use HasFactory;
+    use \App\Models\Concerns\PresentsOrderItemDetails;
 
     protected $fillable = [
         'order_id', 'product_id', 'ordered_qty', 'unit_price',
@@ -33,29 +34,5 @@ class OrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
-    }
-
-    /**
-     * Format harga satuan item ke format mata uang Rupiah
-     */
-    public function getFormattedUnitPriceAttribute(): string
-    {
-        return 'Rp ' . number_format((float) ($this->unit_price ?? 0), 0, ',', '.');
-    }
-
-    /**
-     * Format subtotal item ke format mata uang Rupiah
-     */
-    public function getFormattedSubtotalAttribute(): string
-    {
-        return 'Rp ' . number_format((float) ($this->subtotal ?? 0), 0, ',', '.');
-    }
-
-    /**
-     * Format kuantitas pemesanan dengan satuan kg
-     */
-    public function getFormattedOrderedQtyAttribute(): string
-    {
-        return number_format((float) ($this->ordered_qty ?? 0), 1, ',', '.') . ' kg';
     }
 }

@@ -3,108 +3,20 @@
 @section('title', 'Unggah Bukti Pembayaran & Verifikasi Tagihan')
 
 @php
-    $user = $user ?? auth()->user();
-    $dbInvoices = $dbInvoices ?? collect();
-    $dbPayments = $dbPayments ?? collect();
-    $creditLimit = isset($contract) && $contract ? (float) $contract->credit_limit : 50000000.0;
-    $outstandingTotal = $outstandingTotal ?? (float) $dbInvoices->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])->sum('grand_total');
-
     $invoices = $invoices ?? [];
-    if (empty($invoices) && $dbInvoices->isNotEmpty()) {
-        foreach ($dbInvoices as $inv) {
-            $gross = (float) ($inv->subtotal_amount ?: $inv->grand_total);
-            $net = (float) $inv->grand_total;
-            $creditAdjustment = max(0, $gross - $net);
-
-            $invoices[] = [
-                'po' => $inv->invoice_number,
-                'option_label' => sprintf(
-                    '%s — Periode %s (Rp %s)',
-                    $inv->invoice_number,
-                    $inv->period_start ? $inv->period_start->format('d/m/Y') : '-',
-                    number_format($net, 0, ',', '.')
-                ),
-                'status_chip' => match ($inv->status) {
-                    'PAID' => 'Lunas Sah',
-                    'OVERDUE' => 'Lewat Jatuh Tempo',
-                    'PARTIAL' => 'Terbayar Sebagian',
-                    default => ($inv->has_pending_proof ? 'Menunggu Verifikasi Pembayaran' : 'Menunggu Pembayaran'),
-                },
-                'due_note' => $inv->due_date ? 'Jatuh tempo pada: ' . $inv->due_date->translatedFormat('d F Y') : 'Jatuh tempo TOP 30 Hari',
-                'gross_label' => 'Rp ' . number_format($gross, 0, ',', '.'),
-                'credit_label' => 'Penyesuaian Kredit / Retur:',
-                'credit_value' => $creditAdjustment > 0 ? '- Rp ' . number_format($creditAdjustment, 0, ',', '.') : 'Rp 0',
-                'credit_value_label' => $creditAdjustment > 0 ? '- Rp ' . number_format($creditAdjustment, 0, ',', '.') : 'Rp 0',
-                'has_credit' => $creditAdjustment > 0,
-                'payable' => (int) $net,
-                'payable_label' => 'Rp ' . number_format($net, 0, ',', '.'),
-                'payable_digits' => (string) (int) $net,
-            ];
-        }
-    }
-
-    $selectedPo = $tagihanParam ?? ($selected ?? ($invoices[0]['po'] ?? ''));
-    $selectedExists = collect($invoices)->contains('po', $selectedPo);
-    if (! $selectedExists && ! empty($invoices)) {
-        $selectedPo = $invoices[0]['po'];
-    }
-    $selected = $selectedPo;
-
-    // Deteksi apakah tagihan yang dipilih sudah memiliki bukti pembayaran yang sedang diverifikasi Sekretaris
-    $pendingPaymentForSelected = $dbPayments->first(function ($p) use ($selectedPo) {
-        $invNum = $p->invoice?->invoice_number ?: ($p->order?->order_number ?: '');
-        return $invNum === $selectedPo 
-            && $p->status === 'MENUNGGU_VERIFIKASI' 
-            && !empty($p->proof_url);
-    });
-
-    // Deteksi bukti pembayaran terbaru untuk tagihan yang dipilih
-    $latestPaymentForSelected = $dbPayments->first(function ($p) use ($selectedPo) {
-        $invNum = $p->invoice?->invoice_number ?: ($p->order?->order_number ?: '');
-        return $invNum === $selectedPo;
-    });
-
-    // Apakah pembayaran terbaru ditolak dan belum ada pembayaran pengganti yang sedang diverifikasi
-    $rejectedPaymentForSelected = ($latestPaymentForSelected && in_array($latestPaymentForSelected->status, ['DITOLAK', 'REJECTED']))
-        ? $latestPaymentForSelected
-        : null;
-
+    $selected = $selected ?? ($invoices[0]['po'] ?? '');
+    $creditLimit = $creditLimit ?? 50000000.0;
+    $outstandingTotal = $outstandingTotal ?? 0.0;
     $form = $form ?? [
         'sender_bank' => '',
         'sender_account' => $user?->phone ?: '',
-        'transfer_at' => \Carbon\Carbon::now()->format('d/m/Y H:i'),
+        'transfer_at' => now()->format('d/m/Y H:i'),
         'reference' => '',
         'note' => '',
     ];
-
     $history = $history ?? [];
-    if (empty($history) && $dbPayments->isNotEmpty()) {
-        foreach ($dbPayments as $pay) {
-            $history[] = [
-                'id' => 'PAY-' . str_pad($pay->id, 5, '0', STR_PAD_LEFT),
-                'invoice' => $pay->invoice?->invoice_number ?: ($pay->order?->order_number ?: '-'),
-                'date' => $pay->paid_at ? $pay->paid_at->format('d/m/Y H:i') : $pay->created_at->format('d/m/Y'),
-                'amount_label' => 'Rp ' . number_format((float) $pay->amount, 0, ',', '.'),
-                'method' => $pay->payment_method ?: 'TRANSFER_BANK',
-                'verifier' => $pay->verifier?->name ?: 'Antrean Sistem',
-                'verifier_pending' => ! $pay->verifier_id,
-                'status' => match ($pay->status) {
-                    'LUNAS', 'VERIFIED' => 'Terverifikasi Sah',
-                    'DITOLAK', 'REJECTED' => 'Ditolak',
-                    default => 'Menunggu Verifikasi',
-                },
-                'status_tone' => match ($pay->status) {
-                    'LUNAS', 'VERIFIED' => 'success',
-                    'DITOLAK', 'REJECTED' => 'danger',
-                    default => 'warning',
-                },
-                'receipt' => in_array($pay->status, ['LUNAS', 'VERIFIED']) ? 'KWT-' . str_pad($pay->id, 5, '0', STR_PAD_LEFT) : 'Menunggu Approval',
-                'receipt_pending' => ! in_array($pay->status, ['LUNAS', 'VERIFIED']),
-                'row_tone' => in_array($pay->status, ['LUNAS', 'VERIFIED']) ? 'plain' : 'muted',
-                'note' => $pay->verification_note,
-            ];
-        }
-    }
+    $pendingPaymentForSelected = $pendingPaymentForSelected ?? null;
+    $rejectedPaymentForSelected = $rejectedPaymentForSelected ?? null;
 @endphp
 
 @section('content')
@@ -142,7 +54,7 @@
                 class="inline-flex w-fit shrink-0 items-center gap-2 rounded-lg bg-warning/10 px-3 py-1.5 ring-1 ring-inset ring-warning/40">
                 <x-gpa.icon name="clock" class="h-3 w-3 shrink-0 text-warning-deep" />
                 <span class="text-[9px] font-bold uppercase leading-3 tracking-[0.45px] text-warning-deep">
-                    SLA Verifikasi Pembayaran 1x24 Jam Kerja
+                    Verifikasi Pembayaran Maksimal 1x24 Jam Kerja
                 </span>
             </span>
         </section>
@@ -251,7 +163,7 @@
             </div>
         @endif
 
-        <div class="grid gap-4 xl:grid-cols-3">
+        <div class="grid items-start gap-6 xl:grid-cols-3">
             {{-- ---------------------------------------------------------------- --}}
             {{-- Kolom kiri: pilih tagihan + unggah berkas & metadata --}}
             {{-- ---------------------------------------------------------------- --}}
@@ -644,7 +556,7 @@
             {{-- ---------------------------------------------------------------- --}}
             {{-- Kolom kanan: pipeline verifikasi + ringkasan plafon --}}
             {{-- ---------------------------------------------------------------- --}}
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-4 xl:sticky xl:top-[84px] self-start transition-all">
                 <section class="gpa-card flex flex-col gap-4 p-6">
                     <div class="flex items-center justify-between gap-2 border-b border-line-soft pb-3">
                         <div class="flex items-center gap-2.5">
@@ -656,56 +568,224 @@
                         </span>
                     </div>
 
-                    <ol class="relative flex flex-col gap-6 pl-6">
-                        <span class="absolute left-3 top-3 h-[calc(100%-1.5rem)] w-0.5 rounded bg-line-board"
+                    <ol class="relative flex flex-col gap-6">
+                        {{-- Garis timeline di belakang bulatan ikon --}}
+                        <span class="absolute left-3.5 top-3.5 h-[calc(100%-1.75rem)] w-0.5 -translate-x-1/2 rounded bg-line-board"
                             aria-hidden="true"></span>
 
-                        {{-- Step 1 --}}
-                        <li class="relative flex flex-col gap-1">
-                            <span class="absolute -left-6 top-0 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold bg-success-deep text-white ring-4 ring-surface">
-                                <x-gpa.icon name="check" class="h-3 w-3" />
-                            </span>
-                            <div class="flex flex-col gap-1">
-                                <p class="text-xs font-bold leading-4 text-ink">1. Unggah Slip &amp; Validasi Form</p>
+                        {{-- Step 1: Unggah Slip & Validasi Form --}}
+                        <li class="relative flex items-start gap-3.5 transition-all">
+                            {{-- Bulatan Ikon Step 1 --}}
+                            <div class="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-4 ring-surface shadow-xs transition-colors"
+                                :class="{
+                                    'bg-success-deep text-white': isCurrentPaid || isCurrentPending,
+                                    'bg-danger text-white': isCurrentRejected,
+                                    'bg-accent text-ink': isCurrentUnpaid && hasFile,
+                                    'bg-surface-disabled text-ink border-2 border-accent': isCurrentUnpaid && !hasFile
+                                }">
+                                <template x-if="isCurrentPaid || isCurrentPending">
+                                    <x-gpa.icon name="check" class="h-3.5 w-3.5" />
+                                </template>
+                                <template x-if="isCurrentRejected">
+                                    <x-gpa.icon name="alert-triangle" class="h-3.5 w-3.5" />
+                                </template>
+                                <template x-if="isCurrentUnpaid && hasFile">
+                                    <x-gpa.icon name="check" class="h-3.5 w-3.5" />
+                                </template>
+                                <template x-if="isCurrentUnpaid && !hasFile">
+                                    <span class="h-2 w-2 rounded-full bg-accent animate-pulse" aria-hidden="true"></span>
+                                </template>
+                            </div>
+
+                            <div class="flex min-w-0 flex-1 flex-col gap-1 pt-0.5">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="text-xs font-bold leading-4 text-ink">1. Unggah Slip &amp; Validasi Form</p>
+                                    <template x-if="isCurrentPaid || isCurrentPending">
+                                        <span class="rounded bg-success-deep/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-success-deep">
+                                            Selesai
+                                        </span>
+                                    </template>
+                                    <template x-if="isCurrentRejected">
+                                        <span class="rounded bg-danger/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-danger">
+                                            Perlu Unggah
+                                        </span>
+                                    </template>
+                                    <template x-if="isCurrentUnpaid && hasFile">
+                                        <span class="rounded bg-accent/20 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-ink font-semibold">
+                                            Terlampir
+                                        </span>
+                                    </template>
+                                    <template x-if="isCurrentUnpaid && !hasFile">
+                                        <span class="rounded bg-surface-shell px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-ink-quiet">
+                                            Menunggu Input
+                                        </span>
+                                    </template>
+                                </div>
                                 <p class="font-mono text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
                                     Mitra Klien B2B
                                 </p>
-                                <p class="text-xs leading-4 text-ink-body">Pengisian metadata bank pengirim, nominal akurat, dan unggah berkas slip transfer.</p>
+                                <template x-if="hasFile">
+                                    <div class="mt-1 flex items-center gap-1.5 rounded-lg border border-line-soft bg-surface-shell px-2.5 py-1.5 text-[11px] text-ink">
+                                        <x-gpa.icon name="file-text" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
+                                        <span class="truncate font-medium" x-text="file?.name"></span>
+                                        <span class="ml-auto shrink-0 font-mono text-[10px] text-ink-quiet" x-text="file?.size_label"></span>
+                                    </div>
+                                </template>
+                                <template x-if="!hasFile && (isCurrentPaid || isCurrentPending)">
+                                    <p class="text-xs leading-4 text-ink-body">Slip transfer berhasil tervalidasi dan tercatat dalam arsip transaksi.</p>
+                                </template>
+                                <template x-if="!hasFile && !isCurrentPaid && !isCurrentPending">
+                                    <p class="text-xs leading-4 text-ink-body">Pengisian metadata bank pengirim, nominal akurat, dan unggah berkas slip transfer.</p>
+                                </template>
                             </div>
                         </li>
 
-                        {{-- Step 2 --}}
-                        <li class="relative flex flex-col gap-1">
-                            <span class="absolute -left-6 top-0 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold bg-accent text-ink ring-4 ring-surface">
-                                <span class="h-2.5 w-2.5 rounded-full bg-ink" aria-hidden="true"></span>
-                            </span>
-                            <div class="rounded-xl border border-success-deep/40 bg-surface-shell p-2">
-                                <div class="flex flex-wrap items-center justify-between gap-2">
-                                    <p class="text-xs font-bold leading-4 text-ink">
-                                        2. Pemeriksaan Mutasi Rekening
-                                    </p>
-                                    <span class="rounded bg-success-deep px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[1.08px] text-white">
-                                        Dalam Proses
+                        {{-- Step 2: Pemeriksaan Mutasi Rekening --}}
+                        <li class="relative flex items-start gap-3.5 transition-all">
+                            {{-- Bulatan Ikon Step 2 --}}
+                            <div class="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-4 ring-surface shadow-xs transition-colors"
+                                :class="{
+                                    'bg-success-deep text-white': isCurrentPaid,
+                                    'bg-accent text-ink': isCurrentPending,
+                                    'bg-danger text-white': isCurrentRejected,
+                                    'bg-surface-disabled text-ink-body': isCurrentUnpaid
+                                }">
+                                <template x-if="isCurrentPaid">
+                                    <x-gpa.icon name="check" class="h-3.5 w-3.5" />
+                                </template>
+                                <template x-if="isCurrentPending">
+                                    <span class="relative flex h-2.5 w-2.5">
+                                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-ink opacity-75"></span>
+                                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-ink"></span>
                                     </span>
+                                </template>
+                                <template x-if="isCurrentRejected">
+                                    <x-gpa.icon name="x" class="h-3.5 w-3.5" />
+                                </template>
+                                <template x-if="isCurrentUnpaid">
+                                    <span>2</span>
+                                </template>
+                            </div>
+
+                            <div class="flex min-w-0 flex-1 flex-col gap-1">
+                                {{-- Body Step 2 --}}
+                                <div x-show="isCurrentPending" class="rounded-xl border border-success-deep/40 bg-surface-shell p-2.5 shadow-xs transition-all">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <p class="text-xs font-bold leading-4 text-ink">
+                                            2. Pemeriksaan Mutasi Rekening
+                                        </p>
+                                        <span class="inline-flex items-center gap-1 rounded bg-success-deep px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[1.08px] text-white">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-white animate-pulse"></span>
+                                            Dalam Proses
+                                        </span>
+                                    </div>
+                                    <p class="font-mono text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-success-deep mt-1">
+                                        Staf Sekretariat GPA
+                                    </p>
+                                    <p class="pt-0.5 text-xs leading-4 text-ink">Verifikasi silang nomor referensi transaksi dengan rekening koran giro GPA Finance.</p>
+                                    <template x-if="current?.payment_ref && current?.payment_ref !== '-'">
+                                        <div class="mt-1.5 flex items-center justify-between rounded bg-surface px-2 py-1 text-[11px] font-mono text-ink-body border border-line-soft">
+                                            <span>No. Ref:</span>
+                                            <span class="font-bold text-ink" x-text="current?.payment_ref"></span>
+                                        </div>
+                                    </template>
                                 </div>
-                                <p class="font-mono text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-success-deep">
-                                    Staf Sekretariat GPA
-                                </p>
-                                <p class="pt-0.5 text-xs leading-4 text-ink">Verifikasi silang nomor referensi transaksi dengan rekening koran giro GPA Finance.</p>
+
+                                <div x-show="isCurrentPaid" class="rounded-xl border border-success-deep/30 bg-success-soft/20 p-2.5 transition-all">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <p class="text-xs font-bold leading-4 text-ink">
+                                            2. Pemeriksaan Mutasi Rekening
+                                        </p>
+                                        <span class="rounded bg-success-deep px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[1.08px] text-white">
+                                            Terverifikasi Sah
+                                        </span>
+                                    </div>
+                                    <p class="font-mono text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-success-deep mt-1"
+                                        x-text="'Verifikator: ' + (current?.verifier_name || 'Staf Keuangan GPA')">
+                                    </p>
+                                    <p class="pt-0.5 text-xs leading-4 text-ink-body">Pencocokan mutasi kas giro GPA dinyatakan sesuai 100%.</p>
+                                </div>
+
+                                <div x-show="isCurrentRejected" class="rounded-xl border border-danger/40 bg-danger-soft/20 p-2.5 transition-all">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <p class="text-xs font-bold leading-4 text-danger font-bold">
+                                            2. Pemeriksaan Mutasi Rekening
+                                        </p>
+                                        <span class="rounded bg-danger px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[1.08px] text-white">
+                                            Ditolak
+                                        </span>
+                                    </div>
+                                    <p class="pt-1 text-xs leading-relaxed text-danger font-medium"
+                                        x-text="'Alasan: ' + (current?.verification_note || 'Bukti transfer tidak valid atau dana belum terdeteksi di mutasi koran.')">
+                                    </p>
+                                </div>
+
+                                <div x-show="isCurrentUnpaid" class="flex flex-col gap-1 pt-0.5 opacity-60">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="text-xs font-semibold leading-4 text-ink-body">2. Pemeriksaan Mutasi Rekening</p>
+                                        <span class="rounded bg-surface-shell px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-ink-quiet">
+                                            Antrean
+                                        </span>
+                                    </div>
+                                    <p class="font-mono text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
+                                        Staf Sekretariat GPA
+                                    </p>
+                                    <p class="text-xs leading-4 text-ink-body">Verifikasi silang nomor referensi transaksi dengan rekening koran giro GPA Finance.</p>
+                                </div>
                             </div>
                         </li>
 
-                        {{-- Step 3 --}}
-                        <li class="relative flex flex-col gap-1">
-                            <span class="absolute -left-6 top-0 flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold bg-surface-disabled text-ink-body ring-4 ring-surface">
-                                3
-                            </span>
-                            <div class="flex flex-col gap-1 opacity-60">
-                                <p class="text-xs font-semibold leading-4 text-ink-body">3. Penerbitan Kuitansi Resmi &amp; Pemulihan Plafon</p>
-                                <p class="font-mono text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
-                                    Sistem Otomatis GPA
-                                </p>
-                                <p class="text-xs leading-4 text-ink-body">Status faktur berubah menjadi LUNAS dan limit plafon kredit tempo kembali dipulihkan secara instan.</p>
+                        {{-- Step 3: Penerbitan Kuitansi Resmi & Pemulihan Plafon --}}
+                        <li class="relative flex items-start gap-3.5 transition-all">
+                            {{-- Bulatan Ikon Step 3 --}}
+                            <div class="relative z-10 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ring-4 ring-surface shadow-xs transition-colors"
+                                :class="{
+                                    'bg-success-deep text-white': isCurrentPaid,
+                                    'bg-surface-disabled text-ink-body': !isCurrentPaid
+                                }">
+                                <template x-if="isCurrentPaid">
+                                    <x-gpa.icon name="check" class="h-3.5 w-3.5" />
+                                </template>
+                                <template x-if="!isCurrentPaid">
+                                    <span>3</span>
+                                </template>
+                            </div>
+
+                            <div class="flex min-w-0 flex-1 flex-col gap-1">
+                                {{-- Body Step 3 --}}
+                                <div x-show="isCurrentPaid" class="rounded-xl border border-success-deep/40 bg-surface-shell p-2.5 shadow-xs transition-all">
+                                    <div class="flex flex-wrap items-center justify-between gap-2">
+                                        <p class="text-xs font-bold leading-4 text-ink">
+                                            3. Kuitansi Resmi &amp; Plafon Pulih
+                                        </p>
+                                        <span class="rounded bg-accent px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[1.08px] text-ink">
+                                            Lunas Sah
+                                        </span>
+                                    </div>
+                                    <p class="font-mono text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-success-deep mt-1">
+                                        Sistem Otomatis GPA
+                                    </p>
+                                    <p class="pt-0.5 text-xs leading-4 text-ink">Status faktur lunas dan limit plafon kredit tempo kembali dipulihkan secara instan.</p>
+                                    <template x-if="current?.receipt_number">
+                                        <div class="mt-1.5 flex items-center justify-between rounded bg-surface px-2 py-1 text-[11px] font-mono text-ink border border-line-soft">
+                                            <span class="text-ink-quiet">No. Kuitansi:</span>
+                                            <span class="font-bold text-success-deep" x-text="current?.receipt_number"></span>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <div x-show="!isCurrentPaid" class="flex flex-col gap-1 pt-0.5 opacity-60">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="text-xs font-semibold leading-4 text-ink-body">3. Penerbitan Kuitansi Resmi &amp; Pemulihan Plafon</p>
+                                        <span class="rounded bg-surface-shell px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-ink-quiet">
+                                            Tahap Akhir
+                                        </span>
+                                    </div>
+                                    <p class="font-mono text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
+                                        Sistem Otomatis GPA
+                                    </p>
+                                    <p class="text-xs leading-4 text-ink-body">Status faktur berubah menjadi LUNAS dan limit plafon kredit tempo kembali dipulihkan secara instan.</p>
+                                </div>
                             </div>
                         </li>
                     </ol>
@@ -716,7 +796,7 @@
                             <p class="text-[9px] font-bold uppercase leading-3 tracking-[0.45px] text-accent">
                                 Sistem Rekonsiliasi Otomatis (Host-to-Host)
                             </p>
-                            <p class="text-xs leading-[1.65] text-surface-disabled">Sistem kami terhubung dengan API perbankan BCA dan Mandiri Corporate. Jika nominal dan nomor referensi klop, verifikasi kuitansi selesai dalam kurun waktu 15 - 30 menit.</p>
+                            <p class="text-xs leading-[1.65] text-surface-disabled">Sistem kami terhubung dengan layanan perbankan resmi BCA dan Mandiri Corporate. Jika nominal dan nomor referensi sesuai, verifikasi pembayaran selesai dalam kurun waktu 15 - 30 menit.</p>
                         </div>
                     </div>
 
@@ -796,49 +876,40 @@
                     </thead>
                     <tbody>
                         @forelse ($history as $row)
-                            <tr class="border-b border-line-soft last:border-b-0 {{ $row['row_tone'] === 'muted' ? 'bg-surface-shell' : 'bg-surface' }}">
-                                <td class="px-3 py-3 font-mono text-xs font-bold text-ink">{{ $row['id'] }}</td>
-                                <td class="px-3 py-3 font-mono text-xs text-ink-body">{{ $row['invoice'] }}</td>
-                                <td class="px-3 py-3 text-xs text-ink-body">{{ $row['date'] }}</td>
+                            <tr class="border-b border-line-soft last:border-b-0 {{ ($row->row_tone ?? '') === 'muted' ? 'bg-surface-shell' : 'bg-surface' }}">
+                                <td class="px-3 py-3 font-mono text-xs font-bold text-ink">{{ $row->code ?? $row['id'] }}</td>
+                                <td class="px-3 py-3 font-mono text-xs text-ink-body">{{ $row->invoice_code ?? $row['invoice'] }}</td>
+                                <td class="px-3 py-3 text-xs text-ink-body">{{ $row->date_formatted ?? $row['date'] }}</td>
                                 <td class="px-3 py-3 text-right font-mono text-xs font-bold text-ink">
-                                    {{ $row['amount_label'] }}
+                                    {{ $row->amount_formatted ?? $row['amount_label'] }}
                                 </td>
                                 <td class="px-3 py-3">
                                     <span class="inline-flex items-center rounded border border-line-soft bg-surface-pill px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[1.08px] text-ink">
-                                        {{ $row['method'] }}
+                                        {{ $row->payment_method ?? ($row['method'] ?? 'TRANSFER_BANK') }}
                                     </span>
                                 </td>
                                 <td class="px-3 py-3">
-                                    <span class="text-xs leading-4 {{ $row['verifier_pending'] ? 'italic text-ink-body' : 'text-ink' }}">{{ $row['verifier'] }}</span>
+                                    <span class="text-xs leading-4 {{ ($row->verifier_pending ?? $row['verifier_pending']) ? 'italic text-ink-body' : 'text-ink' }}">{{ $row->verifier_name ?? $row['verifier'] }}</span>
                                 </td>
                                 <td class="px-3 py-3">
                                     @php
-                                        $badgeClass = match ($row['status_tone']) {
-                                            'warning' => 'bg-warning/10 text-warning-deep ring-warning/40',
-                                            'danger' => 'bg-danger-soft text-danger ring-danger/40',
-                                            default => 'bg-accent text-ink ring-accent',
-                                        };
+                                        $note = $row->verification_note ?? ($row['note'] ?? null);
+                                        $isDanger = ($row->status_tone ?? ($row['status_tone'] ?? null)) === 'danger';
                                     @endphp
                                     <div class="flex flex-col gap-0.5">
-                                        <span class="inline-flex w-fit items-center gap-1.5 rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-[0.45px] ring-1 ring-inset {{ $badgeClass }}">
-                                            @if ($row['status_tone'] === 'warning')
-                                                <span class="h-1.5 w-1.5 rounded-full bg-warning-deep" aria-hidden="true"></span>
-                                            @elseif ($row['status_tone'] === 'danger')
-                                                <x-gpa.icon name="x" class="h-2.5 w-2.5" />
-                                            @else
-                                                <x-gpa.icon name="check" class="h-2.5 w-2.5" />
-                                            @endif
-                                            {{ $row['status'] }}
-                                        </span>
-                                        @if (!empty($row['note']) && $row['status_tone'] === 'danger')
-                                            <span class="text-[10px] text-danger max-w-[14rem] truncate" title="{{ $row['note'] }}">
-                                                Ket: {{ $row['note'] }}
+                                        <x-gpa.status-badge 
+                                            :status="$row->status ?? ($row['status'] ?? null)" 
+                                            :label="$row->status_label ?? ($row['status'] ?? null)" 
+                                            :tone="$row->status_tone ?? ($row['status_tone'] ?? null)" />
+                                        @if (!empty($note) && $isDanger)
+                                            <span class="text-[10px] text-danger max-w-[14rem] truncate" title="{{ $note }}">
+                                                Ket: {{ $note }}
                                             </span>
                                         @endif
                                     </div>
                                 </td>
                                 <td class="px-3 py-3 text-right">
-                                    <span class="font-mono text-[9px] font-semibold uppercase tracking-[1.08px] {{ $row['receipt_pending'] ? 'text-ink-quiet' : 'text-ink' }}">{{ $row['receipt'] }}</span>
+                                    <span class="font-mono text-[9px] font-semibold uppercase tracking-[1.08px] {{ ($row->receipt_pending ?? $row['receipt_pending']) ? 'text-ink-quiet' : 'text-ink' }}">{{ $row->receipt_code ?? $row['receipt'] }}</span>
                                 </td>
                             </tr>
                         @empty

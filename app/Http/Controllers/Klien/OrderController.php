@@ -33,14 +33,54 @@ class OrderController extends Controller
     {
         $userId = Auth::guard('web')->id();
 
-        $orders = Order::where('user_id', $userId)
+        $rawOrders = Order::where('user_id', $userId)
             ->with(['orderItems.product', 'driver', 'verifier', 'invoice', 'payments'])
             ->orderBy('created_at', 'desc')
             ->get();
 
+        // 1. Hitung status tabs agregasi
+        $counts = [
+            'all'        => $rawOrders->count(),
+            'verifikasi' => $rawOrders->where('status', 'MENUNGGU_VERIFIKASI')->count(),
+            'bayar'      => $rawOrders->whereIn('status', ['MENUNGGU_PEMBAYARAN', 'LUNAS'])->count(),
+            'kemas'      => $rawOrders->where('status', 'SIAP_KIRIM')->count(),
+            'kirim'      => $rawOrders->where('status', 'DALAM_PENGIRIMAN')->count(),
+            'selesai'    => $rawOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count(),
+            'batal'      => $rawOrders->where('status', 'BATAL')->count(),
+        ];
+
+        $statusTabs = [
+            ['label' => 'Semua Pesanan', 'value' => 'all', 'count' => $counts['all']],
+            ['label' => 'Menunggu Verifikasi', 'value' => 'verifikasi', 'count' => $counts['verifikasi']],
+            ['label' => 'Faktur & Pembayaran', 'value' => 'bayar', 'count' => $counts['bayar']],
+            ['label' => 'Siap Kirim', 'value' => 'kemas', 'count' => $counts['kemas']],
+            ['label' => 'Dalam Armada Chiller', 'value' => 'kirim', 'count' => $counts['kirim']],
+            ['label' => 'Selesai & Sah Diterima', 'value' => 'selesai', 'count' => $counts['selesai']],
+            ['label' => 'Dibatalkan', 'value' => 'batal', 'count' => $counts['batal']],
+        ];
+
+        // 2. Kirim model Eloquent langsung ke View (Prinsip MVC: View mengakses langsung atribut model)
+        $orders = $rawOrders;
+
+        $pagination = [
+            'page'        => 1,
+            'per_page'    => max(1, $orders->count()),
+            'total'       => $orders->count(),
+            'total_pages' => 1,
+            'last_page'   => 1,
+        ];
+
+        $totalKgOrder = (float) $rawOrders->sum(fn($o) => $o->orderItems ? $o->orderItems->sum('ordered_qty') : 0);
+        $totalKgActual = $totalKgOrder;
+
         return view('klien.orders.index', [
-            'rawOrders' => $orders,
-            'orders'    => $orders,
+            'rawOrders'     => $rawOrders,
+            'orders'        => $orders,
+            'counts'        => $counts,
+            'statusTabs'    => $statusTabs,
+            'pagination'    => $pagination,
+            'totalKgOrder'  => $totalKgOrder,
+            'totalKgActual' => $totalKgActual,
         ]);
     }
 
@@ -123,7 +163,73 @@ class OrderController extends Controller
 
         $order->loadMissing(['orderItems.product', 'payments', 'verifier', 'driver', 'invoice']);
 
-        return view('klien.orders.show', compact('order'));
+        $viewData = $this->prepareOrderDetailViewData($order);
+
+        return view('klien.orders.show', array_merge(['order' => $order], $viewData));
+    }
+
+    /**
+     * Menyiapkan view-model detail pesanan untuk tampilan Blade (Prinsip MVC)
+     */
+    protected function prepareOrderDetailViewData(Order $order): array
+    {
+        $hasPendingProof = ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_pending_proof);
+        $podPhotos = $order->pod_photo_asset_urls;
+        $manifestPhoto = $podPhotos[0] ?? null;
+        $dockPhoto = $podPhotos[1] ?? ($podPhotos[0] ?? null);
+        $hasTwoPhotos = count($podPhotos) >= 2;
+        $hasAnyPhoto = !empty($podPhotos);
+
+        $statusStyles = [
+            'MENUNGGU_VERIFIKASI' => 'bg-warning-soft text-warning-deep ring-warning/40',
+            'MENUNGGU_PEMBAYARAN' => $hasPendingProof ? 'bg-warning-soft text-warning-deep ring-warning/40' : 'bg-brand/10 text-brand ring-brand/30',
+            'LUNAS'               => 'bg-accent/40 text-success-deep ring-success/30',
+            'SIAP_KIRIM'          => 'bg-accent text-ink ring-accent-edge',
+            'DALAM_PENGIRIMAN'    => 'bg-brand text-white ring-accent',
+            'SELESAI'             => 'bg-accent text-success-ink ring-accent',
+            'SELESAI_CATATAN'     => 'bg-warning-soft text-warning-deep ring-warning',
+            'BATAL'               => 'bg-surface-pill text-ink-quiet ring-line-board',
+        ];
+
+        $statusLabels = [
+            'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi Pesanan',
+            'MENUNGGU_PEMBAYARAN' => $hasPendingProof ? 'Menunggu Verifikasi Pembayaran' : 'Menunggu Pembayaran',
+            'LUNAS'               => 'Pembayaran Lunas',
+            'SIAP_KIRIM'          => 'Surat Jalan Terbit (Siap Kirim)',
+            'DALAM_PENGIRIMAN'    => 'Armada Menuju Dock',
+            'SELESAI'             => 'Selesai & Diterima',
+            'SELESAI_CATATAN'     => 'Selesai (Ada Catatan Retur)',
+            'BATAL'               => 'Pesanan Dibatalkan',
+        ];
+
+        $statusOrder = $order->status;
+
+        $stepStates = [
+            1 => 'done',
+            2 => in_array($statusOrder, ['MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? 'done' : ($statusOrder === 'MENUNGGU_VERIFIKASI' ? 'active' : 'pending'),
+            3 => in_array($statusOrder, ['LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? 'done' : ($statusOrder === 'MENUNGGU_PEMBAYARAN' ? 'active' : 'pending'),
+            4 => in_array($statusOrder, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? 'done' : ($statusOrder === 'LUNAS' ? 'active' : 'pending'),
+            5 => in_array($statusOrder, ['SELESAI', 'SELESAI_CATATAN']) ? 'done' : (in_array($statusOrder, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN']) ? 'active' : 'pending'),
+        ];
+
+        if ($statusOrder === 'BATAL') {
+            $stepStates = [1 => 'done', 2 => 'cancelled', 3 => 'pending', 4 => 'pending', 5 => 'pending'];
+        }
+
+        $rejectedPayment = $order->has_rejected_proof ? $order->rejected_proof_payment : null;
+
+        return compact(
+            'hasPendingProof',
+            'podPhotos',
+            'manifestPhoto',
+            'dockPhoto',
+            'hasTwoPhotos',
+            'hasAnyPhoto',
+            'statusStyles',
+            'statusLabels',
+            'stepStates',
+            'rejectedPayment'
+        );
     }
 
     /**
@@ -244,22 +350,20 @@ class OrderController extends Controller
                 $hasWeighed = true;
                 $amount = (float) $order->grand_total;
 
-                $commoditiesList = $order->orderItems->map(function ($item) {
-                    return ($item->product->name ?? 'Komoditas') . ' (' . number_format($item->ordered_qty, 0, ',', '.') . ' kg)';
-                })->join(', ');
+                $commoditiesList = $order->commodities_summary;
 
                 $diffPct = 0;
 
                 fputcsv($handle, [
                     $no++,
                     $order->order_number,
-                    $order->created_at ? $order->created_at->format('d/m/Y H:i') : '-',
+                    $order->date_formatted,
                     $commoditiesList ?: 'Sayuran Segar Pasundan',
                     number_format($orderedKg, 2, '.', ''),
                     $hasWeighed ? number_format($actualKg, 2, '.', '') : 'Belum Timbang',
                     $hasWeighed ? (($diffPct >= 0 ? '+' : '') . $diffPct . '%') : '-',
                     $order->surat_jalan_number ?: '-',
-                    $order->vehicle_plate_number ? ($order->vehicle_plate_number . ' / ' . ($order->driver ? $order->driver->name : 'Supir GPA')) : '-',
+                    $order->vehicle ?: ($order->vehicle_plate_number ?: '-'),
                     $order->status,
                     (float) $amount,
                     $order->invoice ? ($order->invoice->status === 'PAID' ? 'Lunas' : 'Faktur Terbit') : 'Belum Ditagihkan',

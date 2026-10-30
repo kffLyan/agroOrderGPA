@@ -163,7 +163,7 @@ export default function directorSales(scopeKeys = [], trend = [], portfolio = []
             try { localStorage.setItem('gpa_director_sales_sealed', '1'); } catch (e) {}
             this.notify(
                 'Tanda Tangan Digital Direktur',
-                'Rekapitulasi kas harian diverifikasi dengan sertifikat elektronik dan hash SHA-256 resmi.',
+                'Rekapitulasi kas harian diverifikasi dengan sertifikat elektronik dan kode keamanan resmi.',
                 'success',
             );
         },

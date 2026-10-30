@@ -44,7 +44,7 @@
             ['label' => 'Persetujuan Kontrak', 'icon' => 'badge-check', 'href' => route('direktur.contracts.approval'), 'active' => request()->routeIs('direktur.contracts.*')],
             ['label' => 'Laporan', 'icon' => 'shield', 'href' => route('direktur.reports.index'), 'active' => request()->routeIs('direktur.reports.*')],
             ['label' => 'Pengaturan Tata Kelola', 'icon' => 'settings', 'href' => route('direktur.governance.index'), 'active' => request()->routeIs('direktur.governance.*')],
-            ['label' => 'Kelola Akun Pengguna & RBAC', 'icon' => 'users', 'href' => route('direktur.users.index'), 'active' => request()->routeIs('direktur.users.*')],
+            ['label' => 'Kelola Akun & Hak Akses', 'icon' => 'users', 'href' => route('direktur.users.index'), 'active' => request()->routeIs('direktur.users.*')],
         ];
     @endphp
 

@@ -475,7 +475,7 @@
 
             <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
                 <p class="gpa-note text-ink-body"
-                    x-text="'Menampilkan ' + visibleRows().length + ' dari ' + {{ $totalInvoices }} + ' baris ledger piutang berjalan'">
+                    x-text="'Menampilkan ' + visibleRows().length + ' dari ' + {{ $totalInvoices }} + ' baris daftar piutang berjalan'">
                 </p>
                 <p class="gpa-note text-ink-body">
                     Total Piutang Terkonfirmasi:

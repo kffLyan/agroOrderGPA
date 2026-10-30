@@ -54,21 +54,9 @@ class CommodityVolumeController extends Controller
         )->all();
 
         // 3. Matriks Alokasi Kontrak B2B Aktif
-        $activeContracts = Contract::with(['user', 'product'])
+        $allocationsList = Contract::with(['user', 'product'])
             ->where('status', 'ACTIVE')
             ->get();
-
-        $allocationsList = $activeContracts->map(function ($contract) {
-            $volKg = (float) $contract->committed_volume_per_cycle;
-            $volTon = round($volKg / 1000, 2);
-
-            return [
-                'name'       => $contract->user?->company_name ?: ($contract->user?->name ?: 'Mitra B2B'),
-                'sentra'     => $contract->product ? strtoupper($contract->product->name) : 'SENTRA PRODUKSI',
-                'commitment' => $volTon > 0 ? $volTon : round($volKg, 2),
-                'priority'   => 'KONTRAK AKTIF',
-            ];
-        })->all();
 
         // 4. Tren Mingguan Volume vs Kapasitas Panen (8 Pekan)
         $weeklyRows = [];

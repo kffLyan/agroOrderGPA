@@ -60,9 +60,6 @@ class ReceivableController extends Controller
 
         // 2. Buku Besar Faktur Konsolidasi per Klien B2B via ReceivableLedgerResource
         $frozenClients = $this->governanceService->getFrozenClients();
-        if (session()->has('frozen_clients')) {
-            $frozenClients = array_merge($frozenClients, session('frozen_clients', []));
-        }
 
         $dbClients = User::where('role', 'KLIEN')
             ->with(['invoices.orders', 'contracts'])
@@ -112,12 +109,25 @@ class ReceivableController extends Controller
         $client = User::find($id);
         $name = $client ? ($client->company_name ?: $client->name) : 'Klien B2B #' . $id;
 
+        // Tentukan apakah ada instruksi eksplisit: 'freeze' / 'unfreeze'
+        $targetState = null;
+        if ($request->has('action')) {
+            $act = strtolower((string) $request->input('action'));
+            if ($act === 'freeze' || $act === 'lock') {
+                $targetState = true;
+            } elseif ($act === 'unfreeze' || $act === 'unlock') {
+                $targetState = false;
+            }
+        } elseif ($request->has('freeze')) {
+            $val = $request->input('freeze');
+            $targetState = ($val === '1' || $val === 1 || $val === true || $val === 'true');
+        }
+
         // Simpan status pembekuan secara persisten ke GovernanceService
-        $isLocked = $this->governanceService->toggleClientFreeze($id);
+        $isLocked = $this->governanceService->toggleClientFreeze($id, $targetState);
 
         // Sinkronkan ke session untuk kompatibilitas tampilan tab browser
-        $frozenClients = $this->governanceService->getFrozenClients();
-        session(['frozen_clients' => $frozenClients]);
+        session(['frozen_clients' => $this->governanceService->getFrozenClients()]);
 
         if ($isLocked) {
             $msg = "Plafon kredit {$name} berhasil dikunci permanen. Penerbitan Surat Jalan baru ditolak otomatis.";

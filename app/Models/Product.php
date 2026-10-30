@@ -9,10 +9,38 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Product extends Model
 {
     use HasFactory;
+    use \App\Models\Concerns\PresentsProductCatalog;
+    use \App\Models\Concerns\HasProductStock;
 
     protected $fillable = [
         'sku', 'name', 'unit', 'grade', 'base_price',
         'minimum_order', 'image_url', 'description', 'is_active',
+    ];
+
+    protected $appends = [
+        'key',
+        'category',
+        'category_label',
+        'latin',
+        'image_path',
+        'formatted_base_price',
+        'formatted_minimum_order',
+        'moq',
+        'step',
+        'initial_qty',
+        'badges',
+        'packaging',
+        'botanical',
+        'subtitle',
+        'price',
+        'price_label',
+        'hub_code',
+        'origin',
+        'franco',
+        'cold_chain',
+        'crate_kg',
+        'pack_label',
+        'extra',
     ];
 
     protected function casts(): array
@@ -37,44 +65,5 @@ class Product extends Model
     public function contracts(): HasMany
     {
         return $this->hasMany(Contract::class);
-    }
-
-    /**
-     * Resolusi URL/Path gambar komoditas secara dinamis murni dari database.
-     * Menggunakan file unggahan atau preset yang tersimpan di kolom image_url.
-     * Jika belum ada gambar, menggunakan default placeholder resmi GPA (gpaleaves.png).
-     */
-    public function getImagePathAttribute(): string
-    {
-        if (!empty($this->image_url)) {
-            $clean = ltrim($this->image_url, '/');
-            if (file_exists(public_path($clean))) {
-                return $clean;
-            }
-            if (file_exists(public_path('storage/' . $clean))) {
-                return 'storage/' . $clean;
-            }
-            if (str_starts_with($this->image_url, 'http://') || str_starts_with($this->image_url, 'https://')) {
-                return $this->image_url;
-            }
-        }
-
-        return 'gpaleaves.png';
-    }
-
-    /**
-     * Format harga dasar komoditas ke format mata uang Rupiah
-     */
-    public function getFormattedBasePriceAttribute(): string
-    {
-        return 'Rp ' . number_format((float) ($this->base_price ?? 0), 0, ',', '.');
-    }
-
-    /**
-     * Format minimal order komoditas dengan satuan (kg/unit)
-     */
-    public function getFormattedMinimumOrderAttribute(): string
-    {
-        return number_format((float) ($this->minimum_order ?? 0), 0, ',', '.') . ' ' . ($this->unit ?: 'kg');
     }
 }

@@ -73,7 +73,6 @@ class ReportController extends Controller
         $sealData = $this->buildSealData($sha256Hash, $lockedBy);
 
         $commodityList = $cAnalytics['list'];
-        $cList = $commodityList;
         $poTotal = $cAnalytics['poTotal'];
         $teraTotal = $cAnalytics['teraTotal'];
         $shrinkageTotal = $cAnalytics['shrinkageTotal'];
@@ -81,7 +80,6 @@ class ReportController extends Controller
         $marginTotal = $cAnalytics['marginTotal'];
 
         $clientList = $clAnalytics['list'];
-        $clList = $clientList;
         $cPoTotal = $clAnalytics['cPoTotal'];
         $cVolTotal = $clAnalytics['cVolTotal'];
         $cGrossTotal = $clAnalytics['cGrossTotal'];
@@ -105,14 +103,12 @@ class ReportController extends Controller
             'shrinkageClaim',
             'tolerancePercent',
             'commodityList',
-            'cList',
             'poTotal',
             'teraTotal',
             'shrinkageTotal',
             'commRev',
             'marginTotal',
             'clientList',
-            'clList',
             'cPoTotal',
             'cVolTotal',
             'cGrossTotal',

@@ -382,8 +382,8 @@ export default function clientCart(commodities = [], demoLines = [], defaults = 
             this.persist();
 
             this.$dispatch('gpa:toast', {
-                title: 'PO diajukan ke admin',
-                message: `${this.totalWeight()} kg menunggu verifikasi SLA < 2 jam kerja.`,
+                title: 'Pesanan Diajukan',
+                message: `${this.totalWeight()} kg pesanan Anda menunggu verifikasi admin (maksimal 2 jam kerja).`,
                 tone: 'success',
             });
         },

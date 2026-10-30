@@ -30,7 +30,7 @@
                 <a href="{{ route('sekretaris.pod.index') }}"
                     class="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-1.5 text-xs font-bold text-ink shadow-xs transition-transform hover:scale-105 ring-1 ring-inset ring-accent-edge">
                     <x-gpa.icon name="check-circle" class="h-3.5 w-3.5 text-success-deep" />
-                    <span>Monitoring PoD Armada &rarr;</span>
+                    <span>Monitoring Bukti Kirim (PoD) &rarr;</span>
                 </a>
                 <span
                     class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-surface-pill py-1.5 pl-3 pr-3 text-[10px] font-bold uppercase text-ink-body ring-1 ring-inset ring-line-board">

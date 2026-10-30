@@ -3,11 +3,13 @@
 namespace App\Http\Controllers\Sekretaris;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Sekretaris\AssignDriverRequest;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 
 class DispatchController extends Controller
 {
@@ -56,7 +58,7 @@ class DispatchController extends Controller
      * Penerbitan Surat Jalan resmi & penugasan supir armada (SOP Penerbitan)
      * Hanya pesanan dengan status LUNAS yang berhak diterbitkan Surat Jalan.
      */
-    public function issue(\App\Http\Requests\Sekretaris\AssignDriverRequest $request, Order $order)
+    public function issue(AssignDriverRequest $request, Order $order)
     {
         // Validasi ketat gerbang SOP: Hanya pesanan LUNAS yang boleh diterbitkan Surat Jalan
         if ($order->status !== 'LUNAS' && $order->status !== 'SIAP_KIRIM') {
@@ -81,16 +83,19 @@ class DispatchController extends Controller
         $sjNumber = $order->surat_jalan_number;
         if (!$sjNumber) {
             $prefix = 'SJ-GPA-' . date('Ym') . '-';
-            $lastSj = Order::where('surat_jalan_number', 'LIKE', $prefix . '%')->orderBy('id', 'desc')->first();
-            $seq = 1;
-            if ($lastSj) {
-                $seq = ((int) substr($lastSj->surat_jalan_number, -4)) + 1;
-            }
-            $sjNumber = $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
-            while (Order::where('surat_jalan_number', $sjNumber)->exists()) {
-                $seq++;
-                $sjNumber = $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
-            }
+            $sjNumber = Cache::lock('surat_jalan_sequence_lock', 5)->block(3, function () use ($prefix) {
+                $lastSj = Order::where('surat_jalan_number', 'LIKE', $prefix . '%')->orderBy('id', 'desc')->first();
+                $seq = 1;
+                if ($lastSj) {
+                    $seq = ((int) substr($lastSj->surat_jalan_number, -4)) + 1;
+                }
+                $candidate = $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+                while (Order::where('surat_jalan_number', $candidate)->exists()) {
+                    $seq++;
+                    $candidate = $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+                }
+                return $candidate;
+            });
         }
 
         $order->update([

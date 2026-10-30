@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Invoice extends Model
 {
     use HasFactory;
+    use \App\Models\Concerns\PresentsInvoiceDetails;
 
     protected $fillable = [
         'invoice_number', 'user_id', 'period_start', 'period_end',
@@ -40,54 +41,5 @@ class Invoice extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
-    }
-
-    /**
-     * Memeriksa apakah faktur ini sudah memiliki bukti pembayaran yang sedang diverifikasi
-     */
-    public function getHasPendingProofAttribute(): bool
-    {
-        return $this->payments
-            ->where('status', 'MENUNGGU_VERIFIKASI')
-            ->filter(fn ($p) => !empty($p->proof_url))
-            ->isNotEmpty();
-    }
-
-    /**
-     * Memeriksa apakah faktur ini memiliki bukti pembayaran terakhir yang ditolak oleh verifikator
-     */
-    public function getHasRejectedProofAttribute(): bool
-    {
-        $latestPayment = $this->payments->sortByDesc('id')->first();
-
-        return $latestPayment && in_array($latestPayment->status, ['DITOLAK', 'REJECTED']);
-    }
-
-    /**
-     * Mengambil entitas pembayaran dengan bukti yang ditolak
-     */
-    public function getRejectedProofPaymentAttribute(): ?Payment
-    {
-        $latestPayment = $this->payments->sortByDesc('id')->first();
-
-        return ($latestPayment && in_array($latestPayment->status, ['DITOLAK', 'REJECTED']))
-            ? $latestPayment
-            : null;
-    }
-
-    /**
-     * Format total tagihan faktur ke format mata uang Rupiah
-     */
-    public function getFormattedGrandTotalAttribute(): string
-    {
-        return 'Rp ' . number_format((float) ($this->grand_total ?? 0), 0, ',', '.');
-    }
-
-    /**
-     * Format subtotal tagihan ke format mata uang Rupiah
-     */
-    public function getFormattedSubtotalAttribute(): string
-    {
-        return 'Rp ' . number_format((float) ($this->subtotal_amount ?? 0), 0, ',', '.');
     }
 }

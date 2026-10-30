@@ -67,17 +67,25 @@ class GovernanceController extends Controller
      */
     public function toggleMasterFreeze(Request $request)
     {
-        $reason = $request->input('reason', 'Audit Kepatuhan & Stock Opname Berkala Direksi');
+        $currentlyFrozen = $this->governanceService->isMasterFreezeActive();
+
+        if ($request->has('freeze')) {
+            $val = $request->input('freeze');
+            $freeze = ($val === '1' || $val === 1 || $val === true || $val === 'true');
+        } else {
+            $freeze = !$currentlyFrozen;
+        }
+
+        $reason = $freeze
+            ? $request->input('reason', 'Audit Kepatuhan & Stock Opname Berkala Direksi')
+            : null;
         $directorName = Auth::user()?->name ?: 'Direktur Utama';
-        $settings = $this->governanceService->getSettings();
-        $currentlyFrozen = $settings['master_freeze_active'] ?? false;
-        $freeze = $request->has('freeze') ? $request->boolean('freeze') : !$currentlyFrozen;
 
         $isActive = $this->governanceService->toggleMasterFreeze($freeze, $reason, $directorName);
 
         $msg = $isActive
             ? "MASTER FREEZE TELAH DIAKTIFKAN. Seluruh mutasi stok dan transaksi input PO dihentikan."
-            : "Master Freeze dinonaktifkan. Seluruh sistem operasional kembali normal.";
+            : "Master Freeze berhasil dinonaktifkan. Seluruh sistem operasional kembali normal.";
 
         return back()->with('success', $msg);
     }

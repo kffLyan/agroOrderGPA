@@ -63,7 +63,7 @@
                     <button type="button" @click="verifyIntegrity()"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-[11px] font-bold tracking-[0.88px] text-white transition-colors hover:bg-white/20 gpa-meta">
                         <x-gpa.icon name="badge-check" class="h-3.5 w-3.5" />
-                        VERIFY SHA-256
+                        VERIFIKASI INTEGRITAS DATA
                     </button>
                 </div>
             </div>
@@ -76,7 +76,7 @@
                     <x-gpa.icon name="filter" class="h-4 w-4" />
                 </span>
                 <span class="text-[10px] font-bold uppercase tracking-[1.08px] text-ink-subtle gpa-micro-bold">
-                    FILTER FROZEN — AUDIT ARCHIVE
+                    FILTER ARSIP — PEMBUKUAN RESMI
                 </span>
 
                 <div class="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-line-faint bg-surface-base px-3 py-2">
@@ -509,17 +509,17 @@
                 <div class="space-y-3 lg:col-span-5">
                     <div>
                         <span class="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">Sertifikasi &amp; Standar Validasi</span>
-                        <p class="mt-0.5 text-xs font-semibold text-ink">Verifikasi Hash Integritas (SHA-256 Digest)</p>
+                        <p class="mt-0.5 text-xs font-semibold text-ink">Verifikasi Kode Integritas Dokumen</p>
                     </div>
                     <div>
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">Hash Integritas Konsolidasi</span>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">Kode Integritas Konsolidasi</span>
                         <div class="mt-1 flex items-center gap-2">
                             <span class="min-w-0 flex-1 truncate rounded-xl border border-line bg-surface-muted/60 px-3 py-2 text-xs font-mono font-semibold text-ink-strong" title="{{ $sha256Hash }}">
                                 {{ $sha256Hash }}
                             </span>
                             <button type="button" @click="copyHash()"
                                 class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-line bg-surface text-ink-subtle hover:bg-surface-muted hover:text-ink transition-colors"
-                                title="Salin Hash SHA-256">
+                                title="Salin Kode Integritas Dokumen">
                                 <x-gpa.icon name="copy" class="h-4 w-4" />
                             </button>
                         </div>
@@ -532,7 +532,7 @@
                     <button type="button" @click="exportWorkbook()"
                         class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-bold text-ink hover:bg-surface-muted transition-colors shadow-sm">
                         <x-gpa.icon name="download" class="h-3.5 w-3.5 text-ink-subtle" />
-                        Download Excel (.xlsx)
+                        Unduh Excel (.xlsx)
                     </button>
                     <button type="button" @click="printSeal()"
                         class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-brand hover:bg-brand-hover px-4 py-2.5 text-xs font-bold text-surface transition-colors shadow-sm">

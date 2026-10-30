@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Order extends Model
 {
     use HasFactory;
+    use \App\Models\Concerns\PresentsOrderDetails;
 
     protected $fillable = [
         'order_number', 'user_id', 'invoice_id', 'order_source',
@@ -17,6 +18,32 @@ class Order extends Model
         'grand_total', 'status', 'verified_by', 'surat_jalan_number',
         'driver_id', 'vehicle_plate_number', 'departure_time',
         'arrival_time', 'pod_photo_url', 'received_by_name',
+    ];
+
+    protected $appends = [
+        'stage',
+        'status_label',
+        'status_tone',
+        'status_note',
+        'commodities_summary',
+        'total_ordered_qty',
+        'po',
+        'date_formatted',
+        'time_formatted',
+        'hub',
+        'hub_chip',
+        'sj',
+        'vehicle',
+        'driver_note',
+        'shipment_note',
+        'total_chip',
+        'total_chip_tone',
+        'url',
+        'deviation_percent',
+        'deviation_label',
+        'weight_label_value',
+        'weight_chip',
+        'scale_note',
     ];
 
     protected function casts(): array
@@ -65,123 +92,6 @@ class Order extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
-    }
-
-    /**
-     * Mengambil instance enum OrderStatus yang bertipe kuat
-     */
-    public function getStatusEnumAttribute(): ?\App\Enums\OrderStatus
-    {
-        return \App\Enums\OrderStatus::tryFrom((string) $this->status);
-    }
-
-    /**
-     * Mengambil alasan penolakan pesanan dari catatan verifikasi pembayaran yang tersimpan
-     */
-    public function getRejectionReasonAttribute(): ?string
-    {
-        return $this->payments->where('status', 'DITOLAK')->first()?->verification_note
-            ?? $this->payments->whereNotNull('verification_note')->first()?->verification_note;
-    }
-
-    /**
-     * Memeriksa apakah pesanan ini sudah memiliki bukti pembayaran yang sedang diverifikasi
-     */
-    public function getHasPendingProofAttribute(): bool
-    {
-        return $this->payments
-            ->where('status', 'MENUNGGU_VERIFIKASI')
-            ->filter(fn ($p) => !empty($p->proof_url))
-            ->isNotEmpty();
-    }
-
-    /**
-     * Mengambil entitas pembayaran dengan bukti yang sedang menunggu verifikasi
-     */
-    public function getPendingProofPaymentAttribute(): ?Payment
-    {
-        return $this->payments
-            ->where('status', 'MENUNGGU_VERIFIKASI')
-            ->filter(fn ($p) => !empty($p->proof_url))
-            ->first();
-    }
-
-    /**
-     * Memeriksa apakah pesanan ini memiliki bukti pembayaran terakhir yang ditolak oleh verifikator
-     */
-    public function getHasRejectedProofAttribute(): bool
-    {
-        $latestPayment = $this->payments->sortByDesc('id')->first();
-
-        return $latestPayment && in_array($latestPayment->status, ['DITOLAK', 'REJECTED']);
-    }
-
-    /**
-     * Mengambil entitas pembayaran dengan bukti yang ditolak
-     */
-    public function getRejectedProofPaymentAttribute(): ?Payment
-    {
-        $latestPayment = $this->payments->sortByDesc('id')->first();
-
-        return ($latestPayment && in_array($latestPayment->status, ['DITOLAK', 'REJECTED']))
-            ? $latestPayment
-            : null;
-    }
-
-    /**
-     * Mengambil URL aset gambar bukti serah terima (PoD) yang valid dan dapat diakses publik
-     */
-    public function getPodPhotoAssetUrlAttribute(): ?string
-    {
-        if (!$this->pod_photo_url) {
-            return null;
-        }
-
-        if (str_starts_with($this->pod_photo_url, 'http://') || str_starts_with($this->pod_photo_url, 'https://')) {
-            return $this->pod_photo_url;
-        }
-
-        if (str_starts_with($this->pod_photo_url, 'uploads/') || str_starts_with($this->pod_photo_url, 'images/')) {
-            return asset($this->pod_photo_url);
-        }
-
-        if (str_starts_with($this->pod_photo_url, 'storage/')) {
-            return asset($this->pod_photo_url);
-        }
-
-        return asset('storage/' . $this->pod_photo_url);
-    }
-
-    /**
-     * Format nilai grand total ke format mata uang Rupiah
-     */
-    public function getFormattedGrandTotalAttribute(): string
-    {
-        return 'Rp ' . number_format((float) ($this->grand_total ?? 0), 0, ',', '.');
-    }
-
-    /**
-     * Hitung total kuantitas seluruh komoditas yang dipesan dalam kilogram
-     */
-    public function getTotalOrderedQtyAttribute(): float
-    {
-        return (float) $this->orderItems->sum('ordered_qty');
-    }
-
-    /**
-     * Format total kuantitas pesanan dengan satuan kg
-     */
-    public function getFormattedTotalOrderedQtyAttribute(): string
-    {
-        return number_format($this->total_ordered_qty, 1, ',', '.') . ' kg';
-    }
-
-    /**
-     * Nama entitas pembeli/klien yang representatif
-     */
-    public function getClientNameAttribute(): string
-    {
-        return $this->user?->company_name ?: ($this->user?->name ?: 'Mitra Klien');
     }
 }
 

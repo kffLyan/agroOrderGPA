@@ -5,11 +5,11 @@
 @section('content')
     @php
         $weeklyRows = $weeklyRows ?? [];
-        $allocationsList = $allocationsList ?? [];
+        $allocationsList = $allocationsList ?? collect();
         $maxWeekly = !empty($weeklyRows) ? max(array_column($weeklyRows, 'total')) : 0;
         $maxWeekly = $maxWeekly > 0 ? $maxWeekly : 1;
         $peakWeek = !empty($weeklyRows) ? ($weeklyRows[array_search(max(array_column($weeklyRows, 'total')), array_column($weeklyRows, 'total'))] ?? null) : null;
-        $totalCommitment = array_sum(array_column($allocationsList, 'commitment'));
+        $totalCommitment = (float) collect($allocationsList)->sum('commitment');
     @endphp
 
     <div class="mx-auto flex max-w-[1280px] flex-col gap-6"
@@ -307,7 +307,7 @@
 
                 <div class="flex flex-col gap-2">
                     <p class="gpa-micro-bold text-ink">Puncak Demand: {{ $peakWeek ? ($peakWeek['week'] . ' (' . number_format($peakWeek['total'], 0, '.', '') . ' T)') : '—' }}</p>
-                    <p class="gpa-micro-bold text-ink">SUMBER DATA: DATABASE NYATA KOPERASI GPA</p>
+                    <p class="gpa-micro-bold text-ink">SUMBER DATA: SISTEM OPERASIONAL KOPERASI GPA</p>
                 </div>
             </div>
 
@@ -330,22 +330,22 @@
                             <button type="button" @click="inspectPartner(@js($row))"
                                 class="flex items-center justify-between gap-3 rounded-xl bg-surface-shell p-3 text-left outline outline-1 -outline-offset-1 outline-line-board/60 transition-colors hover:bg-surface-muted">
                                 <span class="flex min-w-0 flex-col gap-0.5">
-                                    <span class="font-sans text-sm font-bold leading-5 text-ink">{{ $row['name'] }}</span>
+                                    <span class="font-sans text-sm font-bold leading-5 text-ink">{{ $row->name ?? $row['name'] }}</span>
                                     <span class="font-mono text-xs leading-4 text-success-deep">
-                                        SENTRA PRODUKSI: {{ $row['sentra'] }}
+                                        SENTRA PRODUKSI: {{ $row->sentra ?? $row['sentra'] }}
                                     </span>
                                 </span>
 
                                 <span class="flex shrink-0 flex-col items-end gap-0.5">
                                     <span class="text-right font-mono text-sm font-bold leading-5 tracking-[0.28px] text-ink">
-                                        {{ number_format($row['commitment'], 2, '.', '') }}
+                                        {{ number_format($row->commitment ?? $row['commitment'], 2, '.', '') }}
                                     </span>
                                     <span
                                         class="text-right font-mono text-xs font-bold leading-4 tracking-[0.28px] text-ink">
                                         Ton/mgg
                                     </span>
                                     <span class="text-right font-inter text-[9px] font-semibold leading-3 tracking-[1.08px] text-success-deep">
-                                        {{ $row['priority'] }}
+                                        {{ $row->priority ?? $row['priority'] }}
                                     </span>
                                 </span>
                             </button>

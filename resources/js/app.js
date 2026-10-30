@@ -1,8 +1,10 @@
 import './bootstrap';
 
 import Alpine from 'alpinejs';
-// Shared & Dialogs
+// Shared, Dialogs & Global Loading Progress Bar
 import './components/shared/gpa-dialog';
+import './components/shared/gpa-progress';
+import './components/shared/gpa-lazy';
 import gpaToast from './components/shared/gpa-toast';
 import registrationForm from './components/shared/registration-form';
 

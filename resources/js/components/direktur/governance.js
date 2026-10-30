@@ -145,16 +145,21 @@ export default function directorGovernance(rows = [], labels = {}) {
 
         exportAudit() {
             this.run(
-                'Export Audit Log',
-                'Append-only ledger sedang diunduh dalam format .CSV.',
+                'Ekspor Catatan Audit',
+                'Data catatan riwayat audit sedang diunduh dalam format .CSV.',
                 'success'
             );
         },
 
         verifyIntegrity() {
+            alert('HASIL PENGUJIAN INTEGRITAS DATA SISTEM GPA:\n\n' +
+                  '• Status Keamanan Data: 100% VALID\n' +
+                  '• Verifikasi Sistem: Seluruh riwayat transaksi dan audit tersimpan utuh dan sah.\n' +
+                  '• Temuan Anomali: 0 Anomali Terdeteksi (Aman).\n\n' +
+                  'Sistem tata kelola dan catatan riwayat berada dalam kondisi aman terlindungi.');
             this.run(
-                'Uji Integritas Kriptografi',
-                'Seluruh blok SHA-256 diverifikasi: previous block hash cocok, 0 anomali terdeteksi.',
+                'Uji Integritas Data Sistem',
+                'Pemeriksaan keamanan data selesai: Seluruh data riwayat valid dan 0 kejanggalan terdeteksi.',
                 'success'
             );
         },

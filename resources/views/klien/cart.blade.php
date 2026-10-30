@@ -4,37 +4,11 @@
 
 @php
     $user = $user ?? auth()->user();
-    $isB2b = ($user->client_type === 'B2B_KONTRAK');
-
-    $commodities = ($products ?? collect())->map(function ($product) use ($activeContracts, $stockMap) {
-        $hasContract = $activeContracts->has($product->id);
-        $contract = $activeContracts->get($product->id);
-        $effectivePrice = $hasContract ? (float) $contract->fixed_price_per_kg : (float) $product->base_price;
-        $stock = $stockMap[$product->id] ?? 0;
-        $moq = (float) ($product->minimum_order ?? 10);
-
-        return [
-            'key'        => (string) $product->id,
-            'id'         => $product->id,
-            'sku'        => $product->sku ?? ('SKU-' . $product->id),
-            'name'       => $product->name,
-            'grade'      => $product->grade ?: 'Grade A',
-            'packaging'  => "Krat Plastik Higienis 10 {$product->unit}",
-            'origin'     => 'Lembang',
-            'cold_chain' => '2-6°C',
-            'price'      => $effectivePrice,
-            'stock'      => $stock,
-            'moq'        => $moq,
-            'step'       => 1,
-            'crate_kg'   => 10,
-            'pack_label' => 'Krat',
-        ];
-    })->values()->all();
-
-    $defaultDeliveryDate = now()->addDay()->format('Y-m-d');
-    $defaultAddress = $user->address ?: '';
-
-    $docks = [
+    $isB2b = $isB2b ?? ($user->client_type === 'B2B_KONTRAK');
+    $commodities = $commodities ?? [];
+    $defaultDeliveryDate = $defaultDeliveryDate ?? now()->addDay()->format('Y-m-d');
+    $defaultAddress = $defaultAddress ?? ($user->address ?: '');
+    $docks = $docks ?? [
         [
             'key'      => 'dock-utama',
             'name'     => $user->company_name ?: ($user->name ?: 'Alamat Terdaftar'),
@@ -43,7 +17,6 @@
             'access'   => 'Akses Pengiriman Terdaftar',
         ],
     ];
-
     $receivingRoster = $receivingRoster ?? [
         [
             'name'  => $user->pic_name ?: $user->name,
@@ -51,10 +24,8 @@
             'phone' => $user->pic_phone ?: ($user->phone ?: '—'),
         ],
     ];
-
     $demoLines = $demoLines ?? [];
-
-    $cartDefaults = [
+    $cartDefaults = $cartDefaults ?? [
         'date'             => $defaultDeliveryDate,
         'window'           => '04:00 - 06:00 WIB (Subuh)',
         'driver_note'      => 'Harap konfirmasi ke PIC dock penerimaan 30 menit sebelum armada tiba.',
@@ -77,7 +48,7 @@
             <div class="flex items-center gap-2">
                 <span
                     class="rounded bg-accent px-2 py-0.5 gpa-micro-bold text-success-ink">
-                    Live Connected
+                    Tersinkronisasi
                 </span>
                 <span class="gpa-micro text-ink-quiet">Sinkronisasi Otomatis</span>
             </div>
@@ -308,7 +279,7 @@
                                 </select>
                                 <x-gpa.icon name="clock" class="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-quiet" />
                             </div>
-                            <p class="gpa-hint font-semibold text-success-ink">SLA Bongkar Cepat &lt; 30 Menit di Dock Penerimaan.</p>
+                            <p class="gpa-hint font-semibold text-success-ink">Target Bongkar Cepat &lt; 30 Menit di Dock Penerimaan.</p>
                         </div>
                     </div>
 
@@ -641,7 +612,7 @@
                             <span class="text-ink" x-text="statusLabel">Draf Siap Diajukan</span>
                         </p>
                         <p class="gpa-micro text-right text-ink">
-                            SLA Respon Admin: <span class="font-bold">&lt; 2 Jam Kerja</span>
+                            Waktu Respon Admin: <span class="font-bold">&lt; 2 Jam Kerja</span>
                         </p>
                     </div>
                 </section>

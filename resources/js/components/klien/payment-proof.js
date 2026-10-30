@@ -110,6 +110,36 @@ export default function clientPaymentProof(defaults = {}) {
             return this.file !== null;
         },
 
+        get currentStage() {
+            if (this.submitted) {
+                return 2;
+            }
+            return Number(this.current?.verification_stage ?? 1);
+        },
+
+        get currentStatus() {
+            if (this.submitted) {
+                return 'MENUNGGU_VERIFIKASI';
+            }
+            return this.current?.verification_status ?? 'BELUM_BAYAR';
+        },
+
+        get isCurrentPaid() {
+            return this.currentStatus === 'LUNAS' || this.currentStage === 3;
+        },
+
+        get isCurrentPending() {
+            return this.currentStatus === 'MENUNGGU_VERIFIKASI' || this.currentStage === 2;
+        },
+
+        get isCurrentRejected() {
+            return this.currentStatus === 'DITOLAK';
+        },
+
+        get isCurrentUnpaid() {
+            return this.currentStatus === 'BELUM_BAYAR' && !this.submitted;
+        },
+
         get canSubmit() {
             return this.hasFile && this.amountMatches && this.form.compliance === true && ! this.sending;
         },
@@ -178,7 +208,7 @@ export default function clientPaymentProof(defaults = {}) {
                 name: file.name,
                 size_label: this.formatBytes(file.size),
                 time_label: 'Baru saja diunggah',
-                hash_label: 'SHA-256 Dihitung',
+                hash_label: 'Kode Integritas Terverifikasi',
             };
             this.error = null;
 
@@ -225,8 +255,8 @@ export default function clientPaymentProof(defaults = {}) {
 
         contactPic() {
             this.$dispatch('gpa:toast', {
-                title: 'Hotline Sekretariat GPA',
-                message: 'SLA 2 jam kerja aktif. Ext 4 akan terhubung ke PIC Finance.',
+                title: 'Layanan Sekretariat GPA',
+                message: 'Layanan bantuan aktif. Tim Keuangan siap membantu verifikasi pembayaran Anda.',
                 tone: 'info',
             });
         },
@@ -337,6 +367,15 @@ export default function clientPaymentProof(defaults = {}) {
                 this.sending = false;
                 this.submitted = true;
                 this.draftSaved = false;
+
+                if (this.current) {
+                    this.current.verification_stage = 2;
+                    this.current.verification_status = 'MENUNGGU_VERIFIKASI';
+                    this.current.status_chip = 'Menunggu Verifikasi Pembayaran';
+                    if (this.form.reference) {
+                        this.current.payment_ref = this.form.reference;
+                    }
+                }
 
                 this.$dispatch('gpa:toast', {
                     title: 'Bukti Pembayaran Terkirim',

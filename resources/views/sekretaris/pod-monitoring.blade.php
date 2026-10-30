@@ -5,17 +5,21 @@
 @section('content')
     <div x-data="{
         photoModalOpen: false,
-        activePhotoUrl: '',
+        activePhotos: [],
         activeOrderNum: '',
         activeSjNum: '',
         activeReceiver: '',
         activeTime: '',
-        openPhoto(url, orderNum, sjNum, receiver, time) {
-            this.activePhotoUrl = url;
+        viewMode: 'both',
+        selectedIdx: 0,
+        openPhotos(photos, orderNum, sjNum, receiver, time, startIdx = 0) {
+            this.activePhotos = Array.isArray(photos) ? photos : (photos ? [photos] : []);
             this.activeOrderNum = orderNum;
             this.activeSjNum = sjNum;
             this.activeReceiver = receiver;
             this.activeTime = time;
+            this.selectedIdx = startIdx;
+            this.viewMode = this.activePhotos.length > 1 ? 'both' : 'single';
             this.photoModalOpen = true;
         }
     }" class="flex flex-col gap-6">
@@ -203,7 +207,9 @@
                                 $isInTransit = ($order->status === 'DALAM_PENGIRIMAN');
                                 $isReady = ($order->status === 'SIAP_KIRIM');
 
-                                $podUrl = $order->pod_photo_asset_url;
+                                $podPhotos = $order->pod_photo_asset_urls;
+                                $manifestPhoto = $podPhotos[0] ?? null;
+                                $dockPhoto = $podPhotos[1] ?? null;
                                 
                                 $returItems = $order->orderItems->filter(fn($it) => (float)($it->returned_weight ?? 0) > 0);
                             @endphp
@@ -295,19 +301,30 @@
 
                                 {{-- 6. Foto Bukti (PoD) --}}
                                 <td class="px-4 py-3.5 align-top text-center">
-                                    @if ($podUrl)
+                                    @if (!empty($podPhotos))
                                         <div class="flex flex-col items-center gap-1.5">
-                                            <button type="button"
-                                                @click="openPhoto('{{ $podUrl }}', '{{ $order->order_number }}', '{{ $sjNum }}', '{{ $receiver }}', '{{ $arrivalTime }}')"
-                                                class="group relative block h-14 w-20 overflow-hidden rounded-lg border border-line-soft bg-black shadow-xs transition-transform hover:scale-105">
-                                                <img src="{{ $podUrl }}" alt="Bukti PoD"
-                                                    class="h-full w-full object-cover transition-opacity group-hover:opacity-80"
-                                                    onerror="this.onerror=null;this.style.opacity='0.4';">
-                                                <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-                                                    <x-gpa.icon name="eye" class="h-3.5 w-3.5 text-accent" />
-                                                </div>
-                                            </button>
-                                            <span class="text-[9px] font-bold text-success-deep uppercase">Foto Fisik Valid</span>
+                                            <div class="flex items-center justify-center gap-1.5">
+                                                @foreach ($podPhotos as $pIdx => $pUrl)
+                                                    <button type="button"
+                                                        @click="openPhotos({{ json_encode($podPhotos) }}, '{{ $order->order_number }}', '{{ $sjNum }}', '{{ $receiver }}', '{{ $arrivalTime }}', {{ $pIdx }})"
+                                                        title="{{ $pIdx === 0 ? 'Foto 1: Lembar Surat Jalan Bertanda Tangan' : 'Foto 2: Fisik Muatan & Bongkar Dock' }}"
+                                                        class="group relative block h-12 w-14 overflow-hidden rounded-lg border border-line-soft bg-black shadow-xs transition-transform hover:scale-105">
+                                                        <img src="{{ $pUrl }}" alt="Foto {{ $pIdx + 1 }}"
+                                                            class="h-full w-full object-cover transition-opacity group-hover:opacity-80"
+                                                            onerror="this.onerror=null;this.style.opacity='0.4';">
+                                                        <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                                                            <x-gpa.icon name="eye" class="h-3 w-3 text-accent" />
+                                                        </div>
+                                                        <span class="absolute bottom-0 inset-x-0 bg-ink/75 py-0.5 text-[8px] font-bold text-white text-center">
+                                                            {{ $pIdx === 0 ? 'SJ' : 'Dock' }}
+                                                        </span>
+                                                    </button>
+                                                @endforeach
+                                            </div>
+                                            <span class="inline-flex items-center gap-1 text-[9px] font-bold text-success-deep uppercase">
+                                                <x-gpa.icon name="shield-check" class="h-3 w-3 text-success-deep" />
+                                                {{ count($podPhotos) > 1 ? '2 Foto Lengkap' : '1 Foto Terverifikasi' }}
+                                            </span>
                                         </div>
                                     @else
                                         <span class="rounded bg-surface-pill px-2 py-1 text-[10px] text-ink-quiet">
@@ -319,10 +336,10 @@
                                 {{-- 7. Aksi Dokumen --}}
                                 <td class="px-4 py-3.5 align-top text-center">
                                     <div class="flex items-center justify-center gap-1">
-                                        @if ($podUrl)
+                                        @if (!empty($podPhotos))
                                             <button type="button"
-                                                @click="openPhoto('{{ $podUrl }}', '{{ $order->order_number }}', '{{ $sjNum }}', '{{ $receiver }}', '{{ $arrivalTime }}')"
-                                                title="Lihat Pratinjau Foto PoD"
+                                                @click="openPhotos({{ json_encode($podPhotos) }}, '{{ $order->order_number }}', '{{ $sjNum }}', '{{ $receiver }}', '{{ $arrivalTime }}')"
+                                                title="Lihat Pratinjau {{ count($podPhotos) }} Foto PoD"
                                                 class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-line-soft bg-surface text-ink shadow-xs transition-colors hover:bg-accent hover:border-accent-edge">
                                                 <x-gpa.icon name="eye" class="h-3.5 w-3.5" />
                                             </button>
@@ -358,15 +375,16 @@
             @endif
         </section>
 
-        {{-- Modal Pratinjau Foto PoD --}}
+        {{-- Modal Pratinjau Foto PoD Multi-Foto --}}
         <div x-cloak x-show="photoModalOpen"
             @keydown.escape.window="photoModalOpen = false"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+            class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
             role="dialog" aria-modal="true">
             <div class="fixed inset-0 bg-ink/75 backdrop-blur-xs transition-opacity"
                 @click="photoModalOpen = false"></div>
 
-            <div class="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-surface shadow-pop ring-1 ring-ink/10"
+            <div class="relative flex w-full flex-col overflow-hidden rounded-2xl bg-surface shadow-pop ring-1 ring-ink/10 transition-all"
+                :class="activePhotos.length > 1 && viewMode === 'both' ? 'max-w-5xl' : 'max-w-3xl'"
                 x-show="photoModalOpen"
                 x-transition:enter="ease-out duration-200"
                 x-transition:enter-start="opacity-0 scale-95"
@@ -376,7 +394,7 @@
                 x-transition:leave-end="opacity-0 scale-95">
 
                 {{-- Modal Header --}}
-                <div class="flex items-center justify-between border-b border-line-hair bg-surface-shell px-5 py-3.5">
+                <div class="flex flex-col gap-2 border-b border-line-hair bg-surface-shell px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex items-center gap-2.5">
                         <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-ink">
                             <x-gpa.icon name="shield" class="h-4 w-4" />
@@ -390,31 +408,105 @@
                             </p>
                         </div>
                     </div>
-                    <button type="button" @click="photoModalOpen = false"
-                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-body transition-colors hover:bg-surface-muted hover:text-ink">
-                        <x-gpa.icon name="x" class="h-4 w-4" />
-                    </button>
+
+                    {{-- Mode Switcher if 2 photos --}}
+                    <div class="flex items-center gap-2">
+                        <template x-if="activePhotos.length > 1">
+                            <div class="flex items-center rounded-lg border border-line-soft bg-surface p-0.5 text-xs">
+                                <button type="button" @click="viewMode = 'both'"
+                                    :class="viewMode === 'both' ? 'bg-ink text-white font-bold' : 'text-ink-body hover:text-ink'"
+                                    class="rounded-md px-2.5 py-1 text-[11px] transition-colors">
+                                    Berdampingan (2 Foto)
+                                </button>
+                                <button type="button" @click="viewMode = 'single'; selectedIdx = 0"
+                                    :class="viewMode === 'single' && selectedIdx === 0 ? 'bg-ink text-white font-bold' : 'text-ink-body hover:text-ink'"
+                                    class="rounded-md px-2.5 py-1 text-[11px] transition-colors">
+                                    1. Surat Jalan
+                                </button>
+                                <button type="button" @click="viewMode = 'single'; selectedIdx = 1"
+                                    :class="viewMode === 'single' && selectedIdx === 1 ? 'bg-ink text-white font-bold' : 'text-ink-body hover:text-ink'"
+                                    class="rounded-md px-2.5 py-1 text-[11px] transition-colors">
+                                    2. Fisik Muatan
+                                </button>
+                            </div>
+                        </template>
+                        <button type="button" @click="photoModalOpen = false"
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-body transition-colors hover:bg-surface-muted hover:text-ink">
+                            <x-gpa.icon name="x" class="h-4 w-4" />
+                        </button>
+                    </div>
                 </div>
 
                 {{-- Modal Body Image Container --}}
-                <div class="flex max-h-[70vh] items-center justify-center overflow-auto bg-black p-4">
-                    <img :src="activePhotoUrl" alt="Foto Fisik Bukti Terima"
-                        class="max-h-[65vh] w-auto max-w-full rounded-lg object-contain shadow-2xl">
+                <div class="max-h-[72vh] overflow-auto bg-black/95 p-4">
+                    {{-- Both Photos Side by Side --}}
+                    <template x-if="activePhotos.length > 1 && viewMode === 'both'">
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            {{-- Photo 1 --}}
+                            <div class="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/5 p-3">
+                                <div class="flex items-center justify-between text-xs text-white">
+                                    <span class="flex items-center gap-1.5 font-bold">
+                                        <span class="flex h-5 w-5 items-center justify-center rounded bg-accent text-[10px] font-black text-ink">1</span>
+                                        Lembar Surat Jalan (Stempel &amp; Tanda Tangan)
+                                    </span>
+                                    <a :href="activePhotos[0]" target="_blank" class="text-accent underline text-[11px] hover:text-accent-edge">
+                                        Perbesar
+                                    </a>
+                                </div>
+                                <div class="flex h-[48vh] items-center justify-center overflow-hidden rounded-lg bg-black">
+                                    <img :src="activePhotos[0]" alt="Foto Surat Jalan"
+                                        class="h-full w-full object-contain">
+                                </div>
+                            </div>
+                            {{-- Photo 2 --}}
+                            <div class="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/5 p-3">
+                                <div class="flex items-center justify-between text-xs text-white">
+                                    <span class="flex items-center gap-1.5 font-bold">
+                                        <span class="flex h-5 w-5 items-center justify-center rounded bg-accent text-[10px] font-black text-ink">2</span>
+                                        Fisik Komoditas &amp; Dock Pembongkaran
+                                    </span>
+                                    <a :href="activePhotos[1]" target="_blank" class="text-accent underline text-[11px] hover:text-accent-edge">
+                                        Perbesar
+                                    </a>
+                                </div>
+                                <div class="flex h-[48vh] items-center justify-center overflow-hidden rounded-lg bg-black">
+                                    <img :src="activePhotos[1]" alt="Foto Muatan Dock"
+                                        class="h-full w-full object-contain">
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    {{-- Single Photo View --}}
+                    <template x-if="activePhotos.length <= 1 || viewMode === 'single'">
+                        <div class="flex flex-col items-center gap-2">
+                            <div class="flex w-full items-center justify-between text-xs text-white px-2">
+                                <span class="font-bold text-accent" x-text="selectedIdx === 0 ? 'Foto 1: Surat Jalan & Stempel Penerima' : 'Foto 2: Fisik Komoditas & Lokasi Dock'"></span>
+                                <span class="text-[11px] text-white/70" x-text="(selectedIdx + 1) + ' dari ' + activePhotos.length + ' foto'"></span>
+                            </div>
+                            <div class="flex max-h-[64vh] w-full items-center justify-center overflow-auto rounded-lg">
+                                <img :src="activePhotos[selectedIdx] || activePhotos[0]" alt="Foto Bukti Terima"
+                                    class="max-h-[60vh] w-auto max-w-full rounded-lg object-contain shadow-2xl">
+                            </div>
+                        </div>
+                    </template>
                 </div>
 
                 {{-- Modal Footer Metadata & Aksi --}}
-                <div class="flex flex-col gap-2 border-t border-line-hair bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex flex-col gap-3 border-t border-line-hair bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
                     <div class="flex flex-col text-xs text-ink-body">
-                        <span>Penerima di Lokasi: <strong class="text-ink" x-text="activeReceiver"></strong></span>
-                        <span>Waktu Serah Terima: <strong class="text-ink" x-text="activeTime"></strong></span>
+                        <span>Penerima di Lokasi: <strong class="text-ink" x-text="activeReceiver || '—'"></strong></span>
+                        <span>Waktu Serah Terima: <strong class="text-ink" x-text="activeTime || '—'"></strong></span>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        <a :href="activePhotoUrl" target="_blank"
-                            class="inline-flex items-center gap-1.5 rounded-lg border border-line-soft bg-surface px-3 py-2 text-xs font-bold text-ink shadow-xs transition-colors hover:bg-surface-muted">
-                            <x-gpa.icon name="eye" class="h-3.5 w-3.5 text-ink-body" />
-                            <span>Buka di Tab Baru</span>
-                        </a>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <template x-if="activePhotos[selectedIdx] || activePhotos[0]">
+                            <a :href="activePhotos[selectedIdx] || activePhotos[0]" target="_blank"
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-line-soft bg-surface px-3 py-2 text-xs font-bold text-ink shadow-xs transition-colors hover:bg-surface-muted">
+                                <x-gpa.icon name="eye" class="h-3.5 w-3.5 text-ink-body" />
+                                <span>Buka di Tab Baru</span>
+                            </a>
+                        </template>
                         <button type="button" @click="photoModalOpen = false"
                             class="inline-flex items-center rounded-lg bg-ink px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-brand-deep">
                             Tutup

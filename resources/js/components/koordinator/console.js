@@ -52,16 +52,16 @@ export default function coordinatorConsole(rows = [], orders = [], logs = []) {
 
         refreshData() {
             this.syncing = true;
-            this.run('Menyegarkan Data', 'Memperbarui data pasokan dan antrean intake dari database...', 'info');
+            this.run('Menyegarkan Data', 'Memperbarui data pasokan dan antrean penerimaan terbaru...', 'info');
             setTimeout(() => {
                 this.syncing = false;
-                this.run('Data Diperbarui', 'Data kesiapan pasokan dan intake Gate-01 berhasil disinkronkan.', 'success');
+                this.run('Data Diperbarui', 'Data kesiapan pasokan dan penerimaan timbangan berhasil disinkronkan.', 'success');
             }, 600);
         },
 
         syncScale() {
             this.syncing = true;
-            this.run('Sinkronisasi Gate-01', 'Mengkalibrasi sensor timbangan jembatan Gate-01...', 'info');
+            this.run('Sinkronisasi Timbangan', 'Mengkalibrasi sensor timbangan penerimaan panen...', 'info');
             setTimeout(() => {
                 this.syncing = false;
                 const now = new Date();
@@ -69,7 +69,7 @@ export default function coordinatorConsole(rows = [], orders = [], logs = []) {
                 if (this.logs && this.logs.length > 0) {
                     this.logs[0].time = timeStr;
                 }
-                this.run('Sensor Timbangan Terkalibrasi', `Gate-01 sinkron pada ${timeStr}. Zero offset 0.00 KG (Akurasi Metrologi Kelas III).`, 'success');
+                this.run('Sensor Timbangan Terkalibrasi', `Timbangan utama sinkron pada ${timeStr}. Penimbangan akurat dan siap beroperasi.`, 'success');
             }, 700);
         },
 
@@ -233,7 +233,7 @@ export default function coordinatorConsole(rows = [], orders = [], logs = []) {
                 <!DOCTYPE html>
                 <html>
                 <head>
-                    <title>Slip Timbang Gate-01 - ${this.activeSlip?.ticket || 'Tiket'}</title>
+                    <title>Slip Timbang Pos Utama - ${this.activeSlip?.ticket || 'Tiket'}</title>
                     <style>
                         body { font-family: monospace, sans-serif; padding: 24px; color: #111; margin: 0; }
                         .ticket-box { border: 2px dashed #333; padding: 20px; max-width: 450px; margin: auto; }
@@ -251,7 +251,7 @@ export default function coordinatorConsole(rows = [], orders = [], logs = []) {
                     <div class="ticket-box">
                         <div class="header">
                             <h2 class="title">KOPERASI TANI GREEN PASUNDAN AGRICULTURE</h2>
-                            <div class="subtitle">UPTD Metrologi Legal - Timbangan Intake Gate-01</div>
+                            <div class="subtitle">Stasiun Penimbangan Resmi - Pos Timbangan Utama GPA</div>
                             <div class="subtitle">Ciwidey, Kab. Bandung - Jawa Barat</div>
                         </div>
                         <div class="row"><span>No. Tiket:</span><span class="bold">${this.activeSlip?.ticket || '-'}</span></div>
@@ -264,7 +264,7 @@ export default function coordinatorConsole(rows = [], orders = [], logs = []) {
                         <div class="row"><span>Berat Wadah (Tara):</span><span>${this.kg(this.activeSlip?.tare)} KG</span></div>
                         <div class="row netto-row"><span>BERAT BERSIH (NETTO):</span><span>${this.kg(this.activeSlip?.net)} KG</span></div>
                         <div class="divider"></div>
-                        <div class="row"><span>Catatan:</span><span>${this.activeSlip?.note || 'Lolos Uji Metrologi Gate-01'}</span></div>
+                        <div class="row"><span>Catatan:</span><span>${this.activeSlip?.note || 'Lolos Verifikasi Timbangan Resmi'}</span></div>
                         <div class="row" style="margin-top: 20px;">
                             <div style="text-align: center; width: 50%;">
                                 <div style="font-size: 11px;">Pemasok / Driver</div>
@@ -276,7 +276,7 @@ export default function coordinatorConsole(rows = [], orders = [], logs = []) {
                             </div>
                         </div>
                         <div class="footer">
-                            Sistem Informasi Penimbangan Sah Metrologi Kelas III GPA.<br>
+                            Bukti Penimbangan Resmi Koperasi Tani Green Pasundan Agriculture.<br>
                             Dicetak otomatis melalui Konsol Koordinator.
                         </div>
                     </div>

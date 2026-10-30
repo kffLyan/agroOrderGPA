@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\HarvestBatch;
 use App\Models\Product;
 use Exception;
-use Illuminate\Support\Facades\DB;
 
 // Layanan untuk mengelola stok panen komoditas di gudang
 class StockService
@@ -74,7 +73,7 @@ class StockService
         if ($remainingToDeduct > 0) {
             $product = Product::find($productId);
             $productName = $product?->name ?? "ID #{$productId}";
-            throw new \Exception("Stok fisik komoditas {$productName} di gudang tidak mencukupi untuk dialokasikan.");
+            throw new Exception("Stok fisik komoditas {$productName} di gudang tidak mencukupi untuk dialokasikan.");
         }
     }
 

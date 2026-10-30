@@ -413,20 +413,38 @@
                                     <div class="flex flex-wrap items-center justify-end gap-2">
                                         @foreach ($row['actions'] as $actionIndex => $action)
                                             @php $isPrimary = $actionIndex === 0; @endphp
-                                            <button type="button"
-                                                @click="{{ match ($action) {
-                                                    'Kunci Plafon' => 'toggleFreeze(rows[' . $rowIndex . '])',
-                                                    'Lepas Freeze' => 'toggleFreeze(rows[' . $rowIndex . '])',
-                                                    'Kirim Reminder WA' => 'sendReminder(rows[' . $rowIndex . '])',
-                                                    'Restrukturisasi Tagihan' => 'restructure(rows[' . $rowIndex . '])',
-                                                    default => 'inspectInvoice(rows[' . $rowIndex . '])',
-                                                } }}"
-                                                @class([
-                                                    'rounded px-2.5 py-1.5 font-mono text-[11px] font-semibold leading-[14px] tracking-[0.88px] transition-colors',
-                                                    'shadow-sub bg-danger text-white hover:bg-danger-ink' => $isPrimary && !empty($row['locked']),
-                                                    'bg-accent-deep text-ink hover:bg-accent' => $isPrimary && empty($row['locked']) && ($row['status_tone'] ?? '') === 'warning',
-                                                    'bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-disabled' => ! $isPrimary || ($isPrimary && empty($row['locked']) && ($row['status_tone'] ?? '') !== 'warning'),
-                                                ])>{{ $action }}</button>
+                                            @if ($action === 'Kunci Plafon' || $action === 'Lepas Freeze')
+                                                <form method="POST" action="{{ route('direktur.receivables.freeze', $row['id']) }}" class="inline">
+                                                    @csrf
+                                                    <input type="hidden" name="action" value="{{ $action === 'Kunci Plafon' ? 'freeze' : 'unfreeze' }}">
+                                                    <button type="submit"
+                                                        @class([
+                                                            'rounded px-2.5 py-1.5 font-mono text-[11px] font-semibold leading-[14px] tracking-[0.88px] transition-colors',
+                                                            'shadow-sub bg-danger text-white hover:bg-danger-ink' => !empty($row['locked']),
+                                                            'bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-disabled' => empty($row['locked']),
+                                                        ])>{{ $action }}</button>
+                                                </form>
+                                            @elseif ($action === 'Detail Faktur')
+                                                <button type="button"
+                                                    @click="openDetail(rows[{{ $rowIndex }}])"
+                                                    class="rounded px-2.5 py-1.5 font-mono text-[11px] font-semibold leading-[14px] tracking-[0.88px] transition-colors bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-disabled">
+                                                    Detail Faktur
+                                                </button>
+                                            @elseif ($action === 'Kirim Reminder WA')
+                                                <form method="POST" action="{{ route('direktur.receivables.reminder', $row['id']) }}" class="inline">
+                                                    @csrf
+                                                    <button type="submit"
+                                                        class="rounded px-2.5 py-1.5 font-mono text-[11px] font-semibold leading-[14px] tracking-[0.88px] transition-colors bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-disabled">
+                                                        Kirim Reminder WA
+                                                    </button>
+                                                </form>
+                                            @else
+                                                <button type="button"
+                                                    @click="{{ $action === 'Restrukturisasi Tagihan' ? 'restructure(rows[' . $rowIndex . '])' : 'openDetail(rows[' . $rowIndex . '])' }}"
+                                                    class="rounded px-2.5 py-1.5 font-mono text-[11px] font-semibold leading-[14px] tracking-[0.88px] transition-colors bg-accent-deep text-ink hover:bg-accent">
+                                                    {{ $action }}
+                                                </button>
+                                            @endif
                                         @endforeach
                                     </div>
                                 </td>
@@ -479,7 +497,7 @@
                             <span class="text-[12px] font-bold leading-4 text-ink {{ $mono }}">3 Faktur</span>
                         </div>
                         <div class="flex items-center justify-between gap-3 rounded-lg bg-surface-shell p-2.5">
-                            <span class="text-[12px] leading-4 text-ink">Total Nilai Kliring Pending:</span>
+                            <span class="text-[12px] leading-4 text-ink">Total Nilai Menunggu Kliring:</span>
                             <span class="text-[12px] font-bold leading-4 text-success-deep {{ $mono }}">Rp 78.400.000</span>
                         </div>
                     </div>
@@ -497,5 +515,56 @@
                 </div>
             </article>
         </section>
+
+        {{-- Modal Detail Faktur & Evaluasi Plafon Klien --}}
+        <div x-show="selectedRow !== null" x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm"
+            @keydown.escape.window="closeDetail()">
+            <div class="w-full max-w-lg rounded-2xl bg-surface p-6 shadow-2xl border border-line-board"
+                @click.outside="closeDetail()">
+                <div class="flex items-start justify-between border-b border-line-hair pb-4">
+                    <div>
+                        <h3 class="text-base font-bold text-ink" x-text="selectedRow?.name"></h3>
+                        <span class="text-xs font-mono text-ink-subtle" x-text="selectedRow?.client_id"></span>
+                    </div>
+                    <button type="button" @click="closeDetail()" class="rounded-lg p-1 text-ink-subtle hover:bg-surface-shell">
+                        <x-gpa.icon name="x" class="h-5 w-5" />
+                    </button>
+                </div>
+
+                <div class="mt-4 flex flex-col gap-3">
+                    <div class="flex justify-between py-1.5 border-b border-line-hair">
+                        <span class="text-xs text-ink-body">Status AR:</span>
+                        <span class="text-xs font-bold font-mono" :class="selectedRow?.locked ? 'text-danger' : 'text-success-deep'" x-text="selectedRow?.status_label"></span>
+                    </div>
+                    <div class="flex justify-between py-1.5 border-b border-line-hair">
+                        <span class="text-xs text-ink-body">Sisa Tagihan Tertunggak:</span>
+                        <span class="text-xs font-bold font-mono text-ink" x-text="selectedRow?.outstanding_label"></span>
+                    </div>
+                    <div class="flex justify-between py-1.5 border-b border-line-hair">
+                        <span class="text-xs text-ink-body">Termin Pembayaran (TOP):</span>
+                        <span class="text-xs font-bold text-ink" x-text="selectedRow?.top_label"></span>
+                    </div>
+                    <div class="flex justify-between py-1.5 border-b border-line-hair">
+                        <span class="text-xs text-ink-body">Batas Jatuh Tempo:</span>
+                        <span class="text-xs font-bold text-ink" x-text="(selectedRow?.due_label ?? '') + ' ' + (selectedRow?.days_label ?? '')"></span>
+                    </div>
+                    <div class="flex justify-between py-1.5 border-b border-line-hair">
+                        <span class="text-xs text-ink-body">Utilisasi Plafon Kredit:</span>
+                        <span class="text-xs font-bold font-mono text-ink" x-text="(selectedRow?.utilisation_note ?? '') + ' dari ' + (selectedRow?.limit_label ?? '')"></span>
+                    </div>
+                    <div class="flex justify-between py-1.5 border-b border-line-hair">
+                        <span class="text-xs text-ink-body">Surat Jalan Terlampir:</span>
+                        <span class="text-xs font-semibold text-ink" x-text="selectedRow?.sj_label"></span>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-2 border-t border-line-hair pt-4">
+                    <button type="button" @click="closeDetail()" class="rounded-lg bg-surface-shell px-4 py-2 text-xs font-bold text-ink hover:bg-surface-track">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection

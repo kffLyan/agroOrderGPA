@@ -12,21 +12,7 @@
                 </a>
             </div>
             <div>
-                @php
-                    $badgeClasses = match($order->status) {
-                        'SELESAI' => 'bg-emerald-100 text-emerald-800 border-emerald-300',
-                        'SELESAI_CATATAN' => 'bg-teal-100 text-teal-800 border-teal-300',
-                        'DALAM_PENGIRIMAN', 'SIAP_KIRIM' => 'bg-blue-100 text-blue-800 border-blue-300',
-                        'LUNAS' => 'bg-emerald-100 text-emerald-800 border-emerald-300',
-                        'MENUNGGU_PEMBAYARAN' => 'bg-indigo-100 text-indigo-800 border-indigo-300',
-                        'MENUNGGU_VERIFIKASI' => 'bg-amber-100 text-amber-800 border-amber-300',
-                        'BATAL' => 'bg-red-100 text-red-800 border-red-300',
-                        default => 'bg-gray-100 text-gray-700 border-gray-300',
-                    };
-                @endphp
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border {{ $badgeClasses }}">
-                    Status: {{ str_replace('_', ' ', $order->status) }}
-                </span>
+                <x-gpa.status-badge :status="$order->status" />
             </div>
         </div>
 

@@ -11,30 +11,26 @@
             aria-hidden="true"></div>
 
         <div class="relative mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 md:py-16">
-            <div class="space-y-6">
+            <div class="space-y-6 text-center md:text-left">
 
-                <span class="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-brand-deep px-3 py-1 font-mono text-[11px] font-bold text-accent">
-                    Profil Korporat & Infrastruktur Rantai Pasok Agribisnis
-                </span>
-
-                <h1 class="max-w-4xl text-3xl font-extrabold leading-tight sm:text-4xl md:text-5xl md:leading-[1.05]">
+                <h1 class="mx-auto max-w-4xl text-center text-3xl font-extrabold leading-tight sm:mx-auto sm:text-3xl md:mx-0 md:text-left md:text-5xl md:leading-[1.05]">
                     <span class="block text-white">Membangun</span>
                     <span class="block text-accent underline underline-offset-4">Kepastian Pasokan</span>
                     <span class="block text-white">& Transparansi Radikal Agribisnis Indonesia</span>
                 </h1>
 
-                <p class="max-w-3xl text-base leading-relaxed text-white/90 md:text-lg">
-                    Latar belakang pendirian Green Pasundan Agriculture (AgroOrder GPA) sebagai solusi atas masalah struktural rantai pasok agribisnis: fluktuasi pasokan liar, susut timbangan diam-diam (<em class="text-white font-bold">phantom weight</em>), dan mutasi kualitas komoditas segar di sektor HORECA (Hotel, Restaurant, Catering) dan ritel modern.
+                <p class="mx-auto max-w-3xl text-center text-sm leading-relaxed text-white/90 md:mx-0 md:text-left md:text-lg">
+                    Latar belakang pendirian PT Green Pasundan Agriculture (AgroOrder GPA) sebagai solusi atas masalah struktural rantai pasok agribisnis: fluktuasi pasokan liar, susut timbangan diam-diam (<em class="text-white font-bold">phantom weight</em>), dan mutasi kualitas komoditas segar di sektor HORECA (Hotel, Restaurant, Catering) dan ritel modern.
                 </p>
 
-                <ul class="flex flex-wrap gap-2">
+                <ul class="flex flex-wrap justify-center gap-2 md:justify-start">
                     <li class="inline-flex items-center gap-1.5 rounded-lg bg-brand-deep/80 px-3 py-1.5 outline outline-1 outline-accent/30 outline-offset-[-1px] gpa-mono-xs text-white/90">
                         <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
-                        Zero-Phantom Weight Standard
+                        Standar Jaminan Berat Riil
                     </li>
                     <li class="inline-flex items-center gap-1.5 rounded-lg bg-brand-deep/80 px-3 py-1.5 outline outline-1 outline-accent/30 outline-offset-[-1px] gpa-mono-xs text-white/90">
                         <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
-                        Calibrated Legal Metrology Tera (UU No. 2/1981)
+                        Timbangan Tera Legal Metrologi (UU No. 2/1981)
                     </li>
                     <li class="inline-flex items-center gap-1.5 rounded-lg bg-brand-deep/80 px-3 py-1.5 outline outline-1 outline-accent/30 outline-offset-[-1px] gpa-mono-xs text-white/90">
                         <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
@@ -42,14 +38,14 @@
                     </li>
                 </ul>
 
-                <div class="flex flex-wrap items-center gap-3 pt-2">
-                    <x-gpa.btn href="#tentang-gpa" variant="accent" size="lg">
+                <div class="flex w-full max-w-sm flex-col gap-3 pt-2">
+                    <x-gpa.btn href="#tentang-gpa" variant="accent" size="xl" block>
                         <x-slot:icon>
                             <x-gpa.icon name="navigation" />
                         </x-slot:icon>
                         Jelajahi 4 Pilar Operasional
                     </x-gpa.btn>
-                    <x-gpa.btn href="#komoditas" variant="inverse" size="lg">
+                    <x-gpa.btn href="#komoditas" variant="inverse" size="xl" block>
                         <x-slot:icon>
                             <x-gpa.icon name="clipboard" />
                         </x-slot:icon>
@@ -88,14 +84,14 @@
                         <li class="rounded-xl border border-white/10 bg-brand/70 p-3.5">
                             <span class="gpa-mono-xs font-bold text-accent">04</span>
                             <h3 class="mt-1 text-xs font-bold text-white">Receiving Kitchen Dock</h3>
-                            <p class="mt-0.5 text-2xs text-white/70">Digital e-PoD Instant Audit</p>
+                            <p class="mt-0.5 text-2xs text-white/70">Bukti Serah Terima Digital Instan</p>
                             <p class="mt-2 gpa-mono-xs text-accent">Zero-Shrink</p>
                         </li>
                     </ol>
 
                     <div class="mt-4 flex items-center justify-between border-t border-white/10 pt-3 gpa-mono-xs text-white/70">
-                        <span>AUDIT STATUS: FULLY ENCRYPTED</span>
-                        <span class="font-bold text-accent">100% TRACEABLE</span>
+                        <span>STATUS AUDIT: TERVERIFIKASI AMAN</span>
+                        <span class="font-bold text-accent">100% DAPAT DILACAK</span>
                     </div>
                 </div>
             </div>
@@ -108,7 +104,7 @@
             <dl class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div class="gpa-panel p-4 shadow-sub">
                     <div class="flex items-center justify-between gap-2">
-                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Commodity Focus</dt>
+                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Fokus Komoditas</dt>
                         <x-gpa.icon name="dot" class="h-3 w-3 shrink-0 text-success" />
                     </div>
                     <dd class="mt-2 text-2xl font-extrabold leading-tight text-brand-strong">{{ $totalProducts }} Komoditas</dd>
@@ -117,7 +113,7 @@
 
                 <div class="gpa-panel p-4 shadow-sub">
                     <div class="flex items-center justify-between gap-2">
-                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Phantom Weight</dt>
+                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Susut Berat Fiktif</dt>
                         <x-gpa.icon name="dot" class="h-3 w-3 shrink-0 text-success" />
                     </div>
                     <dd class="mt-2 text-2xl font-extrabold leading-tight text-brand-strong">0% Toleransi</dd>
@@ -126,7 +122,7 @@
 
                 <div class="gpa-panel p-4 shadow-sub">
                     <div class="flex items-center justify-between gap-2">
-                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Volume Capacity</dt>
+                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Kapasitas Pasokan</dt>
                         <x-gpa.icon name="dot" class="h-3 w-3 shrink-0 text-success" />
                     </div>
                     <dd class="mt-2 text-2xl font-extrabold leading-tight text-brand-strong">{{ number_format($totalCapacity / 1000, 1) }} Ton</dd>
@@ -135,11 +131,11 @@
 
                 <div class="gpa-panel p-4 shadow-sub">
                     <div class="flex items-center justify-between gap-2">
-                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Punctuality SLA</dt>
+                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Ketepatan Pengiriman</dt>
                         <x-gpa.icon name="dot" class="h-3 w-3 shrink-0 text-success" />
                     </div>
                     <dd class="mt-2 text-2xl font-extrabold leading-tight text-brand-strong">99.6% Subuh</dd>
-                    <p class="mt-1 text-xs font-medium text-ink-body">SLA Dapur Komersial Tepat Waktu</p>
+                    <p class="mt-1 text-xs font-medium text-ink-body">Pasokan Dapur Komersial Selalu Tepat Waktu</p>
                 </div>
             </dl>
         </div>
@@ -148,9 +144,9 @@
     {{-- 4 PILAR OPERASIONAL --}}
     <section id="tentang-gpa" class="scroll-mt-36 border-b border-line-hair bg-surface-muted">
         <div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-12 sm:px-6 md:py-14">
-            <div class="flex flex-col gap-3 border-b-2 border-brand-strong pb-3 md:flex-row md:items-end md:justify-between">
+            <div class="flex flex-col items-center gap-3 border-b-2 border-brand-strong pb-3 text-center">
                 <div>
-                    <h2 class="mt-1 text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
+                    <h2 class="mt-1 text-center text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
                         Arsitektur 4 Pilar Operasional Hulu-ke-Hilir
                     </h2>
                 </div>
@@ -182,7 +178,7 @@
                     <div class="space-y-3">
                         <div class="flex items-center justify-between gap-2 border-b border-line-hair pb-3">
                             <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-strong gpa-mono-xs font-bold text-accent">02</span>
-                            <span class="rounded bg-canvas px-2 py-0.5 outline outline-1 outline-offset-[-1px] outline-line-hair gpa-mono-xs font-semibold uppercase text-success">Cold Chain</span>
+                            <span class="rounded bg-canvas px-2 py-0.5 outline outline-1 outline-offset-[-1px] outline-line-hair gpa-mono-xs font-semibold uppercase text-success">Rantai Dingin</span>
                         </div>
                         <h3 class="text-base font-bold leading-snug text-brand-strong">Buffer Stock Mandiri & Kontrol Termal</h3>
                         <p class="text-xs leading-relaxed text-ink-body">Kapasitas cold buffer di Sentral Hub Utama dengan regulasi suhu presisi 0°C hingga 4°C untuk menjaga kerenyahan jaringan selada.</p>
@@ -203,9 +199,9 @@
                     <div class="space-y-3">
                         <div class="flex items-center justify-between gap-2 border-b border-line-hair pb-3">
                             <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-strong gpa-mono-xs font-bold text-accent">03</span>
-                            <span class="rounded bg-canvas px-2 py-0.5 outline outline-1 outline-offset-[-1px] outline-line-hair gpa-mono-xs font-semibold uppercase text-success">Legal Metrology</span>
+                            <span class="rounded bg-canvas px-2 py-0.5 outline outline-1 outline-offset-[-1px] outline-line-hair gpa-mono-xs font-semibold uppercase text-success">Tera Metrologi</span>
                         </div>
-                        <h3 class="text-base font-bold leading-snug text-brand-strong">Stasiun Tera Legal & Zero-Phantom Weight</h3>
+                        <h3 class="text-base font-bold leading-snug text-brand-strong">Stasiun Timbangan Tera Legal & Jaminan Berat Riil</h3>
                         <p class="text-xs leading-relaxed text-ink-body">Penimbangan bersertifikat metrologi resmi Ditjen Metrologi RI dengan reduksi tara otomatis. Menghapus risiko selisih timbangan fiktif.</p>
                     </div>
                     <dl class="space-y-1.5 border-t border-line-hair pt-3">
@@ -226,17 +222,17 @@
                             <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-strong gpa-mono-xs font-bold text-accent">04</span>
                             <span class="rounded bg-canvas px-2 py-0.5 outline outline-1 outline-offset-[-1px] outline-line-hair gpa-mono-xs font-semibold uppercase text-success">Last-Mile Subuh</span>
                         </div>
-                        <h3 class="text-base font-bold leading-snug text-brand-strong">Armada Reefer & E-PoD Terenkripsi</h3>
-                        <p class="text-xs leading-relaxed text-ink-body">Jadwal pengiriman subuh 03:00 - 05:30 WIB tepat sebelum shift operasional dapur dimulai. Dilengkapi validasi e-PoD terenkripsi dua sisi.</p>
+                        <h3 class="text-base font-bold leading-snug text-brand-strong">Armada Pendingin &amp; Bukti Kirim Digital Aman</h3>
+                        <p class="text-xs leading-relaxed text-ink-body">Jadwal pengiriman subuh 03:00 - 05:30 WIB tepat sebelum shift operasional dapur dimulai. Dilengkapi validasi bukti serah terima digital dua sisi.</p>
                     </div>
                     <dl class="space-y-1.5 border-t border-line-hair pt-3">
                         <div class="flex items-baseline justify-between gap-3">
-                            <dt class="gpa-mono-xs text-ink-subtle">Window SLA:</dt>
+                            <dt class="gpa-mono-xs text-ink-subtle">Jadwal Pengiriman:</dt>
                             <dd class="gpa-mono-xs text-right font-semibold text-brand-strong">03:00 - 05:30 WIB</dd>
                         </div>
                         <div class="flex items-baseline justify-between gap-3">
                             <dt class="gpa-mono-xs text-ink-subtle">Validasi:</dt>
-                            <dd class="gpa-mono-xs text-right font-semibold text-brand-strong">Digital Signed e-PoD</dd>
+                            <dd class="gpa-mono-xs text-right font-semibold text-brand-strong">Bukti Kirim Digital Sah</dd>
                         </div>
                     </dl>
                 </li>
@@ -247,12 +243,12 @@
     {{-- SPESIFIKASI KOMODITAS INTI (DYNAMIC FROM DATABASE) --}}
     <section id="komoditas" class="scroll-mt-36 bg-canvas">
         <div class="mx-auto w-full max-w-6xl space-y-5 px-4 py-12 sm:px-6 md:py-14">
-            <div class="flex flex-col gap-3 border-b-2 border-brand-strong pb-3 md:flex-row md:items-end md:justify-between">
+            <div class="flex flex-col items-center gap-3 border-b-2 border-brand-strong pb-3 text-center">
                 <div>
-                    <h2 class="text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
+                    <h2 class="text-center text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
                         Spesifikasi Komoditas Inti Standar GPA
                     </h2>
-                    <p class="mt-1 text-xs text-ink-body">
+                    <p class="mx-auto mt-1 max-w-3xl text-center text-xs text-ink-body">
                         Tabel komparasi mutu & parameter ketat penerimaan bahan baku segar untuk standardisasi rantai pasok industri kuliner.
                     </p>
                 </div>
@@ -308,8 +304,8 @@
     {{-- LEGALITAS & KEPATUHAN --}}
     <section id="legalitas" class="scroll-mt-36 border-y border-line-hair bg-[#FFFBEB]">
         <div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-12 sm:px-6 md:py-14">
-            <div class="flex flex-col gap-2 border-b-2 border-brand-strong pb-3 md:flex-row md:items-end md:justify-between">
-                <h2 class="text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
+            <div class="flex flex-col items-center gap-2 border-b-2 border-brand-strong pb-3 text-center">
+                <h2 class="text-center text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
                     Legalitas Badan Usaha, Sertifikasi & Kepatuhan Pajak
                 </h2>
             </div>
@@ -356,11 +352,10 @@
                     </div>
 
                     <div>
-                        <a href="{{ route('public.kontak') }}"
-                            class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 font-mono text-xs font-bold text-accent shadow-sm transition hover:bg-brand-deep">
+                        <x-gpa.btn :href="route('public.kontak')" variant="inverse" size="md" block>
                             <x-gpa.icon name="download" class="h-4 w-4" />
                             Minta Berkas Legalitas
-                        </a>
+                        </x-gpa.btn>
                     </div>
                 </div>
             </div>
@@ -370,9 +365,9 @@
     {{-- ALUR SIKLUS 24 JAM --}}
     <section id="rantai-pasok" class="scroll-mt-36 bg-canvas">
         <div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-12 sm:px-6 md:py-14">
-            <div class="flex flex-col gap-3 border-b-2 border-brand-strong pb-3 md:flex-row md:items-end md:justify-between">
+            <div class="flex flex-col items-center gap-3 border-b-2 border-brand-strong pb-3 text-center">
                 <div>
-                    <h2 class="text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
+                    <h2 class="text-center text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
                         Alur Siklus Eksekusi Pasokan 24 Jam HORECA
                     </h2>
                     <p class="mt-1 text-xs text-ink-body">
@@ -424,10 +419,10 @@
                             <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-strong gpa-mono-xs font-bold text-accent">04</span>
                             <span class="gpa-mono-xs font-bold text-success">06:00 WIB</span>
                         </div>
-                        <h3 class="text-sm font-bold leading-snug text-brand-strong">Dock Receiving & e-PoD</h3>
-                        <p class="text-xs leading-relaxed text-ink-body">Pemeriksaan fisik timbangan oleh staff receiving kitchen, penandatanganan e-PoD, dan faktur sah.</p>
+                        <h3 class="text-sm font-bold leading-snug text-brand-strong">Penerimaan Dok &amp; Bukti Kirim Digital</h3>
+                        <p class="text-xs leading-relaxed text-ink-body">Pemeriksaan fisik timbangan oleh staff receiving kitchen, penandatanganan bukti kirim digital, dan faktur sah.</p>
                     </div>
-                    <p class="border-t border-line-hair pt-3 gpa-mono-xs font-semibold uppercase text-ink-body">GATEWAY 4: BILLING LOCK</p>
+                    <p class="border-t border-line-hair pt-3 gpa-mono-xs font-semibold uppercase text-ink-body">TAHAP 4: PENAGIHAN RESMI</p>
                 </li>
             </ol>
         </div>
@@ -439,26 +434,24 @@
             <div class="relative overflow-hidden rounded-3xl border-2 border-brand-strong bg-brand p-8 text-white shadow-pop md:p-12">
                 <div class="pointer-events-none absolute -right-24 top-1/4 h-72 w-72 rounded-full bg-accent/15 blur-3xl" aria-hidden="true"></div>
 
-                <div class="relative max-w-3xl space-y-4">
-                    <h2 class="text-2xl font-extrabold leading-tight md:text-3xl">Mulai Kemitraan Pasokan Berkualitas Bersama GPA</h2>
+                <div class="relative mx-auto max-w-3xl space-y-4 text-center">
+                    <h2 class="text-center text-2xl font-extrabold leading-tight md:text-3xl">Mulai Kemitraan Pasokan Berkualitas Bersama GPA</h2>
                     <p class="text-sm leading-relaxed text-white/90 md:text-base">
                         Dapatkan jaminan berat riil 100%, stabilitas harga kontrak, dan ketepatan kirim subuh setiap hari untuk operasional komersial Anda.
                     </p>
                 </div>
 
-                <div class="relative mt-8 flex flex-col gap-4 border-t border-white/10 pt-6 lg:flex-row lg:items-center lg:justify-between">
-                    <div class="flex flex-wrap items-center gap-3">
-                        <a href="{{ route('public.catalog') }}"
-                            class="inline-block rounded-xl bg-accent px-6 py-3 font-mono text-xs font-bold text-brand shadow-sm transition hover:bg-accent-deep">
+                <div class="relative mt-8 flex flex-col items-center gap-4 border-t border-white/10 pt-6 text-center">
+                    <div class="flex w-full max-w-sm flex-col gap-3">
+                        <x-gpa.btn :href="route('public.catalog')" variant="accent" size="xl" block>
                             Buka Katalog Komoditas
-                        </a>
-                        <a href="{{ route('public.mitra-kontrak') }}"
-                            class="inline-block rounded-xl border border-accent/40 px-5 py-3 font-mono text-xs font-bold text-white transition hover:bg-white/10">
+                        </x-gpa.btn>
+                        <x-gpa.btn :href="route('public.mitra-kontrak')" variant="inverse" size="xl" block>
                             Skema Kemitraan Kontrak
-                        </a>
+                        </x-gpa.btn>
                     </div>
 
-                    <p class="gpa-mono-xs lg:text-right">
+                    <p class="gpa-mono-xs text-center">
                         <span class="block font-semibold text-accent">Hotline Meja Pengadaan:</span>
                         <span class="mt-1 block font-bold text-white">+62 811-1223-3445 (Desk Sekretariat)</span>
                     </p>

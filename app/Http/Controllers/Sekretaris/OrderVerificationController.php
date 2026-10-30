@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Sekretaris;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Sekretaris\RejectOrderRequest;
 use App\Models\Order;
-use App\Models\Product;
 use App\Services\OrderService;
 use Exception;
 use Illuminate\Http\Request;
@@ -82,7 +82,7 @@ class OrderVerificationController extends Controller
     /**
      * Menolak pesanan masuk beserta alasan penolakan
      */
-    public function reject(\App\Http\Requests\Sekretaris\RejectOrderRequest $request, Order $order)
+    public function reject(RejectOrderRequest $request, Order $order)
     {
         try {
             $secretaryId = Auth::guard('web')->id();

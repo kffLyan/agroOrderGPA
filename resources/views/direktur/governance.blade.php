@@ -1,6 +1,6 @@
 @extends('layouts.direktur')
 
-@section('title', 'Pengaturan Tata Kelola // Kebijakan & Audit Trail')
+@section('title', 'Pengaturan Tata Kelola // Kebijakan & Catatan Audit')
 
 @section('content')
     @php
@@ -44,31 +44,75 @@
         <section class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="min-w-0 space-y-1">
                 <h1 class="font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
-                    Pengaturan Tata Kelola, Kebijakan Bisnis &amp; Audit Trail Sistem
+                    Pengaturan Tata Kelola, Kebijakan Bisnis &amp; Catatan Audit Sistem
                 </h1>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
+                @if (!empty($settings['master_freeze_active']))
+                    <form method="POST" action="{{ route('direktur.governance.master-freeze') }}" class="inline">
+                        @csrf
+                        <input type="hidden" name="freeze" value="0">
+                        <button type="submit"
+                            class="inline-flex items-center gap-1.5 rounded bg-danger px-3.5 py-2 gpa-meta font-bold text-white shadow-sub transition-opacity hover:opacity-90 animate-pulse">
+                            <x-gpa.icon name="alert-triangle" class="h-3.5 w-3.5 shrink-0 text-white" />
+                            MASTER FREEZE: AKTIF (Pulihkan Transaksi)
+                        </button>
+                    </form>
+                @else
+                    <form method="POST" action="{{ route('direktur.governance.master-freeze') }}" class="inline"
+                        onsubmit="return confirm('Apakah Anda yakin ingin MENGAKTIFKAN Master Freeze? Seluruh input pesanan klien akan dibekukan seketika untuk audit / stok opname.')">
+                        @csrf
+                        <input type="hidden" name="freeze" value="1">
+                        <input type="hidden" name="reason" value="Audit Forensik & Stok Opname Direksi">
+                        <button type="submit"
+                            class="inline-flex items-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-bold text-danger outline outline-1 -outline-offset-1 outline-danger/50 transition-colors hover:bg-danger/10">
+                            <x-gpa.icon name="alert-triangle" class="h-3.5 w-3.5 shrink-0 text-danger" />
+                            Sakelar Darurat Master Freeze
+                        </button>
+                    </form>
+                @endif
+
                 <a href="{{ route('direktur.users.index') }}"
                     class="inline-flex items-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="users" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
-                    Kelola Akun Pengguna &amp; RBAC
+                    Kelola Akun &amp; Hak Akses
                 </a>
-                <button type="button" @click="exportAudit()"
+
+                <a href="{{ route('direktur.governance.export-audit') }}"
                     class="inline-flex items-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
-                    Export Full Audit Log (.CSV)
-                </button>
+                    Ekspor Catatan Audit (.CSV)
+                </a>
+
                 <button type="button" @click="verifyIntegrity()"
                     class="inline-flex items-center gap-1.5 rounded bg-accent px-3 py-2 gpa-meta font-bold text-ink shadow-sub outline outline-1 -outline-offset-1 outline-success-deep transition-opacity hover:opacity-90">
                     <x-gpa.icon name="shield" class="h-3.5 w-3.5 shrink-0" />
-                    Uji Integritas Kriptografi
+                    Uji Keamanan &amp; Integritas Data
                 </button>
-                <button type="button" @click="lockPeriod()"
-                    class="inline-flex items-center gap-1.5 rounded bg-ink px-3 py-2 gpa-meta font-bold text-accent shadow-sub transition-opacity hover:opacity-90">
-                    <x-gpa.icon name="lock" class="h-3.5 w-3.5 shrink-0" />
-                    Kunci Sistem Periode
-                </button>
+
+                @if (!empty($settings['period_lock']['is_locked']))
+                    <form method="POST" action="{{ route('direktur.reports.unlock') }}" class="inline">
+                        @csrf
+                        <input type="hidden" name="period" value="{{ $settings['period_lock']['period'] ?? 'Oktober 2026' }}">
+                        <button type="submit"
+                            class="inline-flex items-center gap-1.5 rounded bg-amber-600 px-3 py-2 gpa-meta font-bold text-white shadow-sub transition-opacity hover:opacity-90">
+                            <x-gpa.icon name="lock" class="h-3.5 w-3.5 shrink-0" />
+                            Periode Terkunci (Buka Kunci)
+                        </button>
+                    </form>
+                @else
+                    <form method="POST" action="{{ route('direktur.reports.lock') }}" class="inline"
+                        onsubmit="return confirm('Kunci pembukuan periode saat ini? Data yang terkunci bersifat permanen.')">
+                        @csrf
+                        <input type="hidden" name="period" value="{{ 'Kuartal ' . ceil(date('n') / 3) . ' (' . date('Y') . ')' }}">
+                        <button type="submit"
+                            class="inline-flex items-center gap-1.5 rounded bg-ink px-3 py-2 gpa-meta font-bold text-accent shadow-sub transition-opacity hover:opacity-90">
+                            <x-gpa.icon name="lock" class="h-3.5 w-3.5 shrink-0" />
+                            Kunci Sistem Periode
+                        </button>
+                    </form>
+                @endif
             </div>
         </section>
 
@@ -78,13 +122,13 @@
             <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
                 <div class="flex flex-col gap-3">
                     <div class="flex items-center justify-between gap-2">
-                        <h2 class="gpa-micro-bold text-ink-body">INTEGRITAS LEDGER</h2>
+                        <h2 class="gpa-micro-bold text-ink-body">INTEGRITAS DATA CATATAN</h2>
                         <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">
-                            ACTIVE GUARD
+                            SISTEM AKTIF
                         </span>
                     </div>
                     <p class="gpa-figure text-[22px] leading-7 text-ink">100% VALID</p>
-                    <p class="text-[11px] leading-4 text-ink-body">SHA-256 Checksum Verified</p>
+                    <p class="text-[11px] leading-4 text-ink-body">Verifikasi Data Sah &amp; Utuh</p>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
@@ -132,8 +176,8 @@
                 </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
-                    <span class="gpa-note text-ink-body">Pending Otorisasi Dir</span>
-                    <span class="gpa-note font-bold text-success-deep">0 Pending Dir (Clear)</span>
+                    <span class="gpa-note text-ink-body">Menunggu Otorisasi Direktur</span>
+                    <span class="gpa-note font-bold text-success-deep">0 Menunggu Otorisasi (Selesai)</span>
                 </div>
             </article>
 
@@ -141,9 +185,9 @@
             <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
                 <div class="flex flex-col gap-3">
                     <div class="flex items-center justify-between gap-2">
-                        <h2 class="gpa-micro-bold text-ink-body">HARD-GUARD COMPLIANCE</h2>
+                        <h2 class="gpa-micro-bold text-ink-body">STANDAR KEPATUHAN SISTEM</h2>
                         <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board">
-                            POLICY ENGINE
+                            SISTEM KEBIJAKAN
                         </span>
                     </div>
                     <p class="gpa-figure text-[22px] leading-7 text-ink">0 Pelanggaran</p>
@@ -200,7 +244,7 @@
                     <footer class="mt-auto flex items-center justify-between gap-2 border-t border-line-hair pt-3">
                         <span class="inline-flex items-center gap-1 gpa-note font-semibold text-ink-body">
                             <x-gpa.icon name="bolt" class="h-3 w-3 shrink-0 text-success-deep" />
-                            SLA Validasi: Real-Time
+                            Waktu Validasi: Otomatis Seketika
                         </span>
                         <span class="gpa-micro-bold text-ink-body">CFG-DEV-0413</span>
                     </footer>
@@ -503,7 +547,7 @@
                         <span class="rounded bg-accent px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-ink">
                             Otoritas Direktur
                         </span>
-                        <span class="text-xs text-ink-quiet">Gateway &amp; Settlement Rekening &amp; QRIS Resmi</span>
+                        <span class="text-xs text-ink-quiet">Metode Pembayaran Rekening Bank &amp; QRIS Resmi</span>
                     </div>
                     <h2 class="mt-1 font-sans text-xl font-bold text-ink">
                         Kustomisasi Rekening Bank &amp; Foto Barcode QRIS Pembayaran Klien
@@ -669,7 +713,7 @@
                                                     ✓ Foto baru siap diunggah &amp; disimpan
                                                 </p>
                                                 <p x-show="!channel.preview_url && channel.image_url" class="text-ink-body font-medium">
-                                                    Foto aktif saat ini tersimpan di server
+                                                    Foto QRIS aktif saat ini telah terpasang di sistem
                                                 </p>
                                                 <p x-show="!channel.preview_url && !channel.image_url" class="text-ink-quiet">
                                                     Menggunakan barcode QRIS template bawaan
@@ -769,8 +813,8 @@
             <header class="space-y-4 border-b border-line pb-5">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div class="min-w-0">
-                        <h2 class="text-base sm:text-lg font-bold text-ink">Tabel Audit Trail Forensik &amp; Riwayat Aksi Direksi / Admin</h2>
-                        <p class="text-xs text-ink-subtle mt-0.5">Pencatatan kriptografis seluruh aktivitas operasional, verifikasi, dan tata kelola sistem</p>
+                        <h2 class="text-base sm:text-lg font-bold text-ink">Tabel Catatan Audit &amp; Riwayat Aksi Direksi / Admin</h2>
+                        <p class="text-xs text-ink-subtle mt-0.5">Pencatatan riwayat aman seluruh aktivitas operasional, verifikasi, dan tata kelola sistem</p>
                     </div>
 
                     <div class="flex items-center gap-2 shrink-0">
@@ -828,7 +872,7 @@
             {{-- Tabel Pas Sesuai Lebar Container (Dengan Horizontal Scroll Internal jika layar sempit) --}}
             <div class="rounded-xl border border-line bg-surface overflow-x-auto">
                 <table class="w-full table-fixed text-left text-xs border-collapse">
-                    <caption class="sr-only">Tabel Audit Trail Forensik &amp; Riwayat Aksi Direksi / Admin</caption>
+                    <caption class="sr-only">Tabel Catatan Audit &amp; Riwayat Aksi Direksi / Admin</caption>
                     <thead>
                         <tr class="border-b border-line bg-surface-muted/60">
                             <th scope="col" class="w-[14%] px-3.5 py-3 text-[10px] font-bold uppercase tracking-wider text-ink-subtle">
@@ -896,7 +940,7 @@
                         <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
                     <span class="text-xs font-bold text-brand-line">
-                        Status Ledger: Rantai Blok Terverifikasi 100%
+                        Status Catatan Transaksi: Terverifikasi Sah 100%
                     </span>
                 </div>
 

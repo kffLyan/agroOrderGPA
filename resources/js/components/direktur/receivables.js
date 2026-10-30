@@ -13,6 +13,13 @@ export default function directorReceivables(rows = [], policy = {}, verification
         query: '',
         topFilter: 'all',
         activeContracts: numberOf(activeContracts),
+        selectedRow: null,
+        openDetail(row) {
+            this.selectedRow = row;
+        },
+        closeDetail() {
+            this.selectedRow = null;
+        },
         rows: (Array.isArray(rows) ? rows : []).map((row) => ({
             id: row.id,
             name: String(row.name ?? ''),
@@ -101,16 +108,7 @@ export default function directorReceivables(rows = [], policy = {}, verification
         /* ---------- tindakan direksi ---------- */
 
         inspectInvoice(row) {
-            const tempo =
-                row.days_remaining < 0
-                    ? `menunggak ${Math.abs(row.days_remaining)} hari lewat batas TOP.`
-                    : `masih ${row.days_remaining} hari sebelum jatuh tempo.`;
-
-            this.notify(
-                `Faktur Tempo ${row.client_code}`,
-                `Sisa tagihan ${row.outstanding_label} ${tempo} Status AR ${row.status_label}.`,
-                row.status_tone === 'danger' ? 'danger' : 'info',
-            );
+            this.openDetail(row);
         },
         async toggleFreeze(row) {
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');

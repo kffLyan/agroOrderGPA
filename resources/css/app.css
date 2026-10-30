@@ -344,6 +344,27 @@
         background-color: var(--gpa-color-line-strong);
         border-radius: 9999px;
     }
+
+    /* Shimmer Animation untuk Skeleton Loading Modern */
+    .gpa-shimmer {
+        background: linear-gradient(
+            90deg,
+            rgba(215, 224, 201, 0.45) 0%,
+            rgba(255, 255, 255, 0.8) 50%,
+            rgba(215, 224, 201, 0.45) 100%
+        );
+        background-size: 200% 100%;
+        animation: gpaShimmer 1.5s infinite linear;
+    }
+
+    @keyframes gpaShimmer {
+        0% {
+            background-position: 200% 0;
+        }
+        100% {
+            background-position: -200% 0;
+        }
+    }
 }
 
 @media print {

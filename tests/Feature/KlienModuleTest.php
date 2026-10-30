@@ -476,6 +476,10 @@ class KlienModuleTest extends TestCase
         $response->assertSee('Pilih Kanal Pembayaran Resmi GPA');
         $response->assertSee('Bank BCA');
         $response->assertSee('QRIS');
+        $response->assertSee('Pelacakan Status Verifikasi');
+        $response->assertSee('Live Pipeline');
+        $response->assertSee('xl:sticky');
+        $response->assertSee('xl:top-[84px]');
     }
 
     public function test_klien_order_detail_shows_completed_banner_and_valid_pod_when_order_is_selesai(): void

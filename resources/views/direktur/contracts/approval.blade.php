@@ -44,7 +44,7 @@
             <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
                 <div class="flex flex-col gap-3">
                     <div class="flex items-center justify-between gap-2">
-                        <h2 class="gpa-micro-bold text-warning-caution">Pengajuan Pending</h2>
+                        <h2 class="gpa-micro-bold text-warning-caution">Menunggu Persetujuan</h2>
                         <x-gpa.icon name="clock" class="h-4 w-4 shrink-0 text-warning-caution" />
                     </div>
                     <p class="gpa-figure text-[26px] leading-8 text-ink">{{ count($rows) }} Pengajuan</p>
@@ -52,7 +52,7 @@
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
                     <span class="rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-warning-cream text-warning-caution outline outline-1 -outline-offset-1 outline-warning-caution">
-                        GATE L4
+                        TAHAP DIREKSI
                     </span>
                     <span class="gpa-note font-semibold text-warning-caution">
                         Menunggu tanda tangan digital
@@ -64,7 +64,7 @@
             <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
                 <div class="flex flex-col gap-3">
                     <div class="flex items-center justify-between gap-2">
-                        <h2 class="gpa-micro-bold text-ink">Nilai Kontrak Pending</h2>
+                        <h2 class="gpa-micro-bold text-ink">Nilai Kontrak Menunggu Persetujuan</h2>
                         <x-gpa.icon name="banknote" class="h-4 w-4 shrink-0 text-ink" />
                     </div>
                     <p class="gpa-figure text-[26px] leading-8 text-ink">Rp {{ number_format($totalVal, 0, ',', '.') }}</p>
@@ -72,7 +72,7 @@
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
                     <span class="rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent-deep text-white outline outline-1 -outline-offset-1 outline-accent-deep">
-                        TIER-1
+                        PRIORITAS
                     </span>
                     <span class="gpa-note font-semibold text-ink-body">
                         Seluruh nilai Needs Directors
@@ -112,10 +112,10 @@
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
                     <span class="rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">
-                        HSM OK
+                        TERVERIFIKASI
                     </span>
                     <span class="gpa-note font-semibold text-success-deep">
-                        HSM RSA-4096 // SHA-256 aktif
+                        Tanda Tangan Digital Aman
                     </span>
                 </div>
             </article>
@@ -159,7 +159,7 @@
                     <button type="button" @click="setFilter('all')"
                         :class="filterClass('all')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
-                        Semua Pending ({{ count($rows) }})
+                        Semua Menunggu Persetujuan ({{ count($rows) }})
                     </button>
                     <button type="button" @click="setFilter('discount')"
                         :class="filterClass('discount')"
@@ -190,7 +190,7 @@
 
                     <span class="inline-flex items-center gap-1 gpa-note font-semibold text-success-deep">
                         <x-gpa.icon name="lock" class="h-3 w-3 shrink-0" />
-                        HSM RSA-4096 Terhubung
+                        Otorisasi Digital Siap
                     </span>
                     <span class="gpa-note text-ink-body" aria-hidden="true">|</span>
                     <span class="inline-flex items-center gap-1 gpa-note font-semibold text-success-deep">
@@ -350,8 +350,8 @@
                 <p class="flex items-start gap-2">
                 </p>
                 <div class="flex flex-col items-end gap-1">
-                    <p class="gpa-note font-bold text-ink">TOTAL NILAI KONTRAK AKTIF PENDING: Rp {{ number_format($totalVal, 0, ',', '.') }} ({{ count($rows) }} Pengajuan)</p>
-                    <p class="gpa-note text-ink-body" x-text="visibleLabel()">Menampilkan {{ count($rows) }} dari {{ count($rows) }} Pengajuan Pending</p>
+                    <p class="gpa-note font-bold text-ink">TOTAL NILAI KONTRAK MENUNGGU PERSETUJUAN: Rp {{ number_format($totalVal, 0, ',', '.') }} ({{ count($rows) }} Pengajuan)</p>
+                    <p class="gpa-note text-ink-body" x-text="visibleLabel()">Menampilkan {{ count($rows) }} dari {{ count($rows) }} Menunggu Persetujuan</p>
                 </div>
             </footer>
         </section>

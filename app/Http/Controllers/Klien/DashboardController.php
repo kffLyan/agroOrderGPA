@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Contract;
 use App\Models\Invoice;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use Carbon\Carbon;
@@ -144,10 +143,47 @@ class DashboardController extends Controller
             }
         }
 
+        // 10. Format View Models (Prinsip MVC: Controller mengolah Logika & Transformasi Data)
+        $contractNumber = $contract ? $contract->contract_number : ($isContractClient ? ('CTR-B2B-' . str_pad($user->id, 4, '0', STR_PAD_LEFT)) : 'REGULER-HARIAN');
+        $dockName = 'DOCK UTAMA — ' . ($user->company_name ?: ($user->name ?: 'KLIEN GPA'));
+        $creditBarWidth = max(0, min(100, $creditPercent)) . '%';
+
+        $ordersTable = $recentOrders;
+
+        // Ambil data kontrak aktif produk secara efisien tanpa N+1 query
+        $userContractsMap = $isContractClient 
+            ? Contract::where('user_id', $user->id)->where('status', 'ACTIVE')->get()->keyBy('product_id')
+            : collect();
+
+        $reorderData = [];
+        foreach ($products as $p) {
+            $unitPrice = (float) $p->base_price;
+            if ($isContractClient && isset($userContractsMap[$p->id])) {
+                $userContract = $userContractsMap[$p->id];
+                if ($userContract->fixed_price_per_kg) {
+                    $unitPrice = (float) $userContract->fixed_price_per_kg;
+                }
+            }
+            $reorderData[] = [
+                'key' => (string) $p->id,
+                'id' => $p->id,
+                'sku' => $p->sku ?? ('SKU-' . $p->id),
+                'name' => $p->name,
+                'grade' => 'Grade ' . ($p->grade ?: 'Super A'),
+                'price' => $unitPrice,
+                'remaining' => 2500,
+                'step' => 50,
+                'initial_qty' => 100,
+            ];
+        }
+
         return view('klien.dashboard', [
             'isContractClient'     => $isContractClient,
             'contract'             => $contract,
             'pendingContract'      => $pendingContract,
+            'contractNumber'       => $contractNumber,
+            'dockName'             => $dockName,
+            'creditBarWidth'       => $creditBarWidth,
             'syncedAt'             => Carbon::now(),
             'creditLimit'          => $creditLimit,
             'availableCredit'      => $availableCredit,
@@ -162,6 +198,8 @@ class DashboardController extends Controller
             'latestInvoice'        => $latestInvoice,
             'inTransitOrder'       => $inTransitOrder,
             'recentOrders'         => $recentOrders,
+            'ordersTable'          => $ordersTable,
+            'reorderData'          => $reorderData,
             'products'             => $products,
             'allAvailableProducts' => $allAvailableProducts,
             'rejectedPayment'      => $rejectedPayment,

@@ -429,7 +429,7 @@
                     </p>
                     <a href="{{ route('public.kontak') }}"
                         class="mt-4 inline-flex items-center gap-1.5 font-mono text-xs font-bold text-ink hover:text-brand hover:underline">
-                        <span>[ Hubungi Helpdesk SLA 24/7 ]</span>
+                        <span>[ Hubungi Layanan Bantuan GPA ]</span>
                         <x-gpa.icon name="arrow-right" class="h-3.5 w-3.5 text-ink" />
                     </a>
                 </div>

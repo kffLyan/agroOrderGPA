@@ -51,15 +51,15 @@ export default function directorAccess(users = []) {
         exportMatrix() {
             this.run(
                 'Unduh Matriks Akses',
-                'Matriks RBAC 5 peran sedang diunduh dalam format .CSV.',
+                'Matriks hak akses 5 peran pengguna sedang diunduh dalam format .CSV.',
                 'success',
             );
         },
 
         regenerateToken() {
             this.run(
-                'Regenerasi Token Kripto',
-                'Token sesi RSA-4096 diregenerasi untuk seluruh akun. Sesi aktif tidak diputus.',
+                'Regenerasi Kunci Sesi',
+                'Kunci keamanan sesi pengguna berhasil diperbarui. Sesi aktif tetap berjalan lancar.',
                 'warning',
             );
         },
@@ -67,15 +67,15 @@ export default function directorAccess(users = []) {
         createUser() {
             this.run(
                 'Tambah Pengguna Baru',
-                'Formulir registrasi akun dibuka. NIK wajib diverifikasi terhadap Vault Keamanan.',
+                'Formulir registrasi akun dibuka. Pastikan data identitas pengguna telah diverifikasi.',
                 'info',
             );
         },
 
         syncRbacPolicy() {
             this.run(
-                'Sync RBAC Policy',
-                'Matriks wewenang disinkronkan ke semua node. 5 role terisolasi tanpa pencampuran.',
+                'Sinkronisasi Hak Akses',
+                'Matriks wewenang hak akses berhasil disinkronkan ke seluruh sistem.',
                 'success',
             );
         },
@@ -83,7 +83,7 @@ export default function directorAccess(users = []) {
         runUserAction(action) {
             this.run(
                 String(action),
-                'Aksi otorisasi dicatat pada audit trail SHA-256 dan memerlukan PIN Master.',
+                'Aksi otorisasi tercatat rapi pada riwayat aktivitas sistem.',
                 'info',
             );
         },

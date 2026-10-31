@@ -52,35 +52,35 @@ class DirekturUiUxModuleTest extends TestCase
 
     public function test_direktur_can_access_sales_monitoring(): void
     {
-        $response = $this->actingAs($this->director)->get(route('direktur.sales.index'));
+        $response = $this->actingAs($this->director)->get(route('direktur.penjualan.index'));
         $response->assertStatus(200);
         $response->assertSee('Monitoring Penjualan');
     }
 
     public function test_direktur_can_export_sales_monitoring_csv(): void
     {
-        $response = $this->actingAs($this->director)->get(route('direktur.sales.export'));
+        $response = $this->actingAs($this->director)->get(route('direktur.penjualan.export'));
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
     }
 
     public function test_direktur_can_access_commodity_volume(): void
     {
-        $response = $this->actingAs($this->director)->get(route('direktur.commodities.index'));
+        $response = $this->actingAs($this->director)->get(route('direktur.komoditas.index'));
         $response->assertStatus(200);
         $response->assertSee('Volume Komoditas');
     }
 
     public function test_direktur_can_export_commodity_volume_csv(): void
     {
-        $response = $this->actingAs($this->director)->get(route('direktur.commodities.export'));
+        $response = $this->actingAs($this->director)->get(route('direktur.komoditas.export'));
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
     }
 
     public function test_direktur_can_access_receivables(): void
     {
-        $response = $this->actingAs($this->director)->get(route('direktur.receivables.index'));
+        $response = $this->actingAs($this->director)->get(route('direktur.piutang.index'));
         $response->assertStatus(200);
         $response->assertSee('Piutang');
     }
@@ -99,7 +99,7 @@ class DirekturUiUxModuleTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->director)
-            ->post(route('direktur.receivables.reminder', $invoice->id));
+            ->post(route('direktur.piutang.reminder', $invoice->id));
 
         $response->assertStatus(302);
         $response->assertSessionHas('success');
@@ -108,7 +108,7 @@ class DirekturUiUxModuleTest extends TestCase
     public function test_direktur_can_toggle_client_credit_freeze(): void
     {
         $response = $this->actingAs($this->director)
-            ->post(route('direktur.receivables.freeze', $this->client->id));
+            ->post(route('direktur.piutang.freeze', $this->client->id));
 
         $response->assertStatus(302);
         $response->assertSessionHas('success');
@@ -128,7 +128,7 @@ class DirekturUiUxModuleTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->director)
-            ->post(route('direktur.receivables.restructure', $invoice->id), [
+            ->post(route('direktur.piutang.restructure', $invoice->id), [
                 'extended_days' => 30,
                 'notes'         => 'Restrukturisasi disetujui direksi',
             ]);
@@ -149,7 +149,7 @@ class DirekturUiUxModuleTest extends TestCase
             'status'                     => 'PENDING_APPROVAL',
         ]);
 
-        $response = $this->actingAs($this->director)->get(route('direktur.contracts.approval'));
+        $response = $this->actingAs($this->director)->get(route('direktur.kontrak.persetujuan'));
         $response->assertStatus(200);
         $response->assertSee('KTR-PENDING-001');
     }
@@ -167,7 +167,7 @@ class DirekturUiUxModuleTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->director)
-            ->post(route('direktur.contracts.batch-approve'), [
+            ->post(route('direktur.kontrak.batch-approve'), [
                 'selected_ids' => [$contract1->id],
             ]);
 
@@ -189,7 +189,7 @@ class DirekturUiUxModuleTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->director)
-            ->post(route('direktur.contracts.revision', $contract->id), [
+            ->post(route('direktur.kontrak.revision', $contract->id), [
                 'revision_notes' => 'Harap naikkan harga dasar',
             ]);
 
@@ -210,7 +210,7 @@ class DirekturUiUxModuleTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->director)
-            ->post(route('direktur.contracts.reject', $contract->id), [
+            ->post(route('direktur.kontrak.reject', $contract->id), [
                 'rejection_reason' => 'Margin di bawah standar',
             ]);
 
@@ -223,7 +223,7 @@ class DirekturUiUxModuleTest extends TestCase
     {
         // 1. Lock period
         $responseLock = $this->actingAs($this->director)
-            ->post(route('direktur.reports.lock'), [
+            ->post(route('direktur.laporan.lock'), [
                 'period' => 'Kuartal IV (Okt - Des 2026)',
             ]);
         $responseLock->assertStatus(302);
@@ -231,7 +231,7 @@ class DirekturUiUxModuleTest extends TestCase
 
         // 2. Unlock period
         $responseUnlock = $this->actingAs($this->director)
-            ->post(route('direktur.reports.unlock'), [
+            ->post(route('direktur.laporan.unlock'), [
                 'period' => 'Kuartal IV (Okt - Des 2026)',
             ]);
         $responseUnlock->assertStatus(302);
@@ -240,12 +240,12 @@ class DirekturUiUxModuleTest extends TestCase
 
     public function test_direktur_can_access_governance_and_update_parameters(): void
     {
-        $response = $this->actingAs($this->director)->get(route('direktur.governance.index'));
+        $response = $this->actingAs($this->director)->get(route('direktur.tata-kelola.index'));
         $response->assertStatus(200);
         $response->assertSee('Pengaturan Tata Kelola');
 
         $responseUpdate = $this->actingAs($this->director)
-            ->post(route('direktur.governance.update-parameters'), [
+            ->post(route('direktur.tata-kelola.update-parameters'), [
                 'warehouse_loss_max_percent'     => 5.0,
                 'warehouse_loss_warning_percent' => 2.5,
                 'default_top_credit_ceiling'     => 500000000,
@@ -260,7 +260,7 @@ class DirekturUiUxModuleTest extends TestCase
     public function test_direktur_can_toggle_master_freeze_switch(): void
     {
         $response = $this->actingAs($this->director)
-            ->post(route('direktur.governance.master-freeze'), [
+            ->post(route('direktur.tata-kelola.master-freeze'), [
                 'reason' => 'Audit tahunan sedang berjalan',
             ]);
 
@@ -277,7 +277,7 @@ class DirekturUiUxModuleTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->director)
-            ->post(route('direktur.governance.delegate-plt'), [
+            ->post(route('direktur.tata-kelola.delegate-plt'), [
                 'mandate_number'  => 'SK-DIR-2026-PLT-001',
                 'delegate_id'     => $secretary->id,
                 'scope'           => 'OPERASIONAL_RUTIN_ONLY',
@@ -292,7 +292,7 @@ class DirekturUiUxModuleTest extends TestCase
     public function test_direktur_can_export_audit_trail_csv(): void
     {
         $response = $this->actingAs($this->director)
-            ->get(route('direktur.governance.export-audit'));
+            ->get(route('direktur.tata-kelola.export-audit'));
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
@@ -301,7 +301,7 @@ class DirekturUiUxModuleTest extends TestCase
     public function test_direktur_can_customize_payment_channels(): void
     {
         $response = $this->actingAs($this->director)
-            ->post(route('direktur.governance.payment-channels'), [
+            ->post(route('direktur.tata-kelola.payment-channels'), [
                 'channels' => [
                     [
                         'id'             => 'bca',
@@ -345,7 +345,7 @@ class DirekturUiUxModuleTest extends TestCase
         $file = \Illuminate\Http\UploadedFile::fake()->image('custom_qris.png', 400, 400);
 
         $response = $this->actingAs($this->director)
-            ->post(route('direktur.governance.payment-channels'), [
+            ->post(route('direktur.tata-kelola.payment-channels'), [
                 'channels' => [
                     [
                         'id'             => 'qris',

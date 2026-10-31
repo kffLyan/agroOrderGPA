@@ -3,7 +3,7 @@
     $layout = match($role) {
         'DIREKTUR' => 'layouts.direktur',
         'SEKRETARIS' => 'layouts.sekretaris',
-        'KOORDINATOR' => 'layouts.coordinator',
+        'KOORDINATOR' => 'layouts.koordinator',
         'ARMADA' => 'layouts.armada',
         default => 'layouts.klien',
     };

@@ -50,15 +50,15 @@ class SecurityTest extends TestCase
     public function test_sql_injection_payload_does_not_bypass_authentication(): void
     {
         User::factory()->create([
-            'email'    => 'admin@gpa.co.id',
+            'email'    => 'sekretaris@gpa.co.id',
             'password' => bcrypt('secret123'),
         ]);
 
         $sqlInjectionPayloads = [
             "' OR '1'='1",
-            "admin@gpa.co.id' --",
+            "sekretaris@gpa.co.id' --",
             "' UNION SELECT * FROM users --",
-            "admin@gpa.co.id' /*",
+            "sekretaris@gpa.co.id' /*",
         ];
 
         foreach ($sqlInjectionPayloads as $payload) {
@@ -96,7 +96,7 @@ class SecurityTest extends TestCase
         // Input payload destructive SQL Injection
         $maliciousSearch = "'; DROP TABLE products; --";
 
-        $response = $this->actingAs($direktur)->get(route('direktur.products.index', ['search' => $maliciousSearch]));
+        $response = $this->actingAs($direktur)->get(route('direktur.produk.index', ['search' => $maliciousSearch]));
 
         $response->assertStatus(200);
         // Tabel products tetap aman di database
@@ -155,7 +155,7 @@ class SecurityTest extends TestCase
         // Coba upload file script PHP berbahaya yang menyamar sebagai bukti bayar
         $maliciousFile = UploadedFile::fake()->create('backdoor.php', 100, 'application/x-php');
 
-        $response = $this->actingAs($klien)->post('/klien/payment-proof', [
+        $response = $this->actingAs($klien)->post('/klien/bukti-pembayaran', [
             'invoice_po'     => 'INV-SEC-001',
             'amount'         => 1000000,
             'sender_bank'    => 'BCA',
@@ -193,7 +193,7 @@ class SecurityTest extends TestCase
 
         $validImage = UploadedFile::fake()->image('bukti_transfer.jpg', 600, 400);
 
-        $response = $this->actingAs($klien)->post('/klien/payment-proof', [
+        $response = $this->actingAs($klien)->post('/klien/bukti-pembayaran', [
             'invoice_po'     => 'INV-SEC-002',
             'amount'         => 1500000,
             'sender_bank'    => 'Bank Mandiri',

@@ -16,19 +16,19 @@
             </div>
 
             <div class="flex flex-wrap gap-2 px-6 py-5">
-                <a href="{{ route('sekretaris.verification') }}"
+                <a href="{{ route('sekretaris.verifikasi') }}"
                     class="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface px-3.5 shadow-sub outline outline-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="badge-check" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
                     <span class="gpa-meta-lg font-semibold tracking-[0.28px] text-ink">Batch Validasi ({{ $pendingOrdersCount ?? 0 }} PO Masuk)</span>
                 </a>
 
-                <a href="{{ route('sekretaris.payments') }}"
+                <a href="{{ route('sekretaris.pembayaran') }}"
                     class="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface px-3.5 shadow-sub outline outline-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="refresh" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
                     <span class="gpa-meta-lg font-semibold tracking-[0.28px] text-ink">Antrean Bukti Transfer ({{ $pendingPaymentsCount ?? 0 }} Menunggu)</span>
                 </a>
 
-                <a href="{{ route('sekretaris.dispatch') }}"
+                <a href="{{ route('sekretaris.surat-jalan') }}"
                     class="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface px-3.5 shadow-sub outline outline-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="receipt" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
                     <span class="gpa-meta-lg font-semibold tracking-[0.28px] text-ink">Siap Terbit Surat Jalan ({{ $readyOrdersCount ?? 0 }} PO)</span>
@@ -245,7 +245,7 @@
                                                             default => 'bg-surface-pill text-ink-body hover:bg-surface-disabled hover:text-ink',
                                                         };
                                                     @endphp
-                                                    <a href="{{ $action['url'] ?? route('sekretaris.verification') }}"
+                                                    <a href="{{ $action['url'] ?? route('sekretaris.verifikasi') }}"
                                                         class="inline-flex h-7 items-center justify-center rounded px-2 gpa-micro transition-colors {{ $actionClass }}">
                                                         {{ $action['label'] }}
                                                     </a>
@@ -274,7 +274,7 @@
                                 class="gpa-note text-success-deep underline underline-offset-2 hover:text-success">
                                 <span x-text="'Tampilkan ' + resolved.length + ' PO Diproses'"></span>
                             </button>
-                            <a href="{{ route('sekretaris.verification') }}"
+                            <a href="{{ route('sekretaris.verifikasi') }}"
                                 class="gpa-note text-ink-body underline underline-offset-2 hover:text-ink">
                                 Buka Semua Antrean PO &rarr;
                             </a>
@@ -430,7 +430,7 @@
 
                     <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
                         <p class="gpa-note text-ink-body">Pembaruan telemetri otomatis pasca timbangan tera.</p>
-                        <a href="{{ route('sekretaris.inventory') }}"
+                        <a href="{{ route('sekretaris.stok') }}"
                             class="gpa-meta-lg font-semibold tracking-[0.88px] text-success-deep hover:text-success">
                             Lihat Detail Stok Gudang &rarr;
                         </a>
@@ -496,7 +496,7 @@
                             <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-success" aria-hidden="true"></span>
                             <span class="gpa-note text-ink-body">Sistem pemantauan aktif 24/7</span>
                         </p>
-                        <a href="{{ route('sekretaris.reports') }}"
+                        <a href="{{ route('sekretaris.laporan') }}"
                             class="gpa-note text-ink underline underline-offset-2 hover:text-success-deep">
                             Arsip Notifikasi &rarr;
                         </a>

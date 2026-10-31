@@ -15,12 +15,12 @@
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-3">
-                <a href="{{ route('direktur.reports.export') }}"
+                <a href="{{ route('direktur.laporan.export') }}"
                     class="inline-flex items-center gap-2 rounded-lg bg-surface px-4 py-2.5 text-ink shadow-sub outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-shell">
                     <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0" />
                     <span class="text-center text-xs font-semibold leading-4 text-ink">Unduh Buku Besar (CSV)</span>
                 </a>
-                <a href="{{ route('direktur.reports.download') }}" target="_blank"
+                <a href="{{ route('direktur.laporan.download') }}" target="_blank"
                     class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-white shadow-sub outline outline-1 -outline-offset-1 outline-success transition-colors hover:bg-brand-hover">
                     <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0" />
                     <span class="text-center text-xs font-semibold leading-4 text-white">Cetak Laporan Eksekutif (PDF)</span>
@@ -163,7 +163,7 @@
                 </div>
                 <div class="pt-4">
                     <div class="flex flex-col gap-2 border-t border-line-board/60 pt-3">
-                        <a href="{{ route('direktur.contracts.approval') }}"
+                        <a href="{{ route('direktur.kontrak.persetujuan') }}"
                             class="inline-flex items-center justify-center gap-1 rounded bg-brand px-3 py-1.5 gpa-meta font-bold text-accent transition-colors hover:bg-brand-hover">
                             Tinjau Pengajuan ({{ $pendingCount }})
                             <x-gpa.icon name="arrow-right" class="h-2.5 w-2.5 shrink-0" />

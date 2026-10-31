@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\Invoice;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,7 +40,7 @@ class ProfileController extends Controller
             }
         }
 
-        $unpaidInvoicesSum = (float) \App\Models\Invoice::where('user_id', $user->id)
+        $unpaidInvoicesSum = (float) Invoice::where('user_id', $user->id)
             ->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])
             ->sum('grand_total');
 

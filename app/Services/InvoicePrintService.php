@@ -193,8 +193,27 @@ class InvoicePrintService
             $contractGrandSubtotal['total']    += $subTotal;
         }
 
+        $shippingCost = 0.0;
+        $taxAmount    = 0.0;
+        $taxLabel     = null;
+
+        if ($invModel) {
+            foreach ($invModel->orders as $ord) {
+                $shippingCost += (float) ($ord->shipping_cost ?? 0);
+                $taxAmount    += (float) ($ord->tax_amount ?? 0);
+                if (!$taxLabel && !empty($ord->tax_label)) {
+                    $taxLabel = $ord->tax_label;
+                }
+            }
+        }
+
+        $subtotalAmount = $isContractClient ? ($totalWarehouseAmount + $totalContractAmount) : $totalRegularAmount;
+        if ($invModel && $shippingCost <= 0 && $taxAmount <= 0 && ($invModel->grand_total - $subtotalAmount) > 0) {
+            $shippingCost = (float) ($invModel->grand_total - $subtotalAmount);
+        }
+
         $grandTotalFinal = $invModel
-            ? (float) ($invModel->grand_total ?: ($isContractClient ? ($totalWarehouseAmount + $totalContractAmount) : $totalRegularAmount))
+            ? (float) ($invModel->grand_total ?: ($subtotalAmount + $shippingCost + $taxAmount))
             : 0;
 
         return [
@@ -231,6 +250,10 @@ class InvoicePrintService
                 'items'    => $regularItems,
                 'subtotal' => $totalRegularAmount,
             ],
+            'subtotal'          => $subtotalAmount,
+            'shipping_cost'     => $shippingCost,
+            'tax_amount'        => $taxAmount,
+            'tax_label'         => $taxLabel ?: 'Bebas PPN 0% (DTP Pertanian)',
             'grand_total'       => $grandTotalFinal,
         ];
     }

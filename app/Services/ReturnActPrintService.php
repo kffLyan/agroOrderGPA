@@ -89,16 +89,16 @@ class ReturnActPrintService
             'client' => [
                 'name'    => $order?->user?->company_name ?: ($order?->user?->name ?: '-'),
                 'contact' => $order?->received_by_name ?: ($order?->user?->pic_name ?: '-'),
-                'role'    => 'QC Receiving Dock Lead / Purchasing',
+                'role'    => 'Staf Penerima / Purchasing Klien',
             ],
             'driver' => [
                 'name'    => $order?->driver?->name ?: ($order?->fleet_assigned ?: '-'),
-                'id'      => $order?->driver_id ? ('DRV-' . str_pad((string) $order->driver_id, 4, '0', STR_PAD_LEFT)) : '-',
+                'id'      => $order?->driver_id ? ('ARM-' . str_pad((string) $order->driver_id, 4, '0', STR_PAD_LEFT)) : '-',
                 'vehicle' => $order?->vehicle_plate_number ?: '-',
             ],
             'coordinator' => [
                 'name' => $order?->verifier?->name ?: 'Staff Operasional GPA',
-                'role' => 'QA Field Dispatch Coordinator',
+                'role' => 'Koordinator Lapangan & QA Dispatch GPA',
             ],
             'items'      => $items,
             'totals'     => $totals,

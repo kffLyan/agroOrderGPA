@@ -186,6 +186,15 @@ class ProductService
     }
 
     /**
+     * Alias method untuk mengubah status komoditas dan mengembalikan model terbarunya.
+     */
+    public function toggleProductStatus(Product $product, string $actorRole, string $actorName, string $clearance = 'DIR-01 [ROOT-ACCESS]'): Product
+    {
+        $this->toggleStatus($product, $actorRole, $actorName, $clearance);
+        return $product->fresh();
+    }
+
+    /**
      * Menghapus komoditas atau menonaktifkannya jika sudah memiliki riwayat relasi.
      *
      * @return array{is_deleted: bool, message: string}

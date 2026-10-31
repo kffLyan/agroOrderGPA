@@ -103,7 +103,7 @@
                         <x-gpa.btn type="button" variant="accent" size="lg" block
                             @click="submitDraft(); mobileCartOpen = false"
                             x-bind:disabled="draftCount() === 0">
-                            Kirim Permintaan ke Admin GPA
+                            Kirim Permintaan ke Sekretaris GPA
                         </x-gpa.btn>
                     </div>
                 </div>

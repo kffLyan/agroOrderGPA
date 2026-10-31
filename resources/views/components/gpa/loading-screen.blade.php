@@ -37,26 +37,12 @@
 {{-- 2. Tampilan Skeleton Loading (Aktif jika navigasi membutuhkan waktu lebih lama) --}}
 <div id="gpa-nav-skeleton" aria-hidden="true">
   <style>
-    #gpa-nav-skeleton {
-      position: fixed;
-      inset: 0;
-      z-index: 45;
-      background: rgba(248, 250, 243, 0.95);
-      backdrop-filter: blur(2px);
-      -webkit-backdrop-filter: blur(2px);
-      opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transition: opacity 0.16s ease-out, visibility 0.16s ease-out;
-      overflow-y: auto;
-      overflow-x: hidden;
-      box-sizing: border-box;
-      padding: 24px;
-    }
+    #gpa-nav-skeleton,
     #gpa-nav-skeleton.is-active {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
+      display: none !important;
+      opacity: 0 !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
     }
     #gpa-nav-skeleton .gpa-skel-wrap {
       max-width: 1280px;
@@ -348,7 +334,7 @@
       progressTimer = setInterval(trickleProgress, 280);
       progressGuard = setTimeout(function () {
         window.gpaProgress.done(true);
-      }, 10000);
+      }, 2500);
     }
 
     window.gpaProgress = {
@@ -393,40 +379,22 @@
       }
     };
 
-    // --- 2. Skeleton Loading Engine (Hanya muncul jika navigasi memakan waktu >280ms) ---
+    // --- 2. Skeleton Loading Engine (Dinonaktifkan agar tidak menutupi tampilan pengguna) ---
     function executeSkeletonShow() {
-      if (!skeletonOverlay) return;
-      const mainEl = document.getElementById('main-content') || document.querySelector('main');
-      if (mainEl) {
-        const rect = mainEl.getBoundingClientRect();
-        skeletonOverlay.style.top = Math.max(0, rect.top) + 'px';
-        skeletonOverlay.style.left = Math.max(0, rect.left) + 'px';
-        skeletonOverlay.style.width = rect.width + 'px';
-        skeletonOverlay.style.height = (window.innerHeight - Math.max(0, rect.top)) + 'px';
-      } else {
-        skeletonOverlay.style.top = '68px';
-        skeletonOverlay.style.left = '0';
-        skeletonOverlay.style.width = '100vw';
-        skeletonOverlay.style.height = 'calc(100vh - 68px)';
-      }
-      skeletonOverlay.classList.add('is-active');
-      document.body.classList.add('gpa-is-navigating');
+      // Nonaktif: Halaman tetap tampil bersih tanpa kedip overlay abu-abu
+      return;
     }
 
     window.showGpaNavSkeleton = function (delayMs) {
-      clearTimeout(skeletonDebounceTimer);
-      const wait = typeof delayMs === 'number' ? delayMs : 280;
-      if (wait <= 0) {
-        executeSkeletonShow();
-      } else {
-        skeletonDebounceTimer = setTimeout(executeSkeletonShow, wait);
-      }
+      // Safe no-op
+      return;
     };
 
     window.hideGpaNavSkeleton = function () {
       clearTimeout(skeletonDebounceTimer);
       if (skeletonOverlay) {
         skeletonOverlay.classList.remove('is-active');
+        skeletonOverlay.style.display = 'none';
       }
       document.body.classList.remove('gpa-is-navigating');
     };
@@ -480,6 +448,7 @@
       const download = anchor.getAttribute('download');
 
       // Abaikan link instan, tab internal, anchor jump, hash, javascript, tel, mailto, tab baru
+      const hrefLower = String(href || '').toLowerCase();
       if (
         !href ||
         href.startsWith('#') ||
@@ -490,7 +459,13 @@
         download !== null ||
         anchor.hasAttribute('data-no-progress') ||
         anchor.hasAttribute('data-no-loader') ||
-        anchor.hasAttribute('data-instant')
+        anchor.hasAttribute('data-instant') ||
+        hrefLower.includes('export') ||
+        hrefLower.includes('.csv') ||
+        hrefLower.includes('.pdf') ||
+        hrefLower.includes('.xlsx') ||
+        hrefLower.includes('/cetak') ||
+        hrefLower.includes('download')
       ) {
         return;
       }
@@ -507,11 +482,10 @@
           return;
         }
 
-        // Navigasi halaman biasa: Gunakan threshold (120ms untuk bar, 280ms untuk skeleton)
-        // Jika halaman cepat terbuka (<120ms), tidak ada kedip bar atau skeleton sama sekali!
+        // Navigasi halaman biasa: Gunakan threshold (120ms untuk bar)
+        // Jika halaman cepat terbuka (<120ms), tidak ada kedip bar sama sekali!
         if (url.pathname !== window.location.pathname || url.search !== window.location.search) {
           window.gpaProgress.start(120);
-          window.showGpaNavSkeleton(280);
         }
       } catch (err) {}
     });
@@ -537,14 +511,45 @@
 
       // Pada submit form, respon server membutuhkan waktu pemrosesan: mulai bar di 60ms
       window.gpaProgress.start(60);
-      window.showGpaNavSkeleton(280);
     });
 
     // --- 6. Event Reset Saat Halaman Selesai Dimuat / Navigasi Batal ---
+    document.addEventListener('DOMContentLoaded', function () {
+      window.gpaProgress.done(true);
+      window.hideGpaNavSkeleton();
+      window.hideGpaLoader();
+    });
+
+    window.addEventListener('load', function () {
+      window.gpaProgress.done(true);
+      window.hideGpaNavSkeleton();
+      window.hideGpaLoader();
+    });
+
+    window.addEventListener('focus', function () {
+      window.gpaProgress.done(true);
+      window.hideGpaNavSkeleton();
+      window.hideGpaLoader();
+    });
+
     window.addEventListener('pageshow', function () {
       window.gpaProgress.done(true);
       window.hideGpaNavSkeleton();
       window.hideGpaLoader();
+    });
+
+    window.addEventListener('popstate', function () {
+      window.gpaProgress.done(true);
+      window.hideGpaNavSkeleton();
+      window.hideGpaLoader();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        window.gpaProgress.done(true);
+        window.hideGpaNavSkeleton();
+        window.hideGpaLoader();
+      }
     });
 
     window.addEventListener('popstate', function () {

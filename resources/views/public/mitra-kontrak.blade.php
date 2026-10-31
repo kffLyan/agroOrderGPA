@@ -263,7 +263,7 @@
                     <div class="space-y-3">
                         <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-strong gpa-mono-xs font-bold text-accent">04</span>
                         <h3 class="text-sm font-bold leading-snug text-ink-strong">Pengiriman Subuh Perdana</h3>
-                        <p class="text-xs leading-relaxed text-ink-body">Armada reefer mulai rute terjadwal dengan integrasi aplikasi driver dan bukti serah terima digital (e-PoD).</p>
+                        <p class="text-xs leading-relaxed text-ink-body">Armada reefer mulai rute terjadwal dengan integrasi aplikasi armada dan bukti serah terima digital (e-PoD).</p>
                     </div>
                     <p class="border-t border-line-hair pt-3 gpa-mono-xs text-success font-semibold">AKTIF OPERASIONAL</p>
                 </li>

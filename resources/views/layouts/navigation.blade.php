@@ -19,10 +19,10 @@
                         <x-nav-link :href="route('direktur.users.index')" :active="request()->routeIs('direktur.users.*')">
                             {{ __('Kelola Akun') }}
                         </x-nav-link>
-                        <x-nav-link :href="route('direktur.contracts.index')" :active="request()->routeIs('direktur.contracts.*')">
+                        <x-nav-link :href="route('direktur.kontrak.index')" :active="request()->routeIs('direktur.kontrak.*', 'direktur.contracts.*')">
                             {{ __('Kontrak B2B') }}
                         </x-nav-link>
-                        <x-nav-link :href="route('direktur.reports.index')" :active="request()->routeIs('direktur.reports.*')">
+                        <x-nav-link :href="route('direktur.laporan.index')" :active="request()->routeIs('direktur.laporan.*', 'direktur.reports.*')">
                             {{ __('Laporan Penjualan') }}
                         </x-nav-link>
                     @else
@@ -89,10 +89,10 @@
                 <x-responsive-nav-link :href="route('direktur.users.index')" :active="request()->routeIs('direktur.users.*')">
                     {{ __('Kelola Akun') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('direktur.contracts.index')" :active="request()->routeIs('direktur.contracts.*')">
+                <x-responsive-nav-link :href="route('direktur.kontrak.index')" :active="request()->routeIs('direktur.kontrak.*', 'direktur.contracts.*')">
                     {{ __('Kontrak B2B') }}
                 </x-responsive-nav-link>
-                <x-responsive-nav-link :href="route('direktur.reports.index')" :active="request()->routeIs('direktur.reports.*')">
+                <x-responsive-nav-link :href="route('direktur.laporan.index')" :active="request()->routeIs('direktur.laporan.*', 'direktur.reports.*')">
                     {{ __('Laporan Penjualan') }}
                 </x-responsive-nav-link>
             @else

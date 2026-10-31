@@ -1,4 +1,4 @@
-@extends('layouts.coordinator')
+@extends('layouts.koordinator')
 
 @section('title', 'Dasbor Koordinator Lapangan // AgroOrder GPA')
 
@@ -18,12 +18,12 @@
                 </div>
 
                 <div class="flex shrink-0 flex-wrap items-center gap-2">
-                    <a href="{{ route('koordinator.products.create') }}"
+                    <a href="{{ route('koordinator.produk.create') }}"
                         class="inline-flex items-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-surface-shell text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-muted">
                         <x-gpa.icon name="plus" class="h-3.5 w-3.5 shrink-0" />
                         Tambah Komoditas
                     </a>
-                    <a href="{{ route('koordinator.stock') }}#form-intake"
+                    <a href="{{ route('koordinator.stok') }}#form-intake"
                         class="inline-flex items-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-ink text-accent shadow-sub">
                         <x-gpa.icon name="plus" class="h-3.5 w-3.5 shrink-0" />
                         Catat Pasokan Masuk
@@ -182,7 +182,7 @@
                     <h2 class="gpa-section-title text-ink">Status Pasokan &amp; Stok Komoditas</h2>
                     <p class="mt-1 text-xs text-ink-body">Ketersediaan stok dari petani binaan dan buffer siap kirim</p>
                 </div>
-                <a href="{{ route('koordinator.stock') }}"
+                <a href="{{ route('koordinator.stok') }}"
                     class="inline-flex items-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-surface-shell text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-muted">
                     Kelola Stok
                     <x-gpa.icon name="arrow-right" class="h-3.5 w-3.5 shrink-0" />
@@ -224,7 +224,7 @@
                                     <p class="text-[11px] leading-4 text-ink-body">{{ ($row->supplier_name ?? ($row['group'] ?? '')) ?: '-' }}</p>
                                 </td>
                                 <td class="px-3 py-3.5 text-right">
-                                    <a href="{{ route('koordinator.stock') }}?product_id={{ $row->id ?? $row['key'] }}#form-intake"
+                                    <a href="{{ route('koordinator.stok') }}?product_id={{ $row->id ?? $row['key'] }}#form-intake"
                                         class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                                         <x-gpa.icon name="plus" class="h-3 w-3 shrink-0" />
                                         Tambah Panen
@@ -254,7 +254,7 @@
                     <h2 class="gpa-section-title text-ink">Log Pasokan Panen Masuk Terakhir</h2>
                     <p class="mt-1 text-xs text-ink-body">Riwayat pasokan panen terbaru</p>
                 </div>
-                <a href="{{ route('koordinator.stock') }}"
+                <a href="{{ route('koordinator.stok') }}"
                     class="inline-flex items-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-surface-shell text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-muted">
                     Lihat Semua
                     <x-gpa.icon name="arrow-right" class="h-3.5 w-3.5 shrink-0" />

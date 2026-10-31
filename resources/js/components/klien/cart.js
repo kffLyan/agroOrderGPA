@@ -64,7 +64,7 @@ export default function clientCart(commodities = [], demoLines = [], defaults = 
 
         syncStatus() {
             this.statusLabel = this.submitted
-                ? (defaults.submitted_status ?? 'Menunggu Verifikasi Admin')
+                ? (defaults.submitted_status ?? 'Menunggu Verifikasi Sekretaris')
                 : (defaults.status ?? 'Drafting');
         },
 
@@ -204,12 +204,25 @@ export default function clientCart(commodities = [], demoLines = [], defaults = 
             return this.lines.reduce((total, line) => total + line.qty * line.price, 0);
         },
 
+        isFreeShipping() {
+            return true;
+        },
+
         shipping() {
             return 0;
         },
 
+        taxRate() {
+            return (defaults.tax_settings?.enabled) ? Number(defaults.tax_settings?.percent ?? 11) : 0;
+        },
+
+        tax() {
+            if (!defaults.tax_settings?.enabled) return 0;
+            return Math.round(this.subtotal() * (this.taxRate() / 100));
+        },
+
         grandTotal() {
-            return this.subtotal() + this.shipping();
+            return this.subtotal() + this.shipping() + this.tax();
         },
 
         setQty(key, value) {
@@ -383,7 +396,7 @@ export default function clientCart(commodities = [], demoLines = [], defaults = 
 
             this.$dispatch('gpa:toast', {
                 title: 'Pesanan Diajukan',
-                message: `${this.totalWeight()} kg pesanan Anda menunggu verifikasi admin (maksimal 2 jam kerja).`,
+                message: `${this.totalWeight()} kg pesanan Anda menunggu verifikasi sekretaris (maksimal 2 jam kerja).`,
                 tone: 'success',
             });
         },

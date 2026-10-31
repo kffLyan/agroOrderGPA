@@ -11,6 +11,7 @@ export default function secretaryVerification(orders = [], checklistTotal = 0) {
         selectedId: list[0]?.id ?? null,
         resolved: [],
         checked: [],
+        manualShipping: 0,
 
         run(title, message, tone = 'info') {
             if (typeof this.$dispatch === 'function') {
@@ -22,6 +23,43 @@ export default function secretaryVerification(orders = [], checklistTotal = 0) {
 
         get selected() {
             return this.orders.find((order) => order.id === this.selectedId) ?? this.orders[0] ?? null;
+        },
+
+        syncManualShipping() {
+            const current = this.selected;
+            this.manualShipping = Number(current?.shipping_raw ?? 0);
+        },
+
+        setShippingPreset(val) {
+            this.manualShipping = Math.max(0, Number(val || 0));
+        },
+
+        getSubtotal() {
+            return Number(this.selected?.subtotal_raw || 0);
+        },
+
+        getShipping() {
+            return Math.max(0, Number(this.manualShipping || 0));
+        },
+
+        getTaxRate() {
+            return Number(this.selected?.tax_rate_raw || 0);
+        },
+
+        getTaxAmount() {
+            const rate = this.getTaxRate();
+            if (rate > 0) {
+                return Math.round(this.getSubtotal() * (rate / 100));
+            }
+            return 0;
+        },
+
+        getGrandTotal() {
+            return this.getSubtotal() + this.getShipping() + this.getTaxAmount();
+        },
+
+        formatRupiah(val) {
+            return 'Rp ' + Number(val || 0).toLocaleString('id-ID');
         },
 
         isSelected(id) {
@@ -96,11 +134,13 @@ export default function secretaryVerification(orders = [], checklistTotal = 0) {
                     });
                 }
             }
+            this.syncManualShipping();
         },
 
         select(id) {
             this.selectedId = id;
             this.checked = [];
+            this.syncManualShipping();
 
             this.$nextTick(() => {
                 this.scrollToInspection();
@@ -244,6 +284,9 @@ export default function secretaryVerification(orders = [], checklistTotal = 0) {
                             'Accept': 'application/json',
                             'Content-Type': 'application/json',
                         },
+                        body: JSON.stringify({
+                            shipping_cost: this.getShipping(),
+                        }),
                     });
 
                     const data = await response.json().catch(() => ({}));

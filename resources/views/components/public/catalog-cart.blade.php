@@ -6,7 +6,7 @@
 ])
 
 @php
-    $actionHref = $actionHref ?? (auth()->check() ? route('klien.cart') : route('login'));
+    $actionHref = $actionHref ?? (auth()->check() ? route('klien.keranjang') : route('login'));
 @endphp
 
 <section class="gpa-panel p-4 sm:p-5">

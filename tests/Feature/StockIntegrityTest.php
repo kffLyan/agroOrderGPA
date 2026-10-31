@@ -25,7 +25,7 @@ class StockIntegrityTest extends TestCase
      */
     public function test_allocate_stock_throws_exception_when_physical_stock_is_insufficient(): void
     {
-        $admin = User::factory()->create(['role' => 'KOORDINATOR', 'is_active' => true]);
+        $koordinator = User::factory()->create(['role' => 'KOORDINATOR', 'is_active' => true]);
         $product = Product::create([
             'sku'           => 'GPA-KBS-001',
             'name'          => 'Kubis Hijau Super',
@@ -43,7 +43,7 @@ class StockIntegrityTest extends TestCase
             'supplier_name'      => 'Petani Ciwidey',
             'initial_quantity'   => 15,
             'available_quantity' => 15,
-            'inputted_by'        => $admin->id,
+            'inputted_by'        => $koordinator->id,
         ]);
 
         $stockService = app(StockService::class);
@@ -61,7 +61,7 @@ class StockIntegrityTest extends TestCase
      */
     public function test_reject_order_restores_stock_when_order_was_approved(): void
     {
-        $admin = User::factory()->create(['role' => 'SEKRETARIS', 'is_active' => true]);
+        $sekretaris = User::factory()->create(['role' => 'SEKRETARIS', 'is_active' => true]);
         $klien = User::factory()->create(['role' => 'KLIEN', 'is_active' => true]);
 
         $product = Product::create([
@@ -81,7 +81,7 @@ class StockIntegrityTest extends TestCase
             'supplier_name'      => 'Kebun Sayur Lembang',
             'initial_quantity'   => 100,
             'available_quantity' => 100,
-            'inputted_by'        => $admin->id,
+            'inputted_by'        => $sekretaris->id,
         ]);
 
         $order = Order::create([
@@ -104,12 +104,12 @@ class StockIntegrityTest extends TestCase
         $orderService = app(OrderService::class);
 
         // 1. Setujui pesanan -> stok berkurang dari 100 menjadi 80
-        $orderService->approveOrder($order->id, $admin->id);
+        $orderService->approveOrder($order->id, $sekretaris->id);
         $this->assertEquals(80, (float) $batch->fresh()->available_quantity);
         $this->assertEquals(OrderStatus::MENUNGGU_PEMBAYARAN->value, $order->fresh()->status);
 
         // 2. Batalkan pesanan -> stok harus kembali dari 80 menjadi 100
-        $orderService->rejectOrder($order->id, $admin->id, 'Klien membatalkan pesanan');
+        $orderService->rejectOrder($order->id, $sekretaris->id, 'Klien membatalkan pesanan');
         $this->assertEquals(100, (float) $batch->fresh()->available_quantity);
         $this->assertEquals(OrderStatus::BATAL->value, $order->fresh()->status);
     }
@@ -164,7 +164,7 @@ class StockIntegrityTest extends TestCase
      */
     public function test_inventory_resource_atp_avoids_double_deduction(): void
     {
-        $admin = User::factory()->create(['role' => 'KOORDINATOR', 'is_active' => true]);
+        $koordinator = User::factory()->create(['role' => 'KOORDINATOR', 'is_active' => true]);
         $klien = User::factory()->create(['role' => 'KLIEN', 'is_active' => true]);
 
         $product = Product::create([
@@ -185,7 +185,7 @@ class StockIntegrityTest extends TestCase
             'supplier_name'      => 'Mitra Kebun',
             'initial_quantity'   => 50,
             'available_quantity' => 50,
-            'inputted_by'        => $admin->id,
+            'inputted_by'        => $koordinator->id,
         ]);
 
         // Pesanan yang SUDAH LUNAS (artinya stok gudang sudah dipotong saat disetujui)

@@ -81,7 +81,7 @@
     <div class="no-print sticky top-0 z-30 border-b border-line-board bg-white/95 backdrop-blur shadow-sub">
         <div class="mx-auto flex max-w-[297mm] items-center justify-between gap-3 px-4 py-2.5">
             <div class="flex items-center gap-2">
-                <a href="{{ route('klien.orders.index') }}"
+                <a href="{{ route('klien.pesanan.index') }}"
                     class="inline-flex items-center gap-1.5 rounded-lg border border-line-board bg-surface px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-surface-shell">
                     <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5" />
                     Kembali ke Daftar Pesanan
@@ -91,7 +91,7 @@
                 </span>
             </div>
             <div class="flex items-center gap-2">
-                <a href="{{ route('klien.orders.export', ['status' => $statusFilter]) }}"
+                <a href="{{ route('klien.pesanan.export', ['status' => $statusFilter]) }}"
                     class="inline-flex items-center gap-1.5 rounded-lg border border-line-board bg-surface px-3 py-1.5 text-xs font-semibold text-ink shadow-sub transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="download" class="h-3.5 w-3.5" />
                     Unduh Excel (CSV)

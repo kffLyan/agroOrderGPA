@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\View;
@@ -22,6 +23,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        date_default_timezone_set(config('app.timezone', 'Asia/Jakarta'));
+        Carbon::setLocale(config('app.locale', 'id'));
+
         View::composer(['errors::*', 'errors.*', 'errors.layout'], function ($view) {
             $user = Auth::user();
             $detectedRole = $user?->role;

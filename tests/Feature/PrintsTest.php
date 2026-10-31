@@ -70,7 +70,7 @@ class PrintsTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($direktur)->get(route('direktur.reports.download'));
+        $response = $this->actingAs($direktur)->get(route('direktur.laporan.download'));
         $response->assertStatus(200);
         $response->assertSee('KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)');
         $response->assertSee('REKAPITULASI RESMI PENJUALAN KOMODITAS');
@@ -88,7 +88,7 @@ class PrintsTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($sekretaris)->get(route('sekretaris.reports.print'));
+        $response = $this->actingAs($sekretaris)->get(route('sekretaris.laporan.print'));
         $response->assertStatus(200);
         $response->assertSee('KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)');
         $response->assertSee('Jurnal Rekapitulasi Operasional Penimbangan');
@@ -102,12 +102,12 @@ class PrintsTest extends TestCase
             'is_active'   => true,
         ]);
 
-        $ordersPrint = $this->actingAs($klien)->get(route('klien.orders.print-rekap'));
+        $ordersPrint = $this->actingAs($klien)->get(route('klien.pesanan.print-rekap'));
         $ordersPrint->assertStatus(200);
         $ordersPrint->assertViewIs('prints.client-orders-rekap');
         $ordersPrint->assertSee('REKAPITULASI RESMI TRANSAKSI PEMESANAN');
 
-        $docsPrint = $this->actingAs($klien)->get(route('klien.documents.print-rekap'));
+        $docsPrint = $this->actingAs($klien)->get(route('klien.dokumen.print-rekap'));
         $docsPrint->assertStatus(200);
         $docsPrint->assertViewIs('prints.client-documents-rekap');
         $docsPrint->assertSee('REKAPITULASI RESMI FAKTUR KONSOLIDASI');
@@ -149,6 +149,19 @@ class PrintsTest extends TestCase
         $response = $this->actingAs($klienA)->get(route('prints.return-act', ['order_id' => $orderA->id]));
         $response->assertStatus(200);
         $response->assertSee('BERITA ACARA RETUR &amp; SELISIH MUTU', false);
+    }
+
+    public function test_authenticated_user_can_view_thermal_receipt_print_page(): void
+    {
+        $user = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('prints.thermal-receipt', ['invoice' => 'INV-GPA-202610-001']));
+        $response->assertStatus(200);
+        $response->assertSee('STRUK KASIR');
+        $response->assertSee('Green Pasundan Agriculture');
     }
 }
 

@@ -128,13 +128,13 @@ class DirekturTest extends TestCase
         ]);
 
         // 1. Tampilkan semua
-        $response = $this->actingAs($this->director)->get(route('direktur.contracts.index'));
+        $response = $this->actingAs($this->director)->get(route('direktur.kontrak.index'));
         $response->assertStatus(200);
         $response->assertSee('CTR-ACTIVE-001');
         $response->assertSee('CTR-PENDING-001');
 
         // 2. Filter hanya PENDING_APPROVAL
-        $responsePending = $this->actingAs($this->director)->get(route('direktur.contracts.index', ['status' => 'PENDING_APPROVAL']));
+        $responsePending = $this->actingAs($this->director)->get(route('direktur.kontrak.index', ['status' => 'PENDING_APPROVAL']));
         $responsePending->assertStatus(200);
         $responsePending->assertSee('CTR-PENDING-001');
         $responsePending->assertDontSee('CTR-ACTIVE-001');
@@ -142,7 +142,7 @@ class DirekturTest extends TestCase
 
     public function test_direktur_can_view_create_contract_form(): void
     {
-        $response = $this->actingAs($this->director)->get(route('direktur.contracts.create'));
+        $response = $this->actingAs($this->director)->get(route('direktur.kontrak.create'));
 
         $response->assertStatus(200);
         $response->assertSee('Terbitkan Kontrak Kemitraan B2B');
@@ -162,9 +162,9 @@ class DirekturTest extends TestCase
             'status'                     => 'ACTIVE',
         ];
 
-        $response = $this->actingAs($this->director)->post(route('direktur.contracts.store'), $payload);
+        $response = $this->actingAs($this->director)->post(route('direktur.kontrak.store'), $payload);
 
-        $response->assertRedirect(route('direktur.contracts.index'));
+        $response->assertRedirect(route('direktur.kontrak.index'));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('contracts', [
@@ -189,7 +189,7 @@ class DirekturTest extends TestCase
             'approved_at'                => now(),
         ]);
 
-        $response = $this->actingAs($this->director)->get(route('direktur.contracts.show', $contract->id));
+        $response = $this->actingAs($this->director)->get(route('direktur.kontrak.show', $contract->id));
 
         $response->assertStatus(200);
         $response->assertSee('CTR-SHOW-001');
@@ -209,7 +209,7 @@ class DirekturTest extends TestCase
             'status'                     => 'ACTIVE',
         ]);
 
-        $response = $this->actingAs($this->director)->get(route('direktur.contracts.edit', $contract->id));
+        $response = $this->actingAs($this->director)->get(route('direktur.kontrak.edit', $contract->id));
 
         $response->assertStatus(200);
         $response->assertSee('Ubah Parameter Kontrak');
@@ -235,9 +235,9 @@ class DirekturTest extends TestCase
             'status'                     => 'ACTIVE',
         ];
 
-        $response = $this->actingAs($this->director)->put(route('direktur.contracts.update', $contract->id), $payload);
+        $response = $this->actingAs($this->director)->put(route('direktur.kontrak.update', $contract->id), $payload);
 
-        $response->assertRedirect(route('direktur.contracts.index'));
+        $response->assertRedirect(route('direktur.kontrak.index'));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('contracts', [
@@ -261,9 +261,9 @@ class DirekturTest extends TestCase
             'status'                     => 'PENDING_APPROVAL',
         ]);
 
-        $response = $this->actingAs($this->director)->post(route('direktur.contracts.approve', $contract->id));
+        $response = $this->actingAs($this->director)->post(route('direktur.kontrak.approve', $contract->id));
 
-        $response->assertRedirect(route('direktur.contracts.index'));
+        $response->assertRedirect(route('direktur.kontrak.index'));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('contracts', [
@@ -287,9 +287,9 @@ class DirekturTest extends TestCase
             'approved_at'                => now(),
         ]);
 
-        $response = $this->actingAs($this->director)->post(route('direktur.contracts.terminate', $contract->id));
+        $response = $this->actingAs($this->director)->post(route('direktur.kontrak.terminate', $contract->id));
 
-        $response->assertRedirect(route('direktur.contracts.index'));
+        $response->assertRedirect(route('direktur.kontrak.index'));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('contracts', [
@@ -310,9 +310,9 @@ class DirekturTest extends TestCase
             'status'                     => 'PENDING_APPROVAL',
         ]);
 
-        $response = $this->actingAs($this->director)->delete(route('direktur.contracts.destroy', $contract->id));
+        $response = $this->actingAs($this->director)->delete(route('direktur.kontrak.destroy', $contract->id));
 
-        $response->assertRedirect(route('direktur.contracts.index'));
+        $response->assertRedirect(route('direktur.kontrak.index'));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseMissing('contracts', [
@@ -339,7 +339,7 @@ class DirekturTest extends TestCase
             'subtotal'          => 4500000.00,
         ]);
 
-        $response = $this->actingAs($this->director)->get(route('direktur.reports.index'));
+        $response = $this->actingAs($this->director)->get(route('direktur.laporan.index'));
 
         $response->assertStatus(200);
         $response->assertSee('Laporan Rekapitulasi Penjualan');
@@ -348,7 +348,7 @@ class DirekturTest extends TestCase
 
     public function test_direktur_can_view_reports_print_page(): void
     {
-        $response = $this->actingAs($this->director)->get(route('direktur.reports.download'));
+        $response = $this->actingAs($this->director)->get(route('direktur.laporan.download'));
 
         $response->assertStatus(200);
         $response->assertSee('KOPERASI PRODUSEN AGRO GREEN PASUNDAN');
@@ -357,10 +357,46 @@ class DirekturTest extends TestCase
 
     public function test_direktur_can_export_sales_reports_csv(): void
     {
-        $response = $this->actingAs($this->director)->get(route('direktur.reports.export'));
+        $response = $this->actingAs($this->director)->get(route('direktur.laporan.export'));
 
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+    }
+
+    public function test_direktur_can_filter_sales_reports_by_period_presets_and_custom_dates(): void
+    {
+        // 1. Filter Hari Ini
+        $respToday = $this->actingAs($this->director)->get(route('direktur.laporan.index', ['period' => 'hari_ini']));
+        $respToday->assertStatus(200);
+        $respToday->assertSee('Hari Ini');
+
+        // 2. Filter Minggu Ini
+        $respWeek = $this->actingAs($this->director)->get(route('direktur.laporan.index', ['period' => 'minggu_ini']));
+        $respWeek->assertStatus(200);
+        $respWeek->assertSee('Minggu Ini');
+
+        // 3. Filter Tahun Ini
+        $respYear = $this->actingAs($this->director)->get(route('direktur.laporan.index', ['period' => 'tahun_ini']));
+        $respYear->assertStatus(200);
+        $respYear->assertSee('Tahun Ini');
+
+        // 4. Filter Kustom Tanggal
+        $respCustom = $this->actingAs($this->director)->get(route('direktur.laporan.index', [
+            'start_date' => now()->subDays(5)->format('Y-m-d'),
+            'end_date'   => now()->format('Y-m-d'),
+        ]));
+        $respCustom->assertStatus(200);
+        $respCustom->assertSee('Periode:');
+
+        // 5. Download Cetak PDF dengan filter aktif
+        $respPdf = $this->actingAs($this->director)->get(route('direktur.laporan.download', ['period' => 'minggu_ini']));
+        $respPdf->assertStatus(200);
+        $respPdf->assertSee('Minggu Ini');
+
+        // 6. Unduh CSV dengan filter aktif
+        $respCsv = $this->actingAs($this->director)->get(route('direktur.laporan.export', ['period' => 'hari_ini']));
+        $respCsv->assertStatus(200);
+        $respCsv->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
     }
 
     public function test_direktur_can_inspect_order_detail(): void
@@ -382,7 +418,7 @@ class DirekturTest extends TestCase
             'subtotal'          => 4500000.00,
         ]);
 
-        $response = $this->actingAs($this->director)->get(route('direktur.orders.show', $order->id));
+        $response = $this->actingAs($this->director)->get(route('direktur.inspeksi-pesanan.show', $order->id));
 
         $response->assertStatus(200);
         $response->assertSee('Inspeksi Pengawasan Pesanan: ORD-INSP-001');

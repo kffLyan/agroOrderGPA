@@ -365,7 +365,7 @@
                         </div>
                         <h3 class="text-base font-bold leading-snug text-brand-strong">Serah Terima Dok &amp; Bukti Kirim Digital</h3>
                         <p class="text-xs leading-relaxed text-ink-body">
-                            Chef/Purchasing klien memeriksa mutu bersama driver, menandatangani bukti terima digital (e-PoD), dan klaim retur parsial seketika jika ada temuan.
+                            Chef/Purchasing klien memeriksa mutu bersama petugas armada, menandatangani bukti terima digital (e-PoD), dan klaim retur parsial seketika jika ada temuan.
                         </p>
                         <div class="rounded-lg border border-line-hair bg-canvas px-3 py-2.5">
                             <p class="gpa-mono-xs font-bold uppercase tracking-wider text-brand">BERITA ACARA DIGITAL RESMI</p>
@@ -406,7 +406,7 @@
                         <h3 class="text-sm font-bold leading-snug text-brand-strong">Uji Fisik Bersama di Loading Dock</h3>
                     </div>
                     <p class="text-xs leading-relaxed text-ink-body">
-                        Pemeriksaan acak terhadap kemasan bersama driver logistik GPA. Pemeriksaan mencakup kesegaran visual, ketiadaan memar, dan kesesuaian grade komoditas.
+                        Pemeriksaan acak terhadap kemasan bersama armada logistik GPA. Pemeriksaan mencakup kesegaran visual, ketiadaan memar, dan kesesuaian grade komoditas.
                     </p>
                 </li>
 
@@ -416,7 +416,7 @@
                         <h3 class="text-sm font-bold leading-snug text-brand-strong">Catat Retur Parsial di Bukti Kirim Digital</h3>
                     </div>
                     <p class="text-xs leading-relaxed text-ink-body">
-                        Bila terdapat krat komoditas yang tidak memenuhi standar mutu, kuantitas tersebut langsung ditandai pada aplikasi driver tanpa harus menolak seluruh kiriman.
+                        Bila terdapat krat komoditas yang tidak memenuhi standar mutu, kuantitas tersebut langsung ditandai pada aplikasi armada tanpa harus menolak seluruh kiriman.
                     </p>
                 </li>
 

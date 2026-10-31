@@ -90,8 +90,8 @@ class SuratJalanPrintService
             'total_qty'  => $totalQty,
             'signatures' => [
                 'receiver'  => ['label' => 'Tanda Terima', 'name' => $receiverName, 'date' => $receivedDate],
-                'co_driver' => ['label' => 'Co Driver', 'name' => $coDriverName, 'date' => $receivedDate],
-                'driver'    => ['label' => 'Driver', 'name' => $driverName, 'date' => $receivedDate],
+                'co_driver' => ['label' => 'Kernet Armada', 'name' => $coDriverName, 'date' => $receivedDate],
+                'driver'    => ['label' => 'Supir Armada', 'name' => $driverName, 'date' => $receivedDate],
             ],
             'footer'     => 'Terimakasih atas kepercayaan anda, semoga tetap menjadi pelanggan setia',
         ];

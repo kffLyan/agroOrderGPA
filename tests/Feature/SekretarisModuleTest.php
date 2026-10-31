@@ -189,9 +189,9 @@ class SekretarisModuleTest extends TestCase
             'subtotal'    => 360000,
         ]);
 
-        $response = $this->actingAs($sekretaris)->post("/sekretaris/orders/{$order->id}/approve");
+        $response = $this->actingAs($sekretaris)->post("/sekretaris/verifikasi/{$order->id}/setujui");
 
-        $response->assertRedirect(route('sekretaris.verification'));
+        $response->assertRedirect(route('sekretaris.verifikasi'));
         $response->assertSessionHas('success');
 
         // Pastikan status pesanan berubah menjadi MENUNGGU_PEMBAYARAN dan invoice diterbitkan
@@ -245,11 +245,11 @@ class SekretarisModuleTest extends TestCase
             'status'            => 'MENUNGGU_VERIFIKASI',
         ]);
 
-        $response = $this->actingAs($sekretaris)->post("/sekretaris/orders/{$order->id}/reject", [
+        $response = $this->actingAs($sekretaris)->post("/sekretaris/verifikasi/{$order->id}/tolak", [
             'rejection_reason' => 'Kapasitas armada logistik rute Bogor telah melebihi batas muat harian.',
         ]);
 
-        $response->assertRedirect(route('sekretaris.verification'));
+        $response->assertRedirect(route('sekretaris.verifikasi'));
         $response->assertSessionHas('success');
 
         $order->refresh();
@@ -324,7 +324,7 @@ class SekretarisModuleTest extends TestCase
             'driver_id'            => null,
         ]);
 
-        $response = $this->actingAs($sekretaris)->postJson("/sekretaris/surat-jalan/{$order->id}/assign-driver", [
+        $response = $this->actingAs($sekretaris)->postJson("/sekretaris/surat-jalan/{$order->id}/tugaskan-supir", [
             'driver_id'            => $driver->id,
             'vehicle_plate_number' => 'B 9014 KPA',
         ]);
@@ -353,7 +353,7 @@ class SekretarisModuleTest extends TestCase
         ]);
 
         // Percobaan mengubah supir setelah Surat Jalan terbit HARUS DITOLAK
-        $failResponse = $this->actingAs($sekretaris)->postJson("/sekretaris/surat-jalan/{$order->id}/assign-driver", [
+        $failResponse = $this->actingAs($sekretaris)->postJson("/sekretaris/surat-jalan/{$order->id}/tugaskan-supir", [
             'driver_id' => $anotherDriver->id,
         ]);
 
@@ -416,7 +416,7 @@ class SekretarisModuleTest extends TestCase
             'subtotal'    => 100000,
         ]);
 
-        $response = $this->actingAs($sekretaris)->postJson("/sekretaris/orders/{$order->id}/approve");
+        $response = $this->actingAs($sekretaris)->postJson("/sekretaris/verifikasi/{$order->id}/setujui");
 
         $response->assertStatus(200);
         $response->assertJson([
@@ -488,7 +488,7 @@ class SekretarisModuleTest extends TestCase
             'status'            => 'MENUNGGU_VERIFIKASI',
         ]);
 
-        $response = $this->actingAs($sekretaris)->postJson("/sekretaris/pembayaran/{$payment->id}/approve", [
+        $response = $this->actingAs($sekretaris)->postJson("/sekretaris/pembayaran/{$payment->id}/setujui", [
             'note' => 'Rekening koran BCA klir dan sesuai mutasi.',
         ]);
 
@@ -536,7 +536,7 @@ class SekretarisModuleTest extends TestCase
             'status'            => 'MENUNGGU_VERIFIKASI',
         ]);
 
-        $directResponse = $this->actingAs($sekretaris)->postJson("/sekretaris/pembayaran/{$directPayment->id}/approve");
+        $directResponse = $this->actingAs($sekretaris)->postJson("/sekretaris/pembayaran/{$directPayment->id}/setujui");
         $directResponse->assertStatus(200);
 
         $directOrder->refresh();
@@ -865,7 +865,7 @@ class SekretarisModuleTest extends TestCase
         ];
 
         $response = $this->actingAs($sekretaris)->post('/sekretaris/pesanan-manual', $payload);
-        $response->assertRedirect(route('sekretaris.verification'));
+        $response->assertRedirect(route('sekretaris.verifikasi'));
 
         $this->assertDatabaseHas('orders', [
             'user_id'     => $klien->id,
@@ -924,7 +924,7 @@ class SekretarisModuleTest extends TestCase
         ];
 
         $response = $this->actingAs($sekretaris)->post('/sekretaris/pesanan-manual', $payload);
-        $response->assertRedirect(route('sekretaris.verification'));
+        $response->assertRedirect(route('sekretaris.verifikasi'));
 
         $this->assertDatabaseHas('orders', [
             'user_id'     => $klien->id,
@@ -1113,5 +1113,99 @@ class SekretarisModuleTest extends TestCase
 
         $num2 = $orderService->generateInvoiceNumber();
         $this->assertNotEquals($num1, $num2);
+    }
+
+    public function test_sekretaris_can_approve_order_with_manual_shipping_cost_and_updates_financials(): void
+    {
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $koordinator = User::factory()->create([
+            'role'      => 'KOORDINATOR',
+            'is_active' => true,
+        ]);
+
+        $klien = User::factory()->create([
+            'role'      => 'KLIEN',
+            'is_active' => true,
+        ]);
+
+        $product = Product::create([
+            'sku'           => 'GPA-VGT-KL01',
+            'name'          => 'Kale Nero Organik',
+            'unit'          => 'kg',
+            'grade'         => 'Grade A',
+            'base_price'    => 30000,
+            'minimum_order' => 5,
+            'is_active'     => true,
+        ]);
+
+        $batch = HarvestBatch::create([
+            'product_id'         => $product->id,
+            'source_type'        => 'PETANI_BINAAN',
+            'supplier_name'      => 'Kelompok Tani Lembang',
+            'batch_date'         => now()->toDateString(),
+            'initial_quantity'   => 50,
+            'available_quantity' => 50,
+            'inputted_by'        => $koordinator->id,
+        ]);
+
+        // Pesanan dibuat tanpa ongkir (draf PO dari web portal)
+        $order = Order::create([
+            'order_number'         => 'ORD-GPA-MANUAL-ONGKIR-01',
+            'user_id'              => $klien->id,
+            'order_source'         => 'WEB_PORTAL',
+            'target_delivery_date' => now()->addDay(),
+            'delivery_address'     => 'Restoran Bintang Lima, Bandung Barat',
+            'grand_total'          => 300000, // 10 kg * 30000
+            'status'               => 'MENUNGGU_VERIFIKASI',
+        ]);
+
+        OrderItem::create([
+            'order_id'    => $order->id,
+            'product_id'  => $product->id,
+            'ordered_qty' => 10,
+            'unit_price'  => 30000,
+            'subtotal'    => 300000,
+        ]);
+
+        Payment::create([
+            'order_id'          => $order->id,
+            'invoice_id'        => null,
+            'payment_reference' => 'PAY-TEST-ONGKIR-01',
+            'payment_method'    => 'TRANSFER_BANK',
+            'amount'            => 300000,
+            'status'            => 'MENUNGGU_VERIFIKASI',
+            'verification_note' => 'Menunggu verifikasi',
+        ]);
+
+        // Sekretaris menyetujui pesanan dan menginput ongkir manual Rp 65.000 via AJAX
+        $response = $this->actingAs($sekretaris)->postJson("/sekretaris/verifikasi/{$order->id}/setujui", [
+            'shipping_cost' => 65000,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success'  => true,
+            'order_id' => $order->id,
+        ]);
+
+        $order->refresh();
+        $this->assertEquals('MENUNGGU_PEMBAYARAN', $order->status);
+        // Subtotal (300.000) + Manual Ongkir (65.000) = 365.000 (jika PPN 0%)
+        $this->assertGreaterThanOrEqual(365000, (float) $order->grand_total);
+        $this->assertEquals(65000, (float) $order->shipping_cost);
+
+        // Faktur invoice diterbitkan dengan nilai grand total yang sama
+        $this->assertNotNull($order->invoice_id);
+        $invoice = Invoice::find($order->invoice_id);
+        $this->assertEquals($order->grand_total, $invoice->grand_total);
+
+        // Rincian pembayaran disinkronkan dengan catatan ongkir manual
+        $payment = Payment::where('order_id', $order->id)->first();
+        $this->assertEquals($order->grand_total, $payment->amount);
+        $this->assertStringContainsString('65.000', $payment->verification_note);
     }
 }

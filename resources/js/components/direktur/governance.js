@@ -151,12 +151,18 @@ export default function directorGovernance(rows = [], labels = {}) {
             );
         },
 
-        verifyIntegrity() {
-            alert('HASIL PENGUJIAN INTEGRITAS DATA SISTEM GPA:\n\n' +
-                  '• Status Keamanan Data: 100% VALID\n' +
-                  '• Verifikasi Sistem: Seluruh riwayat transaksi dan audit tersimpan utuh dan sah.\n' +
-                  '• Temuan Anomali: 0 Anomali Terdeteksi (Aman).\n\n' +
-                  'Sistem tata kelola dan catatan riwayat berada dalam kondisi aman terlindungi.');
+        async verifyIntegrity() {
+            if (window.$alert) {
+                await window.$alert({
+                    title: 'Hasil Pengujian Integritas Data Sistem GPA',
+                    message: '• Status Keamanan Data: 100% VALID\n' +
+                          '• Verifikasi Sistem: Seluruh riwayat transaksi dan audit tersimpan utuh dan sah.\n' +
+                          '• Temuan Anomali: 0 Anomali Terdeteksi (Aman).\n\n' +
+                          'Sistem tata kelola dan catatan riwayat berada dalam kondisi aman terlindungi.',
+                    tone: 'brand',
+                    confirmText: 'Selesai'
+                });
+            }
             this.run(
                 'Uji Integritas Data Sistem',
                 'Pemeriksaan keamanan data selesai: Seluruh data riwayat valid dan 0 kejanggalan terdeteksi.',
@@ -172,14 +178,12 @@ export default function directorGovernance(rows = [], labels = {}) {
             );
         },
 
+        paramModalOpen: false,
+
         /* ---------- parameter & control actions ---------- */
 
         editParameters() {
-            this.run(
-                'Edit Parameter Kebijakan',
-                'PIN Master Direktur Utama diminta sebelum parameter dapat diubah.',
-                'warning'
-            );
+            this.paramModalOpen = true;
         },
 
         toggleFreeze() {

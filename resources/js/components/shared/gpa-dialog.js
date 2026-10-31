@@ -32,7 +32,7 @@ function ensureDialogElements() {
                     </div>
                     <div class="min-w-0 flex-1 pt-0.5">
                         <h3 id="gpa-dialog-title" class="text-base font-bold text-ink sm:text-lg"></h3>
-                        <p id="gpa-dialog-message" class="mt-1.5 text-xs sm:text-sm leading-relaxed text-ink-muted"></p>
+                        <p id="gpa-dialog-message" class="mt-1.5 text-xs sm:text-sm leading-relaxed text-ink-muted whitespace-pre-line"></p>
                     </div>
                     <button id="gpa-dialog-close" type="button" aria-label="Tutup" class="-mr-1.5 -mt-1.5 inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-subtle hover:bg-surface-muted hover:text-ink transition-colors cursor-pointer">
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg>

@@ -35,11 +35,11 @@ enum UserRole: string
     public function roleKey(): string
     {
         return match ($this) {
-            self::DIREKTUR    => 'director',
-            self::SEKRETARIS  => 'admin',
-            self::KOORDINATOR => 'coordinator',
-            self::ARMADA      => 'driver',
-            self::KLIEN       => 'client',
+            self::DIREKTUR    => 'direktur',
+            self::SEKRETARIS  => 'sekretaris',
+            self::KOORDINATOR => 'koordinator',
+            self::ARMADA      => 'armada',
+            self::KLIEN       => 'klien',
         };
     }
 
@@ -47,9 +47,9 @@ enum UserRole: string
     {
         return match ($this) {
             self::DIREKTUR    => 'DIR',
-            self::SEKRETARIS  => 'ADM',
+            self::SEKRETARIS  => 'SKR',
             self::KOORDINATOR => 'KRD',
-            self::ARMADA      => 'DVR',
+            self::ARMADA      => 'ARM',
             self::KLIEN       => 'KLN',
         };
     }

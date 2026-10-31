@@ -4,7 +4,7 @@
 
 @section('content')
     <div class="mx-auto flex max-w-[1280px] flex-col gap-6"
-        x-data="directorAccess(@js($allUsers))">
+        x-data="direkturAccess(@js($allUsers))">
         @if (session('success'))
             <div class="rounded-xl border border-accent bg-accent/20 px-4 py-3 text-xs font-semibold text-success-deep shadow-sm flex items-center justify-between">
                 <div class="flex items-center gap-2">
@@ -37,6 +37,8 @@
 
                 <div class="flex shrink-0 flex-wrap items-center gap-2">
                     <a href="{{ route('direktur.users.rbac.export') }}"
+                        download
+                        data-no-progress
                         class="inline-flex items-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-surface-shell text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-muted">
                         <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0" />
                         Unduh Matriks Akses (.CSV)
@@ -44,7 +46,7 @@
                     <a href="{{ route('direktur.users.create') }}"
                         class="inline-flex items-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-ink text-accent shadow-sub">
                         <x-gpa.icon name="plus" class="h-3.5 w-3.5 shrink-0" />
-                        + Tambah Pengguna Baru
+                        Tambah Pengguna Baru
                     </a>
                 </div>
             </header>
@@ -83,8 +85,8 @@
                     </div>
 
                     <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
-                        <span class="gpa-note text-ink-body">2 Dir | 4 Adm</span>
-                        <span class="gpa-note font-bold text-success-deep">3 Koord | 5 Supir</span>
+                        <span class="gpa-note text-ink-body">2 Dir | 4 Sekre</span>
+                        <span class="gpa-note font-bold text-success-deep">3 Koord | 5 Armada</span>
                     </div>
                 </article>
 
@@ -153,19 +155,19 @@
                                 MODUL &amp; FITUR OPERASIONAL
                             </th>
                             <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
-                                KLIEN / BUYER
+                                KLIEN
                             </th>
                             <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
-                                SEKRE / ADMIN
+                                SEKRETARIS
                             </th>
                             <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
                                 KOORDINATOR LAPANGAN
                             </th>
                             <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
-                                ARMADA / SUPIR
+                                ARMADA LOGISTIK
                             </th>
                             <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
-                                DIREKTUR / OWNER
+                                DIREKTUR
                             </th>
                         </tr>
                     </thead>
@@ -320,6 +322,21 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
+                    {{-- Pilihan Batas Baris Pengguna: 5 atau 10 Akun --}}
+                    <div class="flex items-center gap-1 rounded bg-surface-shell px-2 py-1 outline outline-1 -outline-offset-1 outline-line-board">
+                        <span class="text-[10px] font-semibold text-ink-body">Baris:</span>
+                        <button type="button" @click="setPerPage(5)"
+                            :class="perPage === 5 ? 'bg-brand text-white font-bold shadow-sub' : 'text-ink-body hover:text-ink'"
+                            class="rounded px-1.5 py-0.5 text-[10px] transition-colors">
+                            5
+                        </button>
+                        <button type="button" @click="setPerPage(10)"
+                            :class="perPage === 10 ? 'bg-brand text-white font-bold shadow-sub' : 'text-ink-body hover:text-ink'"
+                            class="rounded px-1.5 py-0.5 text-[10px] transition-colors">
+                            10
+                        </button>
+                    </div>
+
                     <label class="relative flex items-center" for="directory-search">
                         <span class="sr-only">Cari NIK, Nama, atau ID...</span>
                         <x-gpa.icon name="search"
@@ -334,28 +351,28 @@
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
                         Semua Role ({{ $totalUsers }})
                     </button>
-                    <button type="button" @click="setRole('director')"
-                        :class="roleClass('director')"
+                    <button type="button" @click="setRole('direktur')"
+                        :class="roleClass('direktur')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
                         Direktur
                     </button>
-                    <button type="button" @click="setRole('admin')"
-                        :class="roleClass('admin')"
+                    <button type="button" @click="setRole('sekretaris')"
+                        :class="roleClass('sekretaris')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
-                        Sekre/Admin
+                        Sekretaris
                     </button>
-                    <button type="button" @click="setRole('coordinator')"
-                        :class="roleClass('coordinator')"
+                    <button type="button" @click="setRole('koordinator')"
+                        :class="roleClass('koordinator')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
                         Koordinator
                     </button>
-                    <button type="button" @click="setRole('driver')"
-                        :class="roleClass('driver')"
+                    <button type="button" @click="setRole('armada')"
+                        :class="roleClass('armada')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
-                        Supir
+                        Armada Logistik
                     </button>
-                    <button type="button" @click="setRole('client')"
-                        :class="roleClass('client')"
+                    <button type="button" @click="setRole('klien')"
+                        :class="roleClass('klien')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
                         Klien
                     </button>
@@ -393,13 +410,13 @@
                     <tbody class="divide-y divide-line-hair">
                         @foreach ($allUsers as $user)
                             <tr class="align-top transition-colors hover:bg-surface-shell/50"
-                                x-show="matchesUser(@js($user))">
+                                x-show="isUserVisible(@js($user))">
                                 <th scope="row" class="px-3 py-4 text-left align-top font-normal">
                                     <div class="flex items-start gap-2.5">
                                         <span @class([
                                             'mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-micro',
-                                            'bg-ink text-accent' => $user->role_key === 'director',
-                                            'bg-surface-track text-ink-body' => $user->role_key !== 'director',
+                                            'bg-ink text-accent' => $user->role_key === 'direktur',
+                                            'bg-surface-track text-ink-body' => $user->role_key !== 'direktur',
                                         ])>{{ $user->badge }}</span>
                                         <div class="min-w-0">
                                             <p class="text-[13px] font-bold leading-5 text-ink">{{ $user->name }}</p>
@@ -420,8 +437,8 @@
                                 <td class="px-3 py-4 align-top">
                                     <span @class([
                                         'inline-block rounded px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta',
-                                        'bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep' => $user->role_key === 'director',
-                                        'bg-surface-track text-ink-body' => $user->role_key !== 'director',
+                                        'bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep' => $user->role_key === 'direktur',
+                                        'bg-surface-track text-ink-body' => $user->role_key !== 'direktur',
                                     ])>2FA Aktif</span>
                                 </td>
                                 <td class="px-3 py-4 align-top">
@@ -492,16 +509,36 @@
                     <span class="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
                     <span class="gpa-note font-bold text-success-deep">Seluruh perubahan disimpan secara permanen dalam catatan audit sistem.</span>
                 </p>
-                <div class="flex items-center gap-2">
-                    <span class="gpa-note text-ink-body">Menampilkan {{ $allUsers->count() }} dari {{ $totalUsers }} entri otorisasi terdaftar.</span>
-                    <span class="gpa-micro-bold text-ink">1 / 1</span>
-                    <button type="button" @click="pageDirectory(-1)" disabled
-                        class="inline-flex items-center gap-1 rounded bg-surface-track px-2 py-1 gpa-note font-semibold text-ink-body outline outline-1 -outline-offset-1 outline-line-board disabled:cursor-not-allowed disabled:opacity-45">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="gpa-note text-ink-body">
+                        Menampilkan <strong class="text-ink" x-text="startEntry()"></strong> s.d. <strong class="text-ink" x-text="endEntry()"></strong> dari <strong class="text-ink" x-text="visibleUsers().length"></strong> entri otorisasi terdaftar.
+                    </span>
+
+                    <span class="gpa-micro-bold text-ink rounded bg-surface-track px-2 py-1">
+                        Halaman <span x-text="currentPage"></span> / <span x-text="totalPages()"></span>
+                    </span>
+
+                    {{-- Tombol Sebelumnya --}}
+                    <button type="button" @click="prevPage()" :disabled="currentPage <= 1"
+                        :class="currentPage <= 1 ? 'cursor-not-allowed opacity-40 bg-surface-track text-ink-body' : 'bg-surface-shell text-ink hover:bg-surface-muted cursor-pointer'"
+                        class="inline-flex items-center gap-1 rounded px-2.5 py-1 gpa-note font-semibold outline outline-1 -outline-offset-1 outline-line-board transition-colors">
                         <x-gpa.icon name="arrow-left" class="h-3 w-3 shrink-0" />
                         Sebelumnya
                     </button>
-                    <button type="button" @click="pageDirectory(1)"
-                        class="inline-flex items-center gap-1 rounded bg-ink px-2 py-1 gpa-note font-semibold text-accent transition-opacity hover:opacity-90">
+
+                    {{-- Tombol Nomor Halaman --}}
+                    <template x-for="p in totalPages()" :key="p">
+                        <button type="button" @click="goToPage(p)"
+                            :class="currentPage === p ? 'bg-brand text-white font-bold shadow-sub' : 'bg-surface-shell text-ink hover:bg-surface-muted'"
+                            class="h-7 w-7 rounded text-xs font-semibold outline outline-1 -outline-offset-1 outline-line-board transition-colors"
+                            x-text="p">
+                        </button>
+                    </template>
+
+                    {{-- Tombol Selanjutnya (Next Page) --}}
+                    <button type="button" @click="nextPage()" :disabled="currentPage >= totalPages()"
+                        :class="currentPage >= totalPages() ? 'cursor-not-allowed opacity-40 bg-surface-track text-ink-body' : 'bg-ink text-accent hover:opacity-90 cursor-pointer'"
+                        class="inline-flex items-center gap-1 rounded px-2.5 py-1 gpa-note font-semibold transition-opacity shadow-sub">
                         Selanjutnya
                         <x-gpa.icon name="arrow-right" class="h-3 w-3 shrink-0" />
                     </button>

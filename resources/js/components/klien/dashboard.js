@@ -155,7 +155,7 @@ export default function clientDashboard(catalogue = []) {
 
             this.$dispatch('gpa:toast', {
                 title: 'Draft PO tersimpan',
-                message: `${this.draftWeight()} kg dikirim ke admin GPA untuk verifikasi.`,
+                message: `${this.draftWeight()} kg dikirim ke sekretaris GPA untuk verifikasi.`,
                 tone: 'success',
             });
 

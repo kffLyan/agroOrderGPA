@@ -19,7 +19,7 @@ class KoordinatorTest extends TestCase
         $response = $this->get('/koordinator/dashboard');
         $response->assertRedirect('/login');
 
-        $response = $this->get('/koordinator/products');
+        $response = $this->get('/koordinator/produk');
         $response->assertRedirect('/login');
 
         $response = $this->get('/koordinator/stok');
@@ -36,7 +36,7 @@ class KoordinatorTest extends TestCase
         $response = $this->actingAs($klien)->get('/koordinator/dashboard');
         $response->assertStatus(403);
 
-        $response = $this->actingAs($klien)->get('/koordinator/products');
+        $response = $this->actingAs($klien)->get('/koordinator/produk');
         $response->assertStatus(403);
     }
 
@@ -93,7 +93,7 @@ class KoordinatorTest extends TestCase
         $response->assertSee('Pantau Antrean Pesanan Masuk');
 
         // 2. Manajemen Komoditas (CRUD)
-        $response = $this->actingAs($koordinator)->get('/koordinator/products');
+        $response = $this->actingAs($koordinator)->get('/koordinator/produk');
         $response->assertStatus(200);
         $response->assertSee('Tomat Cherry Hidroponik');
 
@@ -111,11 +111,11 @@ class KoordinatorTest extends TestCase
         ]);
 
         // 1. Tampilkan form create
-        $response = $this->actingAs($koordinator)->get('/koordinator/products/create');
+        $response = $this->actingAs($koordinator)->get('/koordinator/produk/create');
         $response->assertStatus(200);
 
         // 2. Simpan produk baru
-        $response = $this->actingAs($koordinator)->post('/koordinator/products', [
+        $response = $this->actingAs($koordinator)->post('/koordinator/produk', [
             'sku'           => 'GPA-VGT-WRT01',
             'name'          => 'Wortel Brastagi Organik',
             'unit'          => 'kg',
@@ -127,7 +127,7 @@ class KoordinatorTest extends TestCase
             'description'   => 'Wortel segar dipanen langsung dari kebun binaan.',
         ]);
 
-        $response->assertRedirect('/koordinator/products');
+        $response->assertRedirect('/koordinator/produk');
         $this->assertDatabaseHas('products', [
             'sku'  => 'GPA-VGT-WRT01',
             'name' => 'Wortel Brastagi Organik',
@@ -136,15 +136,15 @@ class KoordinatorTest extends TestCase
         $product = Product::where('sku', 'GPA-VGT-WRT01')->first();
 
         // 3. Tampilkan detail produk
-        $response = $this->actingAs($koordinator)->get("/koordinator/products/{$product->id}");
+        $response = $this->actingAs($koordinator)->get("/koordinator/produk/{$product->id}");
         $response->assertStatus(200);
 
         // 4. Tampilkan form edit
-        $response = $this->actingAs($koordinator)->get("/koordinator/products/{$product->id}/edit");
+        $response = $this->actingAs($koordinator)->get("/koordinator/produk/{$product->id}/edit");
         $response->assertStatus(200);
 
         // 5. Update produk
-        $response = $this->actingAs($koordinator)->put("/koordinator/products/{$product->id}", [
+        $response = $this->actingAs($koordinator)->put("/koordinator/produk/{$product->id}", [
             'sku'           => 'GPA-VGT-WRT01',
             'name'          => 'Wortel Brastagi Organik Super',
             'unit'          => 'kg',
@@ -155,7 +155,7 @@ class KoordinatorTest extends TestCase
             'preset_image'  => 'broccoli.jpg',
         ]);
 
-        $response->assertRedirect('/koordinator/products');
+        $response->assertRedirect('/koordinator/produk');
         $this->assertDatabaseHas('products', [
             'id'    => $product->id,
             'name'  => 'Wortel Brastagi Organik Super',
@@ -163,7 +163,7 @@ class KoordinatorTest extends TestCase
         ]);
 
         // 6. Toggle status aktif / nonaktif
-        $response = $this->actingAs($koordinator)->post("/koordinator/products/{$product->id}/toggle-status");
+        $response = $this->actingAs($koordinator)->post("/koordinator/produk/{$product->id}/toggle-status");
         $response->assertRedirect();
         $this->assertDatabaseHas('products', [
             'id'        => $product->id,

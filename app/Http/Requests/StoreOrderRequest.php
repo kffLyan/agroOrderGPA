@@ -24,6 +24,9 @@ class StoreOrderRequest extends FormRequest
             'delivery_address'     => ['required', 'string', 'max:500'],
             'payment_method'       => ['required', 'in:TRANSFER_BANK,QRIS,COD,TEMPO_TOP'],
             'payment_proof'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,pdf', 'max:5120'], // Ukuran maks 5MB
+            'shipping_cost'        => ['nullable', 'numeric', 'min:0'],
+            'tax_rate'             => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'tax_amount'           => ['nullable', 'numeric', 'min:0'],
             'items'                => ['required', 'array', 'min:1'],
             'items.*.product_id'   => ['required', 'distinct', 'exists:products,id'],
             'items.*.quantity'     => ['required', 'numeric', 'min:0.1'],

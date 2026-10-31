@@ -138,7 +138,7 @@
 
             <div class="flex-1 text-center px-2">
                 <p class="text-[8pt] font-extrabold uppercase tracking-widest text-ink">
-                    {{ $brand ?? 'KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)' }}
+                    {{ $brand ?? 'KOPERASI PRODUSEN GREEN PASUNDAN Agriculture (GPA)' }}
                 </p>
                 <h1 class="text-[13pt] font-black uppercase tracking-wider text-ink -mt-0.5">
                     GREEN PASUNDAN AGRICULTURE
@@ -259,7 +259,7 @@
             </table>
         </section>
 
-        <!-- 3 KOLOM TANDA TANGAN (Tanda Terima, Co Driver, Driver) -->
+        <!-- 3 KOLOM TANDA TANGAN (Tanda Terima, Kernet, Supir) -->
         <section class="mt-4 flex items-start justify-between border-t border-line-hair pt-2">
             <!-- Kolom 1: Tanda Terima -->
             <div class="w-3/12 text-center">
@@ -276,9 +276,9 @@
                 <p class="text-[6.5pt] text-ink-muted">Nama &amp; Cap Toko/Klien</p>
             </div>
 
-            <!-- Kolom 2: Co Driver -->
+            <!-- Kolom 2: Kernet -->
             <div class="w-3/12 text-center">
-                <p class="text-[8.5pt] font-bold text-ink">{{ $signatures['co_driver']['label'] ?? 'Co Driver' }}</p>
+                <p class="text-[8.5pt] font-bold text-ink">{{ $signatures['co_driver']['label'] ?? 'Kernet Armada' }}</p>
                 <div class="mt-1 h-14 flex flex-col items-center justify-end">
                     <div class="w-full border-b border-ink"></div>
                 </div>
@@ -288,9 +288,9 @@
                 <p class="text-[6.5pt] text-ink-muted">(Pembantu Pengemudi)</p>
             </div>
 
-            <!-- Kolom 3: Driver -->
+            <!-- Kolom 3: Supir -->
             <div class="w-3/12 text-center">
-                <p class="text-[8.5pt] font-bold text-ink">{{ $signatures['driver']['label'] ?? 'Driver' }}</p>
+                <p class="text-[8.5pt] font-bold text-ink">{{ $signatures['driver']['label'] ?? 'Supir Armada' }}</p>
                 <div class="relative mt-1 h-14 flex flex-col items-center justify-end">
                     <div class="w-full border-b border-ink mt-1"></div>
                 </div>

@@ -26,8 +26,14 @@ class DispatchResource extends JsonResource
 
         $sjNumber = $order->surat_jalan_number ?: ('SJ-GPA-' . date('Ym') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT));
 
+        $isContractClient = $order->user && (
+            $order->user->client_type === 'B2B_KONTRAK' ||
+            ($order->user->relationLoaded('contracts') && $order->user->contracts->where('status', 'ACTIVE')->isNotEmpty()) ||
+            $order->user->contracts()->where('status', 'ACTIVE')->exists()
+        );
         $isPaid = ($order->status === 'LUNAS');
         $isIssued = in_array($order->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']);
+        $isReady = $isPaid || ($isContractClient && $order->status === 'MENUNGGU_PEMBAYARAN');
 
         $itemLines = $order->orderItems->map(function ($it, $lineIdx) {
             $qty = (float) $it->ordered_qty;
@@ -47,15 +53,15 @@ class DispatchResource extends JsonResource
             'client'       => $clientName,
             'warehouse'    => 'Gudang Pusat Sentra GPA',
             'dock'         => $address,
-            'state'        => $isPaid ? 'ready' : ($isIssued ? 'issued' : 'locked'),
+            'state'        => ($isReady && !$isIssued) ? 'ready' : ($isIssued ? 'issued' : 'locked'),
             'order_status' => $order->status,
             'estimate'     => number_format($totalWeight, 1, ',', '.') . ' kg',
             'netto'        => number_format($totalWeight, 1, ',', '.') . ' kg',
-            'deviation'    => 'Lunas Terverifikasi',
+            'deviation'    => $isContractClient ? 'Kredit Tempo B2B (Sah Rilis)' : 'Lunas Terverifikasi',
             'revision'     => null,
             'status_chip'  => [
-                'label' => $isIssued ? 'Surat Jalan Terbit (SIAP KIRIM)' : ($isPaid ? 'Pembayaran LUNAS (Siap Rilis SJ)' : 'Menunggu Pembayaran Lunas'),
-                'class' => $isIssued ? 'bg-surface-pill text-ink-body' : ($isPaid ? 'bg-accent text-success-ink outline outline-1 outline-success-deep font-bold' : 'bg-warning-soft text-warning-deep'),
+                'label' => $isIssued ? 'Surat Jalan Terbit (SIAP KIRIM)' : ($isPaid ? 'Pembayaran LUNAS (Siap Rilis SJ)' : ($isContractClient ? 'Kontrak Tempo B2B (Siap Rilis SJ)' : 'Menunggu Pembayaran Lunas')),
+                'class' => $isIssued ? 'bg-surface-pill text-ink-body' : (($isPaid || $isContractClient) ? 'bg-accent text-success-ink outline outline-1 outline-success-deep font-bold' : 'bg-warning-soft text-warning-deep'),
             ],
             'tera'         => 'Verifikator: ' . ($order->verifier?->name ?: 'Sekretariat GPA'),
             'armada'       => $armadaName,

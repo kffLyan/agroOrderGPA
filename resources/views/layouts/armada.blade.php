@@ -39,15 +39,15 @@
         $navigation = $navigation ?? [
             ['key' => 'tasks', 'label' => 'Tugas', 'icon' => 'clipboard'],
             ['key' => 'dispatch', 'label' => 'Surat Jalan', 'icon' => 'file-text'],
-            ['key' => 'pod', 'label' => 'Bukti Kirim (PoD)', 'icon' => 'qrcode'],
+            ['key' => 'pod', 'label' => 'Bukti Kirim', 'icon' => 'qrcode'],
             ['key' => 'fleet', 'label' => 'Armada', 'icon' => 'truck'],
             ['key' => 'profile', 'label' => 'Profil', 'icon' => 'user'],
         ];
         $navigationRoutes = [
-            'tasks' => 'armada.tasks',
-            'dispatch' => 'armada.dispatch',
-            'pod' => 'armada.pod',
-            'fleet' => 'armada.status',
+            'tasks' => 'armada.tugas',
+            'dispatch' => 'armada.surat-jalan',
+            'pod' => 'armada.bukti-terima',
+            'fleet' => 'armada.status-kendaraan',
             'profile' => 'profile.edit',
         ];
         $headerShell = $headerTone === 'light'

@@ -158,6 +158,108 @@ trait PresentsOrderDetails
     }
 
     /**
+     * Mengambil seluruh string catatan verifikasi pembayaran terkait
+     */
+    public function getAllVerificationNotesAttribute(): string
+    {
+        if (!$this->relationLoaded('payments') && method_exists($this, 'payments')) {
+            $this->load('payments');
+        }
+        return $this->payments ? $this->payments->pluck('verification_note')->filter()->implode(' • ') : '';
+    }
+
+    /**
+     * Hitung subtotal komoditas yang dipesan
+     */
+    public function getSubtotalAmountAttribute(): float
+    {
+        $items = $this->orderItems ?? $this->items;
+        if ($items && $items->isNotEmpty()) {
+            $sum = (float) $items->sum(fn ($i) => ($i->subtotal ?: ($i->ordered_qty * $i->unit_price)));
+            if ($sum > 0) {
+                return $sum;
+            }
+        }
+
+        return (float) ($this->invoice?->subtotal_amount ?? $this->grand_total);
+    }
+
+    /**
+     * Biaya pengiriman / ongkir armada chiller
+     */
+    public function getShippingCostAttribute(): float
+    {
+        $notes = $this->all_verification_notes;
+        if (preg_match('/Ongkir[^\d]*Rp\s*([\d\.,]+)/i', $notes, $m)) {
+            $clean = str_replace(['.', ','], ['', '.'], $m[1]);
+            return (float) $clean;
+        }
+
+        $taxAmount = 0.0;
+        if (preg_match('/PPN \([^\)]+\) Rp\s*([\d\.,]+)/i', $notes, $mTax)) {
+            $cleanTax = str_replace(['.', ','], ['', '.'], $mTax[1]);
+            $taxAmount = (float) $cleanTax;
+        } else {
+            $taxAmount = $this->tax_amount;
+        }
+
+        $diff = (float) $this->grand_total - (float) $this->subtotal_amount - $taxAmount;
+        if ($diff > 0.5) {
+            return round($diff, 2);
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Tarif Pajak PPN (persentase)
+     */
+    public function getTaxRateAttribute(): float
+    {
+        $notes = $this->all_verification_notes;
+        if (preg_match('/PPN \((\d+(\.\d+)?)%\)/i', $notes, $m)) {
+            return (float) $m[1];
+        }
+
+        if (class_exists(\App\Services\GovernanceService::class)) {
+            $gov = app(\App\Services\GovernanceService::class);
+            $tax = $gov->getTaxSettings();
+            return $tax['enabled'] ? $tax['percent'] : 0.0;
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Nilai nominal Pajak PPN
+     */
+    public function getTaxAmountAttribute(): float
+    {
+        $notes = $this->all_verification_notes;
+        if (preg_match('/PPN \([^\)]+\) Rp\s*([\d\.,]+)/i', $notes, $m)) {
+            $clean = str_replace(['.', ','], ['', '.'], $m[1]);
+            return (float) $clean;
+        }
+
+        $rate = $this->tax_rate;
+        if ($rate > 0) {
+            return round($this->subtotal_amount * ($rate / 100), 2);
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Label keterangan Pajak PPN
+     */
+    public function getTaxLabelAttribute(): string
+    {
+        return $this->tax_rate > 0
+            ? "PPN {$this->tax_rate}%"
+            : 'Bebas PPN 0% (DTP Pertanian)';
+    }
+
+    /**
      * Hitung total kuantitas seluruh komoditas yang dipesan dalam kilogram
      */
     public function getTotalOrderedQtyAttribute(): float
@@ -333,7 +435,7 @@ trait PresentsOrderDetails
 
     public function getUrlAttribute(): string
     {
-        return route('klien.orders.show', $this->id);
+        return route('klien.pesanan.show', $this->id);
     }
 
     public function getDeviationPercentAttribute(): float

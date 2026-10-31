@@ -53,11 +53,11 @@ class DirekturProductCrudTest extends TestCase
     public function test_non_direktur_cannot_access_product_catalog(): void
     {
         // Guest
-        $responseGuest = $this->get(route('direktur.products.index'));
+        $responseGuest = $this->get(route('direktur.produk.index'));
         $responseGuest->assertRedirect(route('login'));
 
         // Klien
-        $responseClient = $this->actingAs($this->client)->get(route('direktur.products.index'));
+        $responseClient = $this->actingAs($this->client)->get(route('direktur.produk.index'));
         $responseClient->assertStatus(403);
     }
 
@@ -76,26 +76,26 @@ class DirekturProductCrudTest extends TestCase
         ]);
 
         // 1. Tampilkan semua
-        $response = $this->actingAs($this->director)->get(route('direktur.products.index'));
+        $response = $this->actingAs($this->director)->get(route('direktur.produk.index'));
         $response->assertStatus(200);
         $response->assertSee('Selada Romaine Test');
         $response->assertSee('Tomat Beef Garut Test');
         $response->assertSee('Katalog Komoditas & Penetapan Harga Dasar');
 
         // 2. Filter grade
-        $responseGrade = $this->actingAs($this->director)->get(route('direktur.products.index', ['grade' => 'Grade Super']));
+        $responseGrade = $this->actingAs($this->director)->get(route('direktur.produk.index', ['grade' => 'Grade Super']));
         $responseGrade->assertStatus(200);
         $responseGrade->assertSee('Tomat Beef Garut Test');
         $responseGrade->assertDontSee('Selada Romaine Test');
 
         // 3. Filter status aktif
-        $responseActive = $this->actingAs($this->director)->get(route('direktur.products.index', ['status' => 'active']));
+        $responseActive = $this->actingAs($this->director)->get(route('direktur.produk.index', ['status' => 'active']));
         $responseActive->assertStatus(200);
         $responseActive->assertSee('Selada Romaine Test');
         $responseActive->assertDontSee('Tomat Beef Garut Test');
 
         // 4. Pencarian
-        $responseSearch = $this->actingAs($this->director)->get(route('direktur.products.index', ['search' => 'Romaine']));
+        $responseSearch = $this->actingAs($this->director)->get(route('direktur.produk.index', ['search' => 'Romaine']));
         $responseSearch->assertStatus(200);
         $responseSearch->assertSee('Selada Romaine Test');
         $responseSearch->assertDontSee('Tomat Beef Garut Test');
@@ -103,7 +103,7 @@ class DirekturProductCrudTest extends TestCase
 
     public function test_direktur_can_view_create_product_form(): void
     {
-        $response = $this->actingAs($this->director)->get(route('direktur.products.create'));
+        $response = $this->actingAs($this->director)->get(route('direktur.produk.create'));
         $response->assertStatus(200);
         $response->assertSee('Tambah Komoditas Baru ke Katalog Resmi');
         $response->assertSee('Kode SKU Komoditas');
@@ -124,9 +124,9 @@ class DirekturProductCrudTest extends TestCase
             'is_active'     => '1',
         ];
 
-        $response = $this->actingAs($this->director)->post(route('direktur.products.store'), $payload);
+        $response = $this->actingAs($this->director)->post(route('direktur.produk.store'), $payload);
 
-        $response->assertRedirect(route('direktur.products.index'));
+        $response->assertRedirect(route('direktur.produk.index'));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('products', [
@@ -141,7 +141,7 @@ class DirekturProductCrudTest extends TestCase
 
     public function test_direktur_can_view_product_detail(): void
     {
-        $response = $this->actingAs($this->director)->get(route('direktur.products.show', $this->product->id));
+        $response = $this->actingAs($this->director)->get(route('direktur.produk.show', $this->product->id));
         $response->assertStatus(200);
         $response->assertSee('Rincian Komoditas: Selada Romaine Test');
         $response->assertSee('GPA-VGT-TEST01');
@@ -150,7 +150,7 @@ class DirekturProductCrudTest extends TestCase
 
     public function test_direktur_can_view_edit_product_form(): void
     {
-        $response = $this->actingAs($this->director)->get(route('direktur.products.edit', $this->product->id));
+        $response = $this->actingAs($this->director)->get(route('direktur.produk.edit', $this->product->id));
         $response->assertStatus(200);
         $response->assertSee('Ubah Data Komoditas: Selada Romaine Test');
         $response->assertSee('GPA-VGT-TEST01');
@@ -171,9 +171,9 @@ class DirekturProductCrudTest extends TestCase
             'is_active'     => '1',
         ];
 
-        $response = $this->actingAs($this->director)->put(route('direktur.products.update', $this->product->id), $payload);
+        $response = $this->actingAs($this->director)->put(route('direktur.produk.update', $this->product->id), $payload);
 
-        $response->assertRedirect(route('direktur.products.index'));
+        $response->assertRedirect(route('direktur.produk.index'));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('products', [
@@ -188,7 +188,7 @@ class DirekturProductCrudTest extends TestCase
     {
         $this->assertTrue($this->product->is_active);
 
-        $response = $this->actingAs($this->director)->post(route('direktur.products.toggle-status', $this->product->id));
+        $response = $this->actingAs($this->director)->post(route('direktur.produk.toggle-status', $this->product->id));
         $response->assertSessionHas('success');
 
         $this->product->refresh();
@@ -197,9 +197,9 @@ class DirekturProductCrudTest extends TestCase
 
     public function test_direktur_can_delete_product_without_relations(): void
     {
-        $response = $this->actingAs($this->director)->delete(route('direktur.products.destroy', $this->product->id));
+        $response = $this->actingAs($this->director)->delete(route('direktur.produk.destroy', $this->product->id));
 
-        $response->assertRedirect(route('direktur.products.index'));
+        $response->assertRedirect(route('direktur.produk.index'));
         $response->assertSessionHas('success');
 
         $this->assertDatabaseMissing('products', [
@@ -220,9 +220,9 @@ class DirekturProductCrudTest extends TestCase
             'status'                     => 'ACTIVE',
         ]);
 
-        $response = $this->actingAs($this->director)->delete(route('direktur.products.destroy', $this->product->id));
+        $response = $this->actingAs($this->director)->delete(route('direktur.produk.destroy', $this->product->id));
 
-        $response->assertRedirect(route('direktur.products.index'));
+        $response->assertRedirect(route('direktur.produk.index'));
         $response->assertSessionHas('success');
 
         // Produk tidak dihapus dari database melainkan dinonaktifkan

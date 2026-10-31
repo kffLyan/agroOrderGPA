@@ -52,7 +52,7 @@ class UserSeeder extends Seeder
                 'created_at'   => now(),
                 'updated_at'   => now(),
             ],
-            // 3. Staf Administrasi Sekretariat
+            // 3. Sekretaris Operasional
             [
                 'id'           => 3,
                 'name'         => 'Rina Marlina',

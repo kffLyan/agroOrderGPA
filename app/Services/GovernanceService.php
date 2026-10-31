@@ -44,6 +44,11 @@ class GovernanceService
                 'plt_ceiling_amount' => 100000000,
                 'plt_duration_hours' => 72,
                 'plt_activated_at' => null,
+                'tax_ppn_enabled' => false,
+                'tax_ppn_percent' => 11.0,
+                'tax_ppn_note' => 'Fasilitas Bebas PPN Produk Pertanian DTP (PPN 0%)',
+                'default_shipping_fee' => 75000.0,
+                'free_shipping_min_order' => 1000000.0,
                 'period_lock' => [
                     'is_locked' => false,
                     'period' => 'Kuartal ' . ceil(date('n') / 3) . ' (' . date('Y') . ')',
@@ -64,7 +69,50 @@ class GovernanceService
     public function getSettings(): array
     {
         $this->ensureFilesExist();
-        return json_decode(File::get($this->settingsPath), true) ?? [];
+        $stored = json_decode(File::get($this->settingsPath), true) ?? [];
+        $defaults = [
+            'warehouse_loss_max_percent'     => 2.0,
+            'warehouse_loss_warning_percent' => 1.5,
+            'default_top_credit_ceiling'     => 100000000,
+            'min_credit_score'               => 75,
+            'default_top_days'               => 30,
+            'min_margin_percent'             => 15.0,
+            'master_freeze_active'           => false,
+            'master_freeze_reason'           => null,
+            'master_freeze_engaged_at'       => null,
+            'frozen_clients'                 => [],
+            'plt_active'                     => false,
+            'plt_delegate_name'              => null,
+            'plt_ceiling_amount'             => 100000000,
+            'plt_duration_hours'             => 72,
+            'plt_activated_at'               => null,
+            'tax_ppn_enabled'                => false,
+            'tax_ppn_percent'                => 11.0,
+            'tax_ppn_note'                   => 'Fasilitas Bebas PPN Produk Pertanian DTP (PPN 0%)',
+            'default_shipping_fee'           => 75000.0,
+            'free_shipping_min_order'        => 1000000.0,
+        ];
+
+        return array_merge($defaults, $stored);
+    }
+
+    public function getTaxSettings(): array
+    {
+        $settings = $this->getSettings();
+        return [
+            'enabled' => (bool) ($settings['tax_ppn_enabled'] ?? false),
+            'percent' => (float) ($settings['tax_ppn_percent'] ?? 11.0),
+            'note'    => (string) ($settings['tax_ppn_note'] ?? 'Fasilitas Bebas PPN Produk Pertanian DTP (PPN 0%)'),
+        ];
+    }
+
+    public function getShippingSettings(): array
+    {
+        $settings = $this->getSettings();
+        return [
+            'default_fee'    => (float) ($settings['default_shipping_fee'] ?? 75000.0),
+            'free_min_order' => (float) ($settings['free_shipping_min_order'] ?? 1000000.0),
+        ];
     }
 
     public function updateSettings(array $newSettings): bool

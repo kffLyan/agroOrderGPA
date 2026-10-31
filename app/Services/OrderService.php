@@ -177,6 +177,32 @@ class OrderService
                 ];
             }
 
+            // Hitung nilai subtotal komoditas
+            $commoditySubtotal = $estimatedTotal;
+
+            // Ambil kebijakan PPN dan Ongkir dari GovernanceService (Ketetapan Direktur Utama)
+            $gov = app(\App\Services\GovernanceService::class);
+            $taxSettings = $gov->getTaxSettings();
+            $shippingSettings = $gov->getShippingSettings();
+
+            $isB2b = ($user->client_type === 'B2B_KONTRAK' || Contract::where('user_id', $user->id)->where('status', 'ACTIVE')->exists());
+
+            // Tentukan Ongkir: Manual diinput oleh Sekre saat verifikasi
+            $shippingCost = 0.0;
+            if (isset($data['shipping_cost']) && is_numeric($data['shipping_cost'])) {
+                $shippingCost = max(0.0, (float) $data['shipping_cost']);
+            }
+
+            // Tentukan Pajak PPN sesuai ketetapan Direktur
+            $taxRate = 0.0;
+            $taxAmount = 0.0;
+            if ($taxSettings['enabled']) {
+                $taxRate = (float) $taxSettings['percent'];
+                $taxAmount = round($commoditySubtotal * ($taxRate / 100), 2);
+            }
+
+            $grandTotalFinal = $commoditySubtotal + $shippingCost + $taxAmount;
+
             // 2. Simpan data header pesanan (Status awal MENUNGGU_VERIFIKASI)
             $order = Order::create([
                 'order_number'         => $orderNumber,
@@ -184,7 +210,7 @@ class OrderService
                 'order_source'         => 'WEB_PORTAL',
                 'target_delivery_date' => $data['target_delivery_date'],
                 'delivery_address'     => $data['delivery_address'],
-                'grand_total'          => $estimatedTotal,
+                'grand_total'          => $grandTotalFinal,
                 'status'               => OrderStatus::MENUNGGU_VERIFIKASI->value,
             ]);
 
@@ -203,14 +229,19 @@ class OrderService
 
             // 4. Catat entitas transaksi pembayaran awal
             if (!empty($data['payment_method'])) {
+                $financialNote = "Rincian Biaya: Subtotal Rp " . number_format($commoditySubtotal, 0, ',', '.')
+                    . " • Ongkir Rp " . number_format($shippingCost, 0, ',', '.')
+                    . ($taxRate > 0 ? " • PPN ({$taxRate}%) Rp " . number_format($taxAmount, 0, ',', '.') : " • Bebas PPN (0% DTP)");
+
                 Payment::create([
                     'order_id'          => $order->id,
                     'invoice_id'        => null,
                     'payment_reference' => 'PAY-' . strtoupper(uniqid()),
                     'payment_method'    => $data['payment_method'],
-                    'amount'            => $estimatedTotal,
+                    'amount'            => $grandTotalFinal,
                     'proof_url'         => $proofPath,
                     'status'            => PaymentStatus::MENUNGGU_VERIFIKASI->value,
+                    'verification_note' => $financialNote,
                     'paid_at'           => ($data['payment_method'] === 'TEMPO_TOP' || empty($proofPath)) ? null : now(),
                 ]);
             }
@@ -225,9 +256,9 @@ class OrderService
      *
      * @throws Exception
      */
-    public function approveOrder(int $orderId, int $secretaryId): Order
+    public function approveOrder(int $orderId, int $secretaryId, ?float $manualShippingCost = null): Order
     {
-        return DB::transaction(function () use ($orderId, $secretaryId) {
+        return DB::transaction(function () use ($orderId, $secretaryId, $manualShippingCost) {
             $order = Order::with('orderItems')->lockForUpdate()->findOrFail($orderId);
 
             if ($order->status !== OrderStatus::MENUNGGU_VERIFIKASI->value) {
@@ -237,6 +268,42 @@ class OrderService
             // Potong kuota stok batch panen secara atomik (SELECT ... FOR UPDATE)
             foreach ($order->orderItems as $item) {
                 $this->stockService->allocateStock($item->product_id, (float) $item->ordered_qty);
+            }
+
+            // Hitung subtotal komoditas
+            $commoditySubtotal = (float) $order->orderItems->sum(fn ($i) => ($i->subtotal ?: ($i->ordered_qty * $i->unit_price)));
+            if ($commoditySubtotal <= 0) {
+                $commoditySubtotal = (float) $order->grand_total;
+            }
+
+            // Ambil kebijakan PPN dari Direktur Utama
+            $gov = app(\App\Services\GovernanceService::class);
+            $taxSettings = $gov->getTaxSettings();
+            $taxRate = 0.0;
+            $taxAmount = 0.0;
+            if ($taxSettings['enabled']) {
+                $taxRate = (float) $taxSettings['percent'];
+                $taxAmount = round($commoditySubtotal * ($taxRate / 100), 2);
+            }
+
+            // Jika Sekretaris menginputkan ongkir manual saat verifikasi, perbarui grand_total pesanan & rincian pembayaran
+            if ($manualShippingCost !== null) {
+                $shippingCost = max(0.0, (float) $manualShippingCost);
+                $grandTotalFinal = $commoditySubtotal + $shippingCost + $taxAmount;
+                $order->grand_total = $grandTotalFinal;
+
+                // Sinkronkan catatan rincian finansial & nominal pada pembayaran
+                $financialNote = "Rincian Biaya: Subtotal Rp " . number_format($commoditySubtotal, 0, ',', '.')
+                    . " • Ongkir Rp " . number_format($shippingCost, 0, ',', '.')
+                    . ($taxRate > 0 ? " • PPN ({$taxRate}%) Rp " . number_format($taxAmount, 0, ',', '.') : " • Bebas PPN (0% DTP)");
+
+                $payment = Payment::where('order_id', $order->id)->first();
+                if ($payment) {
+                    $payment->update([
+                        'amount'            => $grandTotalFinal,
+                        'verification_note' => $financialNote,
+                    ]);
+                }
             }
 
             // 1. Buat / Terbitkan Invoice Tagihan PDF resmi jika belum ada
@@ -255,7 +322,7 @@ class OrderService
                     'user_id'         => $order->user_id,
                     'period_start'    => $order->created_at ? $order->created_at->toDateString() : now()->toDateString(),
                     'period_end'      => $order->target_delivery_date ?: now()->toDateString(),
-                    'subtotal_amount' => (float) $order->grand_total,
+                    'subtotal_amount' => $commoditySubtotal,
                     'grand_total'     => (float) $order->grand_total,
                     'due_date'        => $dueDate,
                     'status'          => 'UNPAID',
@@ -268,9 +335,19 @@ class OrderService
                 Payment::where('order_id', $order->id)->whereNull('invoice_id')->update([
                     'invoice_id' => $invoice->id,
                 ]);
+            } else {
+                $existingInvoice = Invoice::find($order->invoice_id);
+                if ($existingInvoice) {
+                    $existingInvoice->update([
+                        'subtotal_amount' => $commoditySubtotal,
+                        'grand_total'     => (float) $order->grand_total,
+                    ]);
+                }
             }
 
-            // 2. Perbarui status pesanan menjadi MENUNGGU_PEMBAYARAN sesuai MODELING_SUMMARY.md
+            // 2. Perbarui status pesanan menjadi MENUNGGU_PEMBAYARAN.
+            // Untuk Klien Mitra B2B dengan tempo TOP, Surat Jalan dapat langsung diterbitkan melalui
+            // modul Dispatch tanpa harus menunggu verifikasi pembayaran di muka.
             $order->status = OrderStatus::MENUNGGU_PEMBAYARAN->value;
             $order->verified_by = $secretaryId;
             $order->save();

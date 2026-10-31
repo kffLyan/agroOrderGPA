@@ -367,11 +367,11 @@
                             <x-gpa.icon name="check-circle" class="h-5 w-5 text-brand" />
                         </span>
                         <h3 class="text-xl font-bold leading-7 text-brand">Bukti Serah Terima Terintegrasi (e-PoD)</h3>
-                        <p class="text-xs leading-[19.5px] text-[#5C6B57]">Setiap serah terima di pintu kitchen mitra diverifikasi via aplikasi driver mobile: dokumentasi foto komoditas, foto nota timbang fisik, dan tanda tangan digital receiving staff.</p>
+                        <p class="text-xs leading-[19.5px] text-[#5C6B57]">Setiap serah terima di pintu kitchen mitra diverifikasi via aplikasi armada logistik mobile: dokumentasi foto komoditas, foto nota timbang fisik, dan tanda tangan digital staf penerima.</p>
                         <ul class="flex flex-col gap-2">
                             <li class="flex items-start gap-2.5">
                                 <x-gpa.icon name="check" class="mt-1 h-3 w-3 shrink-0 text-success" />
-                                <span class="font-mono text-xs leading-4 text-[#121A0F]">Validasi ganda saat serah terima dock receiving</span>
+                                <span class="font-mono text-xs leading-4 text-[#121A0F]">Validasi ganda saat serah terima dock penerimaan</span>
                             </li>
                             <li class="flex items-start gap-2.5">
                                 <x-gpa.icon name="check" class="mt-1 h-3 w-3 shrink-0 text-success" />

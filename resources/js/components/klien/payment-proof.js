@@ -57,6 +57,9 @@ export default function clientPaymentProof(defaults = {}) {
         },
 
         selectChannel(id) {
+            if (this.isCurrentPaid) {
+                return;
+            }
             this.selectedChannelId = id;
             if (this.selectedChannel) {
                 this.form.senderBank = this.selectedChannel.name;
@@ -125,23 +128,23 @@ export default function clientPaymentProof(defaults = {}) {
         },
 
         get isCurrentPaid() {
-            return this.currentStatus === 'LUNAS' || this.currentStage === 3;
+            return Boolean(this.current?.is_paid) || this.currentStatus === 'LUNAS' || this.currentStage === 3;
         },
 
         get isCurrentPending() {
-            return this.currentStatus === 'MENUNGGU_VERIFIKASI' || this.currentStage === 2;
+            return !this.isCurrentPaid && (this.currentStatus === 'MENUNGGU_VERIFIKASI' || this.currentStage === 2);
         },
 
         get isCurrentRejected() {
-            return this.currentStatus === 'DITOLAK';
+            return !this.isCurrentPaid && this.currentStatus === 'DITOLAK';
         },
 
         get isCurrentUnpaid() {
-            return this.currentStatus === 'BELUM_BAYAR' && !this.submitted;
+            return !this.isCurrentPaid && this.currentStatus === 'BELUM_BAYAR' && !this.submitted;
         },
 
         get canSubmit() {
-            return this.hasFile && this.amountMatches && this.form.compliance === true && ! this.sending;
+            return !this.isCurrentPaid && this.hasFile && this.amountMatches && this.form.compliance === true && ! this.sending;
         },
 
         onInvoiceChange() {
@@ -170,15 +173,24 @@ export default function clientPaymentProof(defaults = {}) {
         },
 
         onFileInput(event) {
+            if (this.isCurrentPaid) {
+                return;
+            }
             this.acceptFile(event.target.files?.[0] ?? null);
         },
 
         onDragOver() {
+            if (this.isCurrentPaid) {
+                return;
+            }
             this.dragActive = true;
         },
 
         onDrop(event) {
             this.dragActive = false;
+            if (this.isCurrentPaid) {
+                return;
+            }
             this.acceptFile(event.dataTransfer?.files?.[0] ?? null);
         },
 
@@ -295,6 +307,15 @@ export default function clientPaymentProof(defaults = {}) {
         },
 
         saveDraft() {
+            if (this.isCurrentPaid) {
+                this.$dispatch('gpa:toast', {
+                    title: 'Faktur Telah Lunas',
+                    message: 'Faktur ini sudah lunas terverifikasi sah. Formulir dinonaktifkan.',
+                    tone: 'info',
+                });
+                return;
+            }
+
             this.draftSaved = true;
             this.submitted = false;
 
@@ -306,6 +327,11 @@ export default function clientPaymentProof(defaults = {}) {
         },
 
         async submit() {
+            if (this.isCurrentPaid) {
+                this.reject('Tagihan ini sudah berstatus LUNAS dan diverifikasi sah oleh Sekretariat GPA.');
+                return;
+            }
+
             if (this.sending) {
                 return;
             }

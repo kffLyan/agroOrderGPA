@@ -84,14 +84,14 @@ class DashboardQueueResource extends JsonResource
                     'tone'    => 'ink',
                     'intent'  => 'approve',
                     'message' => "PO {$ord->order_number} disetujui & kuota panen dikunci.",
-                    'url'     => route('sekretaris.verification'),
+                    'url'     => route('sekretaris.verifikasi'),
                 ],
                 [
                     'label'   => 'Detail',
                     'tone'    => 'default',
                     'intent'  => 'detail',
                     'message' => "Membuka rincian pesanan {$ord->order_number}.",
-                    'url'     => route('sekretaris.verification'),
+                    'url'     => route('sekretaris.verifikasi'),
                 ],
             ],
         ];

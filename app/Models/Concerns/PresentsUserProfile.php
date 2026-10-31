@@ -19,7 +19,7 @@ trait PresentsUserProfile
      */
     public function getRoleKeyAttribute(): string
     {
-        return $this->role_enum?->roleKey() ?? 'client';
+        return $this->role_enum?->roleKey() ?? 'klien';
     }
 
     /**
@@ -36,10 +36,10 @@ trait PresentsUserProfile
     public function getDivisionAttribute(): string
     {
         return match ($this->role_key) {
-            'director'    => 'Direksi Pusat / Policy',
-            'admin'       => 'Central Office / Keuangan',
-            'coordinator' => 'STA & Timbangan Lapangan',
-            'driver'      => 'Armada & Distribusi Fisik',
+            'direktur'    => 'Direksi Pusat / Kebijakan',
+            'sekretaris'  => 'Sekretariat Operasional / Keuangan',
+            'koordinator' => 'STA & Timbangan Lapangan',
+            'armada'      => 'Armada & Distribusi Fisik',
             default       => $this->company_name ?: ($this->name ?: 'Mitra B2B Buyer'),
         };
     }
@@ -50,10 +50,10 @@ trait PresentsUserProfile
     public function getHubAttribute(): string
     {
         return match ($this->role_key) {
-            'director'    => 'HQ Jakarta / All Hub',
-            'admin'       => 'Kantor Pusat GPA',
-            'coordinator' => 'STA Cianjur & Lembang',
-            'driver'      => 'Pool Distribusi Bandung',
+            'direktur'    => 'Kantor Pusat GPA / Seluruh Hub',
+            'sekretaris'  => 'Kantor Pusat GPA',
+            'koordinator' => 'STA Cianjur & Lembang',
+            'armada'      => 'Pool Distribusi Bandung',
             default       => 'Jawa Barat & Jabodetabek',
         };
     }

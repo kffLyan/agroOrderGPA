@@ -73,7 +73,7 @@ class PaymentConsistencyTest extends TestCase
         ]);
 
         // Sekretaris langsung menyetujui pembayaran di modul Pembayaran
-        $response = $this->actingAs($sekretaris)->post('/sekretaris/pembayaran/' . $payment->id . '/approve');
+        $response = $this->actingAs($sekretaris)->post('/sekretaris/pembayaran/' . $payment->id . '/setujui');
         $response->assertSessionHas('success');
 
         // Pastikan stok batch panen terpotong dari 100 menjadi 80
@@ -104,7 +104,7 @@ class PaymentConsistencyTest extends TestCase
         ]);
 
         // Kirim bukti transfer pertama
-        $res1 = $this->actingAs($klien)->post('/klien/payment-proof', [
+        $res1 = $this->actingAs($klien)->post('/klien/bukti-pembayaran', [
             'invoice_po'     => $invoice->invoice_number,
             'amount'         => 500000,
             'sender_bank'    => 'BCA',
@@ -114,7 +114,7 @@ class PaymentConsistencyTest extends TestCase
         $this->assertEquals(1, Payment::where('invoice_id', $invoice->id)->count());
 
         // Kirim bukti transfer kedua dengan invoice yang sama dalam hitungan detik
-        $res2 = $this->actingAs($klien)->post('/klien/payment-proof', [
+        $res2 = $this->actingAs($klien)->post('/klien/bukti-pembayaran', [
             'invoice_po'     => $invoice->invoice_number,
             'amount'         => 500000,
             'sender_bank'    => 'BCA',

@@ -59,6 +59,12 @@ class OrderVerificationResource extends JsonResource
             : ($ord->user && method_exists($ord->user, 'contracts') ? $ord->user->contracts()->where('status', 'ACTIVE')->first() : null);
         $plafonVal = $clientContract ? (float) ($clientContract->fixed_price_per_kg * $clientContract->committed_volume_per_cycle * 2) : 0;
 
+        $subtotalAmount = (float) $ord->subtotal_amount;
+        $shippingCost = (float) $ord->shipping_cost;
+        $taxAmount = (float) $ord->tax_amount;
+        $taxRate = (float) $ord->tax_rate;
+        $taxLabel = $ord->tax_label;
+
         return [
             'id'                    => $ord->order_number,
             'order_id'              => $ord->id,
@@ -109,10 +115,16 @@ class OrderVerificationResource extends JsonResource
             ],
             'supply_status'         => ['label' => 'Pasokan Aman', 'icon' => 'check', 'class' => 'bg-accent text-success-ink font-bold'],
             'allocations'           => $allocations,
+            'subtotal_raw'          => $subtotalAmount,
+            'shipping_raw'          => $shippingCost,
+            'tax_amount_raw'        => $taxAmount,
+            'tax_rate_raw'          => $taxRate,
+            'tax_label'             => $taxLabel,
+            'grand_total_raw'       => $totalVal,
             'pricing'               => [
-                ['label' => 'Harga Satuan per Kg', 'value' => 'Rp ' . number_format($unitPrice, 0, ',', '.'), 'suffix' => '/ kg', 'note' => null, 'highlight' => false],
-                ['label' => 'Total Nilai Pesanan', 'value' => 'Rp ' . number_format($totalVal, 0, ',', '.'), 'suffix' => null, 'note' => null, 'highlight' => false],
-                ['label' => 'Pajak / PPN (0%)', 'value' => 'Rp 0', 'suffix' => null, 'note' => '(Bebas Pajak Produk Pertanian)', 'highlight' => false],
+                ['label' => 'Subtotal Komoditas', 'value' => 'Rp ' . number_format($subtotalAmount, 0, ',', '.'), 'suffix' => null, 'note' => null, 'highlight' => false],
+                ['label' => 'Biaya Logistik Armada Chiller', 'value' => $shippingCost > 0 ? ('Rp ' . number_format($shippingCost, 0, ',', '.')) : 'Rp 0', 'suffix' => null, 'note' => $shippingCost > 0 ? null : '(Bebas Ongkir Franco)', 'highlight' => false],
+                ['label' => "Pajak Pertambahan Nilai ({$taxLabel})", 'value' => $taxAmount > 0 ? ('Rp ' . number_format($taxAmount, 0, ',', '.')) : 'Rp 0', 'suffix' => null, 'note' => $taxAmount > 0 ? '(PPN Standar PKP)' : '(Bebas Pajak Produk Pertanian)', 'highlight' => false],
                 ['label' => 'Total Tagihan Invoice', 'value' => 'Rp ' . number_format($totalVal, 0, ',', '.'), 'suffix' => null, 'note' => null, 'highlight' => true],
             ],
             'initial_qty'           => number_format($totalQty, 0, ',', '.') . ' kg',

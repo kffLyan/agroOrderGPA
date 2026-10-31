@@ -21,10 +21,10 @@ class ArmadaTest extends TestCase
         $response = $this->get('/armada/surat-jalan');
         $response->assertRedirect('/login');
 
-        $response = $this->get('/armada/scan-pod');
+        $response = $this->get('/armada/bukti-terima');
         $response->assertRedirect('/login');
 
-        $response = $this->get('/armada/status');
+        $response = $this->get('/armada/status-kendaraan');
         $response->assertRedirect('/login');
     }
 
@@ -87,12 +87,12 @@ class ArmadaTest extends TestCase
         $response = $this->actingAs($armada)->get('/armada/surat-jalan');
         $response->assertStatus(200);
 
-        // 3. Scan PoD
-        $response = $this->actingAs($armada)->get('/armada/scan-pod');
+        // 3. Bukti Terima (PoD)
+        $response = $this->actingAs($armada)->get('/armada/bukti-terima');
         $response->assertStatus(200);
 
-        // 4. Status
-        $response = $this->actingAs($armada)->get('/armada/status');
+        // 4. Status Kendaraan
+        $response = $this->actingAs($armada)->get('/armada/status-kendaraan');
         $response->assertStatus(200);
     }
 
@@ -119,7 +119,7 @@ class ArmadaTest extends TestCase
             'grand_total'          => 1500000,
         ]);
 
-        $response = $this->actingAs($armada)->post("/armada/scan-pod/{$order->id}/selesai", [
+        $response = $this->actingAs($armada)->post("/armada/bukti-terima/{$order->id}/selesai", [
             'condition'        => 'clear',
             'received_by_name' => 'Muha',
         ]);

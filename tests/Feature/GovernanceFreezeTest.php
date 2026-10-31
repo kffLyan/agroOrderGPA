@@ -30,14 +30,14 @@ class GovernanceFreezeTest extends TestCase
         $this->assertFalse($gov->isClientFrozen($client->id));
 
         // 1. Direktur membekukan kredit klien
-        $response = $this->actingAs($director)->post(route('direktur.receivables.freeze', $client->id));
+        $response = $this->actingAs($director)->post(route('direktur.piutang.freeze', $client->id));
         $response->assertStatus(302);
         $response->assertSessionHas('success');
 
         $this->assertTrue($gov->isClientFrozen($client->id));
 
         // 2. Direktur mencabut pembekuan kredit klien
-        $response2 = $this->actingAs($director)->post(route('direktur.receivables.freeze', $client->id));
+        $response2 = $this->actingAs($director)->post(route('direktur.piutang.freeze', $client->id));
         $response2->assertStatus(302);
         $response2->assertSessionHas('success');
 
@@ -84,7 +84,7 @@ class GovernanceFreezeTest extends TestCase
             ],
         ];
 
-        $response = $this->actingAs($client)->post(route('klien.orders.store'), $payload);
+        $response = $this->actingAs($client)->post(route('klien.pesanan.store'), $payload);
         $response->assertSessionHasErrors(['general']);
         $this->assertDatabaseMissing('orders', ['user_id' => $client->id]);
     }
@@ -112,7 +112,7 @@ class GovernanceFreezeTest extends TestCase
         $gov = app(GovernanceService::class);
         $gov->toggleClientFreeze($client->id);
 
-        $response = $this->actingAs($sekretaris)->post(route('sekretaris.dispatch.issue', $order->id), [
+        $response = $this->actingAs($sekretaris)->post(route('sekretaris.surat-jalan.terbitkan', $order->id), [
             'driver_id'            => $driver->id,
             'vehicle_plate_number' => 'D 1234 ABC',
         ]);
@@ -163,7 +163,7 @@ class GovernanceFreezeTest extends TestCase
             ],
         ];
 
-        $response = $this->actingAs($sekretaris)->post(route('sekretaris.manual-order.store'), $payload);
+        $response = $this->actingAs($sekretaris)->post(route('sekretaris.pesanan-manual.store'), $payload);
         $response->assertSessionHasErrors(['client_id']);
         $this->assertDatabaseMissing('orders', ['user_id' => $client->id]);
     }

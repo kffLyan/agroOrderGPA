@@ -74,7 +74,7 @@ class OrderCreationConcurrencyTest extends TestCase
         ]);
 
         // Coba kirimkan items dengan ID produk yang sama dua kali
-        $response = $this->actingAs($klien)->post('/klien/orders', [
+        $response = $this->actingAs($klien)->post('/klien/pesanan', [
             'target_delivery_date' => now()->addDays(2)->toDateString(),
             'delivery_address'     => 'Restoran Sunda Rasa',
             'payment_method'       => 'TRANSFER_BANK',
@@ -118,7 +118,7 @@ class OrderCreationConcurrencyTest extends TestCase
             'inputted_by'        => $klien->id,
         ]);
 
-        $response = $this->actingAs($klien)->post('/klien/orders', [
+        $response = $this->actingAs($klien)->post('/klien/pesanan', [
             'target_delivery_date' => now()->addDays(2)->toDateString(),
             'delivery_address'     => 'Supermarket Segar',
             'payment_method'       => 'TRANSFER_BANK',

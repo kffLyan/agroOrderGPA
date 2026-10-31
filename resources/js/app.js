@@ -50,9 +50,11 @@ import direkturReceivables from './components/direktur/receivables';
 import direkturApproval from './components/direktur/approval';
 import direkturReport from './components/direktur/report';
 import direkturGovernance from './components/direktur/governance';
+import direkturPaymentChannels from './components/direktur/payment-channels';
 import direkturAccess from './components/direktur/access';
 
 window.Alpine = Alpine;
+window.direkturPaymentChannels = direkturPaymentChannels;
 
 // Registrasi Alpine Components (Dukungan nama Bahasa Indonesia & Alias kompatibilitas)
 Alpine.data('gpaToast', gpaToast);
@@ -129,6 +131,8 @@ Alpine.data('direkturReport', direkturReport);
 Alpine.data('directorReport', direkturReport);
 Alpine.data('direkturGovernance', direkturGovernance);
 Alpine.data('directorGovernance', direkturGovernance);
+Alpine.data('direkturPaymentChannels', direkturPaymentChannels);
+Alpine.data('directorPaymentChannels', direkturPaymentChannels);
 Alpine.data('direkturAccess', direkturAccess);
 Alpine.data('directorAccess', direkturAccess);
 

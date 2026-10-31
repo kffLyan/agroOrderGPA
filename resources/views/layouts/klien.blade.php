@@ -33,10 +33,10 @@
 
         $navigation = [
             ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('klien.dashboard'), 'active' => request()->routeIs('klien.dashboard')],
-            ['label' => 'Katalog Komoditas', 'icon' => 'grid', 'href' => route('klien.catalog'), 'active' => request()->routeIs('klien.catalog*')],
-            ['label' => 'Keranjang & Draft', 'icon' => 'cart', 'href' => route('klien.cart'), 'badge' => 'draft', 'active' => request()->routeIs('klien.cart*')],
-            ['label' => 'Riwayat Pesanan', 'icon' => 'package', 'href' => route('klien.orders.index'), 'active' => request()->routeIs('klien.orders.*')],
-            ['label' => 'Dokumen & Faktur', 'icon' => 'file-text', 'href' => route('klien.documents'), 'active' => request()->routeIs('klien.documents*') || request()->routeIs('klien.payment-proof*')],
+            ['label' => 'Katalog Komoditas', 'icon' => 'grid', 'href' => route('klien.katalog'), 'active' => request()->routeIs('klien.katalog*', 'klien.catalog*')],
+            ['label' => 'Keranjang & Draft', 'icon' => 'cart', 'href' => route('klien.keranjang'), 'badge' => 'draft', 'active' => request()->routeIs('klien.keranjang*', 'klien.cart*')],
+            ['label' => 'Riwayat Pesanan', 'icon' => 'package', 'href' => route('klien.pesanan.index'), 'active' => request()->routeIs('klien.pesanan.*', 'klien.orders.*')],
+            ['label' => 'Dokumen & Faktur', 'icon' => 'file-text', 'href' => route('klien.dokumen'), 'active' => request()->routeIs('klien.dokumen*', 'klien.documents*', 'klien.bukti-pembayaran*', 'klien.payment-proof*')],
             ['label' => 'Profil & Gudang', 'icon' => 'building', 'href' => route('profile.edit'), 'active' => request()->routeIs('profile.*')],
         ];
     @endphp
@@ -76,13 +76,13 @@
                 </div>
 
                 <div class="flex shrink-0 items-center gap-2 sm:gap-4">
-                    <a href="{{ route('klien.orders.index') }}"
+                    <a href="{{ route('klien.pesanan.index') }}"
                         class="hidden items-center gap-1.5 rounded-lg border border-success px-3 py-1.5 gpa-meta-lg text-white transition-colors hover:bg-white/10 md:inline-flex">
                         <x-gpa.icon name="package" class="h-3.5 w-3.5" />
                         PO Tracking
                     </a>
 
-                    <a href="{{ route('klien.cart') }}"
+                    <a href="{{ route('klien.keranjang') }}"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-2 text-ink shadow-pop transition-colors hover:bg-accent-deep">
                         <x-gpa.icon name="cart" class="h-3.5 w-3.5 text-ink" />
                         <span class="hidden sm:inline">Keranjang PO</span>
@@ -131,7 +131,7 @@
                         </div>
                     </div>
 
-                    <a href="{{ route('klien.catalog') }}"
+                    <a href="{{ route('klien.katalog') }}"
                         class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-ink shadow-sub transition-colors hover:bg-accent-deep">
                         <x-gpa.icon name="plus" class="h-4 w-4 text-ink" />
                         <span class="gpa-meta-lg font-bold text-ink">Buat Pesanan Baru</span>

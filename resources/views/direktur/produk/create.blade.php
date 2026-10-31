@@ -1,0 +1,212 @@
+@extends('layouts.direktur')
+
+@section('title', 'Tambah Komoditas Baru // Direktur AgroOrder GPA')
+
+@section('content')
+@php
+    $presets = [
+        ['path' => 'lettuce.jpg', 'label' => 'Selada Romaine / Daun Hidroponik'],
+        ['path' => 'broccoli.jpg', 'label' => 'Brokoli Super Lembang'],
+        ['path' => 'tomato.jpg', 'label' => 'Tomat Beef Greenhouse Garut'],
+        ['path' => 'strawberry.jpg', 'label' => 'Stroberi Sweet Ciwidey'],
+        ['path' => 'cabbage.jpg', 'label' => 'Kol Putih Pangalengan'],
+        ['path' => 'gpaleaves.png', 'label' => 'Logo Daun Resmi GPA'],
+    ];
+@endphp
+<div class="mx-auto max-w-4xl space-y-5">
+    {{-- Breadcrumb / Tombol Kembali --}}
+    <div class="flex items-center justify-between">
+        <a href="{{ route('direktur.produk.index') }}"
+            class="inline-flex items-center gap-1.5 rounded-lg border border-line-board bg-surface px-3 py-1.5 text-xs font-semibold text-ink transition hover:bg-surface-shell">
+            <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5" />
+            Kembali ke Katalog Komoditas
+        </a>
+    </div>
+
+    {{-- Error Alert --}}
+    @if ($errors->any())
+        <div class="rounded-xl border border-red-300 bg-red-50 p-4 text-xs text-red-800 shadow-sm">
+            <strong class="font-bold">Gagal Menyimpan Komoditas:</strong>
+            <ul class="mt-1 list-disc list-inside space-y-0.5">
+                @foreach ($errors->all() as $err)
+                    <li>{{ $err }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    {{-- Formulir Tambah Komoditas --}}
+    <div class="rounded-2xl border border-line-hair bg-surface p-6 shadow-card"
+        x-data="{
+            selectedPreset: '{{ old('preset_image', 'lettuce.jpg') }}',
+            hasUpload: false,
+            previewUrl: null,
+            handleFileChange(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    this.hasUpload = true;
+                    this.previewUrl = URL.createObjectURL(file);
+                } else {
+                    this.hasUpload = false;
+                    this.previewUrl = null;
+                }
+            }
+        }">
+        <header class="border-b border-line-hair pb-4 mb-5">
+            <h1 class="font-sans text-xl font-bold text-ink">Tambah Komoditas Baru ke Katalog Resmi</h1>
+            <p class="text-xs text-ink-body mt-0.5">
+                Lengkapi spesifikasi komoditas, grade mutu, harga dasar franco, dan foto representasi produk untuk katalog klien B2B.
+            </p>
+        </header>
+
+        <form action="{{ route('direktur.produk.store') }}" method="POST" enctype="multipart/form-data" class="space-y-5 text-xs">
+            @csrf
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {{-- SKU --}}
+                <div>
+                    <label for="sku" class="block font-bold text-ink mb-1">Kode SKU Komoditas *</label>
+                    <input type="text" id="sku" name="sku" value="{{ old('sku', $suggestedSku) }}" required
+                        placeholder="Contoh: GPA-VGT-06"
+                        class="w-full rounded border-line-board bg-surface-shell px-3 py-2 text-xs font-mono font-bold text-ink focus:border-brand focus:ring-1 focus:ring-brand">
+                    <p class="mt-1 text-[11px] text-ink-body">Format unik kode penamaan standar GPA.</p>
+                </div>
+
+                {{-- Nama Komoditas --}}
+                <div>
+                    <label for="name" class="block font-bold text-ink mb-1">Nama Komoditas Pertanian *</label>
+                    <input type="text" id="name" name="name" value="{{ old('name') }}" required
+                        placeholder="Contoh: Selada Keriting Hidroponik Ciwidey"
+                        class="w-full rounded border-line-board bg-surface-shell px-3 py-2 text-xs text-ink focus:border-brand focus:ring-1 focus:ring-brand">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                {{-- Satuan Unit --}}
+                <div>
+                    <label for="unit" class="block font-bold text-ink mb-1">Satuan Dasar *</label>
+                    <select id="unit" name="unit" required
+                        class="w-full rounded border-line-board bg-surface-shell px-3 py-2 text-xs text-ink focus:border-brand focus:ring-1 focus:ring-brand">
+                        <option value="kg" {{ old('unit', 'kg') === 'kg' ? 'selected' : '' }}>Kilogram (kg)</option>
+                        <option value="pack" {{ old('unit') === 'pack' ? 'selected' : '' }}>Pack / Mika (pack)</option>
+                        <option value="ikat" {{ old('unit') === 'ikat' ? 'selected' : '' }}>Ikat (ikat)</option>
+                        <option value="krat" {{ old('unit') === 'krat' ? 'selected' : '' }}>Krat Plastik (krat)</option>
+                    </select>
+                </div>
+
+                {{-- Grade Mutu --}}
+                <div>
+                    <label for="grade" class="block font-bold text-ink mb-1">Grade Mutu *</label>
+                    <select id="grade" name="grade" required
+                        class="w-full rounded border-line-board bg-surface-shell px-3 py-2 text-xs text-ink focus:border-brand focus:ring-1 focus:ring-brand">
+                        <option value="Grade A" {{ old('grade', 'Grade A') === 'Grade A' ? 'selected' : '' }}>Grade A (Standar Horeca)</option>
+                        <option value="Grade Super" {{ old('grade') === 'Grade Super' ? 'selected' : '' }}>Grade Super (Premium)</option>
+                        <option value="Grade B" {{ old('grade') === 'Grade B' ? 'selected' : '' }}>Grade B (Reguler)</option>
+                        <option value="Grade Ekspor" {{ old('grade') === 'Grade Ekspor' ? 'selected' : '' }}>Grade Ekspor</option>
+                    </select>
+                </div>
+
+                {{-- Harga Dasar (Base Price) --}}
+                <div>
+                    <label for="base_price" class="block font-bold text-ink mb-1">Harga Dasar (Rp) *</label>
+                    <input type="number" id="base_price" name="base_price" value="{{ old('base_price', '15000') }}" min="0" step="100" required
+                        class="w-full rounded border-line-board bg-surface-shell px-3 py-2 text-xs font-mono font-bold text-ink focus:border-brand focus:ring-1 focus:ring-brand">
+                    <p class="mt-1 text-[11px] text-ink-body">Franco Gudang Penerima.</p>
+                </div>
+
+                {{-- Minimum Order (MOQ) --}}
+                <div>
+                    <label for="minimum_order" class="block font-bold text-ink mb-1">Min. Order (MOQ) *</label>
+                    <input type="number" id="minimum_order" name="minimum_order" value="{{ old('minimum_order', '5') }}" min="0.1" step="any" required
+                        class="w-full rounded border-line-board bg-surface-shell px-3 py-2 text-xs font-mono font-bold text-ink focus:border-brand focus:ring-1 focus:ring-brand">
+                </div>
+            </div>
+
+            {{-- Bagian Pemilihan / Upload Foto Produk --}}
+            <div class="rounded-xl border border-line-faint bg-surface-shell p-4 space-y-3">
+                <div class="flex items-center justify-between border-b border-line-faint pb-2">
+                    <div>
+                        <h2 class="font-bold text-ink text-sm">Foto Produk Komoditas</h2>
+                        <p class="text-[11px] text-ink-body">Pilih gambar komoditas preset resolusi tinggi atau unggah foto asli.</p>
+                    </div>
+                </div>
+
+                {{-- Preset Gambar --}}
+                <div>
+                    <span class="block font-semibold text-ink mb-2">Pilihan Gambar Komoditas Preset:</span>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+                        @foreach ($presets as $p)
+                            <label class="relative cursor-pointer rounded-lg border p-1.5 transition-all text-center flex flex-col items-center gap-1.5"
+                                :class="selectedPreset === '{{ $p['path'] }}' && !hasUpload ? 'border-brand ring-2 ring-brand bg-white' : 'border-line-board bg-surface hover:bg-surface-muted'">
+                                <input type="radio" name="preset_image" value="{{ $p['path'] }}"
+                                    x-model="selectedPreset"
+                                    @click="hasUpload = false; previewUrl = null"
+                                    class="sr-only">
+                                <div class="h-16 w-full overflow-hidden rounded bg-surface-muted">
+                                    <img src="{{ asset($p['path']) }}" alt="{{ $p['label'] }}" class="h-full w-full object-cover">
+                                </div>
+                                <span class="text-[10px] font-semibold text-ink leading-tight truncate w-full">{{ $p['label'] }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Upload Custom File --}}
+                <div class="border-t border-line-faint pt-3">
+                    <label for="image_file" class="block font-semibold text-ink mb-1">Atau Unggah Foto Baru Sendiri (Opsional):</label>
+                    <input type="file" id="image_file" name="image_file" accept="image/*"
+                        @change="handleFileChange($event)"
+                        class="w-full text-xs text-ink file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-brand file:text-white hover:file:bg-brand-deep cursor-pointer">
+                    <p class="mt-1 text-[11px] text-ink-body">Format: JPG, PNG, WEBP (Maksimal 5MB).</p>
+
+                    {{-- Preview Container --}}
+                    <div x-show="hasUpload && previewUrl" class="mt-3 flex items-center gap-3" x-cloak>
+                        <span class="text-[11px] font-semibold text-ink-body">Preview Upload:</span>
+                        <div class="h-16 w-24 overflow-hidden rounded-lg border border-line-board">
+                            <img :src="previewUrl" alt="Preview Upload" class="h-full w-full object-cover">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Deskripsi & Standar Mutu --}}
+            <div>
+                <label for="description" class="block font-bold text-ink mb-1">Deskripsi Spesifikasi &amp; Standar Mutu Metrologi</label>
+                <textarea id="description" name="description" rows="3"
+                    placeholder="Contoh: Selada segar renyah hidroponik dataran tinggi Ciwidey, bebas residu pestisida, bobot rata-rata 200-250g per krop."
+                    class="w-full rounded border-line-board bg-surface-shell px-3 py-2 text-xs text-ink focus:border-brand focus:ring-1 focus:ring-brand">{{ old('description') }}</textarea>
+            </div>
+
+            {{-- Status Keaktifan --}}
+            <div>
+                <span class="block font-bold text-ink mb-1">Status Keaktifan di Katalog *</span>
+                <div class="flex items-center gap-4">
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="is_active" value="1" {{ old('is_active', '1') === '1' ? 'checked' : '' }}
+                            class="text-brand focus:ring-brand">
+                        <span class="font-semibold text-ink">AKTIF (Dapat Dipesan di Katalog Klien)</span>
+                    </label>
+                    <label class="inline-flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="is_active" value="0" {{ old('is_active') === '0' ? 'checked' : '' }}
+                            class="text-brand focus:ring-brand">
+                        <span class="font-semibold text-ink-body">NON-AKTIF (Disembunyikan Sementara)</span>
+                    </label>
+                </div>
+            </div>
+
+            {{-- Tombol Aksi Form --}}
+            <div class="flex items-center justify-end gap-3 border-t border-line-hair pt-4">
+                <a href="{{ route('direktur.produk.index') }}"
+                    class="rounded-lg border border-line-board bg-surface px-4 py-2 font-semibold text-ink hover:bg-surface-shell transition">
+                    Batal
+                </a>
+                <button type="submit"
+                    class="rounded-lg bg-ink px-5 py-2 font-bold text-accent shadow-sub hover:bg-brand-deep transition flex items-center gap-2">
+                    <x-gpa.icon name="save" class="h-3.5 w-3.5" />
+                    Simpan Komoditas
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+@endsection

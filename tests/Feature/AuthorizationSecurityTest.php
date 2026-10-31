@@ -101,7 +101,7 @@ class AuthorizationSecurityTest extends TestCase
             'status'               => 'MENUNGGU_VERIFIKASI',
         ]);
 
-        $response = $this->actingAs($klienA)->get('/klien/orders/' . $orderB->id);
+        $response = $this->actingAs($klienA)->get('/klien/pesanan/' . $orderB->id);
         $response->assertStatus(403);
     }
 
@@ -166,7 +166,7 @@ class AuthorizationSecurityTest extends TestCase
             'status'          => 'UNPAID',
         ]);
 
-        $response = $this->actingAs($klienA)->post('/klien/payment-proof', [
+        $response = $this->actingAs($klienA)->post('/klien/bukti-pembayaran', [
             'invoice_po'     => $invoiceB->invoice_number,
             'amount'         => 500000,
             'sender_bank'    => 'BCA',
@@ -200,7 +200,7 @@ class AuthorizationSecurityTest extends TestCase
         $startResponse->assertStatus(403);
 
         // Coba kirim PoD oleh Driver A
-        $podResponse = $this->actingAs($driverA)->post('/armada/scan-pod/' . $orderB->id . '/selesai', [
+        $podResponse = $this->actingAs($driverA)->post('/armada/bukti-terima/' . $orderB->id . '/selesai', [
             'condition' => 'clear',
         ]);
         $podResponse->assertStatus(403);

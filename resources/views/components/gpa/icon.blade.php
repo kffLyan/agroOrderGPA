@@ -47,6 +47,8 @@
         'leaf' => '<path d="M5 19C5 10.4 11 5 19 5c0 8-5.2 14-14 14Z"/><path d="M5 19c2.8-5.2 6.2-8.6 10.5-10.5"/>',
         'search' => '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/>',
         'filter' => '<path d="M4 6.5h16M7 12h10M10 17.5h4"/>',
+        'edit' => '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>',
+        'pencil' => '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>',
         'trash' => '<path d="M4.5 7h15"/><path d="M9.5 7V4.8h5V7"/><path d="m6.5 7 1 13h9l1-13"/>',
         'copy' => '<rect x="9" y="9" width="11.5" height="11.5" rx="2"/><path d="M5.5 15H4.5A1.5 1.5 0 0 1 3 13.5v-9A1.5 1.5 0 0 1 4.5 3h9A1.5 1.5 0 0 1 15 4.5V5.5"/>',
         'grid' => '<rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/>',

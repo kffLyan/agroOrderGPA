@@ -104,6 +104,13 @@
                     </a>
                 </div>
 
+                <!-- Format Struk Kasir Thermal (Khusus Reguler / Walk-In) -->
+                <a href="{{ route('prints.thermal-receipt', ['invoice' => $invoice['id']]) }}"
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-accent bg-accent/20 px-3 py-1.5 text-xs font-bold text-success-deep shadow-xs transition-colors hover:bg-accent/30">
+                    <x-gpa.icon name="printer" class="h-3.5 w-3.5 text-success-deep" />
+                    Struk Kasir (Thermal 80mm)
+                </a>
+
                 <button type="button" onclick="window.print()"
                     class="inline-flex items-center gap-1.5 rounded bg-brand px-4 py-1.5 text-xs font-bold text-white shadow transition-all hover:bg-brand-strong">
                     <x-gpa.icon name="printer" class="h-3.5 w-3.5" />
@@ -362,6 +369,40 @@
         <div class="mt-3">
             <table class="table-bordered text-[8.5pt]">
                 <tfoot>
+                    @if (($shipping_cost ?? 0) > 0 || ($tax_amount ?? 0) > 0)
+                        <tr class="bg-gray-50 text-ink">
+                            <td class="py-1 px-3 text-right font-medium" style="width: 75%;">
+                                Subtotal Komoditas
+                            </td>
+                            <td class="py-1 px-3 text-right font-mono font-semibold" style="width: 25%;">
+                                Rp {{ number_format($subtotal ?? ($grand_total - ($shipping_cost ?? 0) - ($tax_amount ?? 0)), 0, ',', '.') }}
+                            </td>
+                        </tr>
+                    @endif
+                    @if (($shipping_cost ?? 0) > 0)
+                        <tr class="bg-gray-50 text-ink">
+                            <td class="py-1 px-3 text-right font-medium" style="width: 75%;">
+                                Biaya Distribusi &amp; Logistik Armada Chiller
+                            </td>
+                            <td class="py-1 px-3 text-right font-mono font-semibold" style="width: 25%;">
+                                Rp {{ number_format($shipping_cost, 0, ',', '.') }}
+                            </td>
+                        </tr>
+                    @endif
+                    @if (isset($tax_label))
+                        <tr class="bg-gray-50 text-ink">
+                            <td class="py-1 px-3 text-right font-medium" style="width: 75%;">
+                                {{ $tax_label }}
+                            </td>
+                            <td class="py-1 px-3 text-right font-mono font-semibold" style="width: 25%;">
+                                @if (($tax_amount ?? 0) > 0)
+                                    Rp {{ number_format($tax_amount, 0, ',', '.') }}
+                                @else
+                                    Rp 0 (Bebas)
+                                @endif
+                            </td>
+                        </tr>
+                    @endif
                     <tr class="bg-[#1e3a8a] text-white font-black">
                         <td class="py-2 px-3 text-right uppercase tracking-widest font-black" style="width: 75%;">
                             TOTAL TAGIHAN

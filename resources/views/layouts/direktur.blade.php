@@ -37,18 +37,18 @@
 
         $navigation = [
             ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('direktur.dashboard'), 'active' => request()->routeIs('direktur.dashboard')],
-            ['label' => 'Penjualan', 'icon' => 'banknote', 'href' => route('direktur.sales.index'), 'active' => request()->routeIs('direktur.sales.*')],
-            ['label' => 'Volume Komoditas', 'icon' => 'package', 'href' => route('direktur.commodities.index'), 'active' => request()->routeIs('direktur.commodities.*')],
-            ['label' => 'Katalog Komoditas', 'icon' => 'grid', 'href' => route('direktur.products.index'), 'active' => request()->routeIs('direktur.products.*')],
-            ['label' => 'Piutang & Tagihan', 'icon' => 'invoice', 'href' => route('direktur.receivables.index'), 'active' => request()->routeIs('direktur.receivables.*')],
-            ['label' => 'Persetujuan Kontrak', 'icon' => 'badge-check', 'href' => route('direktur.contracts.approval'), 'active' => request()->routeIs('direktur.contracts.*')],
-            ['label' => 'Laporan', 'icon' => 'shield', 'href' => route('direktur.reports.index'), 'active' => request()->routeIs('direktur.reports.*')],
-            ['label' => 'Pengaturan Tata Kelola', 'icon' => 'settings', 'href' => route('direktur.governance.index'), 'active' => request()->routeIs('direktur.governance.*')],
+            ['label' => 'Penjualan', 'icon' => 'banknote', 'href' => route('direktur.penjualan.index'), 'active' => request()->routeIs('direktur.penjualan.*', 'direktur.sales.*')],
+            ['label' => 'Volume Komoditas', 'icon' => 'package', 'href' => route('direktur.komoditas.index'), 'active' => request()->routeIs('direktur.komoditas.*', 'direktur.commodities.*')],
+            ['label' => 'Katalog Komoditas', 'icon' => 'grid', 'href' => route('direktur.produk.index'), 'active' => request()->routeIs('direktur.produk.*', 'direktur.products.*')],
+            ['label' => 'Piutang & Tagihan', 'icon' => 'invoice', 'href' => route('direktur.piutang.index'), 'active' => request()->routeIs('direktur.piutang.*', 'direktur.receivables.*')],
+            ['label' => 'Persetujuan Kontrak', 'icon' => 'badge-check', 'href' => route('direktur.kontrak.persetujuan'), 'active' => request()->routeIs('direktur.kontrak.*', 'direktur.contracts.*')],
+            ['label' => 'Laporan', 'icon' => 'shield', 'href' => route('direktur.laporan.index'), 'active' => request()->routeIs('direktur.laporan.*', 'direktur.reports.*')],
+            ['label' => 'Pengaturan Tata Kelola', 'icon' => 'settings', 'href' => route('direktur.tata-kelola.index'), 'active' => request()->routeIs('direktur.tata-kelola.*', 'direktur.governance.*')],
             ['label' => 'Kelola Akun & Hak Akses', 'icon' => 'users', 'href' => route('direktur.users.index'), 'active' => request()->routeIs('direktur.users.*')],
         ];
     @endphp
 
-    <div x-data="directorDashboard(@js($operator))">
+    <div x-data="direkturDashboard(@js($operator))">
         <a href="#main-content"
             class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2 focus:text-xs focus:font-semibold focus:shadow-card">
             Lewati ke konten utama
@@ -76,13 +76,13 @@
                 </div>
 
                 <div class="ml-auto flex shrink-0 items-center gap-3 lg:ml-0">
-                    <a href="{{ route('direktur.contracts.approval') }}"
+                    <a href="{{ route('direktur.kontrak.persetujuan') }}"
                         class="hidden items-center gap-1.5 rounded-lg border border-success px-3 py-1.5 gpa-meta-lg text-white transition-colors hover:bg-white/10 md:inline-flex">
                         <x-gpa.icon name="shield" class="h-3.5 w-3.5" />
                         Otorisasi Kontrak
                     </a>
 
-                    <a href="{{ route('direktur.reports.index') }}"
+                    <a href="{{ route('direktur.laporan.index') }}"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3.5 py-1.5 gpa-meta-lg font-bold text-ink shadow-sub transition-colors hover:bg-accent-deep">
                         <x-gpa.icon name="file-text" class="h-3.5 w-3.5 text-ink" />
                         <span class="hidden sm:inline">Laporan Eksekutif</span>
@@ -92,13 +92,13 @@
                     <span class="hidden h-6 w-px bg-success lg:block" aria-hidden="true"></span>
 
                     <div class="flex items-center gap-2">
-                        <a href="{{ route('direktur.contracts.approval') }}"
+                        <a href="{{ route('direktur.kontrak.persetujuan') }}"
                             class="relative hidden h-8 w-8 items-center justify-center rounded-lg text-surface-disabled transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"
                             aria-label="Notifikasi">
                             <x-gpa.icon name="bell" class="h-4 w-4" />
                             <span class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-accent" aria-hidden="true"></span>
                         </a>
-                        <a href="{{ route('direktur.governance.index') }}"
+                        <a href="{{ route('direktur.tata-kelola.index') }}"
                             class="hidden h-8 w-8 items-center justify-center rounded-lg text-surface-disabled transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"
                             aria-label="Pesan">
                             <x-gpa.icon name="mail" class="h-4 w-4" />
@@ -139,7 +139,7 @@
                         </span>
                     </div>
 
-                    <a href="{{ route('direktur.governance.export-audit') }}"
+                    <a href="{{ route('direktur.tata-kelola.export-audit') }}"
                         class="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-ink shadow-sub transition-colors hover:bg-accent-deep">
                         <x-gpa.icon name="clipboard" class="h-3.5 w-3.5 shrink-0 text-ink" />
                         <span class="text-[11px] font-bold tracking-[0.88px] text-ink gpa-meta">Audit Log</span>

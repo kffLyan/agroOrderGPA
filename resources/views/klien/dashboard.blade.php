@@ -44,12 +44,12 @@
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-2">
-                <a href="{{ route('klien.documents') }}"
+                <a href="{{ route('klien.dokumen') }}"
                     class="inline-flex items-center gap-2 rounded-lg bg-surface-pill px-3.5 py-2 transition-colors hover:bg-surface-disabled">
                     <x-gpa.icon name="download" class="h-3 w-3 text-ink" />
                     <span class="gpa-meta-lg text-ink">Unduh Statement Bulanan</span>
                 </a>
-                <a href="{{ route('klien.catalog') }}"
+                <a href="{{ route('klien.katalog') }}"
                     class="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2 shadow-sub transition-colors hover:bg-brand-deep">
                     <x-gpa.icon name="plus" class="h-3.5 w-3.5 text-white" />
                     <span class="gpa-meta-lg font-bold text-white">Buat Pesanan Baru / PO</span>
@@ -86,7 +86,7 @@
                         </div>
                     </div>
                     <div class="flex shrink-0 items-center gap-2">
-                        <a href="{{ route('klien.payment-proof', ['tagihan' => $rejectedPayment->invoice?->invoice_number, 'order_id' => $rejectedPayment->order_id]) }}"
+                        <a href="{{ route('klien.bukti-pembayaran', ['tagihan' => $rejectedPayment->invoice?->invoice_number, 'order_id' => $rejectedPayment->order_id]) }}"
                             class="inline-flex items-center gap-2 rounded-xl bg-danger px-4 py-2.5 font-sans text-xs font-bold text-white shadow-lg transition-transform hover:scale-105 hover:bg-danger/90">
                             <x-gpa.icon name="upload" class="h-4 w-4 text-white" />
                             <span>Unggah Ulang Bukti Bayar</span>
@@ -329,12 +329,12 @@
                     </div>
                 </div>
                 <div class="flex shrink-0 flex-wrap items-center gap-2">
-                    <a href="{{ route('klien.documents') }}"
+                    <a href="{{ route('klien.dokumen') }}"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-surface-pill px-3 py-1.5 transition-colors hover:bg-surface-disabled hover:text-ink">
                         <x-gpa.icon name="invoice" class="h-2.5 w-2.5" />
                         <span class="gpa-meta-lg">Unduh Faktur PDF</span>
                     </a>
-                    <a href="{{ route('klien.payment-proof') }}"
+                    <a href="{{ route('klien.bukti-pembayaran') }}"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-ink px-3.5 py-1.5 shadow-sub transition-colors hover:bg-brand-deep">
                         <x-gpa.icon name="upload" class="h-3 w-3.5 text-white" />
                         <span class="gpa-meta-lg font-bold text-white">Unggah Bukti Transfer</span>
@@ -570,7 +570,7 @@
                                 </td>
                                 <td class="px-4 py-3.5">
                                     <div class="flex flex-col items-end gap-1">
-                                        <a :href="order.url || '{{ route('klien.orders.index') }}'"
+                                        <a :href="order.url || '{{ route('klien.pesanan.index') }}'"
                                             class="rounded bg-ink px-2.5 py-1 gpa-micro-bold text-white transition-colors hover:bg-brand-deep">
                                             Detail PO
                                         </a>
@@ -694,7 +694,7 @@
                         &bull;
                         <span class="font-bold text-success-deep" x-text="money(draftTotal())"></span>
                     </p>
-                    <a href="{{ route('klien.cart') }}"
+                    <a href="{{ route('klien.keranjang') }}"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-ink px-4 py-2 transition-colors hover:bg-brand-deep">
                         <x-gpa.icon name="send" class="h-3.5 w-3.5 text-white" />
                         <span class="gpa-meta-lg font-bold text-white">Buka Keranjang PO &amp; Checkout</span>
@@ -737,7 +737,7 @@
                         </button>
                     </header>
 
-                    <form action="{{ route('klien.contracts.propose') }}" method="POST" class="mt-3 flex flex-1 flex-col gap-3.5 overflow-y-auto pr-1 gpa-scrollbar">
+                    <form action="{{ route('klien.pengajuan-kontrak') }}" method="POST" class="mt-3 flex flex-1 flex-col gap-3.5 overflow-y-auto pr-1 gpa-scrollbar">
                         @csrf
 
                         {{-- SEKSI 1: IDENTITAS ENTITAS USAHA (Tabel users) --}}

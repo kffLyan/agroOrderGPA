@@ -372,7 +372,7 @@ export default function clientCatalog(items = []) {
 
             this.$dispatch('gpa:toast', {
                 title: 'Draft PO tersimpan',
-                message: `${weight} kg dikirim ke admin GPA untuk verifikasi.`,
+                message: `${weight} kg dikirim ke sekretaris GPA untuk verifikasi.`,
                 tone: 'success',
             });
         },
@@ -380,7 +380,7 @@ export default function clientCatalog(items = []) {
         exportSpec() {
             this.$dispatch('gpa:toast', {
                 title: 'Export spesifikasi disiapkan',
-                message: 'Spesifikasi kontrak B2B dikirim ke admin GPA sebagai PDF.',
+                message: 'Spesifikasi kontrak B2B dikirim ke sekretaris GPA sebagai PDF.',
                 tone: 'success',
             });
         },

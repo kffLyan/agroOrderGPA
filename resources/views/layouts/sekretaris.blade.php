@@ -29,13 +29,13 @@
 
         $navigation = [
             ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('sekretaris.dashboard'), 'active' => request()->routeIs('sekretaris.dashboard')],
-            ['label' => 'Verifikasi Pesanan', 'icon' => 'shield', 'href' => route('sekretaris.verification'), 'active' => request()->routeIs('sekretaris.verification*')],
-            ['label' => 'Stok & Inventori', 'icon' => 'package', 'href' => route('sekretaris.inventory'), 'active' => request()->routeIs('sekretaris.inventory*')],
-            ['label' => 'Surat Jalan & Armada', 'icon' => 'truck', 'href' => route('sekretaris.dispatch'), 'active' => request()->routeIs('sekretaris.dispatch*')],
-            ['label' => 'Monitoring Bukti Kirim (PoD)', 'icon' => 'check-circle', 'href' => route('sekretaris.pod.index'), 'active' => request()->routeIs('sekretaris.pod*')],
-            ['label' => 'Faktur & Tagihan', 'icon' => 'invoice', 'href' => route('sekretaris.invoices'), 'active' => request()->routeIs('sekretaris.invoices*')],
-            ['label' => 'Verifikasi Pembayaran', 'icon' => 'banknote', 'href' => route('sekretaris.payments'), 'active' => request()->routeIs('sekretaris.payments*')],
-            ['label' => 'Rekap Laporan', 'icon' => 'chart', 'href' => route('sekretaris.reports'), 'active' => request()->routeIs('sekretaris.reports*')],
+            ['label' => 'Verifikasi Pesanan', 'icon' => 'shield', 'href' => route('sekretaris.verifikasi'), 'active' => request()->routeIs('sekretaris.verifikasi*', 'sekretaris.verification*')],
+            ['label' => 'Stok & Inventori', 'icon' => 'package', 'href' => route('sekretaris.stok'), 'active' => request()->routeIs('sekretaris.stok*', 'sekretaris.inventory*')],
+            ['label' => 'Surat Jalan & Armada', 'icon' => 'truck', 'href' => route('sekretaris.surat-jalan'), 'active' => request()->routeIs('sekretaris.surat-jalan*', 'sekretaris.dispatch*')],
+            ['label' => 'Monitoring Bukti Kirim (PoD)', 'icon' => 'check-circle', 'href' => route('sekretaris.monitoring-pod'), 'active' => request()->routeIs('sekretaris.monitoring-pod*', 'sekretaris.pod*')],
+            ['label' => 'Faktur & Tagihan', 'icon' => 'invoice', 'href' => route('sekretaris.faktur'), 'active' => request()->routeIs('sekretaris.faktur*', 'sekretaris.invoices*')],
+            ['label' => 'Verifikasi Pembayaran', 'icon' => 'banknote', 'href' => route('sekretaris.pembayaran'), 'active' => request()->routeIs('sekretaris.pembayaran*', 'sekretaris.payments*')],
+            ['label' => 'Rekap Laporan', 'icon' => 'chart', 'href' => route('sekretaris.laporan'), 'active' => request()->routeIs('sekretaris.laporan*', 'sekretaris.reports*')],
         ];
     @endphp
 
@@ -84,22 +84,22 @@
                 </div>
 
                 <div class="ml-auto flex shrink-0 items-center gap-3 lg:ml-0">
-                    <a href="{{ route('sekretaris.manual-order') }}"
+                    <a href="{{ route('sekretaris.pesanan-manual') }}"
                         @class([
                             'inline-flex h-8 items-center gap-1.5 rounded-lg px-4 transition-colors',
-                            'bg-accent hover:bg-accent-deep' => ! request()->routeIs('sekretaris.manual-order'),
-                            'bg-white/10 ring-1 ring-inset ring-accent/40' => request()->routeIs('sekretaris.manual-order'),
+                            'bg-accent hover:bg-accent-deep' => ! request()->routeIs('sekretaris.pesanan-manual', 'sekretaris.manual-order'),
+                            'bg-white/10 ring-1 ring-inset ring-accent/40' => request()->routeIs('sekretaris.pesanan-manual', 'sekretaris.manual-order'),
                         ])>
                         <x-gpa.icon name="plus"
-                            class="h-3.5 w-3.5 {{ request()->routeIs('sekretaris.manual-order') ? 'text-accent' : 'text-ink' }}" />
+                            class="h-3.5 w-3.5 {{ request()->routeIs('sekretaris.pesanan-manual', 'sekretaris.manual-order') ? 'text-accent' : 'text-ink' }}" />
                         <span
-                            class="hidden text-[11px] font-bold tracking-[0.28px] gpa-meta sm:inline {{ request()->routeIs('sekretaris.manual-order') ? 'text-white' : 'text-ink' }}">Input Order Manual</span>
+                            class="hidden text-[11px] font-bold tracking-[0.28px] gpa-meta sm:inline {{ request()->routeIs('sekretaris.pesanan-manual', 'sekretaris.manual-order') ? 'text-white' : 'text-ink' }}">Input Order Manual</span>
                     </a>
 
                     <span class="hidden h-6 w-px bg-success lg:block" aria-hidden="true"></span>
 
                     <div class="flex items-center gap-2">
-                        <a href="{{ route('sekretaris.verification') }}"
+                        <a href="{{ route('sekretaris.verifikasi') }}"
                             class="relative hidden h-8 w-8 items-center justify-center rounded-lg text-surface-disabled transition-colors hover:bg-white/10 hover:text-white sm:inline-flex"
                             title="Antrean Verifikasi Masuk" aria-label="Notifikasi">
                             <x-gpa.icon name="bell" class="h-4 w-4" />

@@ -53,6 +53,8 @@ export default function secretaryManualOrder(
         paymentReference: '',
         query: '',
         isSubmitting: false,
+        autoPrintReceipt: false,
+        savedOrderModal: null,
         rawFile: null,
         dragActive: false,
         fullQrisModal: null,
@@ -69,6 +71,7 @@ export default function secretaryManualOrder(
         selectedCatalog: '',
         channel: sourceForm.active ?? 'whatsapp',
         clientMode: clientForm.active_mode ?? 'registered',
+        savedRegisteredClient: null,
         paymentMethod: paymentForm.active ?? 'transfer',
         paymentCustomNote: '',
         cashAmount: 0,
@@ -122,6 +125,14 @@ export default function secretaryManualOrder(
         },
 
         selectB2bMethod(method) {
+            if (this.clientMode === 'new' && method === 'top14') {
+                this.run(
+                    'Termin Khusus Ditolak',
+                    'Fasilitas Tempo 14 Hari (TOP) hanya berlaku untuk mitra kontrak aktif berbadan hukum.',
+                    'warning'
+                );
+                return;
+            }
             this.paymentCategory = 'b2b';
             this.paymentMethod = method;
             const labels = {
@@ -156,8 +167,56 @@ export default function secretaryManualOrder(
         },
 
         /* ------------------------------------------------------------------
-         | Pemilihan Klien Terdaftar
+         | Pemilihan Klien Terdaftar & Mode Pembeli
          * ----------------------------------------------------------------*/
+        setClientMode(mode) {
+            this.clientMode = mode;
+            if (mode === 'new') {
+                // Simpan profil pembeli terdaftar saat ini jika belum tersimpan
+                if (!this.savedRegisteredClient) {
+                    this.savedRegisteredClient = {
+                        id: this.client.id,
+                        code: this.client.code,
+                        name: this.client.name,
+                        contact: this.client.contact,
+                        phone: this.client.phone,
+                        address: this.client.address,
+                        credit: clone(this.client.credit),
+                    };
+                }
+
+                // Kosongkan formulir untuk pembeli baru / walk-in
+                this.client.id = null;
+                this.client.code = 'NON-KONTRAK';
+                this.client.name = '';
+                this.client.contact = '';
+                this.client.phone = '';
+                this.client.address = '';
+                this.client.credit = { limit: 0, used: 0 };
+
+                // Alihkan dari tempo kredit B2B ke tunai/resmi
+                if (this.paymentMethod === 'top14') {
+                    this.selectCashMethod();
+                }
+
+                this.run(
+                    'Mode Pembeli Baru Aktif',
+                    'Formulir identitas dikosongkan. Batas plafon kredit dinonaktifkan (Wajib bayar di muka).',
+                    'info'
+                );
+            } else {
+                // Pulihkan data pembeli terdaftar sebelumnya
+                if (this.savedRegisteredClient && this.savedRegisteredClient.id) {
+                    this.selectClient(this.savedRegisteredClient.id);
+                } else if (this.selectedClientId) {
+                    this.selectClient(this.selectedClientId);
+                } else if (this.clients.length > 0) {
+                    this.selectClient(this.clients[0].id);
+                }
+                this.run('Mode Pembeli Terdaftar', 'Data mitra kontrak dan plafon kredit B2B dimuat kembali.', 'info');
+            }
+        },
+
         selectClient(id) {
             const found = this.clients.find((c) => String(c.id) === String(id));
             if (!found) return;
@@ -172,6 +231,20 @@ export default function secretaryManualOrder(
             this.client.credit = {
                 limit: found.credit_limit,
                 used: found.credit_used,
+            };
+
+            // Simpan sebagai state mitra terdaftar terakhir
+            this.savedRegisteredClient = {
+                id: found.id,
+                code: found.code,
+                name: found.name,
+                contact: found.contact,
+                phone: found.phone,
+                address: found.address,
+                credit: {
+                    limit: found.credit_limit,
+                    used: found.credit_used,
+                },
             };
 
             this.run('Pembeli Dipilih', `${found.name} (${found.code}) siap diproses.`, 'info');
@@ -495,8 +568,8 @@ export default function secretaryManualOrder(
                 }
             }
 
-            // Jika status verifikasi, pastikan tidak ada blocker
-            if (targetStatus === 'MENUNGGU_VERIFIKASI') {
+            // Jika bukan draf, pastikan tidak ada blocker stok dan validasi pembayaran
+            if (targetStatus !== 'DRAFT') {
                 const issues = this.blockers();
                 if (issues.length > 0) {
                     this.run('Verifikasi Diblokir', issues[0], 'danger');
@@ -519,8 +592,10 @@ export default function secretaryManualOrder(
             this.isSubmitting = true;
             if (window.showGpaLoader) {
                 window.showGpaLoader(
-                    targetStatus === 'DRAFT' ? 'Menyimpan Draf PO...' : 'Memproses Pesanan Manual...',
-                    'Menyimpan data pesanan dan mengalokasikan stok komoditas...'
+                    targetStatus === 'DRAFT' ? 'Menyimpan Draf PO...' : 'Memverifikasi & Meneruskan Pesanan...',
+                    targetStatus === 'DRAFT'
+                        ? 'Menyimpan draf ke antrean verifikasi...'
+                        : 'Mengalokasikan stok panen, menerbitkan invoice, dan meneruskan ke Surat Jalan...'
                 );
             }
 
@@ -544,6 +619,8 @@ export default function secretaryManualOrder(
             formData.append('fleet_type', this.logistics?.fleet === 'Armada Khusus / Custom'
                 ? (this.logistics?.customFleet || 'Armada Khusus')
                 : (this.logistics?.fleet || 'CDD Reefer Chilled'));
+            formData.append('fee', this.fee);
+            formData.append('shipping_cost', this.fee);
             formData.append('status', targetStatus);
             formData.append('items', JSON.stringify(this.rows.map(row => ({
                 product_id: row.product_id,
@@ -572,15 +649,38 @@ export default function secretaryManualOrder(
                 }));
 
                 if (res.ok && data.success) {
+                    if (window.hideGpaLoader) window.hideGpaLoader();
+                    this.isSubmitting = false;
+
                     this.run(
                         targetStatus === 'DRAFT' ? 'Draf Disimpan' : 'Pesanan Berhasil Disimpan',
                         data.message,
                         'success'
                     );
 
-                    setTimeout(() => {
-                        window.location.href = data.redirect_url || '/sekretaris/verifikasi';
-                    }, 500);
+                    const orderNum = data.order?.order_number || ('PO-' + Date.now());
+                    const receiptUrl = data.order?.receipt_url || `/cetak/struk/${orderNum}`;
+                    const invoiceUrl = data.order?.invoice_url || `/cetak/faktur/${orderNum}`;
+
+                    if (this.autoPrintReceipt) {
+                        window.open(receiptUrl, '_blank');
+                    }
+
+                    if (targetStatus === 'DRAFT') {
+                        setTimeout(() => {
+                            window.location.href = data.redirect_url || '/sekretaris/verifikasi';
+                        }, 800);
+                    } else {
+                        // Tampilkan modal sukses langsung ke Penerbitan Surat Jalan
+                        this.savedOrderModal = {
+                            order_number: orderNum,
+                            grand_total: data.order?.grand_total || this.total,
+                            client_name: data.order?.client_name || (this.client.name || 'Pelanggan Walk-In'),
+                            receipt_url: receiptUrl,
+                            invoice_url: invoiceUrl,
+                            redirect_url: data.redirect_url || '/sekretaris/surat-jalan',
+                        };
+                    }
                 } else {
                     if (window.hideGpaLoader) window.hideGpaLoader();
                     this.isSubmitting = false;
@@ -594,11 +694,18 @@ export default function secretaryManualOrder(
         },
 
         saveDraft() {
+            this.autoPrintReceipt = false;
             this.submitOrder('DRAFT');
         },
 
         verify() {
-            this.submitOrder('MENUNGGU_VERIFIKASI');
+            this.autoPrintReceipt = false;
+            this.submitOrder('LUNAS');
+        },
+
+        saveAndPrintReceipt() {
+            this.autoPrintReceipt = true;
+            this.submitOrder('LUNAS');
         },
 
         async cancel() {

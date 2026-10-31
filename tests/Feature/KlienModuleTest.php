@@ -44,22 +44,22 @@ class KlienModuleTest extends TestCase
         $response->assertStatus(200);
 
         // Langkah 1: Katalog Komoditas
-        $response = $this->actingAs($klien)->get('/klien/catalog');
+        $response = $this->actingAs($klien)->get('/klien/katalog');
         $response->assertStatus(200);
 
         // Langkah 2: Keranjang & Pemesanan
-        $response = $this->actingAs($klien)->get('/klien/cart');
+        $response = $this->actingAs($klien)->get('/klien/keranjang');
         $response->assertStatus(200);
 
         // Langkah 3: Riwayat & Pelacakan Pesanan
-        $response = $this->actingAs($klien)->get('/klien/orders');
+        $response = $this->actingAs($klien)->get('/klien/pesanan');
         $response->assertStatus(200);
 
         // Langkah 4: Pusat Dokumen & Bukti Bayar
-        $response = $this->actingAs($klien)->get('/klien/documents');
+        $response = $this->actingAs($klien)->get('/klien/dokumen');
         $response->assertStatus(200);
 
-        $response = $this->actingAs($klien)->get('/klien/payment-proof');
+        $response = $this->actingAs($klien)->get('/klien/bukti-pembayaran');
         $response->assertStatus(200);
     }
 
@@ -97,7 +97,7 @@ class KlienModuleTest extends TestCase
             'inputted_by' => $koordinator->id,
         ]);
 
-        $response = $this->actingAs($klien)->post('/klien/orders', [
+        $response = $this->actingAs($klien)->post('/klien/pesanan', [
             'target_delivery_date' => now()->addDays(2)->format('Y-m-d'),
             'delivery_address' => 'Bandara Soekarno Hatta Loading Dock',
             'payment_method' => 'TEMPO_TOP',
@@ -120,10 +120,10 @@ class KlienModuleTest extends TestCase
         ]);
 
         $order = \App\Models\Order::where('user_id', $klien->id)->first();
-        $response->assertRedirect(route('klien.orders.show', $order->id));
+        $response->assertRedirect(route('klien.pesanan.show', $order->id));
 
         // Test show order tracking page
-        $showResponse = $this->actingAs($klien)->get(route('klien.orders.show', $order->id));
+        $showResponse = $this->actingAs($klien)->get(route('klien.pesanan.show', $order->id));
         $showResponse->assertStatus(200);
     }
 
@@ -175,19 +175,19 @@ class KlienModuleTest extends TestCase
         ];
 
         // Pengajuan pertama
-        $response1 = $this->actingAs($klien)->post('/klien/orders', $payload);
+        $response1 = $this->actingAs($klien)->post('/klien/pesanan', $payload);
         $order = \App\Models\Order::where('user_id', $klien->id)->first();
         $this->assertNotNull($order);
-        $response1->assertRedirect(route('klien.orders.show', $order->id));
+        $response1->assertRedirect(route('klien.pesanan.show', $order->id));
 
         // Pengajuan kedua dengan token sama (misal: double click)
-        $response2 = $this->actingAs($klien)->post('/klien/orders', $payload);
-        $response2->assertRedirect(route('klien.orders.show', $order->id));
+        $response2 = $this->actingAs($klien)->post('/klien/pesanan', $payload);
+        $response2->assertRedirect(route('klien.pesanan.show', $order->id));
 
         // Pengajuan ketiga dengan token berbeda tapi item dan tanggal identik (misal: back browser lalu submit ulang)
         $payloadWithNewToken = array_merge($payload, ['submission_token' => 'new-token-5678']);
-        $response3 = $this->actingAs($klien)->post('/klien/orders', $payloadWithNewToken);
-        $response3->assertRedirect(route('klien.orders.show', $order->id));
+        $response3 = $this->actingAs($klien)->post('/klien/pesanan', $payloadWithNewToken);
+        $response3->assertRedirect(route('klien.pesanan.show', $order->id));
 
         // Pastikan pesanan di database tetap HANYA 1 (tidak duplikat)
         $this->assertEquals(1, \App\Models\Order::where('user_id', $klien->id)->count());
@@ -248,7 +248,7 @@ class KlienModuleTest extends TestCase
             'subtotal' => 280000.00,
         ]);
 
-        $response = $this->actingAs($sekretaris)->post("/sekretaris/orders/{$order->id}/approve");
+        $response = $this->actingAs($sekretaris)->post("/sekretaris/verifikasi/{$order->id}/setujui");
         $response->assertSessionHasNoErrors();
         $this->assertDatabaseHas('orders', [
             'id' => $order->id,
@@ -276,7 +276,7 @@ class KlienModuleTest extends TestCase
             'status' => 'UNPAID',
         ]);
 
-        $response = $this->actingAs($klien)->post('/klien/payment-proof', [
+        $response = $this->actingAs($klien)->post('/klien/bukti-pembayaran', [
             'invoice_po' => $invoice->invoice_number,
             'amount' => 5000000,
             'sender_bank' => 'BCA',
@@ -302,7 +302,7 @@ class KlienModuleTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($klien)->get(route('klien.orders.print-rekap'));
+        $response = $this->actingAs($klien)->get(route('klien.pesanan.print-rekap'));
         $response->assertStatus(200);
         $response->assertSee('REKAPITULASI RESMI TRANSAKSI PEMESANAN');
         $response->assertSee('GREEN PASUNDAN AGRICULTURE');
@@ -316,7 +316,7 @@ class KlienModuleTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($klien)->get(route('klien.documents.print-rekap'));
+        $response = $this->actingAs($klien)->get(route('klien.dokumen.print-rekap'));
         $response->assertStatus(200);
         $response->assertSee('REKAPITULASI RESMI FAKTUR KONSOLIDASI');
         $response->assertSee('GREEN PASUNDAN AGRICULTURE');
@@ -330,7 +330,7 @@ class KlienModuleTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($klien)->get(route('klien.orders.export'));
+        $response = $this->actingAs($klien)->get(route('klien.pesanan.export'));
         $response->assertStatus(200);
         $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
     }
@@ -343,7 +343,7 @@ class KlienModuleTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($klien)->get(route('klien.documents.export'));
+        $response = $this->actingAs($klien)->get(route('klien.dokumen.export'));
         $response->assertStatus(200);
         $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
     }
@@ -386,7 +386,7 @@ class KlienModuleTest extends TestCase
         ]);
 
         // 1. Klien reguler mengajukan kontrak B2B
-        $response = $this->actingAs($regulerClient)->post(route('klien.contracts.propose'), [
+        $response = $this->actingAs($regulerClient)->post(route('klien.pengajuan-kontrak'), [
             'product_id'                 => $product->id,
             'committed_volume_per_cycle' => 200,
             'top_days'                   => 30,
@@ -406,7 +406,7 @@ class KlienModuleTest extends TestCase
         $dashResponse->assertSee($contract->contract_number);
 
         // 3. Direktur menyetujui kontrak kemitraan
-        $approveResponse = $this->actingAs($direktur)->post(route('direktur.contracts.approve', $contract->id));
+        $approveResponse = $this->actingAs($direktur)->post(route('direktur.kontrak.approve', $contract->id));
         $approveResponse->assertSessionHas('success');
 
         $contract->refresh();
@@ -436,7 +436,7 @@ class KlienModuleTest extends TestCase
             'grand_total'          => 1500000,
         ]);
 
-        $response = $this->actingAs($klien)->get(route('klien.orders.show', $order->id));
+        $response = $this->actingAs($klien)->get(route('klien.pesanan.show', $order->id));
         $response->assertStatus(200);
         $response->assertSee('Bayar Sekarang');
         $response->assertSee('Menunggu Pembayaran');
@@ -471,7 +471,7 @@ class KlienModuleTest extends TestCase
             'due_date' => now()->addDays(30),
         ]);
 
-        $response = $this->actingAs($klien)->get(route('klien.payment-proof', ['tagihan' => $invoice->invoice_number, 'order_id' => $order->id]));
+        $response = $this->actingAs($klien)->get(route('klien.bukti-pembayaran', ['tagihan' => $invoice->invoice_number, 'order_id' => $order->id]));
         $response->assertStatus(200);
         $response->assertSee('Pilih Kanal Pembayaran Resmi GPA');
         $response->assertSee('Bank BCA');
@@ -504,7 +504,7 @@ class KlienModuleTest extends TestCase
             'surat_jalan_number'   => 'SJ-GPA-202610-9999',
         ]);
 
-        $response = $this->actingAs($klien)->get(route('klien.orders.show', $order->id));
+        $response = $this->actingAs($klien)->get(route('klien.pesanan.show', $order->id));
         $response->assertStatus(200);
         $response->assertSee('Transaksi Tuntas &bull; Barang Diterima', false);
         $response->assertSee('Pak Joko Dock Head');
@@ -571,7 +571,7 @@ class KlienModuleTest extends TestCase
 
         // Sekretaris menolak bukti pembayaran dengan catatan
         $rejectionNote = 'Nominal transfer Rp 2.000.000 tidak sesuai tagihan Rp 2.500.000.';
-        $rejectResponse = $this->actingAs($sekretaris)->post("/sekretaris/pembayaran/{$payment->id}/reject", [
+        $rejectResponse = $this->actingAs($sekretaris)->post("/sekretaris/pembayaran/{$payment->id}/tolak", [
             'note' => $rejectionNote,
         ]);
         $rejectResponse->assertRedirect();
@@ -588,7 +588,7 @@ class KlienModuleTest extends TestCase
         $dashResponse->assertSee('Unggah Ulang Bukti Bayar');
 
         // Klien mengakses Form Bukti Pembayaran: harus ada alert penolakan dan form aktif
-        $proofResponse = $this->actingAs($klien)->get(route('klien.payment-proof', ['tagihan' => $invoice->invoice_number]));
+        $proofResponse = $this->actingAs($klien)->get(route('klien.bukti-pembayaran', ['tagihan' => $invoice->invoice_number]));
         $proofResponse->assertStatus(200);
         $proofResponse->assertSee('Verifikasi Pembayaran Ditolak');
         $proofResponse->assertSee($rejectionNote);
@@ -596,23 +596,122 @@ class KlienModuleTest extends TestCase
         $proofResponse->assertSee('Silakan Unggah Ulang Bukti Pembayaran');
 
         // Klien mengakses Detail Pesanan: harus ada banner penolakan
-        $orderResponse = $this->actingAs($klien)->get(route('klien.orders.show', $order->id));
+        $orderResponse = $this->actingAs($klien)->get(route('klien.pesanan.show', $order->id));
         $orderResponse->assertStatus(200);
         $orderResponse->assertSee('Verifikasi Pembayaran Ditolak');
         $orderResponse->assertSee($rejectionNote);
         $orderResponse->assertSee('Unggah Ulang Bukti Pembayaran');
 
         // Klien mengakses Daftar Pesanan: status badge harus menunjukkan bukti bayar ditolak
-        $ordersResponse = $this->actingAs($klien)->get(route('klien.orders.index'));
+        $ordersResponse = $this->actingAs($klien)->get(route('klien.pesanan.index'));
         $ordersResponse->assertStatus(200);
         $ordersResponse->assertSee('Bukti Bayar Ditolak');
 
         // Klien mengakses Pusat Dokumen: status tagihan menunjukkan bukti bayar ditolak
-        $docsResponse = $this->actingAs($klien)->get(route('klien.documents'));
+        $docsResponse = $this->actingAs($klien)->get(route('klien.dokumen'));
         $docsResponse->assertStatus(200);
         $docsResponse->assertSee('Bukti Bayar Ditolak');
         $docsResponse->assertSee('Unggah Ulang Bukti');
     }
+
+    public function test_payment_proof_view_does_not_throw_undefined_selected_po_and_shows_locked_when_paid(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $sekretaris = User::factory()->create([
+            'role' => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $order = \App\Models\Order::create([
+            'order_number' => 'ORD-GPA-202610-8888',
+            'user_id' => $klien->id,
+            'target_delivery_date' => now()->addDays(2)->toDateString(),
+            'delivery_address' => 'Jl. Kebun Raya No. 10',
+            'grand_total' => 1500000.00,
+            'status' => 'LUNAS',
+        ]);
+
+        $invoice = \App\Models\Invoice::create([
+            'invoice_number' => 'INV-GPA-202610-8888',
+            'user_id' => $klien->id,
+            'subtotal_amount' => 1500000.00,
+            'grand_total' => 1500000.00,
+            'status' => 'PAID',
+            'period_start' => now()->startOfMonth(),
+            'period_end' => now()->endOfMonth(),
+            'due_date' => now()->addDays(30),
+        ]);
+
+        $order->update(['invoice_id' => $invoice->id]);
+
+        $payment = \App\Models\Payment::create([
+            'invoice_id' => $invoice->id,
+            'order_id' => $order->id,
+            'payment_reference' => 'PAY-VERIFIED-888',
+            'payment_method' => 'TRANSFER_BANK',
+            'amount' => 1500000.00,
+            'status' => 'LUNAS',
+            'paid_at' => now(),
+            'verified_by' => $sekretaris->id,
+            'verified_at' => now(),
+            'verification_note' => 'Pembayaran lunas sesuai mutasi rekening koran.',
+        ]);
+
+        // 1. Akses tanpa parameter tagihan
+        $resp1 = $this->actingAs($klien)->get(route('klien.bukti-pembayaran'));
+        $resp1->assertStatus(200);
+        $resp1->assertSee('Faktur Ini Telah Lunas &amp; Diverifikasi Sah oleh Sekretariat GPA', false);
+        $resp1->assertSee('Pengesahan Pembayaran Lunas (Status Terkunci)');
+
+        // 2. Akses dengan parameter nomor order (ORD-...)
+        $resp2 = $this->actingAs($klien)->get(route('klien.bukti-pembayaran', ['tagihan' => $order->order_number]));
+        $resp2->assertStatus(200);
+        $resp2->assertSee('Faktur Ini Telah Lunas &amp; Diverifikasi Sah oleh Sekretariat GPA', false);
+
+        // 3. Akses dengan parameter invoice_number
+        $resp3 = $this->actingAs($klien)->get(route('klien.bukti-pembayaran', ['tagihan' => $invoice->invoice_number]));
+        $resp3->assertStatus(200);
+        $resp3->assertSee('Faktur Ini Telah Lunas &amp; Diverifikasi Sah oleh Sekretariat GPA', false);
+    }
+
+    public function test_payment_proof_store_rejects_upload_for_already_paid_invoice(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $invoice = \App\Models\Invoice::create([
+            'invoice_number' => 'INV-GPA-PAID-999',
+            'user_id' => $klien->id,
+            'subtotal_amount' => 1000000.00,
+            'grand_total' => 1000000.00,
+            'status' => 'PAID',
+            'period_start' => now()->startOfMonth(),
+            'period_end' => now()->endOfMonth(),
+            'due_date' => now()->addDays(30),
+        ]);
+
+        $response = $this->actingAs($klien)->postJson(route('klien.bukti-pembayaran.store'), [
+            'invoice_po' => $invoice->invoice_number,
+            'amount' => 1000000,
+            'sender_bank' => 'BCA',
+            'sender_account' => '1234567890',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJson([
+            'success' => false,
+        ]);
+        $this->assertStringContainsString('sudah lunas dan terverifikasi sah', $response->json('message'));
+    }
 }
+
 
 

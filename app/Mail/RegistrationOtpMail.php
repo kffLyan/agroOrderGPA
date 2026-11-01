@@ -18,6 +18,7 @@ class RegistrationOtpMail extends Mailable
         public string $recipientEmail
     ) {}
 
+    // Konfigurasi amplop email pengiriman kode OTP verifikasi pendaftaran akun
     public function envelope(): Envelope
     {
         $fromAddress = config('mail.from.address', 'kafkalyandra@gmail.com');
@@ -32,6 +33,7 @@ class RegistrationOtpMail extends Mailable
         );
     }
 
+    // Mengatur view template HTML dan plain-text email verifikasi OTP
     public function content(): Content
     {
         return new Content(

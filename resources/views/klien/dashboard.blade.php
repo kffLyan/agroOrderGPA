@@ -362,12 +362,12 @@
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                         <div class="inline-flex items-center gap-2 rounded-lg bg-brand px-3 py-1.5 ring-1 ring-inset ring-accent/30">
-                            <x-gpa.icon name="thermometer" class="h-3.5 w-3.5 text-accent" />
+                            <x-gpa.icon name="truck" class="h-3.5 w-3.5 text-accent" />
                             <div class="flex flex-col">
-                                <span class="gpa-meta-lg text-accent">Telemetri Chiller:</span>
+                                <span class="gpa-meta-lg text-accent">Status Armada:</span>
                                 <span class="flex items-baseline gap-1.5">
-                                    <span class="text-xs font-bold leading-4 text-accent">+4.2°C</span>
-                                    <span class="gpa-meta-lg font-bold text-accent">[OPTIMAL]</span>
+                                    <span class="text-xs font-bold leading-4 text-accent">{{ $inTransitOrder->vehicle_plate_number ?: 'Truk GPA' }}</span>
+                                    <span class="gpa-meta-lg font-bold text-accent">[DALAM PERJALANAN]</span>
                                 </span>
                             </div>
                         </div>

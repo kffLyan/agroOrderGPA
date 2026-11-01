@@ -3,33 +3,23 @@
 namespace App\Http\Controllers\Sekretaris;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Sekretaris\OperationalReportResource;
+use App\Http\Resources\Sekretaris\LaporanOperasionalResource;
 use App\Models\Order;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-/**
- * Controller Jurnal Operasional & Rekapitulasi Penjualan Sekretaris.
- *
- * Penjelasan UKK:
- * Modul ini menyajikan rekapitulasi harian operasional Koperasi GPA:
- * 1. Perbandingan bobot estimasi PO vs netto hasil timbang tera.
- * 2. Akurasi pengiriman dan deviasi susut sortir.
- * 3. Ekspor jurnal harian ke CSV dan cetak PDF rekapitulasi resmi.
- */
+// Controller jurnal operasional dan rekapitulasi penjualan untuk Sekretaris
 class LaporanController extends Controller
 {
-    /**
-     * Menampilkan konsol rekapitulasi laporan operasional, pengiriman & penjualan.
-     */
+    // Menampilkan rekapitulasi jurnal operasional, akurasi penimbangan, deviasi tonase, dan tingkat penyelesaian pengiriman
     public function index(Request $request): View
     {
         $orders = Order::with(['user', 'orderItems.product', 'invoice'])->latest()->get();
 
         $journalRows = $orders->values()->map(
-            fn (Order $ord, int $idx) => (new OperationalReportResource($ord, $idx))->resolve()
+            fn (Order $order, int $index) => (new LaporanOperasionalResource($order, $index))->resolve()
         )->all();
 
         $totalEstimate = (float) array_sum(array_column($journalRows, 'estimate'));
@@ -51,9 +41,7 @@ class LaporanController extends Controller
         ]);
     }
 
-    /**
-     * Unduh Rekap Laporan Operasional (.CSV).
-     */
+    // Mengekspor rekapitulasi data penimbangan dan status pelunasan transaksi ke berkas CSV
     public function exportCsv(Request $request): StreamedResponse
     {
         $headers = [
@@ -86,34 +74,34 @@ class LaporanController extends Controller
             ]);
 
             $orders = Order::with(['user', 'orderItems.product', 'invoice'])->latest()->get();
-            $no = 1;
-            foreach ($orders as $ord) {
-                $clientName    = $ord->user?->company_name ?: ($ord->user?->name ?: 'Mitra Klien');
-                $address       = $ord->delivery_address ?: 'Gudang Pembeli';
-                $firstItem     = $ord->orderItems->first();
+            $rowNumber = 1;
+            foreach ($orders as $order) {
+                $clientName    = $order->user?->company_name ?: ($order->user?->name ?: 'Mitra Klien');
+                $address       = $order->delivery_address ?: 'Gudang Pembeli';
+                $firstItem     = $order->orderItems->first();
                 $commodityName = $firstItem?->product?->name ?: 'Sayur Segar';
                 $unitPrice     = $firstItem ? (float) $firstItem->unit_price : 0;
 
-                $est     = (float) $ord->orderItems->sum('ordered_qty');
-                $net     = $est;
-                $val     = (float) ($ord->grand_total ?: ($net * $unitPrice));
-                $diffKg  = $net - $est;
-                $diffPct = $est > 0 ? round(($diffKg / $est) * 100, 2) : 0;
-                $isPaid  = $ord->status === 'SELESAI' || ($ord->invoice && $ord->invoice->status === 'PAID');
+                $estimatedQty = (float) $order->orderItems->sum('ordered_qty');
+                $netQty       = $estimatedQty;
+                $orderTotal   = (float) ($order->grand_total ?: ($netQty * $unitPrice));
+                $diffKg       = $netQty - $estimatedQty;
+                $diffPct      = $estimatedQty > 0 ? round(($diffKg / $estimatedQty) * 100, 2) : 0;
+                $isPaid       = $order->status === 'SELESAI' || ($order->invoice && $order->invoice->status === 'PAID');
 
                 fputcsv($handle, [
-                    $no++,
-                    $ord->order_number,
-                    $ord->surat_jalan_number ?: ('SJ-' . date('Ym') . '-' . str_pad((string) $ord->id, 4, '0', STR_PAD_LEFT)),
+                    $rowNumber++,
+                    $order->order_number,
+                    $order->surat_jalan_number ?: ('SJ-' . date('Ym') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT)),
                     $clientName,
                     $address,
                     $commodityName,
-                    $est,
-                    $net,
+                    $estimatedQty,
+                    $netQty,
                     $diffKg,
                     ($diffPct >= 0 ? '+' : '') . $diffPct . '%',
                     $unitPrice,
-                    $val,
+                    $orderTotal,
                     $isPaid ? 'Lunas' : 'Tempo 30',
                 ]);
             }
@@ -122,15 +110,13 @@ class LaporanController extends Controller
         }, 200, $headers);
     }
 
-    /**
-     * Tampilan Siap Cetak Dokumen Rekap Resmi Sekretaris (.PDF).
-     */
+    // Menyiapkan lembar cetak dokumen rekapitulasi operasional resmi untuk kebutuhan arsip sekretaris
     public function printReport(Request $request): View
     {
         $orders = Order::with(['user', 'orderItems.product', 'invoice'])->latest()->get();
 
         $journalRows = $orders->values()->map(
-            fn (Order $ord, int $idx) => (new OperationalReportResource($ord, $idx))->resolve()
+            fn (Order $order, int $index) => (new LaporanOperasionalResource($order, $index))->resolve()
         )->all();
 
         $totalEstimate    = (float) array_sum(array_column($journalRows, 'estimate'));

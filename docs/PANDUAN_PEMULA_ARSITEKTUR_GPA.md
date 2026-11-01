@@ -25,7 +25,7 @@ Kemarin ada pertanyaan: *"Apakah Anda ingin kami membersihkan coupling Tailwind 
   * **API Resource:** Petugas yang membungkus barang ke dalam kardus paket agar rapi saat dikirim (`to_array`).
   * **Blade View / CSS:** Etalase toko dan lampu hias warna-warni tempat paket itu dipajang.
 * **Kondisi di Kodingan Anda Saat Ini:**
-  Di file `app/Http/Resources/Sekretaris/OrderVerificationResource.php`, selain membungkus data sayur, si petugas pembungkus paket juga menempelkan instruksi warna baju:
+  Di file `app/Http/Resources/Sekretaris/VerifikasiPesananResource.php`, selain membungkus data sayur, si petugas pembungkus paket juga menempelkan instruksi warna baju:
   `'class' => 'bg-accent text-success-ink font-bold'`
 * **Kenapa Disebut Kurang "Clean Code"?**
   Karena menurut standar industri (*Separation of Concerns*), file data (Resource) tidak boleh ikut campur urusan warna/tampilan (CSS). Urusan warna harusnya 100% ditulis di file tampilan (`.blade.php`).
@@ -106,7 +106,7 @@ Aplikasi Anda menggunakan konsep-konsep *Enterprise* yang sangat disukai penguji
 * **Masalah di PHP Jadul:** Pengembang sering menulis string bebas seperti `'lunas'`, `'LUNAS'`, `'selesai'`, `'paid'`. Jika salah ketik satu huruf saja (`'luans'`), aplikasi langsung rusak.
 * **Solusi:** Enum adalah daftar pilihan baku yang dikunci oleh PHP 8.2 (misal: `OrderStatus::MENUNGGU_VERIFIKASI`, `OrderStatus::LUNAS`). Jika Anda mengetik status di luar daftar resmi, PHP langsung memberi tahu saat itu juga.
 
-### F. `Form Request` (Contoh: `StoreOrderRequest.php`)
+### F. `Form Request` (Contoh: `SimpanPesananRequest.php`)
 * **Analogi:** Satpam di depan pintu masuk. Sebelum data formulir masuk ke Controller, satpam ini memeriksa apakah input nama kosong, apakah format tanggal benar, apakah upload file benar-benar gambar. Jika tidak lolos, langsung ditolak sebelum menyentuh Controller.
 
 ---
@@ -116,7 +116,7 @@ Aplikasi Anda menggunakan konsep-konsep *Enterprise* yang sangat disukai penguji
 Gunakan tabel ini jika penguji meminta Anda menunjukkan file kode saat mengklik suatu menu di aplikasi:
 
 | Aksi di Layar | Route yang Dipanggil | Controller & Method | File Tampilan (Blade) |
-| :--- | :--- | :--- | :--- |
+| :---          | :---                  | :---                | :--- |
 | **Klien Checkout Keranjang** | `POST /klien/orders` | `Klien\OrderController@store` | `resources/views/klien/cart.blade.php` |
 | **Sekretaris Setujui Pesanan** | `POST /sekretaris/orders/{id}/approve` | `Sekretaris\OrderVerificationController@approve` | `resources/views/sekretaris/verification.blade.php` |
 | **Sekretaris Terbitkan Surat Jalan** | `POST /sekretaris/surat-jalan/{id}/terbitkan` | `Sekretaris\DispatchController@issue` | `resources/views/sekretaris/dispatch.blade.php` |
@@ -124,7 +124,7 @@ Gunakan tabel ini jika penguji meminta Anda menunjukkan file kode saat mengklik 
 | **Koordinator Catat Panen Baru** | `POST /koordinator/stok` | `Koordinator\StockController@storeBatch` | `resources/views/koordinator/stock.blade.php` |
 | **Armada Selesaikan Kiriman (PoD)** | `POST /armada/scan-pod/{id}/selesai` | `Armada\PodController@store` | `resources/views/armada/pod.blade.php` |
 | **Direktur Setujui Kontrak B2B** | `POST /direktur/contracts/batch-approve` | `Direktur\ContractController@batchApprove` | `resources/views/direktur/contracts/approval.blade.php` |
-| **Cetak Surat Jalan Resmi PDF** | `GET /prints/surat-jalan/{order}` | `Prints\SuratJalanController` | `resources/views/prints/surat-jalan.blade.php` |
+| **Cetak Surat Jalan Resmi PDF** | `GET /prints/surat-jalan/{order}` | `Prints\PrintSuratJalanController` | `resources/views/prints/surat-jalan.blade.php` |
 
 ---
 

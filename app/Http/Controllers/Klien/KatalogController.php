@@ -12,13 +12,7 @@ use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Controller Katalog Komoditas Hasil Tani untuk Klien.
- *
- * Penjelasan UKK:
- * Modul ini menampilkan etalase komoditas agrikultur segar, kuota panen yang tersedia,
- * status kontrak harga khusus B2B, batas kuota bulanan, dan plafon kredit Term of Payment (TOP).
- */
+// Controller katalog komoditas hasil tani untuk Klien
 class KatalogController extends Controller
 {
     public function __construct(
@@ -26,67 +20,66 @@ class KatalogController extends Controller
         protected StockService $stockService
     ) {}
 
-    /**
-     * Menampilkan katalog komoditas dengan resolusi harga kontrak B2B vs harga reguler.
-     */
+    // Menampilkan etalase katalog komoditas, resolusi harga kontrak B2B vs pasar, dan batas pagu kredit
     public function index(Request $request)
     {
         $user = Auth::guard('web')->user();
         $isB2b = ($user->client_type === 'B2B_KONTRAK');
 
-        // Ambil semua produk aktif
+        // Mengambil seluruh produk komoditas panen yang berstatus aktif
         $rawProducts = Product::where('is_active', true)->get();
 
-        // Kontrak aktif user
+        // Mengambil kontrak B2B aktif klien untuk penetapan harga terkunci dan komitmen kuota
         $activeContracts = Contract::where('user_id', $user->id)
             ->where('status', 'ACTIVE')
             ->get()
             ->keyBy('product_id');
 
-        // Query kuota stok panen tersedia dalam 1 query SQL efisien (anti N+1)
+        // Menghitung ketersediaan stok panen fisik secara massal untuk mencegah query N+1
         $stockMap = $this->stockService->getAvailableStockMap($rawProducts->pluck('id')->all());
 
         // Hitung kuota bulanan dari kontrak
         $totalCommittedQuota = (float) $activeContracts->sum('committed_volume_per_cycle');
 
-        // Hitung serapan kuota bulan berjalan langsung melalui agregasi database
+        // Menghitung serapan kuota komitmen pada bulan berjalan dari pesanan yang sedang berjalan
         $startOfMonth = now()->startOfMonth();
-        $usedQuota = (float) OrderItem::whereHas('order', function ($q) use ($user, $startOfMonth) {
-            $q->where('user_id', $user->id)
+        $usedQuota = (float) OrderItem::whereHas('order', function ($orderQuery) use ($user, $startOfMonth) {
+            $orderQuery->where('user_id', $user->id)
                 ->where('created_at', '>=', $startOfMonth)
                 ->whereNotIn('status', ['BATAL', 'DRAFT']);
         })->sum('ordered_qty');
 
-        // Plafon kredit tempo
+        // Mengkalkulasi batas pagu kredit tempo (TOP) berdasarkan ketentuan kontrak aktif
         $creditLimit = 0.0;
         if ($isB2b) {
-            $creditLimit = (float) $activeContracts->sum(function ($c) {
-                return (float) ($c->fixed_price_per_kg * $c->committed_volume_per_cycle * 2);
+            $creditLimit = (float) $activeContracts->sum(function ($contract) {
+                return (float) ($contract->fixed_price_per_kg * $contract->committed_volume_per_cycle * 2);
             });
         }
+
         $unpaidTotal = (float) Order::where('user_id', $user->id)
             ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])
             ->sum('grand_total');
 
-        // Order aktif terakhir untuk pengiriman
+        // Mengambil pesanan aktif terbaru untuk memantau proses logistik pengiriman barang
         $lastActiveOrder = Order::where('user_id', $user->id)
             ->whereIn('status', ['MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])
             ->orderBy('id', 'desc')
             ->first();
 
-        // 1. Kalkulasi metrik plafon & kuota
+        // Menghitung persentase pemakaian kuota dan sisa saldo pagu kredit klien
         $quotaPercent = $totalCommittedQuota > 0 ? min(100, ($usedQuota / $totalCommittedQuota) * 100) : 0;
         $creditAvailable = max(0, $creditLimit - $unpaidTotal);
         $creditPercent = $creditLimit > 0 ? ($creditAvailable / $creditLimit) * 100 : 0;
         $quotaBarWidth = max(0, min(100, $quotaPercent)) . '%';
 
-        // 2. Transformasi ke View Model komoditas
+        // Memformat spesifikasi komoditas menjadi array view model terstandarisasi untuk frontend
         $commodities = $rawProducts->map(function ($product) use ($activeContracts, $stockMap) {
             $availableStock = $stockMap[$product->id] ?? 0;
             $hasContract = $activeContracts->has($product->id);
             $contractItem = $activeContracts->get($product->id);
             $effectivePrice = $hasContract ? (float) $contractItem->fixed_price_per_kg : (float) $product->base_price;
-            $moq = (float) ($product->minimum_order ?? 10);
+            $minimumOrder = (float) ($product->minimum_order ?? 10);
 
             return [
                 'key'                => (string) $product->id,
@@ -110,7 +103,7 @@ class KatalogController extends Controller
                 'stock_label'        => 'Stok Bebas:',
                 'availability'       => $availableStock > 0 ? 'Stok Tersedia' : 'Habis Terpesan',
                 'availability_tone'  => $availableStock > 0 ? 'safe' : 'caution',
-                'moq'                => $moq,
+                'moq'                => $minimumOrder,
                 'step'               => 1,
                 'crate_kg'           => 10,
                 'pack_label'         => 'Keranjang',
@@ -135,7 +128,7 @@ class KatalogController extends Controller
                     ],
                     [
                         'label' => 'Min Order (MOQ)',
-                        'value' => number_format($moq, 0, ',', '.') . ' ' . $product->unit,
+                        'value' => number_format($minimumOrder, 0, ',', '.') . ' ' . $product->unit,
                         'tone'  => 'default',
                     ],
                 ],

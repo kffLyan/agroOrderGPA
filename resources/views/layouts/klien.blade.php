@@ -33,10 +33,10 @@
 
         $navigation = [
             ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('klien.dashboard'), 'active' => request()->routeIs('klien.dashboard')],
-            ['label' => 'Katalog Komoditas', 'icon' => 'grid', 'href' => route('klien.katalog'), 'active' => request()->routeIs('klien.katalog*', 'klien.catalog*')],
-            ['label' => 'Keranjang & Draft', 'icon' => 'cart', 'href' => route('klien.keranjang'), 'badge' => 'draft', 'active' => request()->routeIs('klien.keranjang*', 'klien.cart*')],
-            ['label' => 'Riwayat Pesanan', 'icon' => 'package', 'href' => route('klien.pesanan.index'), 'active' => request()->routeIs('klien.pesanan.*', 'klien.orders.*')],
-            ['label' => 'Dokumen & Faktur', 'icon' => 'file-text', 'href' => route('klien.dokumen'), 'active' => request()->routeIs('klien.dokumen*', 'klien.documents*', 'klien.bukti-pembayaran*', 'klien.payment-proof*')],
+            ['label' => 'Katalog Komoditas', 'icon' => 'grid', 'href' => route('klien.katalog'), 'active' => request()->routeIs('klien.katalog*')],
+            ['label' => 'Keranjang & Draft', 'icon' => 'cart', 'href' => route('klien.keranjang'), 'badge' => 'draft', 'active' => request()->routeIs('klien.keranjang*')],
+            ['label' => 'Riwayat Pesanan', 'icon' => 'package', 'href' => route('klien.pesanan.index'), 'active' => request()->routeIs('klien.pesanan.*')],
+            ['label' => 'Dokumen & Faktur', 'icon' => 'file-text', 'href' => route('klien.dokumen'), 'active' => request()->routeIs('klien.dokumen*')],
             ['label' => 'Profil & Gudang', 'icon' => 'building', 'href' => route('profile.edit'), 'active' => request()->routeIs('profile.*')],
         ];
     @endphp

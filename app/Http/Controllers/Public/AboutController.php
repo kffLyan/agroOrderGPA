@@ -9,6 +9,7 @@ use Illuminate\Contracts\View\View;
 
 class AboutController extends Controller
 {
+    // Menampilkan profil kelembagaan Koperasi Green Pasundan Agriculture beserta kapasitas hasil tani.
     public function __invoke(): View
     {
         $products = Product::where('is_active', true)->get();

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Direktur;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Direktur\CommodityVolumeResource;
+use App\Http\Resources\Direktur\VolumeKomoditasResource;
 use App\Models\Contract;
 use App\Models\HarvestBatch;
 use App\Models\OrderItem;
@@ -12,22 +12,13 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-/**
- * Controller Monitoring Volume Komoditas & Pasokan Panen Direktur.
- *
- * Penjelasan UKK:
- * Modul ini menampilkan neraca pasokan komoditas hasil panen petani binaan
- * vs stok cadangan (buffer stock), tren pemenuhan volume kontrak B2B,
- * serta deteksi potensi defisit atau surplus pasokan komoditas pangan.
- */
+// Controller monitoring volume pasokan komoditas, neraca panen, dan alokasi kontrak B2B
 class KomoditasController extends Controller
 {
-    /**
-     * Menampilkan dashboard monitoring volume komoditas dan neraca panen.
-     */
+    // Menampilkan neraca pasokan komoditas, stok cadangan buffer, serta proyeksi kebutuhan panen
     public function index(Request $request): View
     {
-        // 1. Perhitungan pasokan panen riil (Petani Binaan vs Buffer Luar)
+        // 1. Akumulasi pasokan panen fisik antara mitra petani binaan vs stok penyangga (buffer luar)
         $binaanKg = (float) HarvestBatch::where('source_type', 'PETANI_BINAAN')->sum('initial_quantity');
         $bufferKg = (float) HarvestBatch::where('source_type', 'BUFFER_LUAR')->sum('initial_quantity');
 
@@ -38,45 +29,45 @@ class KomoditasController extends Controller
         $binaanPercent = $totalTon > 0 ? round(($binaanTon / $totalTon) * 100) : 0;
         $bufferPercent = $totalTon > 0 ? (100 - $binaanPercent) : 0;
 
-        // Total Penjualan Riil (MTD)
-        $realSoldKg = (float) OrderItem::whereHas('order', function ($q) {
-            $q->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS']);
+        // Hitung total realisasi penjualan riil komoditas pada bulan berjalan
+        $realSoldKg = (float) OrderItem::whereHas('order', function ($query) {
+            $query->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS']);
         })->sum('ordered_qty');
         $totalSoldTon = round($realSoldKg / 1000, 2);
 
-        // Persentase Retur dan Susut Sortir
+        // Evaluasi persentase susut sortir atau retur barang terhadap total volume pesanan
         $orderedTotalKg  = (float) OrderItem::sum('ordered_qty');
         $returnedTotalKg = (float) OrderItem::sum('returned_weight');
         $shrinkagePercent = $orderedTotalKg > 0 ? round(($returnedTotalKg / $orderedTotalKg) * 100, 1) : 0.0;
 
-        // Stok cadangan siap pakai
+        // Hitung stok cadangan penyangga (safety stock) yang saat ini siap didistribusikan
         $availBufferKg = (float) HarvestBatch::where('source_type', 'BUFFER_LUAR')->sum('available_quantity');
         $safetyStockBufferTon = round($availBufferKg / 1000, 2);
 
-        // 2. Neraca Volume Lima Komoditas Inti (Eager load harvestBatches)
+        // 2. Evaluasi neraca volume untuk lima komoditas utama melalui resource presenter
         $products = Product::with('harvestBatches')->orderBy('id')->take(5)->get();
         $totalHarvestAll = (float) (HarvestBatch::sum('initial_quantity') ?: 1);
 
         $commodityRows = $products->map(
-            fn ($p, $idx) => (new CommodityVolumeResource($p, $idx, $totalHarvestAll))->toArray($request)
+            fn ($product, $index) => (new VolumeKomoditasResource($product, $index, $totalHarvestAll))->toArray($request)
         )->all();
 
-        // 3. Matriks Alokasi Kontrak B2B Aktif
+        // 3. Ambil daftar komitmen kuota dari seluruh kontrak kemitraan B2B yang aktif
         $allocationsList = Contract::with(['user', 'product'])
             ->where('status', 'ACTIVE')
             ->get();
 
-        // 4. Tren Mingguan Volume vs Kapasitas Panen (8 Pekan)
+        // 4. Analisis tren perbandingan volume permintaan pesanan vs kapasitas panen selama 8 pekan
         $weeklyRows = [];
-        $now = now();
-        for ($i = -4; $i <= 3; $i++) {
-            $targetDate  = (clone $now)->addWeeks($i);
+        $currentDate = now();
+        for ($weekOffset = -4; $weekOffset <= 3; $weekOffset++) {
+            $targetDate  = (clone $currentDate)->addWeeks($weekOffset);
             $startOfWeek = (clone $targetDate)->startOfWeek();
             $endOfWeek   = (clone $targetDate)->endOfWeek();
-            $wNum        = 'W' . $startOfWeek->format('W');
+            $weekLabel   = 'W' . $startOfWeek->format('W');
 
-            $demandKg = (float) OrderItem::whereHas('order', function ($q) use ($startOfWeek, $endOfWeek) {
-                $q->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
+            $demandKg = (float) OrderItem::whereHas('order', function ($query) use ($startOfWeek, $endOfWeek) {
+                $query->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
             })->sum('ordered_qty');
 
             $harvestKg = (float) HarvestBatch::whereBetween('batch_date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])->sum('initial_quantity');
@@ -92,10 +83,10 @@ class KomoditasController extends Controller
             $yieldPct   = $sumTon > 0 ? round(($yieldTon / $sumTon) * 100) : 0;
             $reservePct = $sumTon > 0 ? (100 - $demandPct - $yieldPct) : 0;
 
-            $status = $i < 0 ? 'closed' : ($i === 0 ? 'running' : 'forecast');
+            $status = $weekOffset < 0 ? 'closed' : ($weekOffset === 0 ? 'running' : 'forecast');
 
             $weeklyRows[] = [
-                'week'    => $wNum,
+                'week'    => $weekLabel,
                 'total'   => $totalTons > 0 ? $totalTons : 0.0,
                 'demand'  => $demandPct,
                 'yield'   => $yieldPct,
@@ -119,9 +110,7 @@ class KomoditasController extends Controller
         ]);
     }
 
-    /**
-     * Unduh Laporan Neraca Volume Komoditas (.CSV).
-     */
+    // Mengunduh rekapitulasi data neraca volume komoditas dalam format berkas CSV
     public function exportCsv(Request $request): StreamedResponse
     {
         $headers = [
@@ -139,9 +128,9 @@ class KomoditasController extends Controller
             fputcsv($handle, ['ID', 'Nama Komoditas', 'Kebutuhan B2B (ton)', 'Realisasi Panen (ton)', 'Status Pasokan']);
 
             $allProducts = Product::orderBy('id')->get();
-            foreach ($allProducts as $p) {
-                $demandKg  = (float) OrderItem::where('product_id', $p->id)->sum('ordered_qty');
-                $harvestKg = (float) HarvestBatch::where('product_id', $p->id)->sum('initial_quantity');
+            foreach ($allProducts as $product) {
+                $demandKg  = (float) OrderItem::where('product_id', $product->id)->sum('ordered_qty');
+                $harvestKg = (float) HarvestBatch::where('product_id', $product->id)->sum('initial_quantity');
                 $demandTon  = round($demandKg / 1000, 2);
                 $harvestTon = round($harvestKg / 1000, 2);
 
@@ -150,8 +139,8 @@ class KomoditasController extends Controller
                 $statusLabel = $status . ' (' . ($diff >= 0 ? '+' : '') . $diff . '%)';
 
                 fputcsv($handle, [
-                    $p->id,
-                    $p->name,
+                    $product->id,
+                    $product->name,
                     number_format($demandTon, 2, '.', ''),
                     number_format($harvestTon, 2, '.', ''),
                     $statusLabel,

@@ -7,9 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class OrderSeeder extends Seeder
 {
-    /**
-     * Seed invoices, orders, order_items, and payments.
-     */
+    // Menyiapkan data awal transaksi pesanan, rincian komoditas, faktur tagihan, dan bukti pembayaran
     public function run(): void
     {
         DB::table('payments')->truncate();

@@ -3,27 +3,28 @@
 namespace App\Http\Controllers\Direktur;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Direktur\StoreUserRequest;
-use App\Http\Requests\Direktur\UpdateUserRequest;
+use App\Http\Requests\Direktur\SimpanUserRequest;
+use App\Http\Requests\Direktur\PerbaruiUserRequest;
 use App\Models\User;
-use App\Services\GovernanceService;
+use App\Services\TataKelolaService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
+// Controller pengelolaan akun pengguna dan hak akses (RBAC) oleh Direktur Utama
 class UserController extends Controller
 {
-    protected GovernanceService $governanceService;
+    protected TataKelolaService $tataKelolaService;
 
-    public function __construct(GovernanceService $governanceService)
+    public function __construct(TataKelolaService $tataKelolaService)
     {
-        $this->governanceService = $governanceService;
+        $this->tataKelolaService = $tataKelolaService;
     }
 
-    /**
-     * READ: Menampilkan Manajemen Hak Akses, Akun Pengguna & Matriks RBAC
-     */
+    // Menampilkan daftar seluruh akun pengguna dengan filter peran (RBAC) dan pencarian kata kunci
     public function index(Request $request)
     {
         $totalUsers = User::count();
@@ -33,11 +34,12 @@ class UserController extends Controller
             $userQuery->where('role', strtoupper($request->query('role')));
         }
         if ($request->filled('search')) {
-            $s = $request->query('search');
-            $userQuery->where(function ($q) use ($s) {
-                $q->where('name', 'like', "%{$s}%")
-                  ->orWhere('email', 'like', "%{$s}%")
-                  ->orWhere('phone', 'like', "%{$s}%");
+            $search = $request->query('search');
+            // Filter pencarian berdasarkan kecocokan nama pengguna, alamat email, atau nomor telepon
+            $userQuery->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('phone', 'like', "%{$search}%");
             });
         }
         $allUsers = $userQuery->get();
@@ -45,18 +47,14 @@ class UserController extends Controller
         return view('direktur.users.index', compact('allUsers', 'totalUsers'));
     }
 
-    /**
-     * Formulir penambahan akun pengguna baru
-     */
+    // Menampilkan formulir pendaftaran akun pengguna baru di lingkungan koperasi GPA
     public function create()
     {
         return view('direktur.users.create');
     }
 
-    /**
-     * CREATE: Menyimpan akun pengguna baru ke basis data
-     */
-    public function store(StoreUserRequest $request)
+    // Simpan akun pengguna baru ke database dan catat riwayatnya ke audit log tata kelola
+    public function store(SimpanUserRequest $request)
     {
         try {
             $validated = $request->validated();
@@ -75,7 +73,7 @@ class UserController extends Controller
                 'is_active'    => (bool) $validated['is_active'],
             ]);
 
-            $this->governanceService->addAuditLog(
+            $this->tataKelolaService->addAuditLog(
                 'USER_ACCOUNT_CREATED',
                 'USR-ID-' . $user->id,
                 "Pembuatan akun baru {$user->name} ({$user->role}) oleh Direktur Utama.",
@@ -86,36 +84,30 @@ class UserController extends Controller
 
             return redirect()->route('direktur.users.index')
                 ->with('success', "Akun {$user->name} ({$user->role}) berhasil ditambahkan ke ekosistem GPA.");
-        } catch (Exception $e) {
-            return back()->withInput()->withErrors(['error' => 'Gagal menambahkan akun: ' . $e->getMessage()]);
+        } catch (Exception $exception) {
+            return back()->withInput()->withErrors(['error' => 'Gagal menambahkan akun: ' . $exception->getMessage()]);
         }
     }
 
-    /**
-     * READ Detail: Menampilkan profil rincian akun
-     */
+    // Menampilkan rincian detail profil akun pengguna dan hak akses operasionalnya
     public function show(User $user)
     {
         return view('direktur.users.show', compact('user'));
     }
 
-    /**
-     * Formulir penyuntingan profil dan hak akses
-     */
+    // Menampilkan formulir penyuntingan profil pengguna, peran, atau pengaturan kata sandi
     public function edit(User $user)
     {
         return view('direktur.users.edit', compact('user'));
     }
 
-    /**
-     * UPDATE: Memperbarui data pengguna, peran, atau sandi
-     */
-    public function update(UpdateUserRequest $request, User $user)
+    // Perbarui data profil akun serta cegah Direktur menonaktifkan akunnya sendiri
+    public function update(PerbaruiUserRequest $request, User $user)
     {
         try {
             $validated = $request->validated();
 
-            // Mencegah Direktur menonaktifkan akunnya sendiri
+            // Mencegah Direktur menonaktifkan akunnya sendiri agar sistem tidak terkunci
             if ($user->id === Auth::guard('web')->id() && !$validated['is_active']) {
                 return back()->withInput()
                     ->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.')
@@ -141,7 +133,7 @@ class UserController extends Controller
 
             $user->update($updateData);
 
-            $this->governanceService->addAuditLog(
+            $this->tataKelolaService->addAuditLog(
                 'USER_ACCOUNT_UPDATED',
                 'USR-ID-' . $user->id,
                 "Pembaruan profil / peran akun {$user->name} ({$user->role}) oleh Direktur.",
@@ -152,14 +144,12 @@ class UserController extends Controller
 
             return redirect()->route('direktur.users.index')
                 ->with('success', "Data akun {$user->name} berhasil diperbarui.");
-        } catch (Exception $e) {
-            return back()->withInput()->with('error', 'Gagal memperbarui akun: ' . $e->getMessage())->withErrors(['error' => 'Gagal memperbarui akun: ' . $e->getMessage()]);
+        } catch (Exception $exception) {
+            return back()->withInput()->with('error', 'Gagal memperbarui akun: ' . $exception->getMessage())->withErrors(['error' => 'Gagal memperbarui akun: ' . $exception->getMessage()]);
         }
     }
 
-    /**
-     * Reset Sandi Pengguna Cepat oleh Direktur
-     */
+    // Reset kata sandi pengguna secara cepat menjadi default oleh Direktur Utama
     public function resetPassword(Request $request, User $user)
     {
         $newPassword = $request->input('new_password', 'password123');
@@ -167,7 +157,7 @@ class UserController extends Controller
             'password' => Hash::make($newPassword),
         ]);
 
-        $this->governanceService->addAuditLog(
+        $this->tataKelolaService->addAuditLog(
             'USER_PASSWORD_RESET',
             'USR-ID-' . $user->id,
             "Reset kata sandi pengguna {$user->name} ({$user->email}) oleh Direktur.",
@@ -179,16 +169,14 @@ class UserController extends Controller
         return back()->with('success', "Kata sandi untuk {$user->name} berhasil direset menjadi '{$newPassword}'.");
     }
 
-    /**
-     * Prosedur Darurat: Revoke All Sessions (Logout Semua Pengguna Lain)
-     */
+    // Prosedur darurat untuk memutus paksa seluruh sesi aktif pengguna lain di semua perangkat
     public function revokeAllSessions(Request $request)
     {
         try {
             $currentUserId = Auth::guard('web')->id();
             DB::table('sessions')->where('user_id', '!=', $currentUserId)->delete();
 
-            $this->governanceService->addAuditLog(
+            $this->tataKelolaService->addAuditLog(
                 'EMERGENCY_REVOKE_ALL_SESSIONS',
                 'AUTH-SYSTEM-SESSIONS',
                 "PROSEDUR DARURAT: Seluruh sesi aktif di seluruh terminal kantor, gudang sentra, dan kendaraan logistik diputus paksa oleh Direktur Utama.",
@@ -198,14 +186,12 @@ class UserController extends Controller
             );
 
             return back()->with('success', 'Prosedur Darurat Berhasil: Seluruh sesi aktif pengguna lain di semua terminal berhasil diputus seketika.');
-        } catch (\Throwable $e) {
-            return back()->with('error', 'Gagal memutus sesi: ' . $e->getMessage());
+        } catch (\Throwable $exception) {
+            return back()->with('error', 'Gagal memutus sesi: ' . $exception->getMessage());
         }
     }
 
-    /**
-     * Unduh Matriks Akses (.CSV)
-     */
+    // Ekspor berkas CSV matriks hak akses RBAC untuk kebutuhan audit tata kelola
     public function exportRbacCsv(): StreamedResponse
     {
         $headers = [
@@ -238,9 +224,7 @@ class UserController extends Controller
         }, 200, $headers);
     }
 
-    /**
-     * DELETE: Menghapus akun dari sistem
-     */
+    // Hapus akun pengguna dari database dan catat riwayat penghapusan ke audit log
     public function destroy(User $user)
     {
         try {
@@ -251,7 +235,7 @@ class UserController extends Controller
             $userName = $user->name;
             $user->delete();
 
-            $this->governanceService->addAuditLog(
+            $this->tataKelolaService->addAuditLog(
                 'USER_ACCOUNT_DELETED',
                 'USR-ID-' . $user->id,
                 "Penghapusan akun {$userName} dari ekosistem GPA oleh Direktur.",
@@ -262,8 +246,8 @@ class UserController extends Controller
 
             return redirect()->route('direktur.users.index')
                 ->with('success', "Akun {$userName} berhasil dihapus dari sistem.");
-        } catch (Exception $e) {
-            return back()->with('error', 'Gagal menghapus akun: ' . $e->getMessage());
+        } catch (Exception $exception) {
+            return back()->with('error', 'Gagal menghapus akun: ' . $exception->getMessage());
         }
     }
 }

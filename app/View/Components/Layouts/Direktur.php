@@ -12,6 +12,7 @@ class Direktur extends Component
         public ?string $header = null
     ) {}
 
+    // Mengembalikan representasi tampilan view tata letak layout eksekutif Direktur.
     public function render(): View
     {
         return view('layouts.direktur');

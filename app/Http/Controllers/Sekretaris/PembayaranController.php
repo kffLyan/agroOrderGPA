@@ -3,49 +3,39 @@
 namespace App\Http\Controllers\Sekretaris;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Sekretaris\RejectPaymentRequest;
-use App\Http\Resources\Sekretaris\PaymentAuditResource;
-use App\Http\Resources\Sekretaris\PaymentQueueResource;
+use App\Http\Requests\Sekretaris\TolakPembayaranRequest;
+use App\Http\Resources\Sekretaris\AuditPembayaranResource;
+use App\Http\Resources\Sekretaris\AntreanPembayaranResource;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Services\GovernanceService;
+use App\Services\TataKelolaService;
 use App\Services\OrderService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Controller Verifikasi Pembayaran & Rekonsiliasi Kas Sekretaris.
- *
- * Penjelasan UKK:
- * Modul ini menangani pencocokan bukti bayar transfer bank / QRIS dengan rekening koran:
- * 1. Menyetujui bukti bayar, mengubah status faktur dan pesanan menjadi LUNAS.
- * 2. Menolak bukti bayar dengan mencatat alasan spesifik yang dapat dilihat langsung oleh klien.
- * 3. Menampilkan riwayat jurnal audit transaksi keuangan secara transparan.
- */
+// Controller verifikasi pembayaran dan rekonsiliasi kas untuk Sekretaris
 class PembayaranController extends Controller
 {
     public function __construct(
-        protected GovernanceService $governanceService
+        protected TataKelolaService $tataKelolaService
     ) {}
 
-    /**
-     * Menampilkan konsol verifikasi bukti pembayaran manual & rekonsiliasi kas.
-     */
+    // Menampilkan konsol verifikasi mutasi pembayaran kas/bank, antrean validasi bukti transfer, dan riwayat audit
     public function index(Request $request): View
     {
         $user = Auth::user();
         $operatorCode = $user ? 'SK-' . str_pad((string) $user->id, 4, '0', STR_PAD_LEFT) : 'SK-001';
 
-        // Ambil rekening giro resmi aktif dari pengaturan tata kelola
-        $paymentChannels = $this->governanceService->getPaymentChannels();
-        $activeBank = collect($paymentChannels)->first(fn($c) => ($c['type'] ?? '') === 'BANK' && !empty($c['is_active']))
-            ?? collect($paymentChannels)->first(fn($c) => ($c['type'] ?? '') === 'BANK');
+        // Mengambil informasi rekening bank resmi koperasi dari konfigurasi tata kelola keuangan
+        $paymentChannels = $this->tataKelolaService->getPaymentChannels();
+        $activeBank = collect($paymentChannels)->first(fn($channel) => ($channel['type'] ?? '') === 'BANK' && !empty($channel['is_active']))
+            ?? collect($paymentChannels)->first(fn($channel) => ($channel['type'] ?? '') === 'BANK');
         $officialGiroAccount = $activeBank
             ? "{$activeBank['name']} {$activeBank['account_number']} ({$activeBank['account_name']})"
             : 'Rekening Resmi Koperasi GPA';
 
-        // 1. Hitung metrik ringkasan langsung dari basis data
+        // Menghitung metrik total pembayaran pending, pembayaran diverifikasi, dan pembayaran ditolak
         $pendingQuery = Payment::whereIn('status', ['MENUNGGU_VERIFIKASI', 'PENDING'])
             ->whereNotNull('proof_url')
             ->where('proof_url', '!=', '');
@@ -56,23 +46,23 @@ class PembayaranController extends Controller
         $verifiedTotal = (float) Payment::whereIn('status', ['LUNAS', 'SUCCESS'])->sum('amount');
         $rejectedCount = Payment::whereIn('status', ['DITOLAK', 'FAILED'])->count();
 
-        // 2. Antrean pembayaran yang menunggu verifikasi bukti transfer
+        // Mengambil antrean pembayaran yang telah mengunggah bukti dan menunggu persetujuan
         $pendingPayments = $pendingQuery->with(['order.user', 'invoice.user', 'verifier'])
             ->latest()
             ->get();
 
         $queueRows = $pendingPayments->map(
-            fn ($pay) => (new PaymentQueueResource($pay, $officialGiroAccount))->toArray($request)
+            fn ($payment) => (new AntreanPembayaranResource($payment, $officialGiroAccount))->toArray($request)
         )->all();
 
-        // 3. Jurnal riwayat audit pembayaran mutakhir
+        // Mengambil log audit riwayat transaksi pembayaran mutakhir untuk transparansi operasional
         $recentPayments = Payment::with(['order.user', 'invoice.user', 'verifier'])
             ->latest()
             ->take(50)
             ->get();
 
         $auditRows = $recentPayments->map(
-            fn ($pay) => (new PaymentAuditResource($pay, $operatorCode))->toArray($request)
+            fn ($payment) => (new AuditPembayaranResource($payment, $operatorCode))->toArray($request)
         )->all();
 
         return view('sekretaris.pembayaran', [
@@ -87,9 +77,7 @@ class PembayaranController extends Controller
         ]);
     }
 
-    /**
-     * Menyetujui dan memverifikasi bukti pembayaran kas/bank.
-     */
+    // Menyetujui keabsahan pembayaran klien, mencocokkan mutasi kas, serta memperbarui status faktur menjadi lunas
     public function approve(Request $request, Payment $payment)
     {
         $note = $request->input('note', 'Mutasi rekening bank telah diverifikasi cocok dengan rekening koran.');
@@ -101,11 +89,11 @@ class PembayaranController extends Controller
         if ($order && $order->status === 'MENUNGGU_VERIFIKASI') {
             try {
                 $order = $orderService->approveOrder($order->id, Auth::id() ?: 1);
-            } catch (\Exception $e) {
+            } catch (\Exception $exception) {
                 if ($request->wantsJson() || $request->ajax()) {
-                    return response()->json(['success' => false, 'message' => 'Gagal menyetujui pesanan: ' . $e->getMessage()], 422);
+                    return response()->json(['success' => false, 'message' => 'Gagal menyetujui pesanan: ' . $exception->getMessage()], 422);
                 }
-                return back()->withErrors(['error' => 'Gagal mengalokasikan stok pesanan: ' . $e->getMessage()]);
+                return back()->withErrors(['error' => 'Gagal mengalokasikan stok pesanan: ' . $exception->getMessage()]);
             }
         }
 
@@ -136,19 +124,17 @@ class PembayaranController extends Controller
             ]);
         }
 
-        $msg = "Pembayaran PAY-" . str_pad((string) $payment->id, 4, '0', STR_PAD_LEFT) . " berhasil diverifikasi dan disahkan lunas.";
+        $message = "Pembayaran PAY-" . str_pad((string) $payment->id, 4, '0', STR_PAD_LEFT) . " berhasil diverifikasi dan disahkan lunas.";
 
         if ($request->wantsJson() || $request->ajax()) {
-            return response()->json(['success' => true, 'message' => $msg]);
+            return response()->json(['success' => true, 'message' => $message]);
         }
 
-        return back()->with('success', $msg);
+        return back()->with('success', $message);
     }
 
-    /**
-     * Menolak bukti pembayaran yang tidak sesuai.
-     */
-    public function reject(RejectPaymentRequest $request, Payment $payment)
+    // Menolak bukti transfer yang tidak valid atau fiktif dan meminta klien mengunggah bukti pembayaran ulang
+    public function reject(TolakPembayaranRequest $request, Payment $payment)
     {
         $note = $request->input('rejection_note') ?: $request->input('note', 'Bukti transfer tidak valid atau dana belum masuk rekening koran.');
 
@@ -158,12 +144,12 @@ class PembayaranController extends Controller
             'verification_note' => $note,
         ]);
 
-        $msg = "Pembayaran PAY-" . str_pad((string) $payment->id, 4, '0', STR_PAD_LEFT) . " berhasil ditolak. Klien diminta konfirmasi ulang.";
+        $message = "Pembayaran PAY-" . str_pad((string) $payment->id, 4, '0', STR_PAD_LEFT) . " berhasil ditolak. Klien diminta konfirmasi ulang.";
 
         if ($request->wantsJson() || $request->ajax()) {
-            return response()->json(['success' => true, 'message' => $msg]);
+            return response()->json(['success' => true, 'message' => $message]);
         }
 
-        return back()->with('success', $msg);
+        return back()->with('success', $message);
     }
 }

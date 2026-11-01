@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Koordinator;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Koordinator\StoreHarvestBatchRequest;
-use App\Http\Resources\Koordinator\StockCommodityResource;
-use App\Http\Resources\Koordinator\StockLogResource;
+use App\Http\Requests\Koordinator\SimpanBatchPanenRequest;
+use App\Http\Resources\Koordinator\StokKomoditasResource;
+use App\Http\Resources\Koordinator\LogStokResource;
 use App\Models\HarvestBatch;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -15,46 +15,41 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
-/**
- * Controller Manajemen Stok Panen & Alokasi Gudang untuk Koordinator Lapangan.
- *
- * Tugas Utama:
- * 1. Menampilkan neraca stok fisik sayuran di gudang (hasil panen petani binaan vs buffer luar).
- * 2. Menghitung sisa stok bebas (*Available to Promise / ATP*) yang belum dipesan klien.
- * 3. Mencatat pasokan masuk panen baru (*Quick Intake*) ke dalam tabel harvest_batches.
- */
+// Controller pemantauan neraca persediaan gudang dan pencatatan intake panen oleh Koordinator Lapangan
 class StokController extends Controller
 {
-    /**
-     * Menampilkan konsol pemantauan stok panen & neraca persediaan gudang.
-     */
+    // Menampilkan konsol pemantauan stok fisik, alokasi pesanan (ATP), dan log pasokan panen terbaru
     public function index(Request $request): View
     {
-        // Status pesanan yang kuotanya masih mengantre verifikasi
+        // Status pesanan yang kuotanya masih mengantre verifikasi dan mencadangkan alokasi stok gudang
         $pendingStatuses = ['MENUNGGU_VERIFIKASI'];
 
-        // Ambil produk aktif beserta batch panen dan pesanan yang mencadangkan stok (Eager Loading bebas N+1)
+        // Mengambil produk aktif beserta relasi batch panen dan kalkulasi total reservasi pesanan klien
         $products = Product::where('is_active', true)
             ->with('harvestBatches')
             ->withSum(['orderItems as reserved_po_qty' => function ($query) use ($pendingStatuses) {
-                $query->whereHas('order', fn ($orderQuery) => $orderQuery->whereIn('status', $pendingStatuses));
+                $query->whereHas('order', function ($orderQuery) use ($pendingStatuses) {
+                    $orderQuery->whereIn('status', $pendingStatuses);
+                });
             }], 'ordered_qty')
             ->get();
 
         $totalBinaan   = (float) HarvestBatch::where('source_type', 'PETANI_BINAAN')->sum('available_quantity');
         $totalBuffer   = (float) HarvestBatch::where('source_type', 'BUFFER_LUAR')->sum('available_quantity');
         $totalStock    = $totalBinaan + $totalBuffer;
-        $totalReserved = (float) OrderItem::whereHas('order', fn ($query) => $query->whereIn('status', $pendingStatuses))->sum('ordered_qty');
+        $totalReserved = (float) OrderItem::whereHas('order', function ($query) use ($pendingStatuses) {
+            $query->whereIn('status', $pendingStatuses);
+        })->sum('ordered_qty');
         $freeStock     = max(0, $totalStock - $totalReserved);
         $activePoCount = Order::whereIn('status', $pendingStatuses)->count();
 
-        // Transformasi koleksi ke resource terstruktur
-        $commodities = StockCommodityResource::collection($products)->resolve();
+        // Memformat data komoditas menjadi struktur data standar untuk tampilan tabel persediaan
+        $commodities = StokKomoditasResource::collection($products)->resolve();
 
         $distinctSuppliers = HarvestBatch::distinct()->pluck('supplier_name')->filter()->values()->all();
 
         $recentBatches = HarvestBatch::with('product', 'inputter')->latest()->take(10)->get();
-        $logItems      = StockLogResource::collection($recentBatches)->resolve();
+        $logItems      = LogStokResource::collection($recentBatches)->resolve();
 
         return view('koordinator.stok', [
             'products'          => $products,
@@ -70,10 +65,8 @@ class StokController extends Controller
         ]);
     }
 
-    /**
-     * Menyimpan batch pasokan panen baru dari petani binaan ke gudang (Quick Intake).
-     */
-    public function storeBatch(StoreHarvestBatchRequest $request): JsonResponse|RedirectResponse
+    // Mencatat batch pasokan hasil panen baru dari petani binaan maupun buffer luar ke sistem gudang
+    public function storeBatch(SimpanBatchPanenRequest $request): JsonResponse|RedirectResponse
     {
         $validatedData = $request->validated();
 

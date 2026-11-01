@@ -10,6 +10,8 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\OrderService;
+use App\Services\TataKelolaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -1031,7 +1033,7 @@ class SekretarisModuleTest extends TestCase
             'is_active'     => true,
         ]);
 
-        $gov = app(\App\Services\GovernanceService::class);
+        $gov = app(TataKelolaService::class);
         $gov->toggleMasterFreeze(true, 'Uji Coba Darurat', 'Direktur Utama');
 
         $payload = [
@@ -1073,7 +1075,7 @@ class SekretarisModuleTest extends TestCase
             'is_active'     => true,
         ]);
 
-        $gov = app(\App\Services\GovernanceService::class);
+        $gov = app(TataKelolaService::class);
         $gov->toggleClientFreeze($klien->id, true);
 
         $payload = [
@@ -1096,7 +1098,7 @@ class SekretarisModuleTest extends TestCase
 
     public function test_invoice_number_generator_produces_unique_sequential_numbers(): void
     {
-        $orderService = app(\App\Services\OrderService::class);
+        $orderService = app(OrderService::class);
         $num1 = $orderService->generateInvoiceNumber();
         $this->assertStringStartsWith('INV-GPA-' . date('Ym') . '-', $num1);
 
@@ -1207,5 +1209,71 @@ class SekretarisModuleTest extends TestCase
         $payment = Payment::where('order_id', $order->id)->first();
         $this->assertEquals($order->grand_total, $payment->amount);
         $this->assertStringContainsString('65.000', $payment->verification_note);
+    }
+
+    /**
+     * Pastikan sisa hari pada buku besar faktur diformat bulat tanpa angka desimal/koma.
+     */
+    public function test_invoice_ledger_resource_formats_remaining_days_as_clean_integer_without_decimals(): void
+    {
+        $klien = User::factory()->create([
+            'role'         => 'KLIEN',
+            'company_name' => 'PT Resto Sejahtera',
+        ]);
+
+        // 1. Faktur tempo 12 hari ke depan
+        $inv12 = Invoice::create([
+            'invoice_number' => 'INV-TEST-012',
+            'user_id'        => $klien->id,
+            'period_end'     => now()->toDateString(),
+            'subtotal_amount'=> 500000,
+            'grand_total'    => 500000,
+            'status'         => 'UNPAID',
+            'due_date'       => now()->addDays(12)->toDateString(),
+        ]);
+
+        $res12 = (new \App\Http\Resources\Sekretaris\BukuBesarFakturResource($inv12))->toArray(request());
+        $this->assertEquals('Sisa 12 Hari', $res12['remaining']);
+        $this->assertFalse(str_contains($res12['remaining'], '.'));
+
+        // 2. Faktur jatuh tempo hari ini
+        $inv0 = Invoice::create([
+            'invoice_number' => 'INV-TEST-000',
+            'user_id'        => $klien->id,
+            'period_end'     => now()->toDateString(),
+            'subtotal_amount'=> 500000,
+            'grand_total'    => 500000,
+            'status'         => 'UNPAID',
+            'due_date'       => now()->toDateString(),
+        ]);
+
+        $res0 = (new \App\Http\Resources\Sekretaris\BukuBesarFakturResource($inv0))->toArray(request());
+        $this->assertEquals('Jatuh Tempo Hari Ini', $res0['remaining']);
+
+        // 3. Faktur terlambat / overdue 4 hari
+        $invOverdue = Invoice::create([
+            'invoice_number' => 'INV-TEST-999',
+            'user_id'        => $klien->id,
+            'period_end'     => now()->toDateString(),
+            'subtotal_amount'=> 500000,
+            'grand_total'    => 500000,
+            'status'         => 'OVERDUE',
+            'due_date'       => now()->subDays(4)->toDateString(),
+        ]);
+
+        $resOverdue = (new \App\Http\Resources\Sekretaris\BukuBesarFakturResource($invOverdue))->toArray(request());
+        $this->assertEquals('Lewat 4 Hari', $resOverdue['remaining']);
+        $this->assertFalse(str_contains($resOverdue['remaining'], '.'));
+
+        // 4. Pastikan tampilan web /sekretaris/faktur tidak mengandung angka desimal pada kolom sisa hari
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+        $response = $this->actingAs($sekretaris)->get('/sekretaris/faktur');
+        $response->assertStatus(200);
+        $response->assertSee('Sisa 12 Hari');
+        $response->assertSee('Lewat 4 Hari');
+        $this->assertDoesNotMatchRegularExpression('/Sisa \d+\.\d+ Hari/', $response->getContent());
     }
 }

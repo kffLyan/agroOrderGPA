@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Klien;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreOrderRequest;
+use App\Http\Requests\SimpanPesananRequest;
 use App\Models\Order;
 use App\Models\Product;
 use App\Services\OrderService;
@@ -14,16 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-/**
- * Controller Manajemen Pesanan (Purchase Order / PO) Klien.
- *
- * Penjelasan UKK:
- * Modul ini menangani seluruh siklus pesanan dari sisi pembeli / klien:
- * 1. Riwayat pesanan dan status siklus 5 tahap live-tracking.
- * 2. Pembuatan pesanan baru (checkout) dengan proteksi idempotency klik ganda.
- * 3. Tampilan detail pesanan beserta bukti serah terima (PoD) foto pengantaran.
- * 4. Cetak rekap pesanan A4 dan ekspor CSV.
- */
+// Controller manajemen pesanan (PO) untuk Klien
 class PesananController extends Controller
 {
     public function __construct(
@@ -31,9 +22,7 @@ class PesananController extends Controller
         protected StockService $stockService
     ) {}
 
-    /**
-     * Menampilkan daftar transaksi dan riwayat pesanan milik Klien.
-     */
+    // Menampilkan daftar pesanan riil klien, ringkasan kuota per status siklus, dan total tonase belanja
     public function index(Request $request)
     {
         $userId = Auth::guard('web')->id();
@@ -43,7 +32,7 @@ class PesananController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // 1. Hitung status tabs agregasi
+        // Mengelompokkan total kuantitas pesanan berdasarkan status operasional (verifikasi, bayar, kirim, selesai)
         $counts = [
             'all'        => $rawOrders->count(),
             'verifikasi' => $rawOrders->where('status', 'MENUNGGU_VERIFIKASI')->count(),
@@ -74,7 +63,8 @@ class PesananController extends Controller
             'last_page'   => 1,
         ];
 
-        $totalKgOrder = (float) $rawOrders->sum(fn($o) => $o->orderItems ? $o->orderItems->sum('ordered_qty') : 0);
+        // Menghitung akumulasi tonase komoditas yang dipesan klien dalam kilogram
+        $totalKgOrder = (float) $rawOrders->sum(fn($order) => $order->orderItems ? $order->orderItems->sum('ordered_qty') : 0);
         $totalKgActual = $totalKgOrder;
 
         return view('klien.pesanan.index', [
@@ -88,23 +78,19 @@ class PesananController extends Controller
         ]);
     }
 
-    /**
-     * Mengalihkan pembuatan pesanan ke halaman keranjang & katalog.
-     */
+    // Mengalihkan pembuatan pesanan mandiri ke antarmuka katalog dan keranjang belanja
     public function create()
     {
         return redirect()->route('klien.keranjang');
     }
 
-    /**
-     * Menyimpan transaksi pesanan baru dari keranjang klien.
-     */
-    public function store(StoreOrderRequest $request)
+    // Memproses pengajuan pesanan baru, memvalidasi idempotensi duplikasi, dan mengarahkan ke antrean verifikasi
+    public function store(SimpanPesananRequest $request)
     {
         $user = Auth::guard('web')->user();
         $submissionToken = $request->input('submission_token');
 
-        // 1. Cek token pesanan untuk mencegah klik ganda (idempotency)
+        // Memeriksa token idempotensi untuk mencegah transaksi ganda akibat klik tombol berulang kali
         if ($submissionToken) {
             $tokenCacheKey = "order_submission_token_{$user->id}_{$submissionToken}";
             if (Cache::has($tokenCacheKey)) {
@@ -120,7 +106,7 @@ class PesananController extends Controller
         try {
             $validatedData = $request->validated();
 
-            // 2. Deteksi apakah ada pesanan duplikat identik dalam kurun 90 detik terakhir
+            // Mendeteksi pengajuan pesanan identik dalam 90 detik terakhir guna mencegah pesanan duplikat
             $recentOrder = $this->orderService->findRecentDuplicateOrder($user, $validatedData);
             if ($recentOrder) {
                 if ($submissionToken) {
@@ -131,34 +117,32 @@ class PesananController extends Controller
                     ->with('info', "Pesanan {$recentOrder->order_number} sudah berhasil diajukan sebelumnya (menghindari duplikasi).");
             }
 
-            // 3. Simpan file foto bukti pembayaran jika ada
+            // Mengunggah berkas foto bukti transfer pembayaran jika dilampirkan langsung oleh klien
             $proofPath = null;
             if ($request->hasFile('payment_proof')) {
                 $proofPath = $request->file('payment_proof')->store('payments', 'public');
             }
 
-            // 4. Buat pesanan baru melalui OrderService
+            // Memproses pembuatan pesanan dan pencadangan stok awal melalui OrderService
             $order = $this->orderService->createOrder(
                 $user,
                 $validatedData,
                 $proofPath
             );
 
-            // 5. Simpan token ke cache agar form tidak bisa dikirim ulang
+            // Menyimpan token ke cache selama 15 menit agar formulir tidak dapat dikirim berulang
             if ($submissionToken) {
                 Cache::put("order_submission_token_{$user->id}_{$submissionToken}", $order->id, now()->addMinutes(15));
             }
 
             return redirect()->route('klien.pesanan.show', $order->id)
                 ->with('success', "Pesanan {$order->order_number} berhasil diajukan dan sedang masuk antrean verifikasi Sekretaris.");
-        } catch (Exception $e) {
-            return back()->withInput()->withErrors(['error' => $e->getMessage()]);
+        } catch (Exception $exception) {
+            return back()->withInput()->withErrors(['error' => $exception->getMessage()]);
         }
     }
 
-    /**
-     * Menampilkan detail dan visual tracking 5 tahap pesanan Klien.
-     */
+    // Menampilkan visual tracking status 5 tahap pengiriman, rincian item produk, dan foto serah terima PoD
     public function show(Order $order)
     {
         if ($order->user_id !== Auth::guard('web')->id()) {
@@ -172,9 +156,7 @@ class PesananController extends Controller
         return view('klien.pesanan.show', array_merge(['order' => $order], $viewData));
     }
 
-    /**
-     * Menyiapkan view-model detail pesanan untuk tampilan Blade.
-     */
+    // Menyiapkan data visual status tahapan pesanan, foto serah terima PoD, dan bukti transfer untuk antarmuka detail
     protected function prepareOrderDetailViewData(Order $order): array
     {
         $hasPendingProof = ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_pending_proof);
@@ -236,9 +218,7 @@ class PesananController extends Controller
         );
     }
 
-    /**
-     * Tampilan Siap Cetak Dokumen Rekapitulasi Pesanan Resmi (.PDF / Print View).
-     */
+    // Menyiapkan lembar cetak ringkasan transaksi pesanan resmi untuk dokumentasi dan arsip klien
     public function printRekap(Request $request)
     {
         $user = Auth::guard('web')->user();
@@ -266,7 +246,7 @@ class PesananController extends Controller
 
         $orders = $query->get();
 
-        $totalKgOrder = (float) $orders->sum(fn ($o) => $o->orderItems->sum('ordered_qty'));
+        $totalKgOrder = (float) $orders->sum(fn ($order) => $order->orderItems->sum('ordered_qty'));
         $totalKgActual = $totalKgOrder;
         $totalValue = (float) $orders->sum('grand_total');
         $countOrders = $orders->count();
@@ -287,9 +267,7 @@ class PesananController extends Controller
         ));
     }
 
-    /**
-     * Unduh Rekap Transaksi Pemesanan Klien B2B (.CSV / Excel).
-     */
+    // Mengekspor daftar transaksi pemesanan klien ke format CSV untuk pencatatan dan rekonsiliasi internal
     public function exportCsv(Request $request): StreamedResponse
     {
         $user = Auth::guard('web')->user();

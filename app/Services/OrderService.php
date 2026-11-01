@@ -12,11 +12,12 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\StockService;
+use App\Services\TataKelolaService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Exception;
 
-// Layanan utama proses pemesanan (buat pesanan, verifikasi, potong stok, faktur)
+// Layanan orkestrasi transaksi pemesanan komoditas B2B, verifikasi sekretariat, dan penerbitan faktur.
 class OrderService
 {
     protected StockService $stockService;
@@ -26,7 +27,7 @@ class OrderService
         $this->stockService = $stockService;
     }
 
-    // Buat nomor pesanan otomatis berurutan dengan proteksi anti-bentrok (contoh: ORD-GPA-202610-0001)
+    // Menghasilkan nomor pesanan unik berurutan bulanan dengan proteksi race-condition melalui lock cache.
     public function generateOrderNumber(): string
     {
         $prefix = 'ORD-GPA-' . date('Ym') . '-';
@@ -42,47 +43,47 @@ class OrderService
                 $nextNumber = $lastSequence + 1;
             }
 
-            $candidate = $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            $candidateNumber = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
 
-            // Pengaman ekstra: Jika nomor sudah terpakai di database, cari urutan berikutnya
-            while (Order::where('order_number', $candidate)->exists()) {
+            // Pengaman ekstra jika kandidat nomor pesanan sudah terpakai di database
+            while (Order::where('order_number', $candidateNumber)->exists()) {
                 $nextNumber++;
-                $candidate = $prefix . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+                $candidateNumber = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
             }
 
-            return $candidate;
+            return $candidateNumber;
         });
     }
 
-    // Buat nomor faktur / invoice otomatis berurutan dengan proteksi anti-bentrok (contoh: INV-GPA-202610-0001)
+    // Menghasilkan nomor faktur komoditas berurutan bulanan dengan proteksi race-condition melalui lock cache.
     public function generateInvoiceNumber(): string
     {
         $prefix = 'INV-GPA-' . date('Ym') . '-';
 
         return Cache::lock('invoice_number_sequence_lock', 5)->block(3, function () use ($prefix) {
-            $lastInv = Invoice::where('invoice_number', 'LIKE', $prefix . '%')
+            $lastInvoice = Invoice::where('invoice_number', 'LIKE', $prefix . '%')
                 ->orderBy('id', 'desc')
                 ->first();
 
             $nextNumber = 1;
-            if ($lastInv) {
-                $lastSequence = (int) substr($lastInv->invoice_number, -4);
+            if ($lastInvoice) {
+                $lastSequence = (int) substr($lastInvoice->invoice_number, -4);
                 $nextNumber = $lastSequence + 1;
             }
 
-            $candidate = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
+            $candidateInvoiceNumber = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
 
-            // Pengaman ekstra: Jika nomor sudah terpakai di database, cari urutan berikutnya
-            while (Invoice::where('invoice_number', $candidate)->exists()) {
+            // Pengaman ekstra jika kandidat nomor faktur sudah terpakai di database
+            while (Invoice::where('invoice_number', $candidateInvoiceNumber)->exists()) {
                 $nextNumber++;
-                $candidate = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
+                $candidateInvoiceNumber = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
             }
 
-            return $candidate;
+            return $candidateInvoiceNumber;
         });
     }
 
-    // Resolusi harga satuan: Harga Kontrak B2B aktif vs Harga Katalog
+    // Menentukan harga satuan komoditas berdasarkan kontrak B2B aktif atau harga dasar katalog.
     public function resolveUnitPrice(User $user, Product $product): float
     {
         $activeContract = Contract::where('user_id', $user->id)
@@ -97,14 +98,11 @@ class OrderService
         return (float) $product->base_price;
     }
 
-    /**
-     * Memeriksa apakah ada pesanan serupa yang baru saja diajukan (< 90 detik)
-     * untuk mencegah duplikasi pesanan (idempotency fallback).
-     */
-    public function findRecentDuplicateOrder(User $user, array $data): ?Order
+    // Memeriksa riwayat pesanan identik dalam jendela waktu 90 detik untuk mencegah duplikasi pemesanan.
+    public function findRecentDuplicateOrder(User $user, array $orderData): ?Order
     {
-        $targetDate = $data['target_delivery_date'] ?? null;
-        if (!$targetDate || empty($data['items'])) {
+        $targetDate = $orderData['target_delivery_date'] ?? null;
+        if (!$targetDate || empty($orderData['items'])) {
             return null;
         }
 
@@ -116,7 +114,7 @@ class OrderService
             ->orderBy('id', 'desc')
             ->get();
 
-        $incomingItems = collect($data['items'])->map(fn($item) => [
+        $incomingItems = collect($orderData['items'])->map(fn($item) => [
             'product_id' => (int) $item['product_id'],
             'quantity'   => (float) $item['quantity'],
         ])->sortBy('product_id')->values()->toArray();
@@ -135,24 +133,20 @@ class OrderService
         return null;
     }
 
-    /**
-     * Menyimpan transaksi pesanan baru dalam siklus ACID
-     *
-     * @throws Exception
-     */
-    public function createOrder(User $user, array $data, ?string $proofPath = null): Order
+    // Menyimpan transaksi pesanan baru, item komoditas, dan rekaman pembayaran dalam transaksi database.
+    public function createOrder(User $user, array $orderData, ?string $proofPath = null): Order
     {
-        return DB::transaction(function () use ($user, $data, $proofPath) {
+        return DB::transaction(function () use ($user, $orderData, $proofPath) {
             $orderNumber = $this->generateOrderNumber();
             $estimatedTotal = 0.0;
             $itemsToInsert = [];
 
-            // 1. Validasi ketersediaan stok panen bebas (diagregasikan per produk agar tidak bisa diakali dengan item duplikat)
+            // 1. Validasi stok panen di gudang
             $productTotals = [];
-            foreach ($data['items'] as $itemData) {
-                $pid = (int) $itemData['product_id'];
-                $qty = (float) $itemData['quantity'];
-                $productTotals[$pid] = ($productTotals[$pid] ?? 0.0) + $qty;
+            foreach ($orderData['items'] as $itemData) {
+                $productId = (int) $itemData['product_id'];
+                $quantity = (float) $itemData['quantity'];
+                $productTotals[$productId] = ($productTotals[$productId] ?? 0.0) + $quantity;
             }
 
             foreach ($productTotals as $productId => $totalRequestedQty) {
@@ -163,37 +157,32 @@ class OrderService
                 }
             }
 
-            foreach ($data['items'] as $itemData) {
+            // Hitung harga satuan dan subtotal tiap komoditas
+            foreach ($orderData['items'] as $itemData) {
                 $product = Product::findOrFail($itemData['product_id']);
-                $requestedQty = (float) $itemData['quantity'];
+                $requestedQuantity = (float) $itemData['quantity'];
                 $unitPrice = $this->resolveUnitPrice($user, $product);
-                $subtotal = $unitPrice * $requestedQty;
+                $subtotal = $unitPrice * $requestedQuantity;
                 $estimatedTotal += $subtotal;
 
                 $itemsToInsert[] = [
                     'product_id'  => $product->id,
-                    'ordered_qty' => $requestedQty,
+                    'ordered_qty' => $requestedQuantity,
                     'unit_price'  => $unitPrice,
                 ];
             }
 
-            // Hitung nilai subtotal komoditas
             $commoditySubtotal = $estimatedTotal;
 
-            // Ambil kebijakan PPN dan Ongkir dari GovernanceService (Ketetapan Direktur Utama)
-            $gov = app(\App\Services\GovernanceService::class);
-            $taxSettings = $gov->getTaxSettings();
-            $shippingSettings = $gov->getShippingSettings();
+            // Ambil pengaturan PPN dan ongkir dari Tata Kelola
+            $tataKelolaService = app(TataKelolaService::class);
+            $taxSettings = $tataKelolaService->getTaxSettings();
 
-            $isB2b = ($user->client_type === 'B2B_KONTRAK' || Contract::where('user_id', $user->id)->where('status', 'ACTIVE')->exists());
-
-            // Tentukan Ongkir: Manual diinput oleh Sekre saat verifikasi
             $shippingCost = 0.0;
-            if (isset($data['shipping_cost']) && is_numeric($data['shipping_cost'])) {
-                $shippingCost = max(0.0, (float) $data['shipping_cost']);
+            if (isset($orderData['shipping_cost']) && is_numeric($orderData['shipping_cost'])) {
+                $shippingCost = max(0.0, (float) $orderData['shipping_cost']);
             }
 
-            // Tentukan Pajak PPN sesuai ketetapan Direktur
             $taxRate = 0.0;
             $taxAmount = 0.0;
             if ($taxSettings['enabled']) {
@@ -203,18 +192,18 @@ class OrderService
 
             $grandTotalFinal = $commoditySubtotal + $shippingCost + $taxAmount;
 
-            // 2. Simpan data header pesanan (Status awal MENUNGGU_VERIFIKASI)
+            // 2. Simpan data header pesanan (status awal: MENUNGGU_VERIFIKASI)
             $order = Order::create([
                 'order_number'         => $orderNumber,
                 'user_id'              => $user->id,
                 'order_source'         => 'WEB_PORTAL',
-                'target_delivery_date' => $data['target_delivery_date'],
-                'delivery_address'     => $data['delivery_address'],
+                'target_delivery_date' => $orderData['target_delivery_date'],
+                'delivery_address'     => $orderData['delivery_address'],
                 'grand_total'          => $grandTotalFinal,
                 'status'               => OrderStatus::MENUNGGU_VERIFIKASI->value,
             ]);
 
-            // 3. Simpan baris detail komoditas
+            // 3. Simpan rincian komoditas sayur dengan harga terkunci saat transaksi
             foreach ($itemsToInsert as $item) {
                 OrderItem::create([
                     'order_id'        => $order->id,
@@ -227,8 +216,8 @@ class OrderService
                 ]);
             }
 
-            // 4. Catat entitas transaksi pembayaran awal
-            if (!empty($data['payment_method'])) {
+            // 4. Buat catatan pembayaran awal
+            if (!empty($orderData['payment_method'])) {
                 $financialNote = "Rincian Biaya: Subtotal Rp " . number_format($commoditySubtotal, 0, ',', '.')
                     . " • Ongkir Rp " . number_format($shippingCost, 0, ',', '.')
                     . ($taxRate > 0 ? " • PPN ({$taxRate}%) Rp " . number_format($taxAmount, 0, ',', '.') : " • Bebas PPN (0% DTP)");
@@ -237,12 +226,12 @@ class OrderService
                     'order_id'          => $order->id,
                     'invoice_id'        => null,
                     'payment_reference' => 'PAY-' . strtoupper(uniqid()),
-                    'payment_method'    => $data['payment_method'],
+                    'payment_method'    => $orderData['payment_method'],
                     'amount'            => $grandTotalFinal,
                     'proof_url'         => $proofPath,
                     'status'            => PaymentStatus::MENUNGGU_VERIFIKASI->value,
                     'verification_note' => $financialNote,
-                    'paid_at'           => ($data['payment_method'] === 'TEMPO_TOP' || empty($proofPath)) ? null : now(),
+                    'paid_at'           => ($orderData['payment_method'] === 'TEMPO_TOP' || empty($proofPath)) ? null : now(),
                 ]);
             }
 
@@ -250,12 +239,7 @@ class OrderService
         });
     }
 
-    /**
-     * Persetujuan pesanan oleh Sekretaris & pemotongan kuota stok
-     * Sesuai alur: Terbitkan Faktur (Invoice) & status berubah menjadi MENUNGGU_PEMBAYARAN
-     *
-     * @throws Exception
-     */
+    // Menyetujui pesanan oleh Sekretaris, mengalokasikan stok panen gudang, dan menerbitkan faktur tagihan.
     public function approveOrder(int $orderId, int $secretaryId, ?float $manualShippingCost = null): Order
     {
         return DB::transaction(function () use ($orderId, $secretaryId, $manualShippingCost) {
@@ -265,20 +249,20 @@ class OrderService
                 throw new Exception("Hanya pesanan berstatus MENUNGGU_VERIFIKASI yang dapat disetujui.");
             }
 
-            // Potong kuota stok batch panen secara atomik (SELECT ... FOR UPDATE)
+            // Mengurangi kuota stok panen komoditas di gudang sesuai rincian kuantitas pesanan
             foreach ($order->orderItems as $item) {
                 $this->stockService->allocateStock($item->product_id, (float) $item->ordered_qty);
             }
 
-            // Hitung subtotal komoditas
-            $commoditySubtotal = (float) $order->orderItems->sum(fn ($i) => ($i->subtotal ?: ($i->ordered_qty * $i->unit_price)));
+            // Menghitung ulang subtotal komoditas dari rincian item pesanan yang disetujui
+            $commoditySubtotal = (float) $order->orderItems->sum(fn ($item) => ($item->subtotal ?: ($item->ordered_qty * $item->unit_price)));
             if ($commoditySubtotal <= 0) {
                 $commoditySubtotal = (float) $order->grand_total;
             }
 
-            // Ambil kebijakan PPN dari Direktur Utama
-            $gov = app(\App\Services\GovernanceService::class);
-            $taxSettings = $gov->getTaxSettings();
+            // Mengambil parameter konfigurasi pajak PPN aktif dari tata kelola koperasi
+            $tataKelolaService = app(TataKelolaService::class);
+            $taxSettings = $tataKelolaService->getTaxSettings();
             $taxRate = 0.0;
             $taxAmount = 0.0;
             if ($taxSettings['enabled']) {
@@ -286,13 +270,12 @@ class OrderService
                 $taxAmount = round($commoditySubtotal * ($taxRate / 100), 2);
             }
 
-            // Jika Sekretaris menginputkan ongkir manual saat verifikasi, perbarui grand_total pesanan & rincian pembayaran
+            // Memperbarui tarif ongkir dan merevisi grand total jika disesuaikan manual oleh Sekretaris
             if ($manualShippingCost !== null) {
                 $shippingCost = max(0.0, (float) $manualShippingCost);
                 $grandTotalFinal = $commoditySubtotal + $shippingCost + $taxAmount;
                 $order->grand_total = $grandTotalFinal;
 
-                // Sinkronkan catatan rincian finansial & nominal pada pembayaran
                 $financialNote = "Rincian Biaya: Subtotal Rp " . number_format($commoditySubtotal, 0, ',', '.')
                     . " • Ongkir Rp " . number_format($shippingCost, 0, ',', '.')
                     . ($taxRate > 0 ? " • PPN ({$taxRate}%) Rp " . number_format($taxAmount, 0, ',', '.') : " • Bebas PPN (0% DTP)");
@@ -306,11 +289,10 @@ class OrderService
                 }
             }
 
-            // 1. Buat / Terbitkan Invoice Tagihan PDF resmi jika belum ada
+            // Menerbitkan dokumen faktur komoditas baru jika pesanan belum memiliki faktur
             if (!$order->invoice_id) {
-                $invNumber = $this->generateInvoiceNumber();
+                $invoiceNumber = $this->generateInvoiceNumber();
 
-                // Periksa TOP days jika klien kontrak B2B
                 $clientContract = Contract::where('user_id', $order->user_id)
                     ->where('status', 'ACTIVE')
                     ->first();
@@ -318,7 +300,7 @@ class OrderService
                 $dueDate = now()->addDays($topDays)->toDateString();
 
                 $invoice = Invoice::create([
-                    'invoice_number'  => $invNumber,
+                    'invoice_number'  => $invoiceNumber,
                     'user_id'         => $order->user_id,
                     'period_start'    => $order->created_at ? $order->created_at->toDateString() : now()->toDateString(),
                     'period_end'      => $order->target_delivery_date ?: now()->toDateString(),
@@ -326,12 +308,11 @@ class OrderService
                     'grand_total'     => (float) $order->grand_total,
                     'due_date'        => $dueDate,
                     'status'          => 'UNPAID',
-                    'pdf_file_path'   => 'invoices/' . $invNumber . '.pdf',
+                    'pdf_file_path'   => 'invoices/' . $invoiceNumber . '.pdf',
                 ]);
 
                 $order->invoice_id = $invoice->id;
 
-                // Tautkan invoice_id pada pembayaran terkait
                 Payment::where('order_id', $order->id)->whereNull('invoice_id')->update([
                     'invoice_id' => $invoice->id,
                 ]);
@@ -345,9 +326,7 @@ class OrderService
                 }
             }
 
-            // 2. Perbarui status pesanan menjadi MENUNGGU_PEMBAYARAN.
-            // Untuk Klien Mitra B2B dengan tempo TOP, Surat Jalan dapat langsung diterbitkan melalui
-            // modul Dispatch tanpa harus menunggu verifikasi pembayaran di muka.
+            // Memperbarui status pesanan menjadi menunggu pembayaran dan mencatat verifikator
             $order->status = OrderStatus::MENUNGGU_PEMBAYARAN->value;
             $order->verified_by = $secretaryId;
             $order->save();
@@ -356,21 +335,17 @@ class OrderService
         });
     }
 
-    /**
-     * Pembatalan pesanan oleh Sekretaris
-     *
-     * @throws Exception
-     */
-    public function rejectOrder(int $orderId, int $secretaryId, string $reason): Order
+    // Menolak atau membatalkan pesanan serta mengembalikan kuota alokasi stok panen gudang.
+    public function rejectOrder(int $orderId, int $secretaryId, string $rejectionReason): Order
     {
-        return DB::transaction(function () use ($orderId, $secretaryId, $reason) {
+        return DB::transaction(function () use ($orderId, $secretaryId, $rejectionReason) {
             $order = Order::lockForUpdate()->findOrFail($orderId);
 
             if ($order->status !== OrderStatus::MENUNGGU_VERIFIKASI->value && $order->status !== OrderStatus::MENUNGGU_PEMBAYARAN->value) {
                 throw new Exception("Hanya pesanan yang belum lunas yang dapat dibatalkan.");
             }
 
-            // Jika pesanan sebelumnya telah disetujui (kuota stok sudah terpotong), kembalikan stoknya ke gudang
+            // Kembalikan alokasi stok ke gudang jika sebelumnya sudah disetujui
             if ($order->status === OrderStatus::MENUNGGU_PEMBAYARAN->value) {
                 foreach ($order->orderItems as $item) {
                     $this->stockService->restoreStock($item->product_id, (float) $item->ordered_qty);
@@ -382,13 +357,12 @@ class OrderService
                 'verified_by' => $secretaryId,
             ]);
 
-            // Simpan catatan alasan penolakan pada Payment yang ada tanpa memodifikasi skema tabel database
             $payment = Payment::where('order_id', $order->id)->first();
             if ($payment) {
                 $payment->update([
                     'status'            => PaymentStatus::DITOLAK->value,
                     'verified_by'       => $secretaryId,
-                    'verification_note' => $reason,
+                    'verification_note' => $rejectionReason,
                 ]);
             } else {
                 Payment::create([
@@ -399,7 +373,7 @@ class OrderService
                     'amount'            => $order->grand_total,
                     'status'            => PaymentStatus::DITOLAK->value,
                     'verified_by'       => $secretaryId,
-                    'verification_note' => $reason,
+                    'verification_note' => $rejectionReason,
                 ]);
             }
 

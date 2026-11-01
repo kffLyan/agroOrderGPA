@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Koordinator;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreProductRequest;
-use App\Http\Requests\UpdateProductRequest;
+use App\Http\Requests\SimpanProdukRequest;
+use App\Http\Requests\PerbaruiProdukRequest;
 use App\Models\Product;
 use App\Services\ProductService;
 use Exception;
@@ -13,24 +13,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Controller Manajemen Komoditas Hasil Tani (Produk) untuk Koordinator Lapangan.
- *
- * Tugas Utama:
- * 1. Menampilkan daftar seluruh sayuran/komoditas yang dipasok oleh petani binaan.
- * 2. Menambah komoditas baru ke katalog publik hasil panen.
- * 3. Menyunting informasi harga dasar, satuan, grade, dan foto komoditas.
- * 4. Mengubah status aktif/nonaktif komoditas (menghapus secara aman).
- */
+// Controller pengelolaan data master komoditas panen petani dan katalog publik oleh Koordinator Lapangan
 class ProdukController extends Controller
 {
     public function __construct(
         protected ProductService $productService
     ) {}
 
-    /**
-     * Menampilkan katalog komoditas master hasil panen untuk Koordinator.
-     */
+    // Menampilkan katalog komoditas master beserta ringkasan stok fisik di gudang sentra
     public function index(Request $request): View
     {
         $catalogData = $this->productService->getCatalogData($request);
@@ -38,9 +28,7 @@ class ProdukController extends Controller
         return view('koordinator.produk.index', $catalogData);
     }
 
-    /**
-     * Menampilkan formulir penambahan komoditas baru.
-     */
+    // Menyiapkan formulir pendaftaran komoditas baru dengan rekomendasi kode SKU unik otomatis
     public function create(): View
     {
         $suggestedSku = $this->productService->getSuggestedSku();
@@ -48,10 +36,8 @@ class ProdukController extends Controller
         return view('koordinator.produk.create', compact('suggestedSku'));
     }
 
-    /**
-     * Menyimpan komoditas baru ke database dan katalog publik.
-     */
-    public function store(StoreProductRequest $request): RedirectResponse
+    // Menyimpan komoditas panen baru ke database, mengunggah foto, dan mempublikasikannya ke katalog
+    public function store(SimpanProdukRequest $request): RedirectResponse
     {
         $validatedData = $request->validated();
 
@@ -67,14 +53,12 @@ class ProdukController extends Controller
 
             return redirect()->route('koordinator.produk.index')
                 ->with('success', "Komoditas '{$product->name}' berhasil ditambahkan. Katalog publik otomatis terupdate.");
-        } catch (Exception $e) {
-            return back()->withInput()->with('error', 'Gagal menambahkan komoditas: ' . $e->getMessage());
+        } catch (Exception $exception) {
+            return back()->withInput()->with('error', 'Gagal menambahkan komoditas: ' . $exception->getMessage());
         }
     }
 
-    /**
-     * Menampilkan rincian detail komoditas dan riwayat batch panen.
-     */
+    // Menampilkan detail spesifikasi komoditas, riwayat pasokan batch panen, dan pergerakan stok
     public function show(Product $product): View
     {
         $detailData = $this->productService->getProductDetailData($product);
@@ -82,18 +66,14 @@ class ProdukController extends Controller
         return view('koordinator.produk.show', $detailData);
     }
 
-    /**
-     * Menampilkan formulir penyuntingan komoditas master.
-     */
+    // Menampilkan formulir penyuntingan data komoditas, grade kualitas, dan penetapan harga dasar
     public function edit(Product $product): View
     {
         return view('koordinator.produk.edit', compact('product'));
     }
 
-    /**
-     * Memperbarui data komoditas hasil tani.
-     */
-    public function update(UpdateProductRequest $request, Product $product): RedirectResponse
+    // Memperbarui atribut komoditas, mengganti foto jika ada, dan merekam log audit perubahannya
+    public function update(PerbaruiProdukRequest $request, Product $product): RedirectResponse
     {
         $validatedData = $request->validated();
 
@@ -110,14 +90,12 @@ class ProdukController extends Controller
 
             return redirect()->route('koordinator.produk.index')
                 ->with('success', "Perubahan komoditas '{$product->name}' berhasil disimpan.");
-        } catch (Exception $e) {
-            return back()->withInput()->with('error', 'Gagal memperbarui komoditas: ' . $e->getMessage());
+        } catch (Exception $exception) {
+            return back()->withInput()->with('error', 'Gagal memperbarui komoditas: ' . $exception->getMessage());
         }
     }
 
-    /**
-     * Mengaktifkan atau menonaktifkan status tayang komoditas di katalog.
-     */
+    // Mengubah status tayang komoditas secara instan (aktif/nonaktif) agar tidak bisa dipesan sementara
     public function toggleStatus(Product $product): RedirectResponse
     {
         try {
@@ -126,14 +104,12 @@ class ProdukController extends Controller
             $statusLabel = $updatedProduct->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
             return back()->with('success', "Status komoditas '{$updatedProduct->name}' berhasil {$statusLabel}.");
-        } catch (Exception $e) {
-            return back()->with('error', 'Gagal mengubah status komoditas: ' . $e->getMessage());
+        } catch (Exception $exception) {
+            return back()->with('error', 'Gagal mengubah status komoditas: ' . $exception->getMessage());
         }
     }
 
-    /**
-     * Menghapus komoditas secara aman (soft toggle/nonaktif).
-     */
+    // Menonaktifkan komoditas dari katalog secara aman (soft delete/nonaktif) tanpa menghapus data riwayat
     public function destroy(Product $product): RedirectResponse
     {
         try {
@@ -142,8 +118,8 @@ class ProdukController extends Controller
 
             return redirect()->route('koordinator.produk.index')
                 ->with('success', "Komoditas '{$product->name}' telah dinonaktifkan dari katalog operasional.");
-        } catch (Exception $e) {
-            return back()->with('error', 'Gagal menghapus komoditas: ' . $e->getMessage());
+        } catch (Exception $exception) {
+            return back()->with('error', 'Gagal menghapus komoditas: ' . $exception->getMessage());
         }
     }
 }

@@ -9,6 +9,7 @@ use Illuminate\Contracts\View\View;
 
 class MitraKontrakController extends Controller
 {
+    // Menampilkan daftar mitra pembeli kontrak B2B dan kelompok tani (poktan) binaan koperasi.
     public function __invoke(): View
     {
         $clients = User::where('role', 'KLIEN')

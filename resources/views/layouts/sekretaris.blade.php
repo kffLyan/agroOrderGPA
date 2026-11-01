@@ -29,13 +29,13 @@
 
         $navigation = [
             ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('sekretaris.dashboard'), 'active' => request()->routeIs('sekretaris.dashboard')],
-            ['label' => 'Verifikasi Pesanan', 'icon' => 'shield', 'href' => route('sekretaris.verifikasi'), 'active' => request()->routeIs('sekretaris.verifikasi*', 'sekretaris.verification*')],
-            ['label' => 'Stok & Inventori', 'icon' => 'package', 'href' => route('sekretaris.stok'), 'active' => request()->routeIs('sekretaris.stok*', 'sekretaris.inventory*')],
-            ['label' => 'Surat Jalan & Armada', 'icon' => 'truck', 'href' => route('sekretaris.surat-jalan'), 'active' => request()->routeIs('sekretaris.surat-jalan*', 'sekretaris.dispatch*')],
-            ['label' => 'Monitoring Bukti Kirim (PoD)', 'icon' => 'check-circle', 'href' => route('sekretaris.monitoring-pod'), 'active' => request()->routeIs('sekretaris.monitoring-pod*', 'sekretaris.pod*')],
-            ['label' => 'Faktur & Tagihan', 'icon' => 'invoice', 'href' => route('sekretaris.faktur'), 'active' => request()->routeIs('sekretaris.faktur*', 'sekretaris.invoices*')],
-            ['label' => 'Verifikasi Pembayaran', 'icon' => 'banknote', 'href' => route('sekretaris.pembayaran'), 'active' => request()->routeIs('sekretaris.pembayaran*', 'sekretaris.payments*')],
-            ['label' => 'Rekap Laporan', 'icon' => 'chart', 'href' => route('sekretaris.laporan'), 'active' => request()->routeIs('sekretaris.laporan*', 'sekretaris.reports*')],
+            ['label' => 'Verifikasi Pesanan', 'icon' => 'shield', 'href' => route('sekretaris.verifikasi'), 'active' => request()->routeIs('sekretaris.verifikasi*')],
+            ['label' => 'Stok & Inventori', 'icon' => 'package', 'href' => route('sekretaris.stok'), 'active' => request()->routeIs('sekretaris.stok*')],
+            ['label' => 'Surat Jalan & Armada', 'icon' => 'truck', 'href' => route('sekretaris.surat-jalan'), 'active' => request()->routeIs('sekretaris.surat-jalan*')],
+            ['label' => 'Monitoring Bukti Kirim (PoD)', 'icon' => 'check-circle', 'href' => route('sekretaris.monitoring-pod'), 'active' => request()->routeIs('sekretaris.monitoring-pod*')],
+            ['label' => 'Faktur & Tagihan', 'icon' => 'invoice', 'href' => route('sekretaris.faktur'), 'active' => request()->routeIs('sekretaris.faktur*')],
+            ['label' => 'Verifikasi Pembayaran', 'icon' => 'banknote', 'href' => route('sekretaris.pembayaran'), 'active' => request()->routeIs('sekretaris.pembayaran*')],
+            ['label' => 'Rekap Laporan', 'icon' => 'chart', 'href' => route('sekretaris.laporan'), 'active' => request()->routeIs('sekretaris.laporan*')],
         ];
     @endphp
 

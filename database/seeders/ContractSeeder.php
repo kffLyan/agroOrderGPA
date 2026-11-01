@@ -7,9 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class ContractSeeder extends Seeder
 {
-    /**
-     * Seed B2B partnership contracts.
-     */
+    // Menyiapkan kontrak kemitraan B2B dengan komitmen kuota pasokan dan kesepakatan harga grosir tetap
     public function run(): void
     {
         DB::table('contracts')->truncate();

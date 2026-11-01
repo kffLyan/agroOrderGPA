@@ -17,6 +17,7 @@ class ClientOtpController extends Controller
 
     private const TTL_MINUTES = 5;
 
+    // Mengirimkan kode OTP verifikasi registrasi melalui WhatsApp atau email sesuai preferensi klien.
     public function send(Request $request): JsonResponse
     {
         if ($request->filled('email')) {
@@ -36,6 +37,7 @@ class ClientOtpController extends Controller
         return $this->sentResponse($phone, $code, 'Kode OTP telah dikirim ke WhatsApp Anda.');
     }
 
+    // Mengirimkan 6-digit kode OTP verifikasi kepemilikan email pendaftaran klien.
     public function sendEmailOtp(Request $request): JsonResponse
     {
         $emailRule = app()->environment('testing') ? 'email:rfc' : 'email:rfc,dns';
@@ -60,8 +62,8 @@ class ClientOtpController extends Controller
 
         try {
             Mail::to($email)->send(new RegistrationOtpMail($code, $email));
-        } catch (\Throwable $e) {
-            report($e);
+        } catch (\Throwable $exception) {
+            report($exception);
             if (! app()->environment(['local', 'testing'])) {
                 throw ValidationException::withMessages([
                     'email' => 'Gagal mengirim email verifikasi. Pastikan koneksi atau alamat email benar.',
@@ -77,11 +79,13 @@ class ClientOtpController extends Controller
         ]);
     }
 
+    // Mengirimkan ulang kode OTP verifikasi aktif ke kontak klien.
     public function resend(Request $request): JsonResponse
     {
         return $this->send($request);
     }
 
+    // Memvalidasi kesesuaian kode OTP 6-digit WhatsApp yang diinput dengan token sesi.
     public function verify(Request $request): JsonResponse
     {
         if ($request->filled('email')) {
@@ -129,6 +133,7 @@ class ClientOtpController extends Controller
         ]);
     }
 
+    // Memvalidasi kesesuaian kode OTP 6-digit email pendaftaran dengan token sesi aktif.
     public function verifyEmailOtp(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -174,6 +179,7 @@ class ClientOtpController extends Controller
         ]);
     }
 
+    // Melakukan normalisasi nomor telepon seluler ke format internasional E.164 (+62).
     private function normalizePhone(?string $raw): ?string
     {
         if ($raw === null) {
@@ -191,6 +197,7 @@ class ClientOtpController extends Controller
         return strlen($digits) >= 10 ? '+' . $digits : null;
     }
 
+    // Memvalidasi dan memastikan format nomor WhatsApp terisi dengan benar.
     private function validatedPhone(Request $request): string
     {
         $request->validate([

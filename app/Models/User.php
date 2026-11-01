@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Models\Concerns\HasCreditProfile;
+use App\Models\Concerns\PresentsUserProfile;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,16 +14,10 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
-    use \App\Models\Concerns\PresentsUserProfile;
-    use \App\Models\Concerns\HasCreditProfile;
+    // Trait factory dan notifikasi untuk autentikasi serta pengujian model User
+    use HasCreditProfile, HasFactory, Notifiable, PresentsUserProfile;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
+    // Atribut kolom yang dapat diisi secara mass-assignment
     protected $fillable = [
         'name',
         'email',
@@ -37,21 +33,13 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
+    // Atribut data tersembunyi saat model diserialisasi ke array atau JSON
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
+    // Konversi tipe data atribut model pengguna
     protected function casts(): array
     {
         return [
@@ -61,11 +49,7 @@ class User extends Authenticatable implements MustVerifyEmail
         ];
     }
 
-    /**
-     * The accessors to append to the model's array form.
-     *
-     * @var list<string>
-     */
+    // Atribut accessor dinamis yang otomatis dilampirkan pada representasi array model
     protected $appends = [
         'role_key',
         'badge',
@@ -75,22 +59,26 @@ class User extends Authenticatable implements MustVerifyEmail
         'nik',
     ];
 
+    // Memeriksa apakah pengguna memiliki salah satu dari peran wewenang yang ditentukan
     public function hasRole(string|UserRole ...$roles): bool
     {
-        $roleStrings = array_map(fn($r) => $r instanceof UserRole ? $r->value : $r, $roles);
+        $roleStrings = array_map(fn($role) => $role instanceof UserRole ? $role->value : $role, $roles);
         return in_array($this->role, $roleStrings, true);
     }
 
+    // Relasi ke seluruh transaksi pemesanan yang dibuat oleh pengguna
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class);
     }
 
+    // Relasi ke kontrak perjanjian kerja sama (PKS) komoditas B2B
     public function contracts(): HasMany
     {
         return $this->hasMany(Contract::class);
     }
 
+    // Relasi ke dokumen faktur penagihan yang diterbitkan untuk pengguna
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);

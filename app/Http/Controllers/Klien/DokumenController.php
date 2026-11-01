@@ -9,19 +9,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-/**
- * Controller Pusat Dokumen & Faktur Tagihan Konsolidasi Klien.
- *
- * Penjelasan UKK:
- * Modul ini menjadi arsip dokumen penagihan bagi klien B2B, menampilkan
- * faktur gabungan per periode, status jatuh tempo (Term of Payment),
- * rekapitulasi pembayaran lunas, cetak rekap resmi, dan ekspor CSV.
- */
+// Controller pusat dokumen dan faktur tagihan untuk Klien
 class DokumenController extends Controller
 {
-    /**
-     * Menampilkan pusat dokumen, faktur konsolidasi, dan rekap tagihan tempo.
-     */
+    // Menampilkan pusat berkas faktur tagihan konsolidasi, status tempo pembayaran, dan sisa pagu kredit
     public function index(Request $request)
     {
         $userId = Auth::guard('web')->id();
@@ -32,15 +23,15 @@ class DokumenController extends Controller
             ->orderBy('due_date', 'desc')
             ->get();
 
-        // Hitung total metrik tagihan di controller sesuai arsitektur MVC
+        // Menghitung akumulasi nominal tagihan belum bayar dan tagihan yang telah disahkan lunas
         $unpaidAmount = (float) $rawInvoices->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])->sum('grand_total');
         $settledAmount = (float) $rawInvoices->where('status', 'PAID')->sum('grand_total');
 
         $activeContracts = Contract::where('user_id', $userId)
             ->where('status', 'ACTIVE')
             ->get();
-        $creditLimit = (float) $activeContracts->sum(function ($c) {
-            return (float) (($c->fixed_price_per_kg ?: 0) * ($c->committed_volume_per_cycle ?: 0) * 2);
+        $creditLimit = (float) $activeContracts->sum(function ($contract) {
+            return (float) (($contract->fixed_price_per_kg ?: 0) * ($contract->committed_volume_per_cycle ?: 0) * 2);
         });
         if ($creditLimit <= 0) {
             $creditLimit = 150000000.0;
@@ -57,9 +48,7 @@ class DokumenController extends Controller
         ));
     }
 
-    /**
-     * Tampilan Siap Cetak Dokumen Rekapitulasi Faktur & Tagihan Resmi (.PDF / Print View).
-     */
+    // Menyiapkan lembar cetak dokumen rekapitulasi faktur dan status piutang resmi untuk pembukuan klien
     public function printRekap(Request $request)
     {
         $userId = Auth::guard('web')->id();
@@ -70,9 +59,9 @@ class DokumenController extends Controller
             ->orderBy('due_date', 'desc')
             ->get();
 
-        $totalNetto = (float) $invoices->sum(function ($inv) {
-            return $inv->orders->sum(function ($o) {
-                return $o->orderItems->sum('ordered_qty');
+        $totalNetto = (float) $invoices->sum(function ($invoice) {
+            return $invoice->orders->sum(function ($order) {
+                return $order->orderItems->sum('ordered_qty');
             });
         });
 
@@ -95,9 +84,7 @@ class DokumenController extends Controller
         ));
     }
 
-    /**
-     * Unduh Rekap Faktur Konsolidasi Klien B2B (.CSV / Excel).
-     */
+    // Mengekspor daftar faktur tagihan konsolidasi ke berkas spreadsheet CSV untuk kebutuhan rekonsiliasi keuangan
     public function exportCsv(Request $request): StreamedResponse
     {
         $userId = Auth::guard('web')->id();
@@ -134,30 +121,30 @@ class DokumenController extends Controller
                 'Status Pembayaran',
             ]);
 
-            $no = 1;
-            foreach ($invoices as $inv) {
-                $totalNetto = (float) $inv->orders->sum(function ($o) {
-                    return $o->orderItems->sum('ordered_qty');
+            $rowNumber = 1;
+            foreach ($invoices as $invoice) {
+                $totalNetto = (float) $invoice->orders->sum(function ($order) {
+                    return $order->orderItems->sum('ordered_qty');
                 });
 
-                $periodLabel = ($inv->period_start ? $inv->period_start->format('d/m/Y') : '-') . ' - ' . ($inv->period_end ? $inv->period_end->format('d/m/Y') : '-');
-                $statusLabel = match ($inv->status) {
+                $periodLabel = ($invoice->period_start ? $invoice->period_start->format('d/m/Y') : '-') . ' - ' . ($invoice->period_end ? $invoice->period_end->format('d/m/Y') : '-');
+                $statusLabel = match ($invoice->status) {
                     'PAID'    => 'Lunas Terverifikasi',
                     'UNPAID'  => 'Menunggu Pembayaran (Tempo)',
                     'PARTIAL' => 'Dibayar Sebagian',
                     'OVERDUE' => 'Melewati Jatuh Tempo',
-                    default   => $inv->status,
+                    default   => $invoice->status,
                 };
 
                 fputcsv($handle, [
-                    $no++,
-                    $inv->invoice_number,
-                    $inv->created_at ? $inv->created_at->format('d/m/Y') : '-',
+                    $rowNumber++,
+                    $invoice->invoice_number,
+                    $invoice->created_at ? $invoice->created_at->format('d/m/Y') : '-',
                     $periodLabel,
-                    $inv->orders->count(),
+                    $invoice->orders->count(),
                     number_format($totalNetto, 1, '.', ''),
-                    (float) $inv->grand_total,
-                    $inv->due_date ? $inv->due_date->format('d/m/Y') : 'Tempo 30 Hari',
+                    (float) $invoice->grand_total,
+                    $invoice->due_date ? $invoice->due_date->format('d/m/Y') : 'Tempo 30 Hari',
                     $statusLabel,
                 ]);
             }

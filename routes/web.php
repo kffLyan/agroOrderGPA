@@ -46,11 +46,11 @@ use App\Http\Controllers\Armada\SuratJalanArmadaController as ArmadaSuratJalanCo
 use App\Http\Controllers\Armada\TugasController as ArmadaTugasController;
 
 // 6. Controller Cetak Resmi & Profil
-use App\Http\Controllers\Prints\ReturnActController;
-use App\Http\Controllers\Prints\SecretaryInvoiceController as PrintsSecretaryInvoiceController;
-use App\Http\Controllers\Prints\SuratJalanController as PrintsSuratJalanController;
-use App\Http\Controllers\Prints\ReportPrintController;
-use App\Http\Controllers\Prints\ThermalReceiptController;
+use App\Http\Controllers\Prints\PrintBeritaAcaraReturController;
+use App\Http\Controllers\Prints\PrintFakturController;
+use App\Http\Controllers\Prints\PrintLaporanController;
+use App\Http\Controllers\Prints\PrintStrukThermalController;
+use App\Http\Controllers\Prints\PrintSuratJalanController;
 use App\Http\Controllers\ProfileController;
 
 // 7. Controller Halaman Publik
@@ -64,11 +64,7 @@ use App\Http\Controllers\Public\SupplyChainController as PublicSupplyChainContro
 
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Rute Publik (Tanpa Otentikasi)
-|--------------------------------------------------------------------------
-*/
+// Rute portal publik tanpa otentikasi (landing page, profil perusahaan, katalog publik, dan kontak)
 Route::get('/', PublicHomeController::class)->name('public.home');
 Route::get('/beranda', PublicHomeController::class)->name('public.home.beranda');
 Route::get('/tentang-gpa', PublicAboutController::class)->name('public.about');
@@ -78,7 +74,6 @@ Route::get('/katalog-publik', PublicCatalogController::class)->name('public.cata
 Route::get('/galeri', PublicGalleryController::class)->name('public.gallery');
 Route::get('/kontak', PublicKontakController::class)->name('public.kontak');
 Route::get('/loading', fn() => view('loading'))->name('loading');
-Route::get('/notifikasi', fn() => view('demo-notifikasi'))->name('notifikasi.demo');
 
 // Rute pengujian seluruh halaman error HTTP
 Route::get('/errors/{code}', function ($code) {
@@ -102,11 +97,7 @@ Route::middleware('guest')->group(function () {
 });
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout')->middleware('auth');
 
-/*
-|--------------------------------------------------------------------------
-| 1. ROLE KLIEN (Pelanggan Reguler & Mitra B2B)
-|--------------------------------------------------------------------------
-*/
+// Modul operasional klien untuk katalog, checkout PO, riwayat pesanan, dokumen faktur, dan bukti transfer
 Route::middleware(['auth', 'verified', 'role:KLIEN'])->prefix('klien')->name('klien.')->group(function () {
     // Dasbor Operasional Klien
     Route::get('/dashboard', [KlienDashboardController::class, 'index'])->name('dashboard');
@@ -138,11 +129,7 @@ Route::middleware(['auth', 'verified', 'role:KLIEN'])->prefix('klien')->name('kl
     Route::post('/pengajuan-kontrak', [KlienPengajuanKontrakController::class, 'store'])->name('pengajuan-kontrak');
 });
 
-/*
-|--------------------------------------------------------------------------
-| 2. ROLE SEKRETARIS (Administrasi Operasional & Keuangan)
-|--------------------------------------------------------------------------
-*/
+// Modul sekretariat operasional untuk verifikasi PO, surat jalan, faktur konsolidasi, dan audit pembayaran
 Route::middleware(['auth', 'role:SEKRETARIS'])->prefix('sekretaris')->name('sekretaris.')->group(function () {
     // 1. Dasbor Operasional & Administrasi
     Route::get('/dashboard', [SekretarisDashboardController::class, 'index'])->name('dashboard');
@@ -152,7 +139,7 @@ Route::middleware(['auth', 'role:SEKRETARIS'])->prefix('sekretaris')->name('sekr
     Route::post('/verifikasi/{order}/setujui', [SekretarisVerifikasiPesananController::class, 'approve'])->name('verifikasi.setujui');
     Route::post('/verifikasi/{order}/tolak', [SekretarisVerifikasiPesananController::class, 'reject'])->name('verifikasi.tolak');
 
-    // 3. Kesiapan Buffer Stock & Monitoring Stok Gudang
+    // 3. Kesiapan Buffer Stok & Monitoring Stok Gudang
     Route::get('/stok', [SekretarisStokGudangController::class, 'index'])->name('stok');
 
     // 4. Surat Jalan & Dispatch Armada Logistik
@@ -188,11 +175,7 @@ Route::middleware(['auth', 'role:SEKRETARIS,DIREKTUR'])->group(function () {
     Route::post('/pesanan-manual', [SekretarisPesananManualController::class, 'store']);
 });
 
-/*
-|--------------------------------------------------------------------------
-| 3. ROLE KOORDINATOR LAPANGAN (Supply & Inventory Management)
-|--------------------------------------------------------------------------
-*/
+// Modul koordinator lapangan untuk inventaris komoditas, intake batch panen, dan neraca fisik gudang
 Route::middleware(['auth', 'role:KOORDINATOR'])->prefix('koordinator')->name('koordinator.')->group(function () {
     // 1. Dashboard Operasional Pasokan & Persediaan
     Route::get('/dashboard', [KoordinatorDashboardController::class, 'index'])->name('dashboard');
@@ -214,11 +197,7 @@ Route::middleware(['auth', 'role:KOORDINATOR'])->prefix('koordinator')->name('ko
     Route::post('/stok', [KoordinatorStokController::class, 'storeBatch'])->name('stok.store');
 });
 
-/*
-|--------------------------------------------------------------------------
-| 4. ROLE ARMADA LOGISTIK / SUPIR
-|--------------------------------------------------------------------------
-*/
+// Modul armada logistik untuk tugas pengantaran, rute surat jalan, dan unggah bukti serah terima PoD
 Route::middleware(['auth', 'role:ARMADA'])->prefix('armada')->name('armada.')->group(function () {
     // 1. Daftar Tugas Harian & Antrean Titik Pengantaran
     Route::get('/dashboard', [ArmadaTugasController::class, 'index'])->name('dashboard');
@@ -237,11 +216,7 @@ Route::middleware(['auth', 'role:ARMADA'])->prefix('armada')->name('armada.')->g
     Route::post('/status-kendaraan/tutup-shift', [ArmadaStatusKendaraanController::class, 'closeShift'])->name('status-kendaraan.tutup-shift');
 });
 
-/*
-|--------------------------------------------------------------------------
-| 5. ROLE DIREKTUR / OWNER (Eksekutif & Tata Kelola)
-|--------------------------------------------------------------------------
-*/
+// Modul eksekutif Direktur Utama untuk analitika omzet, otorisasi margin kontrak, audit trail, dan tata kelola
 Route::middleware(['auth', 'role:DIREKTUR'])->prefix('direktur')->name('direktur.')->group(function () {
     // 1. Dasbor Eksekutif & Monitoring Bisnis
     Route::get('/dashboard', [DirekturDashboardController::class, 'index'])->name('dashboard');
@@ -314,24 +289,20 @@ Route::middleware(['auth', 'role:DIREKTUR'])->prefix('direktur')->name('direktur
     Route::get('/inspeksi-pesanan/{order}', [DirekturInspeksiPesananController::class, 'show'])->name('inspeksi-pesanan.show');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Profil Pengguna & Dokumen Cetak Format Resmi A4
-|--------------------------------------------------------------------------
-*/
+// Modul profil akun pengguna dan pencetakan dokumen resmi format standar A4
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Dokumen Cetak Format Resmi A4
-    Route::get('/cetak/surat-jalan', PrintsSuratJalanController::class)->name('prints.surat-jalan');
-    Route::get('/cetak/faktur/{invoice}', PrintsSecretaryInvoiceController::class)->name('prints.invoice');
-    Route::get('/cetak/struk/{invoice}', ThermalReceiptController::class)->name('prints.thermal-receipt');
-    Route::get('/cetak/berita-acara-retur', ReturnActController::class)->name('prints.return-act');
+    Route::get('/cetak/surat-jalan', PrintSuratJalanController::class)->name('prints.surat-jalan');
+    Route::get('/cetak/faktur/{invoice}', PrintFakturController::class)->name('prints.invoice');
+    Route::get('/cetak/struk/{invoice}', PrintStrukThermalController::class)->name('prints.thermal-receipt');
+    Route::get('/cetak/berita-acara-retur', PrintBeritaAcaraReturController::class)->name('prints.return-act');
 
     // Laporan rekap eksekutif hanya boleh diakses Direktur & Sekretaris
-    Route::get('/cetak/laporan-eksekutif', ReportPrintController::class)
+    Route::get('/cetak/laporan-eksekutif', PrintLaporanController::class)
         ->middleware('role:DIREKTUR,SEKRETARIS')
         ->name('prints.report');
 });

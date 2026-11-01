@@ -209,7 +209,7 @@ export default function directorReceivables(rows = [], policy = {}, verification
             window.location.href = '/sekretaris/verifikasi';
         },
         openBypassLog() {
-            window.location.href = '/direktur/governance';
+            window.location.href = '/direktur/tata-kelola';
         },
         filterTopOnly() {
             const cycle = ['all', '14', '30', '45'];

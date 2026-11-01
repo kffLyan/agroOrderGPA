@@ -22,7 +22,8 @@
 
         <div class="bg-white p-6 rounded shadow-sm text-xs">
             <h1 class="text-base font-bold text-gray-900 border-b pb-2 mb-4">Tambah Akun Pengguna Baru</h1>
-            <form action="{{ route('direktur.users.store') }}" method="POST" class="space-y-3.5">
+            <form action="{{ route('direktur.users.store') }}" method="POST" class="space-y-3.5"
+                x-data="{ role: '{{ old('role', '') }}' }">
                 @csrf
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -45,7 +46,9 @@
 
                     <div>
                         <label class="block font-bold text-gray-700 mb-1">Wewenang Peran *</label>
-                        <select name="role" id="role_select" required class="w-full text-xs border-gray-300 rounded focus:ring-[#153a01]">
+                        <select name="role" id="role_select" required x-model="role"
+                            @change="if (role !== 'KLIEN') { $refs.clientType.value = ''; }"
+                            class="w-full text-xs border-gray-300 rounded focus:ring-[#153a01]">
                             <option value="">-- Pilih Peran --</option>
                             <option value="DIREKTUR" {{ old('role') === 'DIREKTUR' ? 'selected' : '' }}>DIREKTUR</option>
                             <option value="SEKRETARIS" {{ old('role') === 'SEKRETARIS' ? 'selected' : '' }}>SEKRETARIS</option>
@@ -72,11 +75,20 @@
 
                     <div>
                         <label class="block font-bold text-gray-700 mb-1">Jenis Klien (Khusus Role KLIEN)</label>
-                        <select name="client_type" class="w-full text-xs border-gray-300 rounded focus:ring-[#153a01]">
-                            <option value="">-- Bukan Klien / Opsional --</option>
+                        <select name="client_type" id="client_type_select" x-ref="clientType"
+                            :disabled="role !== 'KLIEN'"
+                            :class="role !== 'KLIEN' ? 'opacity-50 cursor-not-allowed bg-gray-100 text-gray-400' : 'bg-white text-gray-900'"
+                            class="w-full text-xs border-gray-300 rounded focus:ring-[#153a01] transition-all">
+                            <option value="">-- Bukan Klien / Nonaktif --</option>
                             <option value="REGULER" {{ old('client_type') === 'REGULER' ? 'selected' : '' }}>REGULER</option>
                             <option value="B2B_KONTRAK" {{ old('client_type') === 'B2B_KONTRAK' ? 'selected' : '' }}>B2B_KONTRAK</option>
                         </select>
+                        <p x-show="role !== 'KLIEN'" class="text-[10px] text-gray-500 mt-1 italic">
+                            Jenis klien dinonaktifkan otomatis karena peran bukan Klien.
+                        </p>
+                        <p x-show="role === 'KLIEN'" class="text-[10px] text-emerald-600 mt-1 font-semibold">
+                            Silakan tentukan kemitraan untuk akun Klien (Reguler / B2B Kontrak).
+                        </p>
                     </div>
                 </div>
 
@@ -97,4 +109,23 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const roleEl = document.getElementById('role_select');
+            const clientTypeEl = document.getElementById('client_type_select');
+            if (!roleEl || !clientTypeEl) return;
+
+            function syncClientType() {
+                const isClient = roleEl.value === 'KLIEN';
+                clientTypeEl.disabled = !isClient;
+                if (!isClient) {
+                    clientTypeEl.value = '';
+                }
+            }
+
+            roleEl.addEventListener('change', syncClientType);
+            syncClientType();
+        });
+    </script>
 </x-dynamic-component>

@@ -11,18 +11,18 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 
+// Controller eksekutif untuk memantau performa bisnis, omzet, piutang, dan SLA koperasi
 class DashboardController extends Controller
 {
-    /**
-     * Menampilkan Dasbor Eksekutif Monitoring Bisnis & Otorisasi Direktur
-     */
+    // Mempersiapkan metrik kinerja utama eksekutif (omzet, tonase panen, AR aging, dan tren mingguan)
     public function index(Request $request): View
     {
         $user = Auth::user();
 
-        // 1. Akumulasi Omzet dari pesanan sah
+        // 1. Akumulasi total omzet dari pesanan sah (tidak termasuk pesanan batal atau draf)
         $totalRevenue = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS'])
             ->sum('grand_total');
 
@@ -32,9 +32,9 @@ class DashboardController extends Controller
         $paidRevenue = (float) Invoice::where('status', 'PAID')->sum('grand_total');
         $paidRatio = $totalRevenue > 0 ? round(($paidRevenue / $totalRevenue) * 100, 1) : 0;
 
-        // 2. Volume Komoditas (Tera Sah Metrologi)
-        $totalTonnageKg = (float) OrderItem::whereHas('order', function ($q) {
-            $q->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS']);
+        // 2. Perbandingan volume panen antara pasokan petani binaan vs stok penyangga (buffer luar)
+        $totalTonnageKg = (float) OrderItem::whereHas('order', function ($query) {
+            $query->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS']);
         })->sum('ordered_qty');
 
         $binaanKg = (float) HarvestBatch::where('source_type', 'PETANI_BINAAN')->sum('initial_quantity');
@@ -43,35 +43,47 @@ class DashboardController extends Controller
         $binaanPercent = $totalHarvestKg > 0 ? round(($binaanKg / $totalHarvestKg) * 100) : 0;
         $bufferPercent = $totalHarvestKg > 0 ? (100 - $binaanPercent) : 0;
 
-        // 3. Piutang Terbuka (Faktur UNPAID & OVERDUE)
+        // 3. Rekapitulasi piutang terbuka dan klasifikasi faktur yang mendekati jatuh tempo
         $openInvoices = Invoice::whereIn('status', ['UNPAID', 'OVERDUE'])->get();
         $totalReceivables = (float) $openInvoices->sum('grand_total');
 
-        $nearDueInvoices = $openInvoices->filter(function ($inv) {
-            if (!$inv->due_date) return false;
-            $diff = now()->diffInDays($inv->due_date, false);
-            return $diff >= 0 && $diff <= 7;
+        $today = now()->startOfDay();
+        $nearDueInvoices = $openInvoices->filter(function ($invoice) use ($today) {
+            if (!$invoice->due_date) return false;
+            $dueDate = Carbon::parse($invoice->due_date)->startOfDay();
+            $diffDays = (int) round($today->diffInDays($dueDate, false));
+            return $diffDays >= 0 && $diffDays <= 7;
         });
         $nearDueCount = $nearDueInvoices->count();
         $nearDueAmount = (float) $nearDueInvoices->sum('grand_total');
         $activeContractsCount = Contract::where('status', 'ACTIVE')->count();
 
-        // AR Aging Brackets
-        $bucket0_15 = (float) $openInvoices->filter(fn ($i) => !$i->due_date || now()->diffInDays($i->due_date, false) >= 0)->sum('grand_total');
-        $bucket16_30 = (float) $openInvoices->filter(function ($i) {
-            if (!$i->due_date) return false;
-            $d = now()->diffInDays($i->due_date, false);
-            return $d >= -15 && $d < 0;
+        // Pengelompokan umur piutang (AR Aging) untuk memantau risiko keterlambatan pembayaran
+        $bucket0_15 = (float) $openInvoices->filter(function ($invoice) use ($today) {
+            if (!$invoice->due_date) return true;
+            $dueDate = Carbon::parse($invoice->due_date)->startOfDay();
+            return (int) round($today->diffInDays($dueDate, false)) >= 0;
         })->sum('grand_total');
-        $bucket31_45 = (float) $openInvoices->filter(function ($i) {
-            if (!$i->due_date) return false;
-            $d = now()->diffInDays($i->due_date, false);
-            return $d >= -30 && $d < -15;
+
+        $bucket16_30 = (float) $openInvoices->filter(function ($invoice) use ($today) {
+            if (!$invoice->due_date) return false;
+            $dueDate = Carbon::parse($invoice->due_date)->startOfDay();
+            $diffDays = (int) round($today->diffInDays($dueDate, false));
+            return $diffDays >= -15 && $diffDays < 0;
         })->sum('grand_total');
-        $bucketOver45 = (float) $openInvoices->filter(function ($i) {
-            if (!$i->due_date) return false;
-            $d = now()->diffInDays($i->due_date, false);
-            return $d < -30;
+
+        $bucket31_45 = (float) $openInvoices->filter(function ($invoice) use ($today) {
+            if (!$invoice->due_date) return false;
+            $dueDate = Carbon::parse($invoice->due_date)->startOfDay();
+            $diffDays = (int) round($today->diffInDays($dueDate, false));
+            return $diffDays >= -30 && $diffDays < -15;
+        })->sum('grand_total');
+
+        $bucketOver45 = (float) $openInvoices->filter(function ($invoice) use ($today) {
+            if (!$invoice->due_date) return false;
+            $dueDate = Carbon::parse($invoice->due_date)->startOfDay();
+            $diffDays = (int) round($today->diffInDays($dueDate, false));
+            return $diffDays < -30;
         })->sum('grand_total');
 
         $worstOverdueInvoice = Invoice::where('status', 'OVERDUE')
@@ -79,65 +91,67 @@ class DashboardController extends Controller
             ->orderBy('due_date', 'asc')
             ->first();
 
-        // 4. SLA Pengiriman
+        // 4. Tingkat kepatuhan SLA pengiriman (persentase pesanan selesai mulus tanpa retur)
         $totalDelivered = Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count();
         $returnCount = Order::where('status', 'SELESAI_CATATAN')->count();
         $slaPercent = $totalDelivered > 0 ? round((($totalDelivered - $returnCount) / $totalDelivered) * 100, 1) : 100.0;
 
-        // 5. Otorisasi Kontrak Tier-1
+        // 5. Total nilai komitmen finansial dari draf kontrak kemitraan yang mengantre persetujuan
         $pendingContracts = Contract::whereIn('status', ['PENDING', 'PENDING_APPROVAL'])->with(['user', 'product'])->get();
         $pendingCount = $pendingContracts->count();
         $pendingValue = 0;
-        foreach ($pendingContracts as $c) {
-            $pendingValue += (float) (($c->committed_volume_per_cycle ?? $c->volume_kg ?? 0) * ($c->fixed_price_per_kg ?? $c->price_per_kg ?? 0));
+        foreach ($pendingContracts as $contract) {
+            $volume = $contract->committed_volume_per_cycle ?? $contract->volume_kg ?? 0;
+            $price = $contract->fixed_price_per_kg ?? $contract->price_per_kg ?? 0;
+            $pendingValue += (float) ($volume * $price);
         }
 
-        // 6. Tren Mingguan Realistis
-        $now = now();
+        // 6. Tren mingguan omzet aktual dan realisasi panen selama 5 pekan terakhir
+        $currentDate = now();
         $weeklyTrends = [];
-        for ($w = -4; $w <= 0; $w++) {
-            $wDate = (clone $now)->addWeeks($w);
-            $wStart = (clone $wDate)->startOfWeek();
-            $wEnd = (clone $wDate)->endOfWeek();
-            $wLabel = 'W' . $wStart->format('W');
-            $wRev = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS'])
-                ->whereBetween('created_at', [$wStart, $wEnd])
+        for ($weekOffset = -4; $weekOffset <= 0; $weekOffset++) {
+            $targetWeekDate = (clone $currentDate)->addWeeks($weekOffset);
+            $weekStart = (clone $targetWeekDate)->startOfWeek();
+            $weekEnd = (clone $targetWeekDate)->endOfWeek();
+            $weekLabel = 'W' . $weekStart->format('W');
+            $weeklyRevenue = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS'])
+                ->whereBetween('created_at', [$weekStart, $weekEnd])
                 ->sum('grand_total');
-            $wHarvestKg = (float) HarvestBatch::whereBetween('batch_date', [$wStart->toDateString(), $wEnd->toDateString()])->sum('initial_quantity');
-            $wHarvestTon = round($wHarvestKg / 1000, 1);
-            $targetW = 120000000;
-            $pct = $targetW > 0 ? round(($wRev / $targetW) * 100, 1) : 0;
+            $weeklyHarvestKg = (float) HarvestBatch::whereBetween('batch_date', [$weekStart->toDateString(), $weekEnd->toDateString()])->sum('initial_quantity');
+            $weeklyHarvestTon = round($weeklyHarvestKg / 1000, 1);
+            $weeklyTarget = 120000000;
+            $percentReached = $weeklyTarget > 0 ? round(($weeklyRevenue / $weeklyTarget) * 100, 1) : 0;
             $weeklyTrends[] = [
-                'week'        => $wLabel,
-                'revenue'     => $wRev,
-                'target'      => $targetW,
-                'harvest_ton' => $wHarvestTon,
-                'pct'         => $pct,
-                'is_running'  => $w === 0,
+                'week'        => $weekLabel,
+                'revenue'     => $weeklyRevenue,
+                'target'      => $weeklyTarget,
+                'harvest_ton' => $weeklyHarvestTon,
+                'pct'         => $percentReached,
+                'is_running'  => $weekOffset === 0,
             ];
         }
 
-        // 7. 5 Komoditas Teratas
+        // 7. Ambil 5 komoditas unggulan teratas berdasarkan total volume kuantitas terjual
         $topProducts = Product::take(5)->withSum('orderItems', 'ordered_qty')->get();
         $totalKgAll = $totalTonnageKg ?: 1;
         $topProductsData = [];
-        $palette = ['bg-ink', 'bg-brand', 'bg-success', 'bg-accent-deep', 'bg-accent-edge'];
-        foreach ($topProducts as $idx => $p) {
-            $volKg = (float) ($p->order_items_sum_ordered_qty ?? 0);
-            $volTon = round($volKg / 1000, 2);
-            $share = round(($volKg / $totalKgAll) * 100);
+        $colorPalette = ['bg-ink', 'bg-brand', 'bg-success', 'bg-accent-deep', 'bg-accent-edge'];
+        foreach ($topProducts as $index => $product) {
+            $volumeKg = (float) ($product->order_items_sum_ordered_qty ?? 0);
+            $volumeTon = round($volumeKg / 1000, 2);
+            $marketShare = round(($volumeKg / $totalKgAll) * 100);
             $topProductsData[] = [
-                'name'    => $p->name,
-                'ton'     => $volTon,
-                'share'   => $share,
-                'color'   => $palette[$idx % count($palette)],
+                'name'    => $product->name,
+                'ton'     => $volumeTon,
+                'share'   => $marketShare,
+                'color'   => $colorPalette[$index % count($colorPalette)],
             ];
         }
 
-        // 8. Saluran Penjualan
-        $horecaKg = (float) OrderItem::whereHas('order.user', fn ($q) => $q->where('client_type', 'B2B_KONTRAK'))->sum('ordered_qty');
-        $retailKg = (float) OrderItem::whereHas('order.user', fn ($q) => $q->where('client_type', 'REGULER'))->sum('ordered_qty');
-        $manualKg = (float) OrderItem::whereHas('order', fn ($q) => $q->where('order_source', 'MANUAL_SEKRETARIS'))->sum('ordered_qty');
+        // 8. Distribusi tonase penjualan menurut saluran distribusi (B2B Kontrak, Reguler, dan Manual)
+        $horecaKg = (float) OrderItem::whereHas('order.user', fn ($query) => $query->where('client_type', 'B2B_KONTRAK'))->sum('ordered_qty');
+        $retailKg = (float) OrderItem::whereHas('order.user', fn ($query) => $query->where('client_type', 'REGULER'))->sum('ordered_qty');
+        $manualKg = (float) OrderItem::whereHas('order', fn ($query) => $query->where('order_source', 'MANUAL_SEKRETARIS'))->sum('ordered_qty');
 
         $channelData = [
             'horeca' => [
@@ -153,10 +167,10 @@ class DashboardController extends Controller
                 'ton'   => round($manualKg / 1000, 2),
             ],
         ];
-        $totChanTon = $channelData['horeca']['ton'] + $channelData['retail']['ton'] + $channelData['manual']['ton'];
-        if ($totChanTon > 0) {
-            $channelData['horeca']['share'] = round(($channelData['horeca']['ton'] / $totChanTon) * 100);
-            $channelData['retail']['share'] = round(($channelData['retail']['ton'] / $totChanTon) * 100);
+        $totalChannelTons = $channelData['horeca']['ton'] + $channelData['retail']['ton'] + $channelData['manual']['ton'];
+        if ($totalChannelTons > 0) {
+            $channelData['horeca']['share'] = round(($channelData['horeca']['ton'] / $totalChannelTons) * 100);
+            $channelData['retail']['share'] = round(($channelData['retail']['ton'] / $totalChannelTons) * 100);
             $channelData['manual']['share'] = 100 - $channelData['horeca']['share'] - $channelData['retail']['share'];
         }
 

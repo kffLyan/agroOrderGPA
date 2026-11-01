@@ -7,9 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class ProductSeeder extends Seeder
 {
-    /**
-     * Seed the master products (5 Core Commodities GPA).
-     */
+    // Menyiapkan data master 5 komoditas unggulan sayuran segar GPA beserta harga dasar dan spesifikasi mutu
     public function run(): void
     {
         DB::table('products')->truncate();

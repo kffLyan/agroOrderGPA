@@ -7,9 +7,7 @@ use Illuminate\Support\Facades\Schema;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
+    // Menjalankan seeder master pengguna, komoditas, kontrak, panen, dan transaksi secara berurutan
     public function run(): void
     {
         Schema::disableForeignKeyConstraints();

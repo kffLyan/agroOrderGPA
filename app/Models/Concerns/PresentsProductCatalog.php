@@ -6,11 +6,13 @@ use Illuminate\Support\Str;
 
 trait PresentsProductCatalog
 {
+    // Menghasilkan slug kunci unik komoditas untuk pengelompokan antarmuka pengguna
     public function getKeyAttribute(): string
     {
         return Str::slug($this->name ?? '', '_');
     }
 
+    // Mengelompokkan komoditas ke kategori agribisnis: buah, daun, brasika/bunga, atau buah segar
     public function getCategoryAttribute(): string
     {
         $nameLower = strtolower($this->name ?? '');
@@ -26,6 +28,7 @@ trait PresentsProductCatalog
         return 'veg_leaf';
     }
 
+    // Label kategori komoditas dalam bahasa Indonesia
     public function getCategoryLabelAttribute(): string
     {
         return match ($this->category) {
@@ -36,6 +39,7 @@ trait PresentsProductCatalog
         };
     }
 
+    // Nama binomial latin klasifikasi botani komoditas
     public function getLatinAttribute(): string
     {
         return match ($this->category) {
@@ -46,15 +50,16 @@ trait PresentsProductCatalog
         };
     }
 
+    // Resolusi path aset gambar komoditas dengan fallback gambar representatif
     public function getImagePathAttribute(): string
     {
         if (!empty($this->image_url)) {
-            $clean = ltrim($this->image_url, '/');
-            if (file_exists(public_path($clean))) {
-                return $clean;
+            $cleanPath = ltrim($this->image_url, '/');
+            if (file_exists(public_path($cleanPath))) {
+                return $cleanPath;
             }
-            if (file_exists(public_path('storage/' . $clean))) {
-                return 'storage/' . $clean;
+            if (file_exists(public_path('storage/' . $cleanPath))) {
+                return 'storage/' . $cleanPath;
             }
             if (str_starts_with($this->image_url, 'http://') || str_starts_with($this->image_url, 'https://')) {
                 return $this->image_url;

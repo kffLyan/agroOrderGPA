@@ -37,20 +37,20 @@
 
         $navigation = [
             ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('direktur.dashboard'), 'active' => request()->routeIs('direktur.dashboard')],
-            ['label' => 'Penjualan', 'icon' => 'banknote', 'href' => route('direktur.penjualan.index'), 'active' => request()->routeIs('direktur.penjualan.*', 'direktur.sales.*')],
-            ['label' => 'Volume Komoditas', 'icon' => 'package', 'href' => route('direktur.komoditas.index'), 'active' => request()->routeIs('direktur.komoditas.*', 'direktur.commodities.*')],
-            ['label' => 'Katalog Komoditas', 'icon' => 'grid', 'href' => route('direktur.produk.index'), 'active' => request()->routeIs('direktur.produk.*', 'direktur.products.*')],
-            ['label' => 'Piutang & Tagihan', 'icon' => 'invoice', 'href' => route('direktur.piutang.index'), 'active' => request()->routeIs('direktur.piutang.*', 'direktur.receivables.*')],
-            ['label' => 'Persetujuan Kontrak', 'icon' => 'badge-check', 'href' => route('direktur.kontrak.persetujuan'), 'active' => request()->routeIs('direktur.kontrak.*', 'direktur.contracts.*')],
-            ['label' => 'Laporan', 'icon' => 'shield', 'href' => route('direktur.laporan.index'), 'active' => request()->routeIs('direktur.laporan.*', 'direktur.reports.*')],
-            ['label' => 'Pengaturan Tata Kelola', 'icon' => 'settings', 'href' => route('direktur.tata-kelola.index'), 'active' => request()->routeIs('direktur.tata-kelola.*', 'direktur.governance.*')],
+            ['label' => 'Penjualan', 'icon' => 'banknote', 'href' => route('direktur.penjualan.index'), 'active' => request()->routeIs('direktur.penjualan.*')],
+            ['label' => 'Volume Komoditas', 'icon' => 'package', 'href' => route('direktur.komoditas.index'), 'active' => request()->routeIs('direktur.komoditas.*')],
+            ['label' => 'Katalog Komoditas', 'icon' => 'grid', 'href' => route('direktur.produk.index'), 'active' => request()->routeIs('direktur.produk.*')],
+            ['label' => 'Piutang & Tagihan', 'icon' => 'invoice', 'href' => route('direktur.piutang.index'), 'active' => request()->routeIs('direktur.piutang.*')],
+            ['label' => 'Persetujuan Kontrak', 'icon' => 'badge-check', 'href' => route('direktur.kontrak.persetujuan'), 'active' => request()->routeIs('direktur.kontrak.*')],
+            ['label' => 'Laporan', 'icon' => 'shield', 'href' => route('direktur.laporan.index'), 'active' => request()->routeIs('direktur.laporan.*')],
+            ['label' => 'Pengaturan Tata Kelola', 'icon' => 'settings', 'href' => route('direktur.tata-kelola.index'), 'active' => request()->routeIs('direktur.tata-kelola.*')],
             ['label' => 'Kelola Akun & Hak Akses', 'icon' => 'users', 'href' => route('direktur.users.index'), 'active' => request()->routeIs('direktur.users.*')],
         ];
     @endphp
 
     <div x-data="direkturDashboard(@js($operator))">
         <a href="#main-content"
-            class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2 focus:text-xs focus:font-semibold focus:shadow-card">
+            class="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded focus:bg-surface focus:px-3 focus:py-2 focus:text-xs focus:font-semibold focus:shadow-card"> 
             Lewati ke konten utama
         </a>
 

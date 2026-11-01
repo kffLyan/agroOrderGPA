@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
+use App\Http\Requests\PerbaruiProfilRequest;
 use App\Models\Invoice;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
 {
-    /**
-     * Display the user's profile form.
-     */
+    // Menampilkan formulir profil pengguna, status kemitraan B2B, dan ringkasan limit plafon kredit.
     public function edit(Request $request): View
     {
         $user = $request->user();
@@ -69,10 +69,8 @@ class ProfileController extends Controller
         ));
     }
 
-    /**
-     * Update the user's profile information.
-     */
-    public function update(ProfileUpdateRequest $request): RedirectResponse
+    // Memperbarui data identitas profil pengguna, email, dan kata sandi akun.
+    public function update(PerbaruiProfilRequest $request): RedirectResponse
     {
         $user = $request->user();
         $user->fill($request->validated());
@@ -84,9 +82,9 @@ class ProfileController extends Controller
         if ($request->filled('password')) {
             $request->validate([
                 'current_password' => ['required', 'current_password'],
-                'password' => ['required', \Illuminate\Validation\Rules\Password::defaults(), 'confirmed'],
+                'password' => ['required', Password::defaults(), 'confirmed'],
             ]);
-            $user->password = \Illuminate\Support\Facades\Hash::make($request->password);
+            $user->password = Hash::make($request->password);
         }
 
         $user->save();
@@ -94,9 +92,7 @@ class ProfileController extends Controller
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
-    /**
-     * Delete the user's account.
-     */
+    // Menghapus akun pengguna setelah verifikasi kata sandi dan mengakhiri sesi autentikasi.
     public function destroy(Request $request): RedirectResponse
     {
         $request->validateWithBag('userDeletion', [

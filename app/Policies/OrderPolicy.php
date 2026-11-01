@@ -7,9 +7,7 @@ use App\Models\User;
 
 class OrderPolicy
 {
-    /**
-     * S3-01: Menentukan apakah pengguna boleh melihat rincian pesanan tertentu
-     */
+    // Otorisasi wewenang pengguna melihat rincian transaksi pesanan (Anti-IDOR).
     public function view(User $user, Order $order): bool
     {
         // 1. Direktur & Sekretaris diizinkan melihat seluruh data pesanan rantai pasok
@@ -21,9 +19,7 @@ class OrderPolicy
         return $user->id === $order->user_id;
     }
 
-    /**
-     * Menentukan apakah pengguna boleh memperbarui atau membatalkan pesanan
-     */
+    // Otorisasi wewenang pengguna memperbarui atau membatalkan transaksi pesanan.
     public function update(User $user, Order $order): bool
     {
         if (in_array($user->role, ['DIREKTUR', 'SEKRETARIS'])) {

@@ -11,13 +11,16 @@ export default function armadaStatus() {
 
         /* ---------- actions ---------- */
 
-        refreshTelemetry() {
-            this.syncCount = 15;
+        refreshStatus() {
             this.run(
-                'Sinkronisasi Sensor',
-                'Status sensor chiller box, kapasitas muat, dan posisi kendaraan diperbarui.',
+                'Status Diperbarui',
+                'Status operasional armada dan kapasitas muatan berhasil diperbarui.',
                 'success',
             );
+        },
+
+        refreshTelemetry() {
+            this.refreshStatus();
         },
 
         openReport() {
@@ -35,7 +38,7 @@ export default function armadaStatus() {
         openSop() {
             this.run(
                 'Panduan SOP Mutu',
-                'SOP Cold-Chain: Pastikan suhu chiller selalu di rentang +2°C hingga +6°C selama pengantaran sayur segar.',
+                'Pastikan barang pesanan disusun rapi, terlindung dari terik matahari dan hujan, serta sesuai Surat Jalan.',
                 'info',
             );
         },

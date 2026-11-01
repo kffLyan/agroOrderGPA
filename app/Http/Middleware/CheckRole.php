@@ -9,12 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  Closure(Request): (Response)  $next
-     * @param string ...$roles
-     */
+    // Memvalidasi autentikasi, status keaktifan akun, dan kesesuaian peran pengguna dengan rute yang diakses.
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         // Cek apakah user sudah login

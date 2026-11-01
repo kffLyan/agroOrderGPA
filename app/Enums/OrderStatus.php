@@ -14,9 +14,7 @@ enum OrderStatus: string
     case SELESAI_CATATAN      = 'SELESAI_CATATAN';
     case BATAL                = 'BATAL';
 
-    /**
-     * Label representasi bahasa Indonesia yang ramah pengguna.
-     */
+    // Label representasi status pesanan dalam bahasa Indonesia yang ramah pengguna.
     public function label(): string
     {
         return match ($this) {
@@ -31,9 +29,7 @@ enum OrderStatus: string
         };
     }
 
-    /**
-     * Kelas styling warna badge Tailwind CSS.
-     */
+    // Kelas styling warna badge antarmuka pengguna berdasarkan status transaksi pesanan.
     public function badgeClasses(): string
     {
         return match ($this) {
@@ -48,9 +44,7 @@ enum OrderStatus: string
         };
     }
 
-    /**
-     * Memeriksa apakah status termasuk dalam pengiriman yang aktif atau selesai.
-     */
+    // Memeriksa apakah status pesanan termasuk dalam tahap distribusi aktif atau selesai.
     public function isCompletedOrDelivering(): bool
     {
         return in_array($this, [

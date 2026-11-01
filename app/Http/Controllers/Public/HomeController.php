@@ -10,6 +10,7 @@ use Illuminate\Contracts\View\View;
 
 class HomeController extends Controller
 {
+    // Menampilkan beranda portal publik GPA dengan ringkasan komoditas panen, kemitraan B2B, dan testimoni.
     public function __invoke(): View
     {
         $products = Product::where('is_active', true)->with('harvestBatches')->get();

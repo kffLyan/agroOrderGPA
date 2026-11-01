@@ -4,37 +4,25 @@ namespace App\Http\Controllers\Direktur;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Services\GovernanceService;
+use App\Services\TataKelolaService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-/**
- * Controller Tata Kelola, Kebijakan Bisnis & Audit Trail Sistem Direktur.
- *
- * Penjelasan UKK:
- * Modul ini merupakan pusat kendali governance Koperasi GPA, meliputi:
- * 1. Pengaturan kebijakan bisnis (parameter toleransi susut, PPN, plafon kredit TOP, tarif ongkir).
- * 2. Master Freeze Switch (tombol darurat penghentian seluruh transaksi PO dan mutasi stok saat audit).
- * 3. Delegasi wewenang Plt Direksi secara aman.
- * 4. Pengaturan kanal pembayaran resmi koperasi (Transfer Bank, QRIS, dll).
- * 5. Ekspor log audit forensik dengan integritas SHA-256.
- */
+// Controller tata kelola, kebijakan bisnis, dan audit trail untuk Direktur Utama
 class TataKelolaController extends Controller
 {
     public function __construct(
-        protected GovernanceService $governanceService
+        protected TataKelolaService $tataKelolaService
     ) {}
 
-    /**
-     * Menampilkan dashboard tata kelola, log audit, dan saluran pembayaran resmi.
-     */
+    // Menampilkan konsol tata kelola, log audit append-only SHA-256, dan saluran pembayaran resmi
     public function index(Request $request): View
     {
-        $settings = $this->governanceService->getSettings();
-        $storedLogs = $this->governanceService->getAuditLogs();
-        $paymentChannels = $this->governanceService->getPaymentChannels();
+        $settings = $this->tataKelolaService->getSettings();
+        $storedLogs = $this->tataKelolaService->getAuditLogs();
+        $paymentChannels = $this->tataKelolaService->getPaymentChannels();
 
         return view('direktur.tata-kelola', compact(
             'settings',
@@ -43,9 +31,7 @@ class TataKelolaController extends Controller
         ));
     }
 
-    /**
-     * Memperbarui parameter kebijakan bisnis Koperasi GPA.
-     */
+    // Memperbarui parameter kebijakan operasional (toleransi susut gudang, plafon kredit TOP, tarif PPN, dan ongkos kirim)
     public function updateParameters(Request $request)
     {
         $validated = $request->validate([
@@ -64,14 +50,14 @@ class TataKelolaController extends Controller
             $validated['tax_ppn_enabled'] = $request->boolean('tax_ppn_enabled');
         }
 
-        $this->governanceService->updateSettings($validated);
+        $this->tataKelolaService->updateSettings($validated);
 
         $directorName = Auth::user()?->name ?: 'Direktur Utama';
         $ppnStatus = !empty($validated['tax_ppn_enabled'])
             ? "PPN Aktif (" . ($validated['tax_ppn_percent'] ?? 11) . "%)"
             : 'Bebas PPN 0% (DTP Pertanian)';
 
-        $this->governanceService->addAuditLog(
+        $this->tataKelolaService->addAuditLog(
             'PARAMETER_POLICY_UPDATE',
             'CFG-MASTER-POLICY',
             "Direktur memperbarui parameter kebijakan: {$ppnStatus}, Standar Ongkir Rp " . number_format($validated['default_shipping_fee'] ?? 75000, 0, ',', '.'),
@@ -83,16 +69,14 @@ class TataKelolaController extends Controller
         return back()->with('success', 'Konfigurasi parameter dan kebijakan bisnis (PPN & Distribusi) berhasil diperbarui.');
     }
 
-    /**
-     * Mengaktifkan atau menonaktifkan Master Freeze Switch (Kunci Darurat Sistem).
-     */
+    // Mengaktifkan atau menonaktifkan Master Freeze Switch untuk menghentikan transaksi darurat sistem
     public function toggleMasterFreeze(Request $request)
     {
-        $currentlyFrozen = $this->governanceService->isMasterFreezeActive();
+        $currentlyFrozen = $this->tataKelolaService->isMasterFreezeActive();
 
         if ($request->has('freeze')) {
-            $val = $request->input('freeze');
-            $freeze = ($val === '1' || $val === 1 || $val === true || $val === 'true');
+            $freezeValue = $request->input('freeze');
+            $freeze = ($freezeValue === '1' || $freezeValue === 1 || $freezeValue === true || $freezeValue === 'true');
         } else {
             $freeze = !$currentlyFrozen;
         }
@@ -102,18 +86,16 @@ class TataKelolaController extends Controller
             : null;
         $directorName = Auth::user()?->name ?: 'Direktur Utama';
 
-        $isActive = $this->governanceService->toggleMasterFreeze($freeze, $reason, $directorName);
+        $isActive = $this->tataKelolaService->toggleMasterFreeze($freeze, $reason, $directorName);
 
-        $msg = $isActive
+        $message = $isActive
             ? "MASTER FREEZE TELAH DIAKTIFKAN. Seluruh mutasi stok dan transaksi input PO dihentikan."
             : "Master Freeze berhasil dinonaktifkan. Seluruh sistem operasional kembali normal.";
 
-        return back()->with('success', $msg);
+        return back()->with('success', $message);
     }
 
-    /**
-     * Mengatur delegasi wewenang Pelaksana Tugas (Plt) Direksi.
-     */
+    // Menetapkan delegasi wewenang operasional Pelaksana Tugas (Plt) Direksi beserta batasan plafon mandat
     public function configurePlt(Request $request)
     {
         $validated = $request->validate([
@@ -142,9 +124,9 @@ class TataKelolaController extends Controller
         $durationHours = isset($validated['plt_duration_hours']) ? (int) $validated['plt_duration_hours'] : null;
         $directorName = Auth::user()?->name ?: 'Direktur Utama';
 
-        $this->governanceService->configurePlt($pltActive, $delegateName, $ceiling, $durationHours, $directorName);
+        $this->tataKelolaService->configurePlt($pltActive, $delegateName, $ceiling, $durationHours, $directorName);
         $statusStr = $pltActive ? 'DIAKTIFKAN' : 'DINONAKTIFKAN';
-        $this->governanceService->addAuditLog(
+        $this->tataKelolaService->addAuditLog(
             'PLT_SUCCESSION_CONFIG',
             'SEC-PLT-MANDATE',
             "Mandat Plt Direktur {$statusStr}. Penerima: " . ($delegateName ?: '-') . ", Plafon: Rp " . number_format($ceiling ?? 0, 0, ',', '.'),
@@ -156,9 +138,7 @@ class TataKelolaController extends Controller
         return back()->with('success', "Konfigurasi mandat Plt Direksi berhasil disimpan ({$statusStr}).");
     }
 
-    /**
-     * Unduh Full Audit Trail dalam format CSV.
-     */
+    // Mengunduh rekam jejak audit forensik lengkap (append-only audit trail) dalam format CSV
     public function exportAuditLog(Request $request): StreamedResponse
     {
         $headers = [
@@ -166,7 +146,7 @@ class TataKelolaController extends Controller
             'Content-Disposition' => 'attachment; filename="Full_Audit_Trail_' . date('Ymd_His') . '.csv"',
         ];
 
-        $logs = $this->governanceService->getAuditLogs();
+        $logs = $this->tataKelolaService->getAuditLogs();
 
         return response()->stream(function () use ($logs) {
             $handle = fopen('php://output', 'w');
@@ -194,9 +174,7 @@ class TataKelolaController extends Controller
         }, 200, $headers);
     }
 
-    /**
-     * Memperbarui Kanal Pembayaran Resmi GPA (Bank & QRIS) oleh Direktur.
-     */
+    // Menyimpan konfigurasi rekening bank dan barcode QRIS resmi koperasi beserta bukti logo digital
     public function updatePaymentChannels(Request $request)
     {
         $validated = $request->validate([
@@ -216,53 +194,53 @@ class TataKelolaController extends Controller
         ]);
 
         $channels = [];
-        foreach ($validated['channels'] as $idx => $ch) {
-            $imageUrl = $ch['image_url'] ?? null;
+        foreach ($validated['channels'] as $index => $channelItem) {
+            $imageUrl = $channelItem['image_url'] ?? null;
 
-            // Jika mengunggah barcode QRIS atau foto baru
-            if ($request->hasFile("channels.{$idx}.image")) {
-                $file = $request->file("channels.{$idx}.image");
+            // Jika ada pengunggahan berkas gambar barcode QRIS baru
+            if ($request->hasFile("channels.{$index}.image")) {
+                $file = $request->file("channels.{$index}.image");
                 if ($file->isValid()) {
-                    $ext = $file->getClientOriginalExtension() ?: 'png';
-                    $safeId = preg_replace('/[^a-zA-Z0-9_-]/', '_', $ch['id']);
-                    $filename = "channel_{$safeId}_" . time() . "_{$idx}.{$ext}";
+                    $extension = $file->getClientOriginalExtension() ?: 'png';
+                    $safeId = preg_replace('/[^a-zA-Z0-9_-]/', '_', $channelItem['id']);
+                    $filename = "channel_{$safeId}_" . time() . "_{$index}.{$extension}";
                     $path = $file->storeAs('payment-channels', $filename, 'public');
                     $imageUrl = '/storage/' . $path;
                 }
             }
 
-            if ($ch['type'] === 'QRIS' && empty($imageUrl)) {
+            if ($channelItem['type'] === 'QRIS' && empty($imageUrl)) {
                 $imageUrl = '/storage/payment-channels/qris-gpa-default.png';
             }
 
-            $logoUrl = $ch['logo_url'] ?? null;
+            $logoUrl = $channelItem['logo_url'] ?? null;
             if (empty($logoUrl)) {
-                $candidate = '/images/payments/' . strtolower($ch['id']) . '.svg';
+                $candidate = '/images/payments/' . strtolower($channelItem['id']) . '.svg';
                 if (file_exists(public_path(ltrim($candidate, '/')))) {
                     $logoUrl = $candidate;
                 }
             }
 
             $channels[] = [
-                'id'             => $ch['id'],
-                'type'           => $ch['type'],
-                'name'           => $ch['name'],
-                'bank_code'      => $ch['bank_code'] ?? strtoupper($ch['id']),
-                'account_number' => $ch['account_number'],
-                'account_name'   => $ch['account_name'],
-                'description'    => $ch['description'] ?? '',
-                'instructions'   => $ch['instructions'] ?? '',
+                'id'             => $channelItem['id'],
+                'type'           => $channelItem['type'],
+                'name'           => $channelItem['name'],
+                'bank_code'      => $channelItem['bank_code'] ?? strtoupper($channelItem['id']),
+                'account_number' => $channelItem['account_number'],
+                'account_name'   => $channelItem['account_name'],
+                'description'    => $channelItem['description'] ?? '',
+                'instructions'   => $channelItem['instructions'] ?? '',
                 'image_url'      => $imageUrl,
                 'logo_url'       => $logoUrl,
-                'is_active'      => !empty($ch['is_active']),
+                'is_active'      => !empty($channelItem['is_active']),
             ];
         }
 
-        $this->governanceService->updatePaymentChannels($channels);
+        $this->tataKelolaService->updatePaymentChannels($channels);
 
         $directorName = Auth::user()?->name ?: 'Direktur Utama';
-        $activeCount = count(array_filter($channels, fn($c) => $c['is_active']));
-        $this->governanceService->addAuditLog(
+        $activeCount = count(array_filter($channels, fn($channel) => $channel['is_active']));
+        $this->tataKelolaService->addAuditLog(
             'PAYMENT_CHANNELS_UPDATE',
             'CFG-PAYMENT-GATEWAY',
             "Direktur memperbarui konfigurasi kanal pembayaran resmi ({$activeCount} kanal aktif: Bank, QRIS, & Dompet Digital GPA).",
@@ -273,8 +251,8 @@ class TataKelolaController extends Controller
 
         if ($request->wantsJson()) {
             return response()->json([
-                'success' => true,
-                'message' => 'Konfigurasi kanal pembayaran resmi berhasil disimpan.',
+                'success'  => true,
+                'message'  => 'Konfigurasi kanal pembayaran resmi berhasil disimpan.',
                 'channels' => $channels,
             ]);
         }

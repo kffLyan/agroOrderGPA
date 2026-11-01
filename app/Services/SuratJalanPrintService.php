@@ -7,9 +7,7 @@ use Carbon\Carbon;
 
 class SuratJalanPrintService
 {
-    /**
-     * Resolusi pesanan untuk cetak Surat Jalan resmi.
-     */
+    // Resolusi entitas pesanan aktif atau pesanan siap kirim terbaru untuk pencetakan dokumen Surat Jalan.
     public function resolveOrder(?string $orderId): ?Order
     {
         if ($orderId) {
@@ -26,11 +24,7 @@ class SuratJalanPrintService
             ?? Order::with(['user', 'orderItems.product', 'driver'])->latest()->first();
     }
 
-    /**
-     * Membangun payload cetak Surat Jalan Pengiriman.
-     *
-     * @return array<string, mixed>
-     */
+    // Membangun payload data cetak Surat Jalan resmi pengiriman komoditas dengan format standar GPA.
     public function buildPrintData(?Order $order): array
     {
         $company = [
@@ -42,19 +36,19 @@ class SuratJalanPrintService
             'phone'        => '0812-2323-9133 / 0813-2142-2231',
         ];
 
-        $clientName   = $order?->user?->company_name ?: ($order?->user?->name ?: '-');
-        $address      = $order?->delivery_address ?: ($order?->user?->address ?: '-');
-        $sjNum        = $order ? ($order->surat_jalan_number ?: ('SJ-' . date('Ym') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT))) : '-';
-        $poNum        = $order?->order_number ?: '-';
-        $driverName   = $order?->driver?->name ?: ($order?->fleet_assigned ?: '-');
-        $coDriverName = '-';
-        $vehiclePlate = $order?->vehicle_plate_number ?: '-';
+        $clientName         = $order?->user?->company_name ?: ($order?->user?->name ?: '-');
+        $address            = $order?->delivery_address ?: ($order?->user?->address ?: '-');
+        $suratJalanNumber   = $order ? ($order->surat_jalan_number ?: ('SJ-' . date('Ym') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT))) : '-';
+        $orderNumber        = $order?->order_number ?: '-';
+        $driverName         = $order?->driver?->name ?: ($order?->fleet_assigned ?: '-');
+        $coDriverName       = '-';
+        $vehiclePlate       = $order?->vehicle_plate_number ?: '-';
 
         $items    = [];
         $totalQty = 0.0;
 
         if ($order) {
-            foreach ($order->orderItems as $idx => $item) {
+            foreach ($order->orderItems as $index => $item) {
                 $qty         = (float) $item->ordered_qty;
                 $productName = $item->product?->name ?: '-';
                 $grade       = $item->product?->grade ?: '';
@@ -63,7 +57,7 @@ class SuratJalanPrintService
                 $totalQty += $qty;
 
                 $items[] = [
-                    'no'   => $idx + 1,
+                    'no'   => $index + 1,
                     'name' => $itemLabel,
                     'qty'  => $qty,
                 ];
@@ -79,8 +73,8 @@ class SuratJalanPrintService
             'company'    => $company,
             'brand'      => $company['full_brand'],
             'doc' => [
-                'number'  => $sjNum,
-                'po'      => $poNum,
+                'number'  => $suratJalanNumber,
+                'po'      => $orderNumber,
                 'date'    => $dateFormatted,
                 'to'      => $clientName,
                 'address' => $address,

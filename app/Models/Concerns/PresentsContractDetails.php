@@ -6,28 +6,33 @@ use App\Enums\ContractStatus;
 
 trait PresentsContractDetails
 {
+    // Mengonversi status string kontrak ke tipe ContractStatus Enum resmi
     public function getStatusEnumAttribute(): ?ContractStatus
     {
         return ContractStatus::tryFrom((string) $this->status);
     }
 
+    // Mengambil nama tampilan identitas mitra atau badan usaha klien kontrak
     public function getClientDisplayNameAttribute(): string
     {
         return $this->user?->company_name ?: ($this->user?->name ?: 'Mitra B2B');
     }
 
+    // Mengambil nama komoditas sayur yang diikat dalam kontrak perjanjian kerja sama
     public function getProductNameAttribute(): string
     {
         return $this->product ? strtoupper($this->product->name) : 'SENTRA PRODUKSI';
     }
 
+    // Mengonversi komitmen volume pasokan per siklus dari kilogram ke satuan ton
     public function getCommittedVolumeTonAttribute(): float
     {
-        $volKg = (float) $this->committed_volume_per_cycle;
-        $volTon = round($volKg / 1000, 2);
-        return $volTon > 0 ? $volTon : round($volKg, 2);
+        $volumeKg = (float) $this->committed_volume_per_cycle;
+        $volumeTon = round($volumeKg / 1000, 2);
+        return $volumeTon > 0 ? $volumeTon : round($volumeKg, 2);
     }
 
+    // Memformat nilai harga tetap per kg kontrak ke format mata uang Rupiah
     public function getFixedPriceFormattedAttribute(): string
     {
         return 'Rp ' . number_format((float) ($this->fixed_price_per_kg ?? 0), 0, ',', '.');

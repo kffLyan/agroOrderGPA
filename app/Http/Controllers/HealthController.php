@@ -8,14 +8,15 @@ use Exception;
 
 class HealthController extends Controller
 {
+    // Endpoint pemantauan status konektivitas basis data dan kesiapan operasional server aplikasi.
     public function check()
     {
         try {
             DB::connection()->getPdo();
             $dbStatus = "CONNECTED";
             $userCount = DB::table('users')->count();
-        } catch (Exception $e) {
-            $dbStatus = "DISCONNECTED: " . $e->getMessage();
+        } catch (Exception $exception) {
+            $dbStatus = "DISCONNECTED: " . $exception->getMessage();
             $userCount = 0;
         }
 

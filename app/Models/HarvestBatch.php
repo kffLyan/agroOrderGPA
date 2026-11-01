@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\PresentsHarvestBatchDetails;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HarvestBatch extends Model
 {
-    use HasFactory;
-    use \App\Models\Concerns\PresentsHarvestBatchDetails;
+    use HasFactory, PresentsHarvestBatchDetails;
 
     protected $fillable = [
         'product_id', 'source_type', 'supplier_name',
@@ -39,11 +39,13 @@ class HarvestBatch extends Model
         'commodity',
     ];
 
+    // Relasi Many-to-One: Batch panen merujuk ke data master sayur (Product)
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
+    // Relasi Many-to-One: Batch panen diinput oleh Koordinator Lapangan (User)
     public function inputter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'inputted_by');

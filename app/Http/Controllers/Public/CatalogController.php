@@ -9,6 +9,7 @@ use Illuminate\Support\Str;
 
 class CatalogController extends Controller
 {
+    // Menampilkan etalase katalog komoditas pertanian aktif beserta batch panen untuk pengunjung publik.
     public function __invoke(): View
     {
         $commodities = Product::where('is_active', true)->with('harvestBatches')->get();

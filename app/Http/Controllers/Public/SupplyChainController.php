@@ -9,6 +9,7 @@ use Illuminate\Contracts\View\View;
 
 class SupplyChainController extends Controller
 {
+    // Menampilkan diagram transparansi rantai pasok agribisnis dari petani mitra hingga pengiriman armada.
     public function __invoke(): View
     {
         $totalStock = (float) HarvestBatch::sum('available_quantity');

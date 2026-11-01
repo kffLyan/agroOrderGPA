@@ -9,24 +9,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Controller Status Kelaikan Kendaraan, Telemetri IoT & Shift Supir Armada.
- *
- * Penjelasan UKK:
- * Modul ini menampilkan status operasional kendaraan berpendingin (Cold Chain Reefer):
- * 1. Pemantauan suhu chiller (2-6°C).
- * 2. Kelaikan jalan armada dan riwayat muatan harian.
- * 3. Fitur tutup shift kerja harian supir.
- */
+// Controller status kelaikan kendaraan dan shift untuk Armada
 class StatusKendaraanController extends Controller
 {
     public function __construct(
         protected ArmadaService $armadaService
     ) {}
 
-    /**
-     * Menampilkan status kendaraan armada, telemetri IoT, audit kelaikan, dan rekap shift.
-     */
+    // Menampilkan status kendaraan armada, kapasitas muatan, dan rekap shift
     public function index(Request $request): View
     {
         $orders = $this->armadaService->getActiveOrdersForDriver(Auth::user());
@@ -41,9 +31,7 @@ class StatusKendaraanController extends Controller
         ]);
     }
 
-    /**
-     * Menutup shift harian supir armada.
-     */
+    // Menutup shift operasional harian supir armada dan merekam kepulangan kendaraan ke sentra
     public function closeShift(Request $request): RedirectResponse
     {
         return redirect()

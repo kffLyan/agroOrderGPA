@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasProductStock;
+use App\Models\Concerns\PresentsProductCatalog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
 {
-    use HasFactory;
-    use \App\Models\Concerns\PresentsProductCatalog;
-    use \App\Models\Concerns\HasProductStock;
+    use HasFactory, HasProductStock, PresentsProductCatalog;
 
     protected $fillable = [
         'sku', 'name', 'unit', 'grade', 'base_price',
@@ -52,16 +52,19 @@ class Product extends Model
         ];
     }
 
+    // Relasi One-to-Many: Komoditas memiliki banyak catatan pasokan panen (HarvestBatch)
     public function harvestBatches(): HasMany
     {
         return $this->hasMany(HarvestBatch::class);
     }
 
+    // Relasi One-to-Many: Komoditas dapat muncul di banyak detail pesanan (OrderItem)
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
+    // Relasi One-to-Many: Komoditas dapat diikat dalam kontrak kemitraan B2B (Contract)
     public function contracts(): HasMany
     {
         return $this->hasMany(Contract::class);

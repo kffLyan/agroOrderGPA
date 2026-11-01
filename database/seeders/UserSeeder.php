@@ -8,9 +8,7 @@ use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
-    /**
-     * Seed the application's users.
-     */
+    // Menyiapkan akun pengguna awal untuk seluruh peran Direktur, Sekretaris, Koordinator, Armada, dan Klien
     public function run(): void
     {
         DB::table('users')->truncate();

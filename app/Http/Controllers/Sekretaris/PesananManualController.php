@@ -5,14 +5,14 @@ namespace App\Http\Controllers\Sekretaris;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Sekretaris\StoreManualOrderRequest;
+use App\Http\Requests\Sekretaris\SimpanPesananManualRequest;
 use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\User;
-use App\Services\GovernanceService;
+use App\Services\TataKelolaService;
 use App\Services\OrderService;
 use App\Services\StockService;
 use Illuminate\Contracts\View\View;
@@ -22,88 +22,78 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Controller Input Pesanan Manual (Telepon / WhatsApp / Walk-in) Sekretaris.
- *
- * Penjelasan UKK:
- * Modul ini mengakomodasi pemesanan non-portal dari klien yang menghubungi via WhatsApp atau datang langsung:
- * 1. Pilihan metode bayar fleksibel: Tunai (Cash Kasir), Transfer Bank, QRIS, atau Tempo TOP.
- * 2. Perhitungan otomatis kembalian tunai, PPN 11% (jika aktif), dan ongkos kirim.
- * 3. Penerbitan Invoice instan dan alokasi stok fisik FIFO langsung dari gudang.
- */
+// Controller input pesanan manual (WhatsApp / Telepon) untuk Sekretaris
 class PesananManualController extends Controller
 {
     public function __construct(
         protected OrderService $orderService
     ) {}
 
-    /**
-     * Menampilkan formulir input order manual via telepon / WhatsApp.
-     */
+    // Menyiapkan formulir pembuatan pesanan manual untuk klien walk-in, via WhatsApp, atau telepon
     public function index(Request $request): View
     {
-        // Ambil daftar seluruh pembeli / klien terdaftar dengan kontrak dan faktur terutang
+        // Mengambil daftar seluruh klien terdaftar dengan kontrak aktif dan faktur tertunggak
         $allClients = User::where('role', 'KLIEN')
             ->with([
-                'contracts' => fn($q) => $q->where('status', 'ACTIVE'),
-                'invoices'  => fn($q) => $q->whereIn('status', ['UNPAID', 'OVERDUE']),
+                'contracts' => fn($subQuery) => $subQuery->where('status', 'ACTIVE'),
+                'invoices'  => fn($subQuery) => $subQuery->whereIn('status', ['UNPAID', 'OVERDUE']),
             ])
             ->get();
 
         if ($allClients->isEmpty()) {
             $allClients = User::whereIn('role', ['KLIEN', 'SEKRETARIS'])
                 ->with([
-                    'contracts' => fn($q) => $q->where('status', 'ACTIVE'),
-                    'invoices'  => fn($q) => $q->whereIn('status', ['UNPAID', 'OVERDUE']),
+                    'contracts' => fn($subQuery) => $subQuery->where('status', 'ACTIVE'),
+                    'invoices'  => fn($subQuery) => $subQuery->whereIn('status', ['UNPAID', 'OVERDUE']),
                 ])
                 ->get();
         }
 
-        $clients = $allClients->map(function ($c) {
+        $clients = $allClients->map(function ($client) {
             return [
-                'id'           => $c->id,
-                'code'         => $c->code,
-                'name'         => $c->company_name ?: $c->name,
-                'contact'      => $c->contact,
-                'phone'        => $c->phone ?: '0812-3456-7890',
-                'address'      => $c->address ?: 'Sentra Operasional Klien, Jawa Barat',
-                'type'         => $c->client_type ?: 'B2B_KONTRAK',
-                'credit_limit' => $c->credit_limit,
-                'credit_used'  => $c->credit_used,
+                'id'           => $client->id,
+                'code'         => $client->code,
+                'name'         => $client->company_name ?: $client->name,
+                'contact'      => $client->contact,
+                'phone'        => $client->phone ?: '0812-3456-7890',
+                'address'      => $client->address ?: 'Sentra Operasional Klien, Jawa Barat',
+                'type'         => $client->client_type ?: 'B2B_KONTRAK',
+                'credit_limit' => $client->credit_limit,
+                'credit_used'  => $client->credit_used,
             ];
         })->values()->all();
 
         $clientUser = $allClients->first();
 
-        // Ambil produk riil dari database dengan batch panen aktif
-        $dbProducts = Product::with(['harvestBatches' => fn($q) => $q->where('available_quantity', '>', 0)])
+        // Mengambil daftar komoditas produk aktif yang memiliki stok panen tersedia di gudang
+        $dbProducts = Product::with(['harvestBatches' => fn($subQuery) => $subQuery->where('available_quantity', '>', 0)])
             ->where('is_active', true)
             ->get();
 
         if ($dbProducts->isEmpty()) {
-            $dbProducts = Product::with(['harvestBatches' => fn($q) => $q->where('available_quantity', '>', 0)])->get();
+            $dbProducts = Product::with(['harvestBatches' => fn($subQuery) => $subQuery->where('available_quantity', '>', 0)])->get();
         }
 
-        $catalog = $dbProducts->map(function ($prod) {
+        $catalog = $dbProducts->map(function ($product) {
             return [
-                'key'          => 'prod-' . $prod->id,
-                'product_id'   => $prod->id,
-                'name'         => $prod->name,
-                'sku'          => $prod->sku ?: ('GPA-VEG-' . str_pad((string) $prod->id, 3, '0', STR_PAD_LEFT)),
-                'grade'        => $prod->grade ?: 'Grade A Pilihan',
-                'unit'         => $prod->unit ?: 'kg',
-                'min_order'    => (float) ($prod->minimum_order ?: 5),
-                'stock'        => $prod->stock,
-                'stock_bud'    => $prod->stock_bud,
-                'stock_buffer' => $prod->stock_buffer,
-                'price'        => $prod->price,
+                'key'          => 'prod-' . $product->id,
+                'product_id'   => $product->id,
+                'name'         => $product->name,
+                'sku'          => $product->sku ?: ('GPA-VEG-' . str_pad((string) $product->id, 3, '0', STR_PAD_LEFT)),
+                'grade'        => $product->grade ?: 'Grade A Pilihan',
+                'unit'         => $product->unit ?: 'kg',
+                'min_order'    => (float) ($product->minimum_order ?: 5),
+                'stock'        => $product->stock,
+                'stock_bud'    => $product->stock_bud,
+                'stock_buffer' => $product->stock_buffer,
+                'price'        => $product->price,
             ];
         })->values()->all();
 
-        $governanceService = app(GovernanceService::class);
-        $paymentChannels = $governanceService->getActivePaymentChannels();
+        $tataKelolaService = app(TataKelolaService::class);
+        $paymentChannels = $tataKelolaService->getActivePaymentChannels();
         if (empty($paymentChannels)) {
-            $paymentChannels = $governanceService->defaultPaymentChannels();
+            $paymentChannels = $tataKelolaService->defaultPaymentChannels();
         }
 
         // View Models
@@ -174,15 +164,13 @@ class PesananManualController extends Controller
         ]);
     }
 
-    /**
-     * Menyimpan pesanan manual baru ke database secara riil.
-     */
-    public function store(StoreManualOrderRequest $request): JsonResponse|RedirectResponse
+    // Menyimpan transaksi pesanan manual, mengalokasikan stok panen, dan menerbitkan faktur penagihan otomatis
+    public function store(SimpanPesananManualRequest $request): JsonResponse|RedirectResponse
     {
         $validated = $request->validated();
         $secretary = Auth::user();
 
-        // Tentukan akun pembeli
+        // Mengambil profil entitas klien pemesan atau menetapkan akun pembeli default
         $clientId = $validated['client_id'] ?? null;
         $client = $clientId ? User::find($clientId) : null;
         if (!$client) {
@@ -192,7 +180,7 @@ class PesananManualController extends Controller
         $requestedStatus = $validated['status'] ?? 'LUNAS';
         $isDraft = ($requestedStatus === 'DRAFT');
 
-        // Jika sekretaris memverifikasi di tempat (LUNAS, SIAP_KIRIM, VERIFIKASI)
+        // Menentukan apakah pesanan langsung disahkan dan diverifikasi di tempat oleh sekretaris
         $isDirectVerification = !$isDraft && in_array($requestedStatus, ['LUNAS', 'SIAP_KIRIM', 'VERIFIKASI', 'VERIFIED']);
 
         $paymentMethod = PaymentMethod::fromRaw(
@@ -201,7 +189,7 @@ class PesananManualController extends Controller
         );
         $paymentMethodEnum = $paymentMethod->value;
 
-        // Tentukan status pesanan
+        // Menetapkan status pesanan berdasarkan metode pembayaran (Tempo TOP vs Lunas Langsung)
         if ($isDraft) {
             $orderStatus = 'MENUNGGU_VERIFIKASI';
         } elseif ($isDirectVerification) {
@@ -236,27 +224,27 @@ class PesananManualController extends Controller
             ]);
 
             $total = 0;
-            foreach ($validated['items'] as $it) {
-                $prod = Product::find($it['product_id']);
-                if ($prod) {
-                    $qty = (float) $it['quantity'];
-                    $price = (float) ($it['price'] ?? $prod->base_price);
-                    $sub = $qty * $price;
-                    $total += $sub;
+            foreach ($validated['items'] as $item) {
+                $product = Product::find($item['product_id']);
+                if ($product) {
+                    $qty = (float) $item['quantity'];
+                    $price = (float) ($item['price'] ?? $product->base_price);
+                    $subtotal = $qty * $price;
+                    $total += $subtotal;
 
                     OrderItem::create([
                         'order_id'    => $newOrder->id,
-                        'product_id'  => $prod->id,
+                        'product_id'  => $product->id,
                         'ordered_qty' => $qty,
                         'unit_price'  => $price,
-                        'subtotal'    => $sub,
+                        'subtotal'    => $subtotal,
                     ]);
                 }
             }
 
-            // Ambil kebijakan PPN & Ongkir dari GovernanceService
-            $gov = app(GovernanceService::class);
-            $taxSettings = $gov->getTaxSettings();
+            // Memeriksa kebijakan perpajakan PPN dan ongkos kirim dari layanan tata kelola
+            $tataKelolaService = app(TataKelolaService::class);
+            $taxSettings = $tataKelolaService->getTaxSettings();
 
             $shippingCost = 0.0;
             if (isset($validated['shipping_cost']) && is_numeric($validated['shipping_cost'])) {
@@ -273,19 +261,17 @@ class PesananManualController extends Controller
                 'grand_total' => $grandTotalFinal,
             ]);
 
-            // Jika verifikasi langsung oleh Sekretaris:
+            // Jika diverifikasi langsung, lakukan pemotongan alokasi stok dan buat faktur tagihan resmi
             if ($isDirectVerification) {
-                // 1. Alokasikan stok panen secara atomik
                 $stockService = app(StockService::class);
-                foreach ($validated['items'] as $it) {
-                    $stockService->allocateStock((int) $it['product_id'], (float) $it['quantity']);
+                foreach ($validated['items'] as $item) {
+                    $stockService->allocateStock((int) $item['product_id'], (float) $item['quantity']);
                 }
 
-                // 2. Terbitkan Faktur (Invoice) resmi otomatis
-                $invNumber = $this->orderService->generateInvoiceNumber();
+                $invoiceNumber = $this->orderService->generateInvoiceNumber();
                 $dueDate = ($paymentMethodEnum === 'TEMPO_TOP') ? now()->addDays(14)->toDateString() : now()->toDateString();
                 $invoice = Invoice::create([
-                    'invoice_number'  => $invNumber,
+                    'invoice_number'  => $invoiceNumber,
                     'user_id'         => $client->id,
                     'period_start'    => now()->toDateString(),
                     'period_end'      => $targetDate,
@@ -293,7 +279,7 @@ class PesananManualController extends Controller
                     'grand_total'     => $grandTotalFinal,
                     'due_date'        => $dueDate,
                     'status'          => ($paymentMethodEnum === 'TEMPO_TOP') ? 'UNPAID' : 'PAID',
-                    'pdf_file_path'   => 'invoices/' . $invNumber . '.pdf',
+                    'pdf_file_path'   => 'invoices/' . $invoiceNumber . '.pdf',
                 ]);
                 $newOrder->update(['invoice_id' => $invoice->id]);
             }
@@ -321,8 +307,8 @@ class PesananManualController extends Controller
                     . ' • Diterima Rp ' . number_format($cashAmount, 0, ',', '.')
                     . ' • Kembalian Rp ' . number_format($cashChange, 0, ',', '.');
             } elseif ($senderBank) {
-                $accInfo = $senderAccount ? " (Rek/No: {$senderAccount})" : '';
-                $verificationNotes[] = "Kanal: {$senderBank}{$accInfo}";
+                $accountInfo = $senderAccount ? " (Rek/No: {$senderAccount})" : '';
+                $verificationNotes[] = "Kanal: {$senderBank}{$accountInfo}";
             }
             if ($customNote) {
                 $verificationNotes[] = $customNote;

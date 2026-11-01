@@ -5,20 +5,13 @@ namespace App\Http\Controllers\Klien;
 use App\Http\Controllers\Controller;
 use App\Models\Contract;
 use App\Models\Product;
-use App\Services\GovernanceService;
+use App\Services\TataKelolaService;
 use App\Services\OrderService;
 use App\Services\StockService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Controller Keranjang Belanja Komoditas & Draf Pemesanan (PO) Klien.
- *
- * Penjelasan UKK:
- * Halaman ini memfasilitasi klien (Reguler maupun Mitra B2B) dalam memilih
- * komoditas hasil tani, menghitung harga khusus kontrak (jika ada),
- * memeriksa ketersediaan stok panen riil, serta menentukan alamat dan jadwal pengiriman.
- */
+// Controller keranjang belanja dan draf pesanan untuk Klien
 class KeranjangController extends Controller
 {
     public function __construct(
@@ -26,15 +19,13 @@ class KeranjangController extends Controller
         protected StockService $stockService
     ) {}
 
-    /**
-     * Menampilkan antarmuka keranjang belanja dan penyusunan draf PO mandiri.
-     */
+    // Menampilkan antarmuka keranjang belanja komoditas sayur, penentuan jadwal kirim, dan kalkulasi PPN/ongkir
     public function index(Request $request)
     {
         $user = Auth::guard('web')->user();
         $isB2b = ($user->client_type === 'B2B_KONTRAK');
 
-        // Ambil produk aktif beserta ketersediaan stok panen
+        // Mengambil komoditas produk aktif beserta kontrak B2B yang dimiliki klien
         $products = Product::where('is_active', true)->get();
 
         $activeContracts = Contract::where('user_id', $user->id)
@@ -42,7 +33,7 @@ class KeranjangController extends Controller
             ->get()
             ->keyBy('product_id');
 
-        // Query kuota stok panen tersedia secara agregat (mencegah query N+1)
+        // Menghitung ketersediaan kuota stok panen fisik di gudang sentra secara efisien
         $stockMap = $this->stockService->getAvailableStockMap($products->pluck('id')->all());
 
         $receivingRoster = [
@@ -53,13 +44,13 @@ class KeranjangController extends Controller
             ],
         ];
 
-        // Transformasi View Model untuk kemudahan interaksi frontend
+        // Memformat daftar komoditas beserta harga kontrak efektif untuk interaktivitas keranjang belanja
         $commodities = $products->map(function ($product) use ($activeContracts, $stockMap) {
             $hasContract = $activeContracts->has($product->id);
             $contract = $activeContracts->get($product->id);
             $effectivePrice = $hasContract ? (float) $contract->fixed_price_per_kg : (float) $product->base_price;
             $stock = $stockMap[$product->id] ?? 0;
-            $moq = (float) ($product->minimum_order ?? 10);
+            $minimumOrder = (float) ($product->minimum_order ?? 10);
 
             return [
                 'key'        => (string) $product->id,
@@ -72,7 +63,7 @@ class KeranjangController extends Controller
                 'cold_chain' => '2-6°C',
                 'price'      => $effectivePrice,
                 'stock'      => $stock,
-                'moq'        => $moq,
+                'moq'        => $minimumOrder,
                 'step'       => 1,
                 'crate_kg'   => 10,
                 'pack_label' => 'Krat',
@@ -92,9 +83,9 @@ class KeranjangController extends Controller
             ],
         ];
 
-        $gov = app(GovernanceService::class);
-        $taxSettings = $gov->getTaxSettings();
-        $shippingSettings = $gov->getShippingSettings();
+        $tataKelolaService = app(TataKelolaService::class);
+        $taxSettings = $tataKelolaService->getTaxSettings();
+        $shippingSettings = $tataKelolaService->getShippingSettings();
 
         $cartDefaults = [
             'date'              => $defaultDeliveryDate,

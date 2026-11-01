@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Armada;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Armada\StorePodRequest;
+use App\Http\Requests\Armada\SimpanBuktiTerimaRequest;
 use App\Models\Order;
 use App\Services\ArmadaService;
 use Illuminate\Contracts\View\View;
@@ -11,25 +11,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Controller Bukti Serah Terima Digital (Proof of Delivery / PoD) Supir Armada.
- *
- * Penjelasan UKK:
- * Modul ini digunakan oleh supir saat tiba di dermaga (dock) penerima klien:
- * 1. Mengunggah foto bukti fisik serah terima sayur (foto timbangan & foto dock).
- * 2. Mencatat nama petugas penerima barang dari pihak klien.
- * 3. Mencatat retur / ketidaksesuaian barang (discrepancy) jika ada sayur yang susut/rusak.
- * 4. Menyelesaikan status siklus pengiriman (SELESAI atau SELESAI_CATATAN).
- */
+// Controller bukti serah terima digital (PoD) untuk Armada
 class BuktiTerimaController extends Controller
 {
     public function __construct(
         protected ArmadaService $armadaService
     ) {}
 
-    /**
-     * Menampilkan formulir dan konsol bukti terima digital (Proof of Delivery / PoD).
-     */
+    // Menampilkan konsol input bukti serah terima (PoD), tanda tangan digital, dan komplain retur bagi supir
     public function index(Request $request): View
     {
         $user = Auth::user();
@@ -45,14 +34,12 @@ class BuktiTerimaController extends Controller
         ]);
     }
 
-    /**
-     * Menyimpan dokumen bukti terima pengiriman (Proof of Delivery).
-     */
-    public function store(StorePodRequest $request, Order $order): RedirectResponse
+    // Mengunggah foto bukti serah terima, mencatat bobot retur komoditas, dan menyelesaikan status pengiriman pesanan
+    public function store(SimpanBuktiTerimaRequest $request, Order $order): RedirectResponse
     {
         $user = Auth::user();
 
-        // Anti-IDOR: Jika pesanan sudah ditugaskan ke supir lain, tolak aksesnya
+        // Mencegah akses tidak sah (Anti-IDOR) jika pesanan telah ditugaskan kepada supir armada lain
         if ($order->driver_id && $order->driver_id !== $user->id) {
             abort(403, 'Akses Ditolak: Pesanan ini ditugaskan kepada supir armada lain.');
         }
@@ -96,7 +83,7 @@ class BuktiTerimaController extends Controller
             }
         }
 
-        // Simpan status pesanan dan catatan kedatangan
+        // Menentukan status akhir pesanan (SELESAI atau SELESAI_CATATAN) berdasarkan ada/tidaknya retur barang
         $order->status = ($condition === 'discrepancy' || $hasReturn) ? 'SELESAI_CATATAN' : 'SELESAI';
         $order->arrival_time = now();
         if ($receiverName) {

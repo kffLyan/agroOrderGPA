@@ -11,17 +11,13 @@ use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Display the login view.
-     */
+    // Menampilkan halaman formulir masuk (login) ke dalam sistem portal agroOrderGPA.
     public function create(): View
     {
         return view('auth.login');
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
+    // Memproses autentikasi kredensial pengguna dan mengarahkan ke dashboard sesuai hak akses peran.
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
@@ -41,9 +37,7 @@ class AuthenticatedSessionController extends Controller
         };
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
+    // Mengakhiri sesi login pengguna aktif dan meregenerasi token CSRF demi keamanan.
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();

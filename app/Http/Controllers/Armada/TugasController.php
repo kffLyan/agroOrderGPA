@@ -8,24 +8,14 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Controller Daftar Tugas Harian & Antrean Titik Pengantaran Supir Armada.
- *
- * Penjelasan UKK:
- * Modul ini menampilkan dashboard tugas harian pengemudi logistik:
- * 1. Jumlah titik pengantaran (Siap Kirim, Dalam Perjalanan, Selesai).
- * 2. Total muatan tonase sayur (Kg) yang diangkut pada shift tersebut.
- * 3. Identitas kendaraan dan status kelaikan operasional.
- */
+// Controller daftar tugas harian dan rute pengantaran untuk Armada
 class TugasController extends Controller
 {
     public function __construct(
         protected ArmadaService $armadaService
     ) {}
 
-    /**
-     * Menampilkan daftar tugas harian dan antrean titik pengantaran armada.
-     */
+    // Menampilkan daftar penugasan muatan logistik, antrean pengiriman, dan status pengantaran supir
     public function index(Request $request): View
     {
         $orders = $this->armadaService->getActiveOrdersForDriver(Auth::user());

@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\TataKelolaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -331,8 +332,8 @@ class DirekturUiUxModuleTest extends TestCase
         $response->assertStatus(302);
         $response->assertSessionHas('success');
 
-        $governanceService = app(\App\Services\GovernanceService::class);
-        $activeChannels = $governanceService->getActivePaymentChannels();
+        $tataKelolaService = app(TataKelolaService::class);
+        $activeChannels = $tataKelolaService->getActivePaymentChannels();
         $this->assertCount(2, $activeChannels);
         $this->assertEquals('Bank BCA Corporate', $activeChannels[0]['name']);
         $this->assertEquals('QRIS Dinamis GPA', $activeChannels[1]['name']);
@@ -365,8 +366,8 @@ class DirekturUiUxModuleTest extends TestCase
         $response->assertStatus(302);
         $response->assertSessionHas('success');
 
-        $governanceService = app(\App\Services\GovernanceService::class);
-        $channels = $governanceService->getActivePaymentChannels();
+        $tataKelolaService = app(TataKelolaService::class);
+        $channels = $tataKelolaService->getActivePaymentChannels();
         $this->assertCount(1, $channels);
         $this->assertNotNull($channels[0]['image_url']);
         $this->assertStringContainsString('/storage/payment-channels/channel_qris_', $channels[0]['image_url']);

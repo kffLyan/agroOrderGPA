@@ -9,6 +9,7 @@ use Illuminate\Contracts\View\View;
 
 class GalleryController extends Controller
 {
+    // Menampilkan galeri visual aktivitas budidaya tani Ciwidey, fasilitas sortir, dan armada distribusi.
     public function __invoke(): View
     {
         $totalProducts = Product::where('is_active', true)->count();

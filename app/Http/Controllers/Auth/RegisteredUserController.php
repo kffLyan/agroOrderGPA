@@ -15,11 +15,13 @@ use Illuminate\View\View;
 
 class RegisteredUserController extends Controller
 {
+    // Menampilkan halaman pendaftaran akun mitra atau pembeli baru agroOrderGPA.
     public function create(): View
     {
         return view('auth.register');
     }
     
+    // Memvalidasi data pendaftaran, OTP email, dan membuat entitas akun pengguna mitra baru.
     public function store(Request $request): RedirectResponse
     {
         $businessName = trim((string) $request->input('business_name', $request->input('company_name')));
@@ -58,8 +60,7 @@ class RegisteredUserController extends Controller
             }
         }
 
-        // Seluruh pendaftaran klien baru bermula sebagai Klien Reguler (Spot Market).
-        // Peningkatan ke Kontrak B2B (TOP Tempo & Harga Terkunci) wajib diajukan melalui portal untuk disahkan Direktur Utama.
+        // Pendaftaran mitra baru secara default bertipe REGULER spot market sebelum mengajukan kontrak B2B
         $user = User::create([
             'name'              => $request->name,
             'email'             => $email,

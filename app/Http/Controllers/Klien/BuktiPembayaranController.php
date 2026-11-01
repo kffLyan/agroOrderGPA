@@ -7,7 +7,7 @@ use App\Models\Contract;
 use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Services\GovernanceService;
+use App\Services\TataKelolaService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -16,33 +16,21 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
-/**
- * Controller Unggah Bukti Pembayaran Klien.
- *
- * Penjelasan UKK:
- * Modul ini menangani konfirmasi transfer pembayaran dari pembeli:
- * 1. Mengunggah foto bukti struk transfer / screenshot QRIS.
- * 2. Proteksi Anti-IDOR: Memastikan tagihan yang dibayar adalah milik klien yang login.
- * 3. Status Terkunci: Jika sudah berstatus PAID (lunas terverifikasi), form otomatis terkunci
- *    sehingga tidak dapat diubah atau diunggah ulang.
- * 4. Integrasi kanal pembayaran resmi (BCA, Mandiri, BRI, QRIS GPA).
- */
+// Controller unggah bukti transfer pembayaran untuk Klien
 class BuktiPembayaranController extends Controller
 {
-    /**
-     * Tampilkan formulir unggah bukti transfer dan pelacakan verifikasi pembayaran.
-     */
+    // Menampilkan halaman konfirmasi pembayaran, pilihan invoice terbuka, dan riwayat verifikasi bukti transfer
     public function index(Request $request): View
     {
         $user = auth()->user();
 
-        // 1. Ambil semua invoice milik user yang belum lunas atau baru diterbitkan
+        // Mengambil seluruh faktur tagihan milik klien yang masih aktif atau memiliki tunggakan
         $dbInvoices = Invoice::with(['orders', 'payments'])
             ->where('user_id', $user->id)
             ->latest('due_date')
             ->get();
 
-        // 2. Ambil kontrak aktif untuk plafon kredit
+        // Mengambil data kontrak aktif untuk mengecek sisa pagu kredit yang tersedia
         $contract = Contract::where('user_id', $user->id)
             ->where('status', 'ACTIVE')
             ->first();
@@ -53,11 +41,11 @@ class BuktiPembayaranController extends Controller
             ->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])
             ->sum('grand_total');
 
-        // 3. Riwayat Pembayaran (History)
+        // Mengambil daftar riwayat pembayaran terdahulu untuk kebutuhan audit dan bukti serah
         $dbPayments = Payment::with(['invoice', 'order', 'verifier'])
             ->where(function ($query) use ($user) {
-                $query->whereHas('invoice', fn ($q) => $q->where('user_id', $user->id))
-                    ->orWhereHas('order', fn ($q) => $q->where('user_id', $user->id));
+                $query->whereHas('invoice', fn ($subQuery) => $subQuery->where('user_id', $user->id))
+                    ->orWhereHas('order', fn ($subQuery) => $subQuery->where('user_id', $user->id));
             })
             ->latest('id')
             ->take(15)
@@ -66,7 +54,7 @@ class BuktiPembayaranController extends Controller
         $tagihanParam = $request->query('tagihan');
         $orderIdParam = $request->query('order_id');
 
-        // Jika tagihan kosong atau diberikan order_id, cari invoice terkait pesanan tersebut
+        // Memeriksa parameter rujukan faktur atau nomor pesanan yang dipilih pengguna
         if ($orderIdParam) {
             $relatedOrder = Order::with('invoice')->where('user_id', $user->id)->find($orderIdParam);
             if ($relatedOrder && $relatedOrder->invoice) {
@@ -74,7 +62,6 @@ class BuktiPembayaranController extends Controller
             }
         }
 
-        // Jika tagihan berupa nomor order (ORD-...), cari invoice terkait
         if ($tagihanParam && str_starts_with($tagihanParam, 'ORD-')) {
             $matchedOrder = Order::with('invoice')->where('user_id', $user->id)->where('order_number', $tagihanParam)->first();
             if ($matchedOrder && $matchedOrder->invoice) {
@@ -82,10 +69,9 @@ class BuktiPembayaranController extends Controller
             }
         }
 
-        // 4. Format data invoices untuk UI & Alpine.js
+        // Memformat data faktur untuk visualisasi status lunas, penyesuaian retur, dan tahapan verifikasi
         $invoices = $this->formatInvoices($dbInvoices, $dbPayments);
 
-        // Tentukan invoice yang sedang dipilih (selected)
         $selectedPo = $tagihanParam ?? ($invoices[0]['po'] ?? '');
         $selectedExists = collect($invoices)->contains('po', $selectedPo);
         if (! $selectedExists && ! empty($invoices)) {
@@ -93,27 +79,25 @@ class BuktiPembayaranController extends Controller
         }
         $selected = $selectedPo;
 
-        // Cari item invoice yang sedang dipilih untuk mengecek status lunas
         $currentSelectedInvoice = collect($invoices)->firstWhere('po', $selectedPo);
         $isSelectedPaid = $currentSelectedInvoice['is_paid'] ?? false;
 
-        // Deteksi apakah tagihan yang dipilih sudah memiliki bukti pembayaran yang sedang diverifikasi Sekretaris
+        // Memeriksa apakah faktur yang dipilih sedang dalam proses peninjauan bukti transfer oleh sekretaris
         $pendingPaymentForSelected = (! $isSelectedPaid)
-            ? $dbPayments->first(function ($p) use ($selectedPo) {
-                $invNum = $p->invoice?->invoice_number ?: ($p->order?->order_number ?: '');
-                return $invNum === $selectedPo 
-                    && $p->status === 'MENUNGGU_VERIFIKASI' 
-                    && ! empty($p->proof_url);
+            ? $dbPayments->first(function ($payment) use ($selectedPo) {
+                $invoiceNumber = $payment->invoice?->invoice_number ?: ($payment->order?->order_number ?: '');
+                return $invoiceNumber === $selectedPo 
+                    && $payment->status === 'MENUNGGU_VERIFIKASI' 
+                    && ! empty($payment->proof_url);
             })
             : null;
 
-        // Deteksi bukti pembayaran terbaru untuk tagihan yang dipilih
-        $latestPaymentForSelected = $dbPayments->first(function ($p) use ($selectedPo) {
-            $invNum = $p->invoice?->invoice_number ?: ($p->order?->order_number ?: '');
-            return $invNum === $selectedPo;
+        // Mengidentifikasi catatan pembayaran terakhir untuk mendeteksi penolakan atau status transaksi
+        $latestPaymentForSelected = $dbPayments->first(function ($payment) use ($selectedPo) {
+            $invoiceNumber = $payment->invoice?->invoice_number ?: ($payment->order?->order_number ?: '');
+            return $invoiceNumber === $selectedPo;
         });
 
-        // Apakah pembayaran terbaru ditolak dan belum ada pembayaran pengganti yang sedang diverifikasi
         $rejectedPaymentForSelected = (! $isSelectedPaid && $latestPaymentForSelected && in_array($latestPaymentForSelected->status, ['DITOLAK', 'REJECTED']))
             ? $latestPaymentForSelected
             : null;
@@ -128,9 +112,8 @@ class BuktiPembayaranController extends Controller
 
         $history = $dbPayments;
 
-        // Ambil kanal pembayaran resmi yang telah disetel oleh Direktur
-        $governanceService = app(GovernanceService::class);
-        $paymentChannels = $governanceService->getActivePaymentChannels();
+        $tataKelolaService = app(TataKelolaService::class);
+        $paymentChannels = $tataKelolaService->getActivePaymentChannels();
 
         return view('klien.bukti-pembayaran', compact(
             'invoices',
@@ -149,45 +132,43 @@ class BuktiPembayaranController extends Controller
         ));
     }
 
-    /**
-     * Format koleksi invoice menjadi array view model siap pakai untuk Blade & Alpine.js.
-     */
+    // Memformat koleksi faktur tagihan menjadi struktur data visual yang siap diproses Blade dan Alpine.js
     protected function formatInvoices($dbInvoices, $dbPayments): array
     {
         $invoices = [];
-        foreach ($dbInvoices as $inv) {
-            $gross = (float) ($inv->subtotal_amount ?: $inv->grand_total);
-            $net = (float) $inv->grand_total;
+        foreach ($dbInvoices as $invoice) {
+            $gross = (float) ($invoice->subtotal_amount ?: $invoice->grand_total);
+            $net = (float) $invoice->grand_total;
             $creditAdjustment = max(0, $gross - $net);
 
-            $latestPayment = $inv->payments?->sortByDesc('id')->first()
-                ?: $dbPayments->first(function ($p) use ($inv) {
-                    $invNum = $p->invoice?->invoice_number ?: ($p->order?->order_number ?: '');
-                    return $p->invoice_id === $inv->id || $invNum === $inv->invoice_number;
+            $latestPayment = $invoice->payments?->sortByDesc('id')->first()
+                ?: $dbPayments->first(function ($payment) use ($invoice) {
+                    $invoiceNumber = $payment->invoice?->invoice_number ?: ($payment->order?->order_number ?: '');
+                    return $payment->invoice_id === $invoice->id || $invoiceNumber === $invoice->invoice_number;
                 });
 
-            $isPaid = ($inv->status === 'PAID') || ($latestPayment && in_array($latestPayment->status, ['LUNAS', 'VERIFIED']));
+            $isPaid = ($invoice->status === 'PAID') || ($latestPayment && in_array($latestPayment->status, ['LUNAS', 'VERIFIED']));
             $isRejected = ($latestPayment && in_array($latestPayment->status, ['DITOLAK', 'REJECTED']));
-            $isPending = (($latestPayment && in_array($latestPayment->status, ['MENUNGGU_VERIFIKASI', 'PENDING'])) || $inv->has_pending_proof) && ! $isPaid;
+            $isPending = (($latestPayment && in_array($latestPayment->status, ['MENUNGGU_VERIFIKASI', 'PENDING'])) || $invoice->has_pending_proof) && ! $isPaid;
 
             $verificationStage = $isPaid ? 3 : ($isPending ? 2 : 1);
             $verificationStatus = $isPaid ? 'LUNAS' : ($isPending ? 'MENUNGGU_VERIFIKASI' : ($isRejected ? 'DITOLAK' : 'BELUM_BAYAR'));
 
             $invoices[] = [
-                'po' => $inv->invoice_number,
+                'po' => $invoice->invoice_number,
                 'option_label' => sprintf(
                     '%s — Periode %s (Rp %s)',
-                    $inv->invoice_number,
-                    $inv->period_start ? $inv->period_start->format('d/m/Y') : '-',
+                    $invoice->invoice_number,
+                    $invoice->period_start ? $invoice->period_start->format('d/m/Y') : '-',
                     number_format($net, 0, ',', '.')
                 ),
-                'status_chip' => match ($inv->status) {
+                'status_chip' => match ($invoice->status) {
                     'PAID'    => 'Lunas Sah',
                     'OVERDUE' => 'Lewat Jatuh Tempo',
                     'PARTIAL' => 'Terbayar Sebagian',
-                    default   => ($inv->has_pending_proof ? 'Menunggu Verifikasi Pembayaran' : 'Menunggu Pembayaran'),
+                    default   => ($invoice->has_pending_proof ? 'Menunggu Verifikasi Pembayaran' : 'Menunggu Pembayaran'),
                 },
-                'due_note'            => $inv->due_date ? 'Jatuh tempo pada: ' . $inv->due_date->translatedFormat('d F Y') : 'Jatuh tempo TOP 30 Hari',
+                'due_note'            => $invoice->due_date ? 'Jatuh tempo pada: ' . $invoice->due_date->translatedFormat('d F Y') : 'Jatuh tempo TOP 30 Hari',
                 'gross_label'         => 'Rp ' . number_format($gross, 0, ',', '.'),
                 'credit_label'        => 'Penyesuaian Kredit / Retur:',
                 'credit_value'        => $creditAdjustment > 0 ? '- Rp ' . number_format($creditAdjustment, 0, ',', '.') : 'Rp 0',
@@ -201,13 +182,13 @@ class BuktiPembayaranController extends Controller
                 'is_paid'             => $isPaid,
                 'is_pending'          => $isPending,
                 'is_rejected'         => $isRejected,
-                'status'              => $inv->status,
+                'status'              => $invoice->status,
                 'payment_ref'         => $latestPayment ? ($latestPayment->payment_reference ?: 'PAY-' . str_pad((string) $latestPayment->id, 5, '0', STR_PAD_LEFT)) : '-',
                 'payment_method'      => $latestPayment?->payment_method ?: 'TRANSFER_BANK',
                 'paid_at'             => $latestPayment?->paid_at ? $latestPayment->paid_at->translatedFormat('d F Y H:i') : ($latestPayment?->created_at ? $latestPayment->created_at->translatedFormat('d F Y H:i') : null),
                 'verifier_name'       => $latestPayment?->verifier?->name ?: 'Staf Sekretariat Keuangan GPA',
                 'verification_note'   => $latestPayment?->verification_note,
-                'receipt_number'      => $isPaid ? ('KWT-' . str_pad((string) ($latestPayment?->id ?? $inv->id), 5, '0', STR_PAD_LEFT)) : null,
+                'receipt_number'      => $isPaid ? ('KWT-' . str_pad((string) ($latestPayment?->id ?? $invoice->id), 5, '0', STR_PAD_LEFT)) : null,
                 'proof_url'           => $latestPayment?->proof_url ? asset('storage/' . $latestPayment->proof_url) : null,
             ];
         }
@@ -215,9 +196,7 @@ class BuktiPembayaranController extends Controller
         return $invoices;
     }
 
-    /**
-     * Proses unggah bukti pembayaran oleh Klien.
-     */
+    // Memvalidasi dan menyimpan unggahan berkas bukti transfer pembayaran serta mencatatnya ke antrean verifikasi
     public function store(Request $request): RedirectResponse|JsonResponse
     {
         $user = auth()->user();
@@ -234,13 +213,13 @@ class BuktiPembayaranController extends Controller
         ]);
 
         $invoice = Invoice::where('user_id', $user->id)
-            ->where(function ($q) use ($validated) {
-                $q->where('invoice_number', $validated['invoice_po'])
-                  ->orWhere('id', $validated['invoice_po']);
+            ->where(function ($query) use ($validated) {
+                $query->where('invoice_number', $validated['invoice_po'])
+                      ->orWhere('id', $validated['invoice_po']);
             })
             ->first();
 
-        // Anti-IDOR: Pastikan tagihan yang dibayar adalah milik Klien yang sedang login
+        // Memvalidasi kepemilikan tagihan (Anti-IDOR) agar klien hanya dapat membayar fakturnya sendiri
         if (!$invoice) {
             if ($request->wantsJson()) {
                 return response()->json([
@@ -252,7 +231,7 @@ class BuktiPembayaranController extends Controller
             return back()->withInput()->withErrors(['invoice_po' => 'Nomor tagihan tidak ditemukan pada akun Anda.']);
         }
 
-        // Cek jika tagihan sudah berstatus PAID (Lunas & Terverifikasi Sah)
+        // Memastikan faktur yang sudah berstatus lunas tidak dapat dibayar atau diunggah ulang
         if ($invoice->status === 'PAID') {
             if ($request->wantsJson()) {
                 return response()->json([
@@ -264,7 +243,7 @@ class BuktiPembayaranController extends Controller
             return redirect()->route('klien.dokumen')->with('info', 'Faktur ' . $invoice->invoice_number . ' sudah lunas dan terverifikasi sah.');
         }
 
-        // Pencegahan dobel unggah bukti transfer yang masih mengantre dalam 60 detik terakhir
+        // Mencegah pengiriman ganda (double submission) berkas bukti pembayaran dalam rentang 60 detik
         $existingPendingPayment = Payment::where('invoice_id', $invoice->id)
             ->where('status', 'MENUNGGU_VERIFIKASI')
             ->where('created_at', '>=', now()->subSeconds(60))
@@ -291,7 +270,7 @@ class BuktiPembayaranController extends Controller
         if (! empty($validated['transfer_at'] ?? null)) {
             try {
                 $paidAt = Carbon::createFromFormat('d/m/Y H:i', $validated['transfer_at']);
-            } catch (\Exception $e) {
+            } catch (\Exception $exception) {
                 $paidAt = Carbon::now();
             }
         }
@@ -326,13 +305,13 @@ class BuktiPembayaranController extends Controller
             }
 
             return redirect()->route('klien.dokumen')->with('success', 'Bukti pembayaran faktur ' . $validated['invoice_po'] . ' berhasil diunggah. Menunggu konfirmasi verifikasi Staf Sekretariat.');
-        } catch (\Exception $e) {
+        } catch (\Exception $exception) {
             DB::rollBack();
 
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Gagal memproses bukti pembayaran: ' . $e->getMessage(),
+                    'message' => 'Gagal memproses bukti pembayaran: ' . $exception->getMessage(),
                 ], 500);
             }
 

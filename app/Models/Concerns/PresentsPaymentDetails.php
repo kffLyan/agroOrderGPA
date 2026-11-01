@@ -17,9 +17,7 @@ trait PresentsPaymentDetails
         return PaymentMethod::tryFrom((string) $this->payment_method);
     }
 
-    /**
-     * Format nominal pembayaran ke format mata uang Rupiah
-     */
+    // Format nominal pembayaran ke format mata uang Rupiah
     public function getFormattedAmountAttribute(): string
     {
         return 'Rp ' . number_format((float) ($this->amount ?? 0), 0, ',', '.');

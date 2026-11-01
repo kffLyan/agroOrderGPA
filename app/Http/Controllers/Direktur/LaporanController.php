@@ -4,47 +4,39 @@ namespace App\Http\Controllers\Direktur;
 
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
+use Carbon\Carbon;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
-use App\Services\GovernanceService;
-use App\Services\ReportPrintService;
+use App\Services\TataKelolaService;
+use App\Services\LaporanPrintService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-/**
- * Controller Laporan Penjualan Eksekutif & Pengesahan Arsip Imutabel Direktur.
- *
- * Penjelasan UKK:
- * Modul ini menampilkan laporan konsolidasi penjualan eksekutif, rekapitulasi volume panen,
- * dan fitur integritas data: Penguncian Arsip Imutabel (Immutable Archive) berbasis hash SHA-256
- * yang memastikan data laporan keuangan resmi tidak dapat dimanipulasi setelah disahkan Direksi.
- */
+// Controller laporan penjualan eksekutif dan pengesahan arsip untuk Direktur
 class LaporanController extends Controller
 {
     public function __construct(
-        protected GovernanceService $governanceService
+        protected TataKelolaService $tataKelolaService
     ) {}
 
-    /**
-     * Menampilkan Laporan Penjualan Eksekutif Direktur beserta status kunci arsip.
-     */
+    // Menampilkan laporan penjualan eksekutif beserta status kunci arsip
     public function index(Request $request): View
     {
-        $settings = $this->governanceService->getSettings();
+        $settings = $this->tataKelolaService->getSettings();
         $periodLock = $settings['period_lock'] ?? [
-            'is_locked'   => true,
-            'period'      => 'Kuartal IV 2026 (Okt - Des 2026)',
-            'locked_at'   => '24 Okt 2026 23:59:59 WIB',
-            'locked_by'   => Auth::user()?->name ?: 'Direktur GPA',
+            'is_locked' => true,
+            'period' => 'Kuartal IV 2026 (Okt - Des 2026)',
+            'locked_at' => '24 Okt 2026 23:59:59 WIB',
+            'locked_by' => Auth::user()?->name ?: 'Direktur GPA',
             'sha256_hash' => '0x8F9C4A217B1E90D4CC67F814E32A0B7D18C992E5F67104B8A293CD0891DE33',
         ];
 
-        // 1. Penentuan Rentang Periode Rekapitulasi (Preset Sederhana atau Tanggal Kustom)
+        // 1. Penentuan rentang periode rekapitulasi
         $selectedPeriod = $request->query('period');
         $startDate = $request->query('start_date');
         $endDate = $request->query('end_date');
@@ -55,8 +47,8 @@ class LaporanController extends Controller
         $activePeriodLabel = '';
 
         if ($startDate && $endDate) {
-            $start = \Carbon\Carbon::parse($startDate)->startOfDay();
-            $end = \Carbon\Carbon::parse($endDate)->endOfDay();
+            $start = Carbon::parse($startDate)->startOfDay();
+            $end = Carbon::parse($endDate)->endOfDay();
             $selectedPeriod = 'kustom';
             $activePeriodLabel = 'Periode: ' . $start->translatedFormat('d M Y') . ' s.d. ' . $end->translatedFormat('d M Y');
         } else {
@@ -95,7 +87,7 @@ class LaporanController extends Controller
         $inputStartDate = $start ? $start->format('Y-m-d') : '';
         $inputEndDate = $end ? $end->format('Y-m-d') : '';
 
-        // 2. Query Pesanan Sah dalam Rentang Periode Terpilih
+        // 2. Query pesanan sah dalam rentang periode terpilih
         $ordersQuery = Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS']);
         if ($start && $end) {
             $ordersQuery->whereBetween('created_at', [$start, $end]);
@@ -103,7 +95,7 @@ class LaporanController extends Controller
         $orders = $ordersQuery->with(['user', 'orderItems.product'])->latest()->get();
         $orderIds = $orders->pluck('id');
 
-        // 3. Rekapitulasi Otomatis Metrik Finansial & Volume
+        // 3. Rekapitulasi metrik finansial dan volume
         $totalRevenue = (float) $orders->sum('grand_total');
         $totalTonnageKg = (float) OrderItem::whereIn('order_id', $orderIds)->sum('ordered_qty');
 
@@ -116,11 +108,11 @@ class LaporanController extends Controller
 
         $quarterTarget = 600000000;
         $periodTarget = match ($selectedPeriod) {
-            'hari_ini'   => round($quarterTarget / 90),
+            'hari_ini' => round($quarterTarget / 90),
             'minggu_ini' => round($quarterTarget / 12),
-            'bulan_ini'  => round($quarterTarget / 3),
-            'tahun_ini'  => $quarterTarget * 4,
-            default      => $quarterTarget,
+            'bulan_ini' => round($quarterTarget / 3),
+            'tahun_ini' => $quarterTarget * 4,
+            default => $quarterTarget,
         };
 
         $revenuePercent = $periodTarget > 0 ? round(($totalRevenue / $periodTarget) * 100, 1) : 0;
@@ -130,11 +122,11 @@ class LaporanController extends Controller
             ->sum(DB::raw('returned_weight * unit_price'));
         $tolerancePercent = $totalRevenue > 0 ? round(($shrinkageClaim / $totalRevenue) * 100, 2) : 0;
 
-        // 4. Analitik Komoditas Terjual dalam Periode
+        // 4. Analitik komoditas terjual dalam periode
         $products = Product::take(5)->get();
         $cAnalytics = $this->buildCommodityAnalytics($products, $orderIds);
 
-        // 5. Analitik Mitra Klien B2B dalam Periode
+        // 5. Analitik mitra klien B2B dalam periode
         $clients = User::where('role', 'KLIEN')->with(['orders.orderItems', 'invoices', 'contracts'])->get();
         $clAnalytics = $this->buildClientAnalytics($clients, $orderIds, $start, $end);
 
@@ -200,30 +192,28 @@ class LaporanController extends Controller
         ));
     }
 
-    /**
-     * Format dan hitung analitik komoditas untuk laporan eksekutif.
-     */
+    // Format dan hitung analitik komoditas untuk laporan eksekutif
     protected function buildCommodityAnalytics($products, $orderIds): array
     {
         $raw = [];
         $commRev = 0;
-        foreach ($products as $p) {
-            $itemsQuery = OrderItem::whereIn('order_id', $orderIds)->where('product_id', $p->id);
+        foreach ($products as $produk) {
+            $itemsQuery = OrderItem::whereIn('order_id', $orderIds)->where('product_id', $produk->id);
             $poKg = (float) (clone $itemsQuery)->sum('ordered_qty');
             $retKg = (float) (clone $itemsQuery)->sum('returned_weight');
             $teraKg = max(0, $poKg - $retKg);
-            $price = (float) $p->base_price;
+            $hargaDasar = (float) $produk->base_price;
             $omzet = (int) round((clone $itemsQuery)->sum('subtotal'));
             if ($omzet === 0 && $teraKg > 0) {
-                $omzet = (int) round($teraKg * $price);
+                $omzet = (int) round($teraKg * $hargaDasar);
             }
             $commRev += $omzet;
 
             $raw[] = [
-                'name'    => $p->name,
+                'name'    => $produk->name,
                 'po_kg'   => $poKg,
                 'tera_kg' => $teraKg,
-                'price'   => $price,
+                'price'   => $hargaDasar,
                 'omzet'   => $omzet,
                 'margin'  => 25.0,
             ];
@@ -235,21 +225,21 @@ class LaporanController extends Controller
         $marginTotal = array_sum(array_column($raw, 'margin'));
 
         $list = [];
-        foreach ($raw as $row) {
-            $shrinkage = max(0, $row['po_kg'] - $row['tera_kg']);
-            $dev = $row['po_kg'] > 0 ? round(($shrinkage / $row['po_kg']) * 100, 2) : 0.0;
-            $row['po_label']           = number_format($row['po_kg'], 0, ',', '.');
-            $row['tera_label']         = number_format($row['tera_kg'], 0, ',', '.');
-            $row['shrinkage_kg']       = $shrinkage;
-            $row['deviation']          = $dev;
-            $row['deviation_label']    = $shrinkage > 0 ? ('-' . number_format($shrinkage, 0, ',', '.') . ' kg (-' . $dev . '%)') : '0 kg (0%)';
-            $row['price_label']        = 'Rp ' . number_format($row['price'], 0, ',', '.');
-            $row['revenue']            = $row['omzet'];
-            $row['revenue_label']      = 'Rp ' . number_format($row['omzet'], 0, ',', '.');
-            $row['contribution']       = $commRev > 0 ? round(($row['omzet'] / $commRev) * 100, 2) : 0.0;
-            $row['contribution_label'] = number_format($row['contribution'], 2, '.', '') . '%';
-            $row['margin_label']       = number_format($row['margin'], 1, '.', '') . '%';
-            $list[] = $row;
+        foreach ($raw as $baris) {
+            $shrinkage = max(0, $baris['po_kg'] - $baris['tera_kg']);
+            $dev = $baris['po_kg'] > 0 ? round(($shrinkage / $baris['po_kg']) * 100, 2) : 0.0;
+            $baris['po_label'] = number_format($baris['po_kg'], 0, ',', '.');
+            $baris['tera_label'] = number_format($baris['tera_kg'], 0, ',', '.');
+            $baris['shrinkage_kg'] = $shrinkage;
+            $baris['deviation'] = $dev;
+            $baris['deviation_label'] = $shrinkage > 0 ? ('-' . number_format($shrinkage, 0, ',', '.') . ' kg (-' . $dev . '%)') : '0 kg (0%)';
+            $baris['price_label'] = 'Rp ' . number_format($baris['price'], 0, ',', '.');
+            $baris['revenue'] = $baris['omzet'];
+            $baris['revenue_label'] = 'Rp ' . number_format($baris['omzet'], 0, ',', '.');
+            $baris['contribution'] = $commRev > 0 ? round(($baris['omzet'] / $commRev) * 100, 2) : 0.0;
+            $baris['contribution_label'] = number_format($baris['contribution'], 2, '.', '') . '%';
+            $baris['margin_label'] = number_format($baris['margin'], 1, '.', '') . '%';
+            $list[] = $baris;
         }
 
         return [
@@ -262,16 +252,14 @@ class LaporanController extends Controller
         ];
     }
 
-    /**
-     * Format dan hitung analitik penjualan klien B2B untuk laporan eksekutif.
-     */
+    // Format dan hitung analitik penjualan klien B2B untuk laporan eksekutif
     protected function buildClientAnalytics($clients, $orderIds, $start = null, $end = null): array
     {
         $list = [];
         foreach ($clients as $client) {
             $clientOrders = $client->orders->whereIn('id', $orderIds)->whereNotIn('status', ['BATAL']);
             $poCount = $clientOrders->count();
-            $volumeKg = (float) $clientOrders->sum(fn ($o) => $o->orderItems->sum('ordered_qty'));
+            $volumeKg = (float) $clientOrders->sum(fn($pesanan) => $pesanan->orderItems->sum('ordered_qty'));
             $gross = (float) $clientOrders->sum('grand_total');
 
             $invQuery = $client->invoices();
@@ -282,7 +270,7 @@ class LaporanController extends Controller
             $contract = $client->contracts->first();
             $termDays = $contract ? (int) $contract->top_days : 30;
             $earliestDue = (clone $invQuery)->whereIn('status', ['UNPAID', 'OVERDUE'])->min('due_date');
-            $dueLabel = $earliestDue ? ('JT: ' . \Carbon\Carbon::parse($earliestDue)->translatedFormat('d M')) : 'Lancar';
+            $dueLabel = $earliestDue ? ('JT: ' . Carbon::parse($earliestDue)->translatedFormat('d M')) : 'Lancar';
             $rec = max(0, $gross - $settled);
 
             $list[] = [
@@ -326,9 +314,7 @@ class LaporanController extends Controller
         ];
     }
 
-    /**
-     * Siapkan entri log audit forensik penguncian laporan.
-     */
+    // Siapkan entri log audit forensik penguncian laporan
     protected function buildAuditEntries(float $teraTotal, float $openReceivables, string $lockedBy): array
     {
         return [
@@ -357,9 +343,7 @@ class LaporanController extends Controller
         ];
     }
 
-    /**
-     * Siapkan data sertifikat digital penutup laporan.
-     */
+    // Siapkan data sertifikat digital penutup laporan
     protected function buildSealData(string $sha256Hash, string $lockedBy): array
     {
         return [
@@ -369,52 +353,46 @@ class LaporanController extends Controller
         ];
     }
 
-    /**
-     * Kunci dan Sahkan Laporan Periode (Immutable Archive SHA-256).
-     */
+    // Kunci dan sahkan laporan periode (Immutable Archive SHA-256)
     public function lockPeriod(Request $request)
     {
-        $periodName = $request->input('period', 'Kuartal IV (Okt - Des 2026)');
-        $directorName = Auth::user()?->name ?: 'Direktur GPA';
+        $namaPeriode = $request->input('period', 'Kuartal IV (Okt - Des 2026)');
+        $namaDirektur = Auth::user()?->name ?: 'Direktur GPA';
 
-        $lockInfo = $this->governanceService->lockPeriod($periodName, $directorName);
+        $infoKunci = $this->tataKelolaService->lockPeriod($namaPeriode, $namaDirektur);
 
-        return redirect()->route('direktur.laporan.index')
-            ->with('success', "Periode {$periodName} berhasil dikunci dan disahkan permanen dengan hash {$lockInfo['sha256_hash']}. Status kini Immutable Archive.");
+        return redirect()
+            ->route('direktur.laporan.index')
+            ->with('success', "Periode {$namaPeriode} berhasil dikunci dan disahkan permanen dengan hash {$infoKunci['sha256_hash']}. Status kini Immutable Archive.");
     }
 
-    /**
-     * Buka Kunci Laporan Periode (Jika Diperlukan Koreksi Direksi).
-     */
+    // Buka kunci laporan periode untuk koreksi Direksi
     public function unlockPeriod(Request $request)
     {
-        $periodName = $request->input('period', 'Kuartal IV (Okt - Des 2026)');
-        $directorName = Auth::user()?->name ?: 'Direktur GPA';
+        $namaPeriode = $request->input('period', 'Kuartal IV (Okt - Des 2026)');
+        $namaDirektur = Auth::user()?->name ?: 'Direktur GPA';
 
-        $this->governanceService->unlockPeriod($periodName, $directorName);
+        $this->tataKelolaService->unlockPeriod($namaPeriode, $namaDirektur);
 
-        return redirect()->route('direktur.laporan.index')
-            ->with('success', "Kunci audit periode {$periodName} dibuka sementara oleh Direktur Utama.");
+        return redirect()
+            ->route('direktur.laporan.index')
+            ->with('success', "Kunci audit periode {$namaPeriode} dibuka sementara oleh Direktur Utama.");
     }
 
-    /**
-     * Tampilan Siap Cetak Dokumen Pengesahan Resmi (.PDF / Print View).
-     */
-    public function download(Request $request, ReportPrintService $service): View
+    // Tampilan siap cetak dokumen pengesahan resmi PDF
+    public function download(Request $request, LaporanPrintService $service): View
     {
-        $data = $service->buildPrintData(
+        $dataCetak = $service->buildPrintData(
             $request->query('start_date'),
             $request->query('end_date'),
             $request->query('client_id') ? (int) $request->query('client_id') : null,
             $request->query('period')
         );
 
-        return view('prints.report', $data);
+        return view('prints.report', $dataCetak);
     }
 
-    /**
-     * Unduh Buku Besar Penjualan (.CSV).
-     */
+    // Unduh buku besar penjualan (.CSV)
     public function exportCsv(Request $request): StreamedResponse
     {
         $period = $request->query('period');
@@ -424,39 +402,39 @@ class LaporanController extends Controller
         $now = now();
         $start = null;
         $end = null;
-        $periodLabel = 'Bulan Ini (' . $now->translatedFormat('F Y') . ')';
+        $labelPeriode = 'Bulan Ini (' . $now->translatedFormat('F Y') . ')';
 
         if ($startDate && $endDate) {
-            $start = \Carbon\Carbon::parse($startDate)->startOfDay();
-            $end = \Carbon\Carbon::parse($endDate)->endOfDay();
-            $periodLabel = 'Periode: ' . $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y');
+            $start = Carbon::parse($startDate)->startOfDay();
+            $end = Carbon::parse($endDate)->endOfDay();
+            $labelPeriode = 'Periode: ' . $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y');
         } elseif ($period) {
             switch ($period) {
                 case 'hari_ini':
                     $start = (clone $now)->startOfDay();
                     $end = (clone $now)->endOfDay();
-                    $periodLabel = 'Hari Ini (' . $now->format('d/m/Y') . ')';
+                    $labelPeriode = 'Hari Ini (' . $now->format('d/m/Y') . ')';
                     break;
                 case 'minggu_ini':
                     $start = (clone $now)->startOfWeek();
                     $end = (clone $now)->endOfWeek();
-                    $periodLabel = 'Minggu Ini';
+                    $labelPeriode = 'Minggu Ini';
                     break;
                 case 'tahun_ini':
                     $start = (clone $now)->startOfYear();
                     $end = (clone $now)->endOfYear();
-                    $periodLabel = 'Tahun Ini (' . $now->format('Y') . ')';
+                    $labelPeriode = 'Tahun Ini (' . $now->format('Y') . ')';
                     break;
                 case 'semua':
                     $start = null;
                     $end = null;
-                    $periodLabel = 'Semua Riwayat';
+                    $labelPeriode = 'Semua Riwayat';
                     break;
                 case 'bulan_ini':
                 default:
                     $start = (clone $now)->startOfMonth();
                     $end = (clone $now)->endOfMonth();
-                    $periodLabel = 'Bulan Ini (' . $now->translatedFormat('F Y') . ')';
+                    $labelPeriode = 'Bulan Ini (' . $now->translatedFormat('F Y') . ')';
                     break;
             }
         } else {
@@ -464,30 +442,30 @@ class LaporanController extends Controller
             $end = (clone $now)->endOfMonth();
         }
 
-        $headers = [
+        $headerBerkas = [
             'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="Buku_Besar_Penjualan_' . date('Ymd_His') . '.csv"',
         ];
 
-        return response()->stream(function () use ($start, $end, $periodLabel) {
-            $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF");
+        return response()->stream(function () use ($start, $end, $labelPeriode) {
+            $penunjukBerkas = fopen('php://output', 'w');
+            fputs($penunjukBerkas, "\u{FEFF}");
 
-            fputcsv($handle, ['BUKU BESAR REKAPITULASI PENJUALAN EKSEKUTIF KOPERASI GREEN PASUNDAN AGRICULTURE']);
-            fputcsv($handle, ['CAKUPAN PERIODE', $periodLabel]);
-            fputcsv($handle, ['STATUS AUDIT', 'DISAHKAN // SISTEM RESMI']);
-            fputcsv($handle, ['TANGGAL CETAK', date('d/m/Y H:i') . ' WIB']);
-            fputcsv($handle, []);
-            fputcsv($handle, ['Entitas Mitra B2B', 'No Kontrak', 'Frekuensi PO', 'Volume Tera Sah (kg)', 'Tagihan Bruto (Rp)', 'Settled / Kas Masuk (Rp)', 'Sisa Piutang (Rp)', 'Status']);
+            fputcsv($penunjukBerkas, ['BUKU BESAR REKAPITULASI PENJUALAN EKSEKUTIF KOPERASI GREEN PASUNDAN AGRICULTURE']);
+            fputcsv($penunjukBerkas, ['CAKUPAN PERIODE', $labelPeriode]);
+            fputcsv($penunjukBerkas, ['STATUS AUDIT', 'DISAHKAN // SISTEM RESMI']);
+            fputcsv($penunjukBerkas, ['TANGGAL CETAK', date('d/m/Y H:i') . ' WIB']);
+            fputcsv($penunjukBerkas, []);
+            fputcsv($penunjukBerkas, ['Entitas Mitra B2B', 'No Kontrak', 'Frekuensi PO', 'Volume Tera Sah (kg)', 'Tagihan Bruto (Rp)', 'Settled / Kas Masuk (Rp)', 'Sisa Piutang (Rp)', 'Status']);
 
-            $clients = User::where('role', 'KLIEN')->with(['orders.orderItems', 'invoices', 'contracts'])->get();
-            foreach ($clients as $client) {
+            $daftarKlien = User::where('role', 'KLIEN')->with(['orders.orderItems', 'invoices', 'contracts'])->get();
+            foreach ($daftarKlien as $client) {
                 $clientOrders = $client->orders->whereNotIn('status', ['BATAL']);
                 if ($start && $end) {
                     $clientOrders = $clientOrders->whereBetween('created_at', [$start, $end]);
                 }
                 $poCount = $clientOrders->count();
-                $volumeKg = (float) $clientOrders->sum(fn ($o) => $o->orderItems->sum('ordered_qty'));
+                $volumeKg = (float) $clientOrders->sum(fn($pesanan) => $pesanan->orderItems->sum('ordered_qty'));
                 $gross = (float) $clientOrders->sum('grand_total');
 
                 $invQuery = $client->invoices();
@@ -500,7 +478,7 @@ class LaporanController extends Controller
                 $contractNo = $contract ? $contract->contract_number : ('CLI-' . str_pad((string) $client->id, 3, '0', STR_PAD_LEFT));
                 $status = $outstanding <= 0 ? 'LUNAS' : 'LANCAR';
 
-                fputcsv($handle, [
+                fputcsv($penunjukBerkas, [
                     $client->company_name ?: $client->name,
                     $contractNo,
                     $poCount,
@@ -512,7 +490,7 @@ class LaporanController extends Controller
                 ]);
             }
 
-            fclose($handle);
-        }, 200, $headers);
+            fclose($penunjukBerkas);
+        }, 200, $headerBerkas);
     }
 }

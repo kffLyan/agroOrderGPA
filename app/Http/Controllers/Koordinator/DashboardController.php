@@ -11,9 +11,7 @@ use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
-    /**
-     * Tampilkan Konsol Operasional Pasokan, Persediaan & Intake Koordinator Lapangan.
-     */
+    // Menampilkan konsol operasional pasokan, persediaan komoditas, dan intake timbangan Koordinator Lapangan.
     public function index(Request $request): View
     {
         // Metrik Pasokan & Persediaan dari Database

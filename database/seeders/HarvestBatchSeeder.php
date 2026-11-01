@@ -7,9 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class HarvestBatchSeeder extends Seeder
 {
-    /**
-     * Seed harvest batches and warehouse inventory lots.
-     */
+    // Menyiapkan lot batch panen masuk dari kebun binaan dan buffer mitra luar untuk neraca stok gudang
     public function run(): void
     {
         DB::table('harvest_batches')->truncate();

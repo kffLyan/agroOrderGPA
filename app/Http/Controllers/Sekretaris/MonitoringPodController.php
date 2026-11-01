@@ -9,20 +9,10 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 
-/**
- * Controller Pemantauan Bukti Serah Terima (Proof of Delivery / PoD) Sekretaris.
- *
- * Penjelasan UKK:
- * Modul ini menampilkan audit bukti penerimaan sayur oleh klien di dock:
- * 1. Foto serah terima barang (manifest timbang & dock penerimaan).
- * 2. Catatan retur / susut timbangan (jika ada barang rusak/discrepancy).
- * 3. Status ketepatan waktu pengiriman oleh armada logistik.
- */
+// Controller pemantauan bukti serah terima (PoD) untuk Sekretaris
 class MonitoringPodController extends Controller
 {
-    /**
-     * Menampilkan konsol pemantauan Bukti Serah Terima (Proof of Delivery / PoD).
-     */
+    // Menampilkan konsol pemantauan serah terima logistik (PoD), tanda tangan digital, foto serah terima, dan klaim retur barang
     public function index(Request $request): View
     {
         $statusFilter = $request->query('status', 'all');
@@ -30,12 +20,12 @@ class MonitoringPodController extends Controller
         $search = trim($request->query('search', ''));
 
         $query = Order::with(['orderItems.product', 'user', 'driver', 'verifier', 'invoice'])
-            ->where(function ($q) {
-                $q->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'DALAM_PENGIRIMAN', 'SIAP_KIRIM'])
-                  ->orWhereNotNull('pod_photo_url');
+            ->where(function ($subQuery) {
+                $subQuery->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'DALAM_PENGIRIMAN', 'SIAP_KIRIM'])
+                         ->orWhereNotNull('pod_photo_url');
             });
 
-        // Filter status
+        // Memfilter status pesanan berdasarkan tahap pengiriman atau penyelesaian
         if ($statusFilter === 'clean') {
             $query->where('status', 'SELESAI');
         } elseif ($statusFilter === 'discrepancy') {
@@ -46,25 +36,25 @@ class MonitoringPodController extends Controller
             $query->where('status', 'SIAP_KIRIM');
         }
 
-        // Filter supir armada
+        // Memfilter data berdasarkan supir armada logistik yang ditugaskan
         if ($driverFilter !== 'all' && is_numeric($driverFilter)) {
             $query->where('driver_id', $driverFilter);
         }
 
-        // Pencarian teks
+        // Pencarian multi-kolom berdasarkan nomor pesanan, surat jalan, penerima, atau plat armada
         if (!empty($search)) {
-            $query->where(function ($q) use ($search) {
-                $q->where('order_number', 'LIKE', "%{$search}%")
-                  ->orWhere('surat_jalan_number', 'LIKE', "%{$search}%")
-                  ->orWhere('received_by_name', 'LIKE', "%{$search}%")
-                  ->orWhere('vehicle_plate_number', 'LIKE', "%{$search}%")
-                  ->orWhereHas('user', function ($uq) use ($search) {
-                      $uq->where('name', 'LIKE', "%{$search}%")
-                         ->orWhere('company_name', 'LIKE', "%{$search}%");
-                  })
-                  ->orWhereHas('driver', function ($dq) use ($search) {
-                      $dq->where('name', 'LIKE', "%{$search}%");
-                  });
+            $query->where(function ($filterQuery) use ($search) {
+                $filterQuery->where('order_number', 'LIKE', "%{$search}%")
+                            ->orWhere('surat_jalan_number', 'LIKE', "%{$search}%")
+                            ->orWhere('received_by_name', 'LIKE', "%{$search}%")
+                            ->orWhere('vehicle_plate_number', 'LIKE', "%{$search}%")
+                            ->orWhereHas('user', function ($userQuery) use ($search) {
+                                $userQuery->where('name', 'LIKE', "%{$search}%")
+                                          ->orWhere('company_name', 'LIKE', "%{$search}%");
+                            })
+                            ->orWhereHas('driver', function ($driverQuery) use ($search) {
+                                $driverQuery->where('name', 'LIKE', "%{$search}%");
+                            });
             });
         }
 
@@ -78,10 +68,10 @@ class MonitoringPodController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        // Metrik Ringkasan dihitung langsung via SQL agregasi efisien
-        $baseMetricsQuery = Order::where(function ($q) {
-            $q->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'DALAM_PENGIRIMAN', 'SIAP_KIRIM'])
-              ->orWhereNotNull('pod_photo_url');
+        // Menghitung metrik ringkasan pengiriman (bersih, komplain retur, dalam rute) secara efisien
+        $baseMetricsQuery = Order::where(function ($metricQuery) {
+            $metricQuery->whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'DALAM_PENGIRIMAN', 'SIAP_KIRIM'])
+                        ->orWhereNotNull('pod_photo_url');
         });
 
         $cleanCount       = (clone $baseMetricsQuery)->where('status', 'SELESAI')->count();
@@ -90,12 +80,12 @@ class MonitoringPodController extends Controller
         $inTransitCount   = (clone $baseMetricsQuery)->where('status', 'DALAM_PENGIRIMAN')->count();
         $readyCount       = (clone $baseMetricsQuery)->where('status', 'SIAP_KIRIM')->count();
 
-        // Total retur kg dihitung langsung dari basis data tanpa memuat seluruh model ke memori
-        $totalReturnKg = (float) OrderItem::whereHas('order', function ($q) {
-            $q->where('status', 'SELESAI_CATATAN');
+        // Mengakumulasi total bobot komoditas yang diretur atau diklaim rusak saat serah terima di lokasi
+        $totalReturnKg = (float) OrderItem::whereHas('order', function ($orderQuery) {
+            $orderQuery->where('status', 'SELESAI_CATATAN');
         })->sum('returned_weight');
 
-        // Daftar supir untuk dropdown filter
+        // Mengambil daftar supir armada yang aktif untuk opsi dropdown penyaringan
         $drivers = User::where('role', 'ARMADA')
             ->where('is_active', true)
             ->orderBy('name')

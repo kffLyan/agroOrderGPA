@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\PresentsPaymentDetails;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Payment extends Model
 {
-    use HasFactory;
-    use \App\Models\Concerns\PresentsPaymentDetails;
+    use HasFactory, PresentsPaymentDetails;
 
     protected $fillable = [
         'order_id', 'invoice_id', 'payment_reference',
@@ -39,16 +39,19 @@ class Payment extends Model
         ];
     }
 
+    // Relasi Many-to-One: Pembayaran melunasi transaksi pesanan (Order)
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
+    // Relasi Many-to-One: Pembayaran melunasi faktur tagihan (Invoice)
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
     }
 
+    // Relasi Many-to-One: Pembayaran diverifikasi oleh Sekretaris (User)
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');

@@ -23,17 +23,15 @@ enum PaymentMethod: string
         };
     }
 
-    /**
-     * Resolusi metode pembayaran dari input teks / channel ID
-     */
+    // Resolusi metode pembayaran dari input teks atau kanal transaksi perbankan.
     public static function fromRaw(?string $method, ?string $channelId = null): self
     {
         $raw = strtolower((string) $method);
-        $ch = strtolower((string) $channelId);
+        $channel = strtolower((string) $channelId);
 
         return match (true) {
-            $raw === 'cash' || $raw === 'tunai' || $ch === 'cash' => self::CASH,
-            $raw === 'qris' || $ch === 'qris'                     => self::QRIS,
+            $raw === 'cash' || $raw === 'tunai' || $channel === 'cash' => self::CASH,
+            $raw === 'qris' || $channel === 'qris'                     => self::QRIS,
             $raw === 'cod'                                        => self::COD,
             $raw === 'top14' || $raw === 'tempo_top'              => self::TEMPO_TOP,
             $raw === 'custom' || $raw === 'sk_direktur'           => self::SK_DIREKTUR,

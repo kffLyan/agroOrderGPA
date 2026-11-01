@@ -14,9 +14,7 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    /**
-     * Tampilkan Dashboard Ringkasan & Operasional Klien (Klien Reguler & B2B Kontrak).
-     */
+    // Menampilkan dashboard ringkasan operasional dan keuangan portal mandiri mitra klien.
     public function index(Request $request): View
     {
         $user = auth()->user();
@@ -80,8 +78,8 @@ class DashboardController extends Controller
             foreach ($order->items as $item) {
                 $qty = (float) $item->ordered_qty;
                 $totalKgHarvest += $qty;
-                $pName = $item->product?->name ?: 'Komoditas';
-                $commodityBreakdown[$pName] = ($commodityBreakdown[$pName] ?? 0) + $qty;
+                $productName = $item->product?->name ?: 'Komoditas';
+                $commodityBreakdown[$productName] = ($commodityBreakdown[$productName] ?? 0) + $qty;
             }
         }
 
@@ -119,19 +117,19 @@ class DashboardController extends Controller
         // 9. Bukti Pembayaran Ditolak yang Membutuhkan Tindakan Klien
         $rejectedPayment = Payment::with(['invoice', 'order', 'verifier'])
             ->where(function ($query) use ($user) {
-                $query->whereHas('invoice', fn ($q) => $q->where('user_id', $user->id))
-                    ->orWhereHas('order', fn ($q) => $q->where('user_id', $user->id));
+                $query->whereHas('invoice', fn ($subQuery) => $subQuery->where('user_id', $user->id))
+                    ->orWhereHas('order', fn ($subQuery) => $subQuery->where('user_id', $user->id));
             })
             ->whereIn('status', ['DITOLAK', 'REJECTED'])
             ->latest('id')
             ->first();
 
         if ($rejectedPayment) {
-            $hasSuccessor = Payment::where(function ($q) use ($rejectedPayment) {
+            $hasSuccessor = Payment::where(function ($query) use ($rejectedPayment) {
                 if ($rejectedPayment->invoice_id) {
-                    $q->where('invoice_id', $rejectedPayment->invoice_id);
+                    $query->where('invoice_id', $rejectedPayment->invoice_id);
                 } elseif ($rejectedPayment->order_id) {
-                    $q->where('order_id', $rejectedPayment->order_id);
+                    $query->where('order_id', $rejectedPayment->order_id);
                 }
             })
             ->where('id', '>', $rejectedPayment->id)
@@ -156,20 +154,20 @@ class DashboardController extends Controller
             : collect();
 
         $reorderData = [];
-        foreach ($products as $p) {
-            $unitPrice = (float) $p->base_price;
-            if ($isContractClient && isset($userContractsMap[$p->id])) {
-                $userContract = $userContractsMap[$p->id];
+        foreach ($products as $product) {
+            $unitPrice = (float) $product->base_price;
+            if ($isContractClient && isset($userContractsMap[$product->id])) {
+                $userContract = $userContractsMap[$product->id];
                 if ($userContract->fixed_price_per_kg) {
                     $unitPrice = (float) $userContract->fixed_price_per_kg;
                 }
             }
             $reorderData[] = [
-                'key' => (string) $p->id,
-                'id' => $p->id,
-                'sku' => $p->sku ?? ('SKU-' . $p->id),
-                'name' => $p->name,
-                'grade' => 'Grade ' . ($p->grade ?: 'Super A'),
+                'key' => (string) $product->id,
+                'id' => $product->id,
+                'sku' => $product->sku ?? ('SKU-' . $product->id),
+                'name' => $product->name,
+                'grade' => 'Grade ' . ($product->grade ?: 'Super A'),
                 'price' => $unitPrice,
                 'remaining' => 2500,
                 'step' => 50,

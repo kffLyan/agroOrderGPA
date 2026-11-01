@@ -264,8 +264,8 @@
                 <div class="flex items-center justify-between text-xs font-mono text-white/90">
                     <span>Bruto Muatan: {{ number_format($totalWeight + $totalTare, 1, ',', '.') }} kg</span>
                     <span class="flex items-center gap-1 text-accent">
-                        <x-gpa.icon name="thermometer" class="h-3.5 w-3.5" />
-                        <span>+3.8°C (Suhu Cold Chain Optimal)</span>
+                        <x-gpa.icon name="check-circle" class="h-3.5 w-3.5" />
+                        <span>Muatan Terverifikasi Lengkap</span>
                     </span>
                 </div>
             </div>

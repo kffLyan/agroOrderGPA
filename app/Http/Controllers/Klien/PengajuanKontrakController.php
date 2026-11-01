@@ -9,24 +9,15 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Controller Pengajuan Proposal Kontrak Kemitraan B2B oleh Klien.
- *
- * Penjelasan UKK:
- * Modul ini memungkinkan Klien Reguler mengajukan permohonan kemitraan jangka panjang
- * ke Direktur Utama (B2B Kontrak), mencakup komitmen kuota pasokan per siklus,
- * termin jatuh tempo pembayaran (Term of Payment / TOP), serta pembaruan profil perusahaan PIC.
- */
+// Controller pengajuan proposal kontrak kemitraan B2B untuk Klien
 class PengajuanKontrakController extends Controller
 {
-    /**
-     * Mengajukan proposal kemitraan B2B Kontrak oleh Klien Reguler ke Direksi.
-     */
+    // Mengajukan proposal kemitraan kontrak suplai rutin B2B dan tempo pembayaran ke Direktur Utama
     public function store(Request $request): RedirectResponse
     {
         $user = Auth::guard('web')->user();
 
-        // Cek apakah ada pengajuan yang masih dalam peninjauan
+        // Memeriksa apakah klien masih memiliki proposal kontrak yang berstatus menunggu peninjauan
         $existingPending = Contract::where('user_id', $user->id)
             ->whereIn('status', ['PENDING', 'PENDING_APPROVAL'])
             ->first();
@@ -54,7 +45,7 @@ class PengajuanKontrakController extends Controller
             'top_days.in'                         => 'Pilihan TOP harus 14, 30, atau 45 hari.',
         ]);
 
-        // Perbarui data identitas usaha dan kontak PIC pada tabel users
+        // Memperbarui profil legalitas usaha dan narahubung PIC klien ke database
         $userUpdates = array_filter([
             'company_name' => $validated['company_name'] ?? null,
             'address'      => $validated['address'] ?? null,
@@ -79,11 +70,11 @@ class PengajuanKontrakController extends Controller
         ]);
 
         $picPhone = $user->fresh()->pic_phone ?: $user->phone;
-        $waNote = $picPhone ? " Tim Kemitraan GPA akan segera menghubungi WhatsApp PIC ({$picPhone}) untuk due diligence dan koordinasi draf PKS." : "";
+        $whatsAppNote = $picPhone ? " Tim Kemitraan GPA akan segera menghubungi WhatsApp PIC ({$picPhone}) untuk due diligence dan koordinasi draf PKS." : "";
 
         return redirect()->route('klien.dashboard')->with(
             'success',
-            "Pengajuan Kontrak Kemitraan {$contract->contract_number} ({$product->name}, {$contract->committed_volume_per_cycle} kg, TOP {$contract->top_days}D) berhasil dikirimkan ke Direktur Utama GPA.{$waNote}"
+            "Pengajuan Kontrak Kemitraan {$contract->contract_number} ({$product->name}, {$contract->committed_volume_per_cycle} kg, TOP {$contract->top_days}D) berhasil dikirimkan ke Direktur Utama GPA.{$whatsAppNote}"
         );
     }
 }

@@ -6,7 +6,7 @@ use App\Models\HarvestBatch;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
-use App\Services\GovernanceService;
+use App\Services\TataKelolaService;
 use App\Services\OrderService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -94,7 +94,7 @@ class OrderCreationConcurrencyTest extends TestCase
      */
     public function test_order_submission_is_blocked_when_master_freeze_is_active(): void
     {
-        $gov = app(GovernanceService::class);
+        $gov = app(TataKelolaService::class);
         $gov->toggleMasterFreeze(true, 'Audit Inventaris Akhir Bulan', 'Direktur Utama');
 
         $klien = User::factory()->create(['role' => 'KLIEN', 'is_active' => true]);

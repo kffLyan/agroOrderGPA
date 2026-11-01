@@ -2,14 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\PresentsOrderItemDetails;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OrderItem extends Model
 {
-    use HasFactory;
-    use \App\Models\Concerns\PresentsOrderItemDetails;
+    use HasFactory, PresentsOrderItemDetails;
 
     protected $fillable = [
         'order_id', 'product_id', 'ordered_qty', 'unit_price',
@@ -26,11 +26,13 @@ class OrderItem extends Model
         ];
     }
 
+    // Relasi Many-to-One: Item terikat pada pesanan induk (Order)
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
+    // Relasi Many-to-One: Item merujuk ke data master sayur (Product)
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

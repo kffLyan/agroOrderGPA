@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\PresentsOrderDetails;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,8 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Order extends Model
 {
-    use HasFactory;
-    use \App\Models\Concerns\PresentsOrderDetails;
+    use HasFactory, PresentsOrderDetails;
 
     protected $fillable = [
         'order_number', 'user_id', 'invoice_id', 'order_source',
@@ -56,39 +56,43 @@ class Order extends Model
         ];
     }
 
+    // Relasi Many-to-One: Pesanan dimiliki oleh Klien (User)
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    // Relasi Many-to-One: Pesanan terikat pada Faktur (Invoice)
     public function invoice(): BelongsTo
     {
         return $this->belongsTo(Invoice::class);
     }
 
+    // Relasi Many-to-One: Pesanan diverifikasi oleh Sekretaris (User)
     public function verifier(): BelongsTo
     {
         return $this->belongsTo(User::class, 'verified_by');
     }
 
+    // Relasi Many-to-One: Pesanan diantar oleh supir Armada (User)
     public function driver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'driver_id');
     }
 
-    /**
-     * Alias untuk relasi orderItems() demi kompatibilitas antarmuka
-     */
+    // Alias untuk relasi orderItems()
     public function items(): HasMany
     {
         return $this->orderItems();
     }
 
+    // Relasi One-to-Many: Satu pesanan memiliki banyak rincian sayur (OrderItem)
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
+    // Relasi One-to-Many: Satu pesanan memiliki riwayat transaksi pembayaran (Payment)
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);

@@ -35,7 +35,14 @@
         $brand = $header['brand'] ?? 'AGROORDER GPA';
         $armadaRole = $header['role'] ?? 'Armada Logistik';
         $headerTone = $header['tone'] ?? 'light';
-        $activeKey = $activeNav ?? 'tasks';
+        $activeKey = $activeNav ?? match (true) {
+            request()->routeIs('profile.*') => 'profile',
+            request()->routeIs('armada.surat-jalan*') => 'dispatch',
+            request()->routeIs('armada.bukti-terima*') => 'pod',
+            request()->routeIs('armada.status-kendaraan*') => 'fleet',
+            request()->routeIs('armada.tugas*') => 'tasks',
+            default => 'tasks',
+        };
         $navigation = $navigation ?? [
             ['key' => 'tasks', 'label' => 'Tugas', 'icon' => 'clipboard'],
             ['key' => 'dispatch', 'label' => 'Surat Jalan', 'icon' => 'file-text'],

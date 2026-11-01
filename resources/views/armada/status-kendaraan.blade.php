@@ -9,13 +9,13 @@
         $driverCode = 'ARM-' . str_pad($user?->id ?? 1, 2, '0', STR_PAD_LEFT);
         $driverInitials = strtoupper(substr($user?->name ?? 'SP', 0, 2));
         $driverName = $user?->name ?? 'Supir Pengiriman GPA';
-        $unitCode = 'UNIT-CDD-REEFER-' . str_pad($user?->id ?? 1, 2, '0', STR_PAD_LEFT);
+        $unitCode = 'UNIT-CDD-' . str_pad($user?->id ?? 1, 2, '0', STR_PAD_LEFT);
     @endphp
 
     <div class="mx-auto flex w-full max-w-[512px] flex-col gap-4 px-4 pb-24"
         x-data="armadaStatus">
 
-        {{-- Status telemetri operasional kendaraan --}}
+        {{-- Status operasional armada --}}
         <section class="flex items-center justify-between gap-3 rounded-2xl bg-surface p-4 shadow-card border-l-4 border-accent">
             <div class="flex items-center gap-3">
                 <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent text-ink shadow-sm">
@@ -23,14 +23,14 @@
                 </span>
 
                 <div class="flex flex-col">
-                    <span class="font-mono text-[10px] font-bold uppercase text-ink-quiet">STATUS TELEMETRI KENDARAAN</span>
-                    <span class="text-base font-bold text-ink">OPERASIONAL &bull; AKTIF BERJALAN</span>
+                    <span class="font-mono text-[10px] font-bold uppercase text-ink-quiet">STATUS OPERASIONAL ARMADA</span>
+                    <span class="text-base font-bold text-ink">SIAP JALAN &bull; TUGAS AKTIF</span>
                 </div>
             </div>
 
-            <button type="button" @click="refreshTelemetry()"
-                class="shrink-0 rounded-xl bg-accent px-3 py-1.5 font-mono text-[10px] font-bold text-ink shadow-sub transition-transform active:scale-95">
-                SINKRONISASI<br><span x-text="syncLabel()">15 DETIK</span>
+            <button type="button" @click="refreshStatus()"
+                class="shrink-0 rounded-xl bg-accent px-3 py-2 font-mono text-[10px] font-bold text-ink shadow-sub transition-transform active:scale-95">
+                PERBARUI STATUS
             </button>
         </section>
 
@@ -67,9 +67,9 @@
             <div class="grid grid-cols-2 gap-2 border-t border-surface-shell pt-3">
                 <div class="flex flex-col gap-0.5 rounded-xl bg-surface-shell p-2.5 outline outline-1 -outline-offset-1 outline-line-board/50">
                     <span class="font-mono text-[9px] font-bold text-ink-quiet uppercase">SPESIFIKASI KENDARAAN</span>
-                    <span class="font-mono text-xs font-bold text-ink">Truk Boks Pendingin (CDD)</span>
-                    <span class="font-mono text-xs font-bold text-ink">Kompartemen Reefer</span>
-                    <span class="text-[10px] text-ink-body">Pendingin Cold-Chain Standar Hortikultura</span>
+                    <span class="font-mono text-xs font-bold text-ink">Truk Boks Angkut (CDD)</span>
+                    <span class="font-mono text-xs font-bold text-ink">Kapasitas Maksimal 3.000 kg</span>
+                    <span class="text-[10px] text-ink-body">Standar Distribusi Komoditas GPA</span>
                 </div>
 
                 <div class="flex flex-col gap-0.5 rounded-xl bg-surface-shell p-2.5 outline outline-1 -outline-offset-1 outline-line-board/50">
@@ -80,36 +80,19 @@
             </div>
         </section>
 
-        {{-- Telemetri IoT kendaraan --}}
+        {{-- Kapasitas & beban muatan kendaraan --}}
         <section class="flex flex-col gap-3 rounded-2xl bg-surface p-4 shadow-card">
             <header class="flex items-center justify-between border-b border-surface-shell pb-2">
-                <span class="font-mono text-[10px] font-bold uppercase text-ink-quiet">TELEMETRI IOT TERKONEKSI</span>
+                <span class="font-mono text-[10px] font-bold uppercase text-ink-quiet">KAPASITAS &amp; BEBAN MUATAN KENDARAAN</span>
                 <span class="rounded bg-accent/40 px-2 py-0.5 font-mono text-[10px] font-bold text-ink">
-                    LIVE SENSOR
+                    DATA RIIL PESANAN
                 </span>
             </header>
-
-            {{-- Suhu chiller --}}
-            <div class="flex flex-col gap-1 rounded-xl bg-brand p-3.5 text-white">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <x-gpa.icon name="thermometer" class="h-4 w-4 text-accent" />
-                        <span class="font-mono text-[10px] font-bold text-accent uppercase">SUHU BOKS PENDINGIN (SAYUR SEGAR)</span>
-                    </div>
-                    <span class="rounded bg-accent px-2 py-0.5 font-mono text-[9px] font-bold text-ink">
-                        OPTIMAL DINGIN
-                    </span>
-                </div>
-                <div class="flex items-baseline justify-between pt-1">
-                    <span class="font-inter text-2xl font-extrabold text-white">+3.8°C</span>
-                    <span class="text-xs text-white/80 font-mono">Ambang Batas: +2.0°C s.d. +6.0°C</span>
-                </div>
-            </div>
 
             {{-- Kapasitas muat box --}}
             <div class="flex flex-col gap-1.5 rounded-xl bg-surface-shell p-3 outline outline-1 -outline-offset-1 outline-line-board/60">
                 <div class="flex items-center justify-between text-xs">
-                    <span class="font-mono text-[10px] font-bold text-ink-quiet uppercase">KAPASITAS MUAT BOKS</span>
+                    <span class="font-mono text-[10px] font-bold text-ink-quiet uppercase">UTILISASI KAPASITAS BOKS</span>
                     <span class="font-mono font-bold text-ink">{{ number_format($totalTonaseKg, 0, ',', '.') }} / 3.000 kg ({{ number_format($capacityPercent, 1, ',', '.') }}%)</span>
                 </div>
                 <div class="h-2.5 w-full rounded-full bg-surface-disabled overflow-hidden">
@@ -117,24 +100,24 @@
                 </div>
             </div>
 
-            {{-- Sensor bahan bakar & GPS --}}
+            {{-- Ringkasan Beban & Batas Angkut --}}
             <div class="grid grid-cols-2 gap-2">
                 <div class="flex flex-col gap-1 rounded-xl bg-surface-shell p-3 outline outline-1 -outline-offset-1 outline-line-board/50">
                     <div class="flex items-center gap-1.5 text-ink-quiet">
-                        <x-gpa.icon name="gauge" class="h-3.5 w-3.5" />
-                        <span class="font-mono text-[9px] font-bold uppercase">BAHAN BAKAR</span>
+                        <x-gpa.icon name="package" class="h-3.5 w-3.5" />
+                        <span class="font-mono text-[9px] font-bold uppercase">TOTAL MUATAN RIIL</span>
                     </div>
-                    <span class="font-mono text-sm font-bold text-ink">78% Solar Dex</span>
-                    <span class="text-[10px] text-ink-body">Odometer Terkoneksi</span>
+                    <span class="font-mono text-sm font-bold text-ink">{{ number_format($totalTonaseKg, 1, ',', '.') }} kg</span>
+                    <span class="text-[10px] text-ink-body">Sesuai Surat Jalan Aktif</span>
                 </div>
 
                 <div class="flex flex-col gap-1 rounded-xl bg-surface-shell p-3 outline outline-1 -outline-offset-1 outline-line-board/50">
                     <div class="flex items-center gap-1.5 text-ink-quiet">
-                        <x-gpa.icon name="map-pin" class="h-3.5 w-3.5" />
-                        <span class="font-mono text-[9px] font-bold uppercase">GPS TRACKER</span>
+                        <x-gpa.icon name="shield-check" class="h-3.5 w-3.5" />
+                        <span class="font-mono text-[9px] font-bold uppercase">SISA DAYA ANGKUT</span>
                     </div>
-                    <span class="font-mono text-sm font-bold text-ink">TERHUBUNG 4G</span>
-                    <span class="text-[10px] text-ink-body">Satelit Aktif GPS &bull; Latensi Rendah</span>
+                    <span class="font-mono text-sm font-bold text-ink">{{ number_format(max(0, 3000 - $totalTonaseKg), 0, ',', '.') }} kg</span>
+                    <span class="text-[10px] text-ink-body">Maksimal 3.000 kg (3 Ton)</span>
                 </div>
             </div>
         </section>
@@ -157,7 +140,7 @@
                         <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-ink text-accent">
                             <x-gpa.icon name="check" class="h-3 w-3" />
                         </span>
-                        <span class="text-xs text-ink">Suhu awal chiller boks stabil (+3.8°C)</span>
+                        <span class="text-xs text-ink">Kondisi boks muatan bersih dan pintu tertutup rapat</span>
                     </div>
                     <span class="font-mono text-[10px] font-semibold text-ink-quiet">05:30 WIB</span>
                 </div>
@@ -281,7 +264,7 @@
                 class="flex items-center justify-between rounded-xl bg-surface-shell p-2.5 outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-disabled transition-colors">
                 <div class="flex items-center gap-2 text-xs text-ink">
                     <x-gpa.icon name="file-text" class="h-4 w-4 text-ink-body" />
-                    <span>Panduan Penanganan Mutu Sayur &amp; Suhu Cold-Chain Pengiriman</span>
+                    <span>Panduan Penanganan Mutu Sayur &amp; Tata Cara Pengiriman</span>
                 </div>
                 <span class="rounded bg-surface-disabled px-2 py-0.5 font-mono text-[9px] font-bold text-ink-body">
                     SOP_GPA

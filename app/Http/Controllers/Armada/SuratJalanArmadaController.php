@@ -10,24 +10,14 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Controller Surat Jalan Digital & Rincian Muatan Supir Armada.
- *
- * Penjelasan UKK:
- * Modul ini menampilkan lembar Surat Jalan digital bagi supir armada berpendingin:
- * 1. Rincian muatan komoditas, berat timbang, dan dock penerima.
- * 2. Tombol mulai jalan: mengubah status pesanan menjadi DALAM_PENGIRIMAN
- *    dan mencatat waktu keberangkatan armada (departure time).
- */
+// Controller surat jalan digital dan rincian muatan untuk Armada
 class SuratJalanArmadaController extends Controller
 {
     public function __construct(
         protected ArmadaService $armadaService
     ) {}
 
-    /**
-     * Menampilkan Surat Jalan Digital & Rincian Muatan Supir.
-     */
+    // Menampilkan lembar digital surat jalan, manifest muatan sayur, dan multi-drop lokasi tujuan supir
     public function index(Request $request): View
     {
         $user = Auth::user();
@@ -35,7 +25,7 @@ class SuratJalanArmadaController extends Controller
 
         $currentOrder = $this->armadaService->resolveCurrentDeliveryOrder($targetOrderId, $user);
 
-        // Ambil daftar rute / multi-stops dari pesanan yang aktif hari ini
+        // Mengambil daftar rute pengantaran aktif hari ini untuk panduan multi-tujuan supir
         $activeOrders = Order::with(['user', 'orderItems.product'])
             ->whereIn('status', ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI'])
             ->latest()
@@ -56,14 +46,12 @@ class SuratJalanArmadaController extends Controller
         ]);
     }
 
-    /**
-     * Memulai pengiriman armada (mengubah status menjadi DALAM_PENGIRIMAN).
-     */
+    // Memulai rute pengiriman armada dan mencatat waktu keberangkatan (departure time) dari sentra
     public function startRoute(Request $request, Order $order): RedirectResponse
     {
         $user = Auth::user();
 
-        // Anti-IDOR: Jika pesanan sudah ditugaskan ke supir lain, tolak aksesnya
+        // Mencegah akses tidak sah (Anti-IDOR) jika pesanan telah ditugaskan kepada supir armada lain
         if ($order->driver_id && $order->driver_id !== $user->id) {
             abort(403, 'Akses Ditolak: Pesanan ini ditugaskan kepada supir armada lain.');
         }

@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\OrderStatus;
-use App\Http\Resources\Sekretaris\InventoryResource;
+use App\Http\Resources\Sekretaris\InventarisResource;
 use App\Models\HarvestBatch;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -206,7 +206,7 @@ class StockIntegrityTest extends TestCase
         ]);
 
         $prod = Product::with(['harvestBatches', 'orderItems.order'])->find($product->id);
-        $resource = (new InventoryResource($prod))->resolve();
+        $resource = (new InventarisResource($prod))->resolve();
 
         // ATP harus tetap 50 kg (karena stok pesanan lunas sudah dipotong sebelumnya di batch)
         $this->assertEquals('50 kg', $resource['atp_value']);

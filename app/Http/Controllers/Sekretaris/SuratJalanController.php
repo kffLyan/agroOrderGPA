@@ -4,48 +4,36 @@ namespace App\Http\Controllers\Sekretaris;
 
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Sekretaris\AssignDriverRequest;
-use App\Http\Resources\Sekretaris\DispatchResource;
+use App\Http\Requests\Sekretaris\TugaskanDriverRequest;
+use App\Http\Resources\Sekretaris\SuratJalanResource;
 use App\Models\Order;
 use App\Models\User;
-use App\Services\GovernanceService;
+use App\Services\TataKelolaService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
-/**
- * Controller Penerbitan Surat Jalan & Penugasan Armada Logistik Sekretaris.
- *
- * Penjelasan UKK:
- * Modul ini mengatur gerbang pengiriman pesanan (Dispatch Console):
- * 1. SOP Penerbitan: Hanya pesanan berstatus LUNAS atau Klien Kontrak Tempo B2B
- *    yang sah untuk diterbitkan Surat Jalan (SJ).
- * 2. Penugasan supir armada berpendingin (Cold Chain).
- * 3. Kunci Imutabilitas: Ketika Surat Jalan telah terbit, penugasan supir dan pelat nomor
- *    otomatis terkunci untuk menjaga integritas manifest logistik.
- */
+// Controller penerbitan Surat Jalan dan penugasan armada logistik untuk Sekretaris
 class SuratJalanController extends Controller
 {
-    /**
-     * Menampilkan konsol Surat Jalan & Penugasan Armada Logistik.
-     */
+    // Menampilkan konsol penerbitan surat jalan, penugasan armada logistik, dan rekapitulasi pengiriman
     public function index(Request $request): View
     {
-        // Ambil data supir armada aktif dari database
+        // Mengambil seluruh supir armada logistik aktif dari database untuk opsi penugasan
         $drivers = User::where('role', 'ARMADA')
             ->where('is_active', true)
             ->orderBy('name')
             ->get();
 
-        // Ambil pesanan yang relevan untuk penerbitan surat jalan dan logistik
+        // Mengambil pesanan yang relevan untuk penerbitan surat jalan dan logistik
         $orders = Order::with(['orderItems.product', 'user.contracts', 'driver', 'verifier'])
-            ->where(function ($q) {
-                $q->whereIn('status', ['LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'])
-                  ->orWhere(function ($sub) {
-                      $sub->where('status', 'MENUNGGU_PEMBAYARAN')
-                          ->whereHas('user', function ($u) {
-                              $u->where('client_type', 'B2B_KONTRAK')
-                                ->orWhereHas('contracts', fn($c) => $c->where('status', 'ACTIVE'));
+            ->where(function ($query) {
+                $query->whereIn('status', ['LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'])
+                  ->orWhere(function ($subQuery) {
+                      $subQuery->where('status', 'MENUNGGU_PEMBAYARAN')
+                          ->whereHas('user', function ($userQuery) {
+                              $userQuery->where('client_type', 'B2B_KONTRAK')
+                                ->orWhereHas('contracts', fn($contract) => $contract->where('status', 'ACTIVE'));
                           });
                   });
             })
@@ -64,7 +52,7 @@ class SuratJalanController extends Controller
             OrderStatus::SELESAI_CATATAN->value,
         ])->count();
 
-        $rows = DispatchResource::collection($orders)->resolve();
+        $rows = SuratJalanResource::collection($orders)->resolve();
 
         return view('sekretaris.surat-jalan', [
             'drivers'             => $drivers,
@@ -76,94 +64,90 @@ class SuratJalanController extends Controller
         ]);
     }
 
-    /**
-     * Penerbitan Surat Jalan resmi & penugasan supir armada (SOP 1.2).
-     */
-    public function issue(AssignDriverRequest $request, Order $order)
+    // Menerbitkan nomor surat jalan resmi secara atomik dan menugaskan supir armada untuk pengantaran pesanan
+    public function issue(TugaskanDriverRequest $request, Order $order)
     {
         $isContractClient = $order->user && (
             $order->user->client_type === 'B2B_KONTRAK' || 
             $order->user->contracts()->where('status', 'ACTIVE')->exists()
         );
 
-        // Validasi ketat gerbang SOP: Hanya pesanan LUNAS, SIAP_KIRIM, atau Kontrak Tempo B2B yang boleh diterbitkan Surat Jalan
+        // Memvalidasi kepatuhan SOP bahwa pesanan harus berstatus lunas, siap kirim, atau kontrak B2B
         if ($order->status !== 'LUNAS' && $order->status !== 'SIAP_KIRIM' && !$isContractClient) {
             return back()->withErrors([
                 'error' => "Penerbitan Surat Jalan DITOLAK: Pesanan #{$order->order_number} belum berstatus LUNAS. Pembayaran wajib diverifikasi terlebih dahulu sebelum Surat Jalan dapat dicetak."
             ]);
         }
 
-        // Kepatuhan Tata Kelola: Tolak penerbitan Surat Jalan jika plafon kredit klien dibekukan
-        $governanceService = app(GovernanceService::class);
-        if ($governanceService->isClientFrozen((int) $order->user_id)) {
-            $msg = "Penerbitan Surat Jalan DITOLAK: Plafon kredit klien pemilik pesanan ini sedang dibekukan oleh Direktur Utama.";
+        // Memeriksa pembekuan plafon kredit klien agar pengiriman tertahan jika terkena sanksi tata kelola
+        $tataKelolaService = app(TataKelolaService::class);
+        if ($tataKelolaService->isClientFrozen((int) $order->user_id)) {
+            $message = "Penerbitan Surat Jalan DITOLAK: Plafon kredit klien pemilik pesanan ini sedang dibekukan oleh Direktur Utama.";
             if ($request->wantsJson() || $request->ajax()) {
-                return response()->json(['success' => false, 'message' => $msg], 422);
+                return response()->json(['success' => false, 'message' => $message], 422);
             }
-            return back()->withErrors(['error' => $msg]);
+            return back()->withErrors(['error' => $message]);
         }
 
         $driverId = $request->input('driver_id') ?: ($order->driver_id ?: User::where('role', 'ARMADA')->first()?->id);
-        $plate = $request->input('vehicle_plate_number') ?: ($order->vehicle_plate_number ?: 'B 9014 KPA');
+        $vehiclePlateNumber = $request->input('vehicle_plate_number') ?: ($order->vehicle_plate_number ?: 'B 9014 KPA');
 
-        $sjNumber = $order->surat_jalan_number;
-        if (!$sjNumber) {
+        $suratJalanNumber = $order->surat_jalan_number;
+        if (!$suratJalanNumber) {
             $prefix = 'SJ-GPA-' . date('Ym') . '-';
-            $sjNumber = Cache::lock('surat_jalan_sequence_lock', 5)->block(3, function () use ($prefix) {
-                $lastSj = Order::where('surat_jalan_number', 'LIKE', $prefix . '%')->orderBy('id', 'desc')->first();
-                $seq = 1;
-                if ($lastSj) {
-                    $seq = ((int) substr($lastSj->surat_jalan_number, -4)) + 1;
+            $suratJalanNumber = Cache::lock('surat_jalan_sequence_lock', 5)->block(3, function () use ($prefix) {
+                $lastSuratJalan = Order::where('surat_jalan_number', 'LIKE', $prefix . '%')->orderBy('id', 'desc')->first();
+                $nextSequence = 1;
+                if ($lastSuratJalan) {
+                    $nextSequence = ((int) substr($lastSuratJalan->surat_jalan_number, -4)) + 1;
                 }
-                $candidate = $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
-                while (Order::where('surat_jalan_number', $candidate)->exists()) {
-                    $seq++;
-                    $candidate = $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+                $candidateSuratJalanNumber = $prefix . str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
+                while (Order::where('surat_jalan_number', $candidateSuratJalanNumber)->exists()) {
+                    $nextSequence++;
+                    $candidateSuratJalanNumber = $prefix . str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
                 }
-                return $candidate;
+                return $candidateSuratJalanNumber;
             });
         }
 
         $order->update([
             'driver_id'            => $driverId,
-            'vehicle_plate_number' => $plate,
-            'surat_jalan_number'   => $sjNumber,
+            'vehicle_plate_number' => $vehiclePlateNumber,
+            'surat_jalan_number'   => $suratJalanNumber,
             'status'               => 'SIAP_KIRIM',
         ]);
 
         $driver = User::find($driverId);
         $driverName = $driver?->name ?: 'Armada Logistik GPA';
 
-        $msg = "Surat Jalan {$sjNumber} untuk pesanan #{$order->order_number} berhasil diterbitkan dan ditugaskan ke supir {$driverName}.";
+        $message = "Surat Jalan {$suratJalanNumber} untuk pesanan #{$order->order_number} berhasil diterbitkan dan ditugaskan ke supir {$driverName}.";
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success'     => true,
-                'message'     => $msg,
+                'message'     => $message,
                 'order'       => $order,
                 'driver_name' => $driverName,
                 'driver_id'   => $driverId,
             ]);
         }
 
-        return back()->with('success', $msg);
+        return back()->with('success', $message);
     }
 
-    /**
-     * Memperbarui / menugaskan supir armada ke pesanan sebelum Surat Jalan terbit.
-     */
+    // Menetapkan supir armada sebelum surat jalan diterbitkan dan mengunci armada secara permanen
     public function assignDriver(Request $request, Order $order)
     {
-        // SOP Penugasan Armada: Supir HANYA bisa dipilih/diubah SEBELUM Surat Jalan diterbitkan
+        // Memastikan penugasan supir armada hanya dilakukan sebelum surat jalan resmi diterbitkan
         if (in_array($order->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) || !empty($order->surat_jalan_number)) {
-            $errMessage = "Penugasan supir DITOLAK: Surat Jalan untuk pesanan #{$order->order_number} telah resmi diterbitkan. Supir dan armada telah terkunci permanen dan tidak dapat diubah lagi.";
+            $errorMessage = "Penugasan supir DITOLAK: Surat Jalan untuk pesanan #{$order->order_number} telah resmi diterbitkan. Supir dan armada telah terkunci permanen dan tidak dapat diubah lagi.";
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $errMessage,
+                    'message' => $errorMessage,
                 ], 422);
             }
-            return back()->withErrors(['error' => $errMessage]);
+            return back()->withErrors(['error' => $errorMessage]);
         }
 
         $request->validate([
@@ -185,18 +169,18 @@ class SuratJalanController extends Controller
 
         $order->update($updateData);
 
-        $msg = "Supir armada untuk pesanan #{$order->order_number} berhasil ditugaskan ke {$driver->name}.";
+        $message = "Supir armada untuk pesanan #{$order->order_number} berhasil ditugaskan ke {$driver->name}.";
 
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json([
                 'success'     => true,
-                'message'     => $msg,
+                'message'     => $message,
                 'driver_id'   => $driver->id,
                 'driver_name' => $driver->name,
                 'plate'       => $order->vehicle_plate_number,
             ]);
         }
 
-        return back()->with('success', $msg);
+        return back()->with('success', $message);
     }
 }

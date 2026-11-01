@@ -8,11 +8,7 @@ use Illuminate\Support\Collection;
 
 class ArmadaService
 {
-    /**
-     * Mengambil daftar pesanan tugas pengantaran armada untuk supir tertentu
-     *
-     * @return Collection<int, Order>
-     */
+    // Mengambil daftar pesanan tugas pengantaran armada untuk supir tertentu atau pesanan siap kirim.
     public function getActiveOrdersForDriver(?User $user): Collection
     {
         $orders = Order::with(['orderItems.product', 'user', 'driver', 'verifier'])
@@ -28,7 +24,7 @@ class ArmadaService
             ->latest()
             ->get();
 
-        // Fallback jika belum ada pesanan aktif sama sekali
+        // Fallback mengambil riwayat pengiriman jika belum ada tugas aktif baru
         if ($orders->isEmpty()) {
             $orders = Order::with(['orderItems.product', 'user', 'driver', 'verifier'])
                 ->whereIn('status', ['LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'])
@@ -40,29 +36,19 @@ class ArmadaService
         return $orders;
     }
 
-    /**
-     * Mencari nomor pelat armada operasional yang terdaftar
-     *
-     * @param Collection<int, Order> $orders
-     */
+    // Mengidentifikasi nomor pelat armada operasional kendaraan yang ditugaskan pada pesanan aktif.
     public function resolveVehiclePlate(Collection $orders): string
     {
-        return $orders->first(fn ($o) => !empty($o->vehicle_plate_number))?->vehicle_plate_number ?? '—';
+        return $orders->first(fn ($order) => !empty($order->vehicle_plate_number))?->vehicle_plate_number ?? '—';
     }
 
-    /**
-     * Menghitung total bobot muatan pengantaran (kg)
-     *
-     * @param Collection<int, Order> $orders
-     */
+    // Menghitung total bobot tonase muatan pengantaran sayur dan komoditas dalam satuan kilogram.
     public function calculateTotalWeightKg(Collection $orders): float
     {
         return (float) $orders->sum(fn ($order) => $order->orderItems->sum('ordered_qty'));
     }
 
-    /**
-     * Mengambil target pesanan spesifik atau pesanan terkini untuk pengantaran/PoD
-     */
+    // Mengambil pesanan pengantaran spesifik berdasarkan ID atau pesanan aktif pertama armada.
     public function resolveCurrentDeliveryOrder(?int $orderId, ?User $user): ?Order
     {
         $query = Order::with(['orderItems.product', 'user', 'driver', 'verifier']);

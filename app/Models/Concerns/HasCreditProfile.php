@@ -4,34 +4,27 @@ namespace App\Models\Concerns;
 
 trait HasCreditProfile
 {
-    /**
-     * Hitung plafon batas kredit belanja klien (B2B)
-     */
+    // Menghitung batas plafon kredit belanja klien B2B berdasarkan komitmen kontrak kerja sama aktif.
     public function getCreditLimitAttribute(): float
     {
-        if ($this->relationLoaded('contracts')) {
-            $limit = (float) $this->contracts->where('status', 'ACTIVE')->sum(
-                fn ($ct) => ($ct->committed_volume_per_cycle ?: 0) * ($ct->fixed_price_per_kg ?: 0)
-            );
-            return $limit > 0 ? $limit : 150000000.0;
-        }
+        $activeContracts = $this->relationLoaded('contracts')
+            ? $this->contracts->where('status', 'ACTIVE')
+            : $this->contracts()->where('status', 'ACTIVE')->get();
 
-        $limit = (float) $this->contracts()->where('status', 'ACTIVE')->get()->sum(
-            fn ($ct) => ($ct->committed_volume_per_cycle ?: 0) * ($ct->fixed_price_per_kg ?: 0)
+        $limit = (float) $activeContracts->sum(
+            fn ($contract) => ($contract->committed_volume_per_cycle ?: 0) * ($contract->fixed_price_per_kg ?: 0)
         );
 
         return $limit > 0 ? $limit : 150000000.0;
     }
 
-    /**
-     * Total nilai kredit/tagihan yang sedang berjalan
-     */
+    // Menghitung akumulasi nilai faktur tagihan yang sedang berjalan atau jatuh tempo.
     public function getCreditUsedAttribute(): float
     {
-        if ($this->relationLoaded('invoices')) {
-            return (float) $this->invoices->whereIn('status', ['UNPAID', 'OVERDUE'])->sum('grand_total');
-        }
+        $unpaidInvoices = $this->relationLoaded('invoices')
+            ? $this->invoices->whereIn('status', ['UNPAID', 'OVERDUE'])
+            : $this->invoices()->whereIn('status', ['UNPAID', 'OVERDUE'])->get();
 
-        return (float) $this->invoices()->whereIn('status', ['UNPAID', 'OVERDUE'])->sum('grand_total');
+        return (float) $unpaidInvoices->sum('grand_total');
     }
 }

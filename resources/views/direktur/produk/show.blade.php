@@ -2,6 +2,8 @@
 
 @section('title', 'Rincian Komoditas: ' . $product->name . ' // Direktur AgroOrder GPA')
 
+@use('Carbon\Carbon')
+
 @section('content')
 <div class="mx-auto max-w-5xl space-y-5">
     {{-- Breadcrumb & Aksi Atas --}}
@@ -120,7 +122,7 @@
                     @forelse ($product->harvestBatches as $batch)
                         <tr class="hover:bg-surface-shell/40">
                             <td class="py-2.5 px-3 font-mono font-bold text-ink">{{ $batch->batch_code }}</td>
-                            <td class="py-2.5 px-3 text-ink-body">{{ $batch->harvest_date ? \Carbon\Carbon::parse($batch->harvest_date)->format('d M Y') : '-' }}</td>
+                            <td class="py-2.5 px-3 text-ink-body">{{ $batch->batch_date ? $batch->batch_date->format('d M Y') : ($batch->harvest_date ? Carbon::parse($batch->harvest_date)->format('d M Y') : '-') }}</td>
                             <td class="py-2.5 px-3 text-ink">{{ $batch->origin_location ?? 'Ciwidey / Lembang' }}</td>
                             <td class="py-2.5 px-3">
                                 <span class="rounded px-2 py-0.5 text-[10px] font-bold {{ $batch->source_type === 'PETANI_BINAAN' ? 'bg-accent text-brand-deep' : 'bg-surface-track text-ink-body' }}">

@@ -10,17 +10,13 @@ use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
+    // Mendaftarkan service binding ke dalam service container aplikasi.
     public function register(): void
     {
         //
     }
 
-    /**
-     * Bootstrap any application services.
-     */
+    // Menginisialisasi konfigurasi zona waktu, lokal Carbon, dan view composer halaman error.
     public function boot(): void
     {
         date_default_timezone_set(config('app.timezone', 'Asia/Jakarta'));

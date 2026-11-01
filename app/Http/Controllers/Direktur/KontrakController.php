@@ -3,54 +3,42 @@
 namespace App\Http\Controllers\Direktur;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Direktur\StoreContractRequest;
-use App\Http\Requests\Direktur\UpdateContractRequest;
-use App\Http\Resources\Direktur\ContractApprovalResource;
+use App\Http\Requests\Direktur\SimpanKontrakRequest;
+use App\Http\Requests\Direktur\PerbaruiKontrakRequest;
+use App\Http\Resources\Direktur\PersetujuanKontrakResource;
 use App\Models\Contract;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
-use App\Services\GovernanceService;
+use App\Services\TataKelolaService;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Controller Manajemen & Otorisasi Kontrak Kemitraan B2B untuk Direktur Utama.
- *
- * Tugas Utama:
- * 1. Otorisasi pengesahan kontrak kemitraan jangka panjang dan diskon volume pesanan.
- * 2. Persetujuan serentak (*Batch Approval*) kontrak yang mengantre.
- * 3. Menolak atau meminta revisi draf klausul kontrak ke tim legal.
- * 4. CRUD penuh parameter kontrak (harga tetap, kuota komitmen, batas hari TOP).
- */
+// Controller otorisasi dan manajemen kontrak kemitraan B2B untuk Direktur Utama
 class KontrakController extends Controller
 {
     public function __construct(
-        protected GovernanceService $governanceService
+        protected TataKelolaService $tataKelolaService
     ) {}
 
-    /**
-     * Halaman khusus antrean persetujuan (approval) kontrak kemitraan B2B.
-     */
+    // Mengambil antrean kontrak kemitraan B2B yang menunggu verifikasi dan evaluasi kelayakan margin
     public function approval(Request $request)
     {
         $pendingContracts = Contract::whereIn('status', ['PENDING', 'PENDING_APPROVAL'])
             ->with(['user', 'product'])
             ->get();
 
-        $settings = $this->governanceService->getSettings();
+        $settings = $this->tataKelolaService->getSettings();
 
         $rows = $pendingContracts->map(
-            fn (Contract $contract) => (new ContractApprovalResource($contract, $settings))->resolve()
+            fn (Contract $contract) => (new PersetujuanKontrakResource($contract, $settings))->resolve()
         )->all();
 
         return view('direktur.kontrak.approval', compact('rows'));
     }
 
-    /**
-     * Persetujuan serentak (Batch Approve) sejumlah kontrak oleh Direktur Utama.
-     */
+    // Melakukan pengesahan serentak (batch approval) kontrak terpilih dan otomatis mengaktifkan status kemitraan klien
     public function batchApprove(Request $request)
     {
         $contractIds = $request->input('selected_ids', []);
@@ -64,7 +52,7 @@ class KontrakController extends Controller
 
         foreach ($contractIds as $contractId) {
             $contract = Contract::find($contractId);
-            if ($contract && in_array($contract->status, ['PENDING', 'PENDING_APPROVAL'])) {
+            if ($contract && in_array($contract->status, ['PENDING', 'PENDING_APPROVAL'], true)) {
                 $contract->update([
                     'status'      => 'ACTIVE',
                     'approved_by' => Auth::guard('web')->id(),
@@ -78,7 +66,7 @@ class KontrakController extends Controller
                 $approvedCount++;
 
                 $clientName = $contract->user ? ($contract->user->company_name ?: $contract->user->name) : 'Klien';
-                $this->governanceService->addAuditLog(
+                $this->tataKelolaService->addAuditLog(
                     'BATCH_APPROVAL_KONTRAK',
                     $contract->contract_number,
                     "Persetujuan kontrak kemitraan B2B {$contract->contract_number} ({$clientName}) disahkan oleh Direktur Utama.",
@@ -97,9 +85,7 @@ class KontrakController extends Controller
         return redirect()->route('direktur.kontrak.persetujuan')->with('success', $message);
     }
 
-    /**
-     * Menolak pengajuan kontrak kemitraan.
-     */
+    // Menolak pengajuan draf kontrak kemitraan yang dinilai tidak memenuhi batas margin atau skor kredit
     public function reject(Request $request, Contract $contract)
     {
         $reason = $request->input('rejection_reason', 'Margin di bawah threshold ketentuan Direksi atau riwayat kredit tidak memenuhi kualifikasi.');
@@ -108,7 +94,7 @@ class KontrakController extends Controller
             'status' => 'TERMINATED',
         ]);
 
-        $this->governanceService->addAuditLog(
+        $this->tataKelolaService->addAuditLog(
             'KONTRAK_DITOLAK',
             $contract->contract_number,
             "Pengajuan kontrak {$contract->contract_number} ditolak Direktur. Alasan: {$reason}",
@@ -125,14 +111,12 @@ class KontrakController extends Controller
         return back()->with('success', $message);
     }
 
-    /**
-     * Meminta revisi klausul draf kontrak.
-     */
+    // Mengembalikan draf kontrak ke tim legal untuk penyesuaian klausul termin pembayaran atau volume komitmen
     public function requestRevision(Request $request, Contract $contract)
     {
         $notes = $request->input('revision_notes', 'Harap sesuaikan tenor TOP menjadi maksimal 30 hari atau tingkatkan kuota komitmen.');
 
-        $this->governanceService->addAuditLog(
+        $this->tataKelolaService->addAuditLog(
             'REVISI_KONTRAK_DIMINTA',
             $contract->contract_number,
             "Direktur meminta revisi pada draf kontrak {$contract->contract_number}. Catatan: {$notes}",
@@ -149,9 +133,7 @@ class KontrakController extends Controller
         return back()->with('success', $message);
     }
 
-    /**
-     * Menampilkan daftar seluruh kontrak kemitraan B2B.
-     */
+    // Menampilkan seluruh master kontrak kemitraan B2B dengan filter status operasional dan pencarian kata kunci
     public function index(Request $request)
     {
         $statusFilter = $request->query('status');
@@ -172,16 +154,16 @@ class KontrakController extends Controller
                 return $query->where('status', $statusFilter);
             })
             ->when($search, function ($query, $search) {
-                return $query->where(function ($q) use ($search) {
-                    $q->where('contract_number', 'like', "%{$search}%")
-                      ->orWhereHas('user', function ($uq) use ($search) {
-                          $uq->where('name', 'like', "%{$search}%")
-                             ->orWhere('company_name', 'like', "%{$search}%");
-                      })
-                      ->orWhereHas('product', function ($pq) use ($search) {
-                          $pq->where('name', 'like', "%{$search}%")
-                             ->orWhere('sku', 'like', "%{$search}%");
-                      });
+                return $query->where(function ($subQuery) use ($search) {
+                    $subQuery->where('contract_number', 'like', "%{$search}%")
+                        ->orWhereHas('user', function ($userQuery) use ($search) {
+                            $userQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('company_name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('product', function ($productQuery) use ($search) {
+                            $productQuery->where('name', 'like', "%{$search}%")
+                                ->orWhere('sku', 'like', "%{$search}%");
+                        });
                 });
             })
             ->orderByRaw("CASE WHEN status = 'PENDING_APPROVAL' THEN 0 WHEN status = 'ACTIVE' THEN 1 ELSE 2 END")
@@ -192,9 +174,7 @@ class KontrakController extends Controller
         return view('direktur.kontrak.index', compact('contracts', 'statusFilter', 'search', 'statusCounts'));
     }
 
-    /**
-     * Formulir pembuatan kontrak harga khusus B2B baru.
-     */
+    // Menyiapkan formulir pembuatan draf kontrak baru dengan nomor kontrak otomatis yang terstandarisasi
     public function create()
     {
         $clients = User::where('role', 'KLIEN')->where('is_active', true)->orderBy('name')->get();
@@ -206,10 +186,8 @@ class KontrakController extends Controller
         return view('direktur.kontrak.create', compact('clients', 'products', 'suggestedNumber'));
     }
 
-    /**
-     * Menyimpan kontrak baru yang diterbitkan Direktur.
-     */
-    public function store(StoreContractRequest $request)
+    // Menerbitkan kontrak kemitraan baru dan mencatat parameter harga tetap ke log audit keamanan
+    public function store(SimpanKontrakRequest $request)
     {
         try {
             $validatedData = $request->validated();
@@ -235,7 +213,7 @@ class KontrakController extends Controller
                 }
             }
 
-            $this->governanceService->addAuditLog(
+            $this->tataKelolaService->addAuditLog(
                 'PEMBUATAN_KONTRAK',
                 $contract->contract_number,
                 "Penerbitan kontrak baru {$contract->contract_number} ({$contract->product->name} - Rp " . number_format($contract->fixed_price_per_kg, 0, ',', '.') . "/kg).",
@@ -249,21 +227,19 @@ class KontrakController extends Controller
                 : "Draf kontrak {$contract->contract_number} berhasil disimpan dan menunggu pengesahan.";
 
             return redirect()->route('direktur.kontrak.index')->with('success', $message);
-        } catch (Exception $e) {
-            return back()->withInput()->withErrors(['error' => 'Gagal membuat kontrak: ' . $e->getMessage()]);
+        } catch (Exception $exception) {
+            return back()->withInput()->withErrors(['error' => 'Gagal membuat kontrak: ' . $exception->getMessage()]);
         }
     }
 
-    /**
-     * Menampilkan lembar detail resmi kontrak kemitraan B2B.
-     */
+    // Menampilkan lembar detail resmi klausul kontrak beserta riwayat transaksi pesanan terkait
     public function show(Contract $contract)
     {
         $contract->loadMissing(['user', 'product', 'approver']);
 
         $recentOrders = Order::where('user_id', $contract->user_id)
-            ->whereHas('orderItems', function ($q) use ($contract) {
-                $q->where('product_id', $contract->product_id);
+            ->whereHas('orderItems', function ($query) use ($contract) {
+                $query->where('product_id', $contract->product_id);
             })
             ->with(['orderItems.product'])
             ->orderBy('created_at', 'desc')
@@ -273,9 +249,7 @@ class KontrakController extends Controller
         return view('direktur.kontrak.show', compact('contract', 'recentOrders'));
     }
 
-    /**
-     * Formulir penyuntingan klausul kontrak kemitraan.
-     */
+    // Menampilkan formulir penyuntingan klausul kontrak seperti harga kesepakatan dan termin pembayaran
     public function edit(Contract $contract)
     {
         $contract->loadMissing(['user', 'product']);
@@ -283,10 +257,8 @@ class KontrakController extends Controller
         return view('direktur.kontrak.edit', compact('contract'));
     }
 
-    /**
-     * Memperbarui parameter klausul kontrak kemitraan.
-     */
-    public function update(UpdateContractRequest $request, Contract $contract)
+    // Memperbarui parameter klausul kontrak kemitraan dan mencatat pengesahan jika status berubah aktif
+    public function update(PerbaruiKontrakRequest $request, Contract $contract)
     {
         try {
             $validatedData = $request->validated();
@@ -298,7 +270,7 @@ class KontrakController extends Controller
 
             $contract->update($validatedData);
 
-            $this->governanceService->addAuditLog(
+            $this->tataKelolaService->addAuditLog(
                 'UPDATE_KONTRAK',
                 $contract->contract_number,
                 "Pembaruan klausul kontrak {$contract->contract_number}.",
@@ -309,14 +281,12 @@ class KontrakController extends Controller
 
             return redirect()->route('direktur.kontrak.index')
                 ->with('success', "Kontrak {$contract->contract_number} berhasil diperbarui.");
-        } catch (Exception $e) {
-            return back()->withInput()->withErrors(['error' => 'Gagal memperbarui kontrak: ' . $e->getMessage()]);
+        } catch (Exception $exception) {
+            return back()->withInput()->withErrors(['error' => 'Gagal memperbarui kontrak: ' . $exception->getMessage()]);
         }
     }
 
-    /**
-     * Otorisasi dan pengesahan kontrak oleh Direktur Utama.
-     */
+    // Otorisasi dan pengesahan kontrak individual oleh Direktur Utama
     public function approve(Contract $contract)
     {
         try {
@@ -330,7 +300,7 @@ class KontrakController extends Controller
                 $contract->user->update(['client_type' => 'B2B_KONTRAK']);
             }
 
-            $this->governanceService->addAuditLog(
+            $this->tataKelolaService->addAuditLog(
                 'APPROVAL_KONTRAK',
                 $contract->contract_number,
                 "Kontrak kemitraan {$contract->contract_number} disetujui & disahkan oleh Direktur Utama.",
@@ -349,17 +319,15 @@ class KontrakController extends Controller
             }
 
             return redirect()->route('direktur.kontrak.index')->with('success', $message);
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             if (request()->wantsJson() || request()->ajax()) {
-                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+                return response()->json(['success' => false, 'message' => $exception->getMessage()], 422);
             }
-            return back()->withErrors(['error' => 'Gagal menyetujui kontrak: ' . $e->getMessage()]);
+            return back()->withErrors(['error' => 'Gagal menyetujui kontrak: ' . $exception->getMessage()]);
         }
     }
 
-    /**
-     * Menghentikan kontrak secara resmi oleh Direktur (TERMINATE).
-     */
+    // Menghentikan masa berlaku kontrak secara permanen (TERMINATED) melalui wewenang Direktur
     public function terminate(Contract $contract)
     {
         try {
@@ -367,7 +335,7 @@ class KontrakController extends Controller
                 'status' => 'TERMINATED',
             ]);
 
-            $this->governanceService->addAuditLog(
+            $this->tataKelolaService->addAuditLog(
                 'TERMINASI_KONTRAK',
                 $contract->contract_number,
                 "Kontrak {$contract->contract_number} dinonaktifkan permanen oleh Direktur.",
@@ -378,14 +346,12 @@ class KontrakController extends Controller
 
             return redirect()->route('direktur.kontrak.index')
                 ->with('success', "Kontrak {$contract->contract_number} telah dinonaktifkan (TERMINATED).");
-        } catch (Exception $e) {
-            return back()->withErrors(['error' => 'Gagal menghentikan kontrak: ' . $e->getMessage()]);
+        } catch (Exception $exception) {
+            return back()->withErrors(['error' => 'Gagal menghentikan kontrak: ' . $exception->getMessage()]);
         }
     }
 
-    /**
-     * Menghapus kontrak dari sistem.
-     */
+    // Menghapus data kontrak kemitraan dari basis data jika draf tidak lagi digunakan
     public function destroy(Contract $contract)
     {
         try {
@@ -394,8 +360,8 @@ class KontrakController extends Controller
 
             return redirect()->route('direktur.kontrak.index')
                 ->with('success', "Kontrak {$contractNumber} berhasil dihapus dari sistem.");
-        } catch (Exception $e) {
-            return back()->withErrors(['error' => 'Gagal menghapus kontrak: ' . $e->getMessage()]);
+        } catch (Exception $exception) {
+            return back()->withErrors(['error' => 'Gagal menghapus kontrak: ' . $exception->getMessage()]);
         }
     }
 }

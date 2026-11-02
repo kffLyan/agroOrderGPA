@@ -31,7 +31,7 @@ class PembayaranController extends Controller
         $paymentChannels = $this->tataKelolaService->getPaymentChannels();
         $activeBank = collect($paymentChannels)->first(fn($channel) => ($channel['type'] ?? '') === 'BANK' && !empty($channel['is_active']))
             ?? collect($paymentChannels)->first(fn($channel) => ($channel['type'] ?? '') === 'BANK');
-        $officialGiroAccount = $activeBank
+        $officialAccount = $activeBank
             ? "{$activeBank['name']} {$activeBank['account_number']} ({$activeBank['account_name']})"
             : 'Rekening Resmi Koperasi GPA';
 
@@ -52,7 +52,7 @@ class PembayaranController extends Controller
             ->get();
 
         $queueRows = $pendingPayments->map(
-            fn ($payment) => (new AntreanPembayaranResource($payment, $officialGiroAccount))->toArray($request)
+            fn ($payment) => (new AntreanPembayaranResource($payment, $officialAccount))->toArray($request)
         )->all();
 
         // Mengambil log audit riwayat transaksi pembayaran mutakhir untuk transparansi operasional
@@ -80,7 +80,7 @@ class PembayaranController extends Controller
     // Menyetujui keabsahan pembayaran klien, mencocokkan mutasi kas, serta memperbarui status faktur menjadi lunas
     public function approve(Request $request, Payment $payment)
     {
-        $note = $request->input('note', 'Mutasi rekening bank telah diverifikasi cocok dengan rekening koran.');
+        $verificationNote = $request->input('note', 'Mutasi rekening bank telah diverifikasi cocok dengan rekening koran.');
 
         $orderService = app(OrderService::class);
         $order = $payment->order;
@@ -89,11 +89,11 @@ class PembayaranController extends Controller
         if ($order && $order->status === 'MENUNGGU_VERIFIKASI') {
             try {
                 $order = $orderService->approveOrder($order->id, Auth::id() ?: 1);
-            } catch (\Exception $exception) {
+            } catch (\Exception $e) {
                 if ($request->wantsJson() || $request->ajax()) {
-                    return response()->json(['success' => false, 'message' => 'Gagal menyetujui pesanan: ' . $exception->getMessage()], 422);
+                    return response()->json(['success' => false, 'message' => 'Gagal menyetujui pesanan: ' . $e->getMessage()], 422);
                 }
-                return back()->withErrors(['error' => 'Gagal mengalokasikan stok pesanan: ' . $exception->getMessage()]);
+                return back()->withErrors(['error' => 'Gagal mengalokasikan stok pesanan: ' . $e->getMessage()]);
             }
         }
 
@@ -105,7 +105,7 @@ class PembayaranController extends Controller
             'status'            => 'LUNAS',
             'verified_by'       => Auth::id(),
             'paid_at'           => now(),
-            'verification_note' => $note,
+            'verification_note' => $verificationNote,
             'invoice_id'        => $payment->invoice_id,
         ]);
 
@@ -136,12 +136,12 @@ class PembayaranController extends Controller
     // Menolak bukti transfer yang tidak valid atau fiktif dan meminta klien mengunggah bukti pembayaran ulang
     public function reject(TolakPembayaranRequest $request, Payment $payment)
     {
-        $note = $request->input('rejection_note') ?: $request->input('note', 'Bukti transfer tidak valid atau dana belum masuk rekening koran.');
+        $rejectionReason = $request->input('rejection_note') ?: $request->input('note', 'Bukti transfer tidak valid atau dana belum masuk rekening koran.');
 
         $payment->update([
             'status'            => 'DITOLAK',
             'verified_by'       => Auth::id(),
-            'verification_note' => $note,
+            'verification_note' => $rejectionReason,
         ]);
 
         $message = "Pembayaran PAY-" . str_pad((string) $payment->id, 4, '0', STR_PAD_LEFT) . " berhasil ditolak. Klien diminta konfirmasi ulang.";

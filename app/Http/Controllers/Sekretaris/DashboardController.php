@@ -49,7 +49,7 @@ class DashboardController extends Controller
 
         // 4. Memeriksa ketersediaan stok fisik komoditas aktif di gudang untuk mencegah pesanan kosong
         $products = Product::where('is_active', true)
-            ->with(['harvestBatches' => fn ($batchQuery) => $batchQuery->where('available_quantity', '>', 0)])
+            ->with(['harvestBatches' => fn ($query) => $query->where('available_quantity', '>', 0)])
             ->take(4)
             ->get();
 

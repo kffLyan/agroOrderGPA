@@ -22,7 +22,8 @@ class PrintFakturController extends Controller
             abort(403, 'Akses Ditolak: Anda tidak memiliki izin untuk melihat faktur pelanggan lain.');
         }
 
-        $data = $service->buildPrintData($invoice, $request->query('format'));
+        $format = $request->query('format');
+        $data   = $service->buildPrintData($invoice, $format);
 
         return view('prints.invoice', $data);
     }

@@ -16,7 +16,7 @@ class LaporanPrintService
     // Membangun payload cetak Laporan Resmi Eksekutif Penjualan GPA A4 dengan kalkulasi pendapatan dan ringkasan komoditas.
     public function buildPrintData(?string $startDate = null, ?string $endDate = null, ?int $clientFilter = null, ?string $period = null): array
     {
-        $now = now();
+        $now        = now();
         $periodName = 'Bulan Ini (' . $now->translatedFormat('F Y') . ')';
 
         if ($startDate && $endDate) {
@@ -24,36 +24,36 @@ class LaporanPrintService
         } elseif ($period) {
             switch ($period) {
                 case 'hari_ini':
-                    $startDate = (clone $now)->startOfDay()->toDateString();
-                    $endDate   = (clone $now)->endOfDay()->toDateString();
+                    $startDate  = (clone $now)->startOfDay()->toDateString();
+                    $endDate    = (clone $now)->endOfDay()->toDateString();
                     $periodName = 'Hari Ini (' . $now->translatedFormat('d F Y') . ')';
                     break;
                 case 'minggu_ini':
-                    $startDate = (clone $now)->startOfWeek()->toDateString();
-                    $endDate   = (clone $now)->endOfWeek()->toDateString();
+                    $startDate  = (clone $now)->startOfWeek()->toDateString();
+                    $endDate    = (clone $now)->endOfWeek()->toDateString();
                     $periodName = 'Minggu Ini (' . (clone $now)->startOfWeek()->translatedFormat('d M') . ' - ' . (clone $now)->endOfWeek()->translatedFormat('d M Y') . ')';
                     break;
                 case 'tahun_ini':
-                    $startDate = (clone $now)->startOfYear()->toDateString();
-                    $endDate   = (clone $now)->endOfYear()->toDateString();
+                    $startDate  = (clone $now)->startOfYear()->toDateString();
+                    $endDate    = (clone $now)->endOfYear()->toDateString();
                     $periodName = 'Tahun Ini (' . $now->translatedFormat('Y') . ')';
                     break;
                 case 'semua':
-                    $startDate = null;
-                    $endDate   = null;
+                    $startDate  = null;
+                    $endDate    = null;
                     $periodName = 'Semua Periode Transaksi';
                     break;
                 case 'bulan_ini':
                 default:
-                    $startDate = (clone $now)->startOfMonth()->toDateString();
-                    $endDate   = (clone $now)->endOfMonth()->toDateString();
+                    $startDate  = (clone $now)->startOfMonth()->toDateString();
+                    $endDate    = (clone $now)->endOfMonth()->toDateString();
                     $periodName = 'Bulan Ini (' . $now->translatedFormat('F Y') . ')';
                     break;
             }
         } else {
             // Default periode bulan berjalan
-            $startDate = (clone $now)->startOfMonth()->toDateString();
-            $endDate   = (clone $now)->endOfMonth()->toDateString();
+            $startDate  = (clone $now)->startOfMonth()->toDateString();
+            $endDate    = (clone $now)->endOfMonth()->toDateString();
             $periodName = 'Bulan Ini (' . $now->translatedFormat('F Y') . ')';
         }
 
@@ -75,7 +75,7 @@ class LaporanPrintService
 
         $orders = $query->orderBy('created_at', 'desc')->get();
 
-        $totalRevenue = (float) $orders->sum('grand_total');
+        $totalRevenue   = (float) $orders->sum('grand_total');
         $totalTonnageKg = (float) OrderItem::whereIn('order_id', $orders->pluck('id'))
             ->sum('ordered_qty');
 
@@ -89,19 +89,19 @@ class LaporanPrintService
             ->with('product')
             ->get();
 
-        $settings = $this->tataKelolaService->getSettings();
+        $settings   = $this->tataKelolaService->getSettings();
         $periodLock = $settings['period_lock'] ?? [];
 
-        return compact(
-            'startDate',
-            'endDate',
-            'clientFilterName',
-            'totalRevenue',
-            'totalTonnageKg',
-            'orders',
-            'commoditySummary',
-            'periodName',
-            'periodLock'
-        );
+        return [
+            'startDate'        => $startDate,
+            'endDate'          => $endDate,
+            'clientFilterName' => $clientFilterName,
+            'totalRevenue'     => $totalRevenue,
+            'totalTonnageKg'   => $totalTonnageKg,
+            'orders'           => $orders,
+            'commoditySummary' => $commoditySummary,
+            'periodName'       => $periodName,
+            'periodLock'       => $periodLock,
+        ];
     }
 }

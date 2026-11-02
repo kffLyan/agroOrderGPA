@@ -9,12 +9,12 @@ use Illuminate\Support\Collection;
 class ArmadaService
 {
     // Mengambil daftar pesanan tugas pengantaran armada untuk supir tertentu atau pesanan siap kirim.
-    public function getActiveOrdersForDriver(?User $user): Collection
+    public function getActiveOrdersForDriver(?User $driver): Collection
     {
         $orders = Order::with(['orderItems.product', 'user', 'driver', 'verifier'])
-            ->where(function ($query) use ($user) {
-                if ($user) {
-                    $query->where('driver_id', $user->id)
+            ->where(function ($query) use ($driver) {
+                if ($driver) {
+                    $query->where('driver_id', $driver->id)
                         ->orWhereIn('status', ['DALAM_PENGIRIMAN', 'SIAP_KIRIM']);
                 } else {
                     $query->whereIn('status', ['DALAM_PENGIRIMAN', 'SIAP_KIRIM']);
@@ -49,7 +49,7 @@ class ArmadaService
     }
 
     // Mengambil pesanan pengantaran spesifik berdasarkan ID atau pesanan aktif pertama armada.
-    public function resolveCurrentDeliveryOrder(?int $orderId, ?User $user): ?Order
+    public function resolveCurrentDeliveryOrder(?int $orderId, ?User $driver): ?Order
     {
         $query = Order::with(['orderItems.product', 'user', 'driver', 'verifier']);
 
@@ -60,6 +60,6 @@ class ArmadaService
             }
         }
 
-        return $this->getActiveOrdersForDriver($user)->first();
+        return $this->getActiveOrdersForDriver($driver)->first();
     }
 }

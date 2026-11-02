@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
 // 1. Controller Direktur
@@ -85,7 +86,7 @@ Route::get('/errors/{code}', function ($code) {
 
 // Pengalihan cerdas /dashboard utama ke dashboard masing-masing peran
 Route::middleware(['auth'])->get('/dashboard', function () {
-    $roleEnum = \App\Enums\UserRole::tryFrom((string) auth()->user()?->role);
+    $roleEnum = UserRole::tryFrom((string) auth()->user()?->role);
 
     return $roleEnum ? redirect()->route($roleEnum->dashboardRoute()) : redirect('/');
 })->name('dashboard');

@@ -40,39 +40,39 @@ class StockService
     }
 
     // Memvalidasi apakah ketersediaan stok panen gudang mencukupi kuantitas pesanan yang diminta.
-    public function isStockSufficient(int $productId, float $requestedQuantity): bool
+    public function isStockSufficient(int $productId, float $neededQty): bool
     {
-        return $this->getAvailableStock($productId) >= $requestedQuantity;
+        return $this->getAvailableStock($productId) >= $neededQty;
     }
 
     // Mengalokasikan pemotongan stok panen gudang berbasis FIFO dengan penguncian baris kueri.
-    public function allocateStock(int $productId, float $quantityToDeduct): void
+    public function allocateStock(int $productId, float $neededQty): void
     {
         // Mengambil kumpulan batch panen dari tanggal terlama (FIFO) dengan penguncian pesimistik
-        $harvestBatches = HarvestBatch::where('product_id', $productId)
+        $batches = HarvestBatch::where('product_id', $productId)
             ->where('available_quantity', '>', 0)
             ->orderBy('batch_date', 'asc')
             ->orderBy('id', 'asc')
             ->lockForUpdate()
             ->get();
 
-        $remainingQuantityToDeduct = $quantityToDeduct;
+        $remainingQty = $neededQty;
 
-        foreach ($harvestBatches as $batch) {
-            if ($remainingQuantityToDeduct <= 0) {
+        foreach ($batches as $batch) {
+            if ($remainingQty <= 0) {
                 break;
             }
 
-            $currentAvailable = (float) $batch->available_quantity;
-            $deductionAmount = min($currentAvailable, $remainingQuantityToDeduct);
+            $available = (float) $batch->available_quantity;
+            $deductQty = min($available, $remainingQty);
 
             // Mengurangi kuantitas batch panen aktif di database sesuai porsi alokasi terhitung
-            $batch->decrement('available_quantity', $deductionAmount);
-            $remainingQuantityToDeduct -= $deductionAmount;
+            $batch->decrement('available_quantity', $deductQty);
+            $remainingQty -= $deductQty;
         }
 
         // Memvalidasi integritas alokasi akhir dan melempar pengecualian bila fisik stok tidak mencukupi
-        if ($remainingQuantityToDeduct > 0) {
+        if ($remainingQty > 0) {
             $product = Product::find($productId);
             $productName = $product?->name ?? "ID #{$productId}";
             throw new Exception("Stok fisik komoditas {$productName} di gudang tidak mencukupi untuk dialokasikan.");
@@ -80,11 +80,11 @@ class StockService
     }
 
     // Mengembalikan kuota alokasi stok komoditas ke batch panen terbaru saat pesanan dibatalkan.
-    public function restoreStock(int $productId, float $quantityToRestore): void
+    public function restoreStock(int $productId, float $qty): void
     {
-        $activeBatch = HarvestBatch::where('product_id', $productId)->latest('id')->first();
-        if ($activeBatch) {
-            $activeBatch->increment('available_quantity', $quantityToRestore);
+        $batch = HarvestBatch::where('product_id', $productId)->latest('id')->first();
+        if ($batch) {
+            $batch->increment('available_quantity', $qty);
         }
     }
 }

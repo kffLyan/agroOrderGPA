@@ -101,12 +101,12 @@ class SuratJalanController extends Controller
                 if ($lastSuratJalan) {
                     $nextSequence = ((int) substr($lastSuratJalan->surat_jalan_number, -4)) + 1;
                 }
-                $candidateSuratJalanNumber = $prefix . str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
-                while (Order::where('surat_jalan_number', $candidateSuratJalanNumber)->exists()) {
+                $newSuratJalanNumber = $prefix . str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
+                while (Order::where('surat_jalan_number', $newSuratJalanNumber)->exists()) {
                     $nextSequence++;
-                    $candidateSuratJalanNumber = $prefix . str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
+                    $newSuratJalanNumber = $prefix . str_pad((string) $nextSequence, 4, '0', STR_PAD_LEFT);
                 }
-                return $candidateSuratJalanNumber;
+                return $newSuratJalanNumber;
             });
         }
 

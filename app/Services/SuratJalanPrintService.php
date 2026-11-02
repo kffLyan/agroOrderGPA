@@ -36,13 +36,13 @@ class SuratJalanPrintService
             'phone'        => '0812-2323-9133 / 0813-2142-2231',
         ];
 
-        $clientName         = $order?->user?->company_name ?: ($order?->user?->name ?: '-');
-        $address            = $order?->delivery_address ?: ($order?->user?->address ?: '-');
-        $suratJalanNumber   = $order ? ($order->surat_jalan_number ?: ('SJ-' . date('Ym') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT))) : '-';
-        $orderNumber        = $order?->order_number ?: '-';
-        $driverName         = $order?->driver?->name ?: ($order?->fleet_assigned ?: '-');
-        $coDriverName       = '-';
-        $vehiclePlate       = $order?->vehicle_plate_number ?: '-';
+        $clientName   = $order?->user?->company_name ?: ($order?->user?->name ?: '-');
+        $address      = $order?->delivery_address ?: ($order?->user?->address ?: '-');
+        $sjNumber     = $order ? ($order->surat_jalan_number ?: ('SJ-' . date('Ym') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT))) : '-';
+        $orderNumber  = $order?->order_number ?: '-';
+        $driverName   = $order?->driver?->name ?: ($order?->fleet_assigned ?: '-');
+        $coDriverName = '-';
+        $plate        = $order?->vehicle_plate_number ?: '-';
 
         $items    = [];
         $totalQty = 0.0;
@@ -64,8 +64,8 @@ class SuratJalanPrintService
             }
         }
 
-        $dateRaw       = $order?->departure_time ?: ($order?->target_delivery_date ?: $order?->created_at);
-        $dateFormatted = $dateRaw ? Carbon::parse($dateRaw)->format('d-m-Y') : date('d-m-Y');
+        $rawDate       = $order?->departure_time ?: ($order?->target_delivery_date ?: $order?->created_at);
+        $dateFormatted = $rawDate ? Carbon::parse($rawDate)->format('d-m-Y') : date('d-m-Y');
         $receivedDate  = Carbon::parse($order?->arrival_time ?: ($order?->departure_time ?: now()))->format('d/m/y');
         $receiverName  = $order?->received_by_name ?: ($order?->user?->pic_name ?: ($order?->user?->name ?: '-'));
 
@@ -73,12 +73,12 @@ class SuratJalanPrintService
             'company'    => $company,
             'brand'      => $company['full_brand'],
             'doc' => [
-                'number'  => $suratJalanNumber,
+                'number'  => $sjNumber,
                 'po'      => $orderNumber,
                 'date'    => $dateFormatted,
                 'to'      => $clientName,
                 'address' => $address,
-                'vehicle' => $vehiclePlate,
+                'vehicle' => $plate,
             ],
             'items'      => $items,
             'total_qty'  => $totalQty,

@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Order;
 use Carbon\Carbon;
 
-class BeritaAcaraReturPrintService
+class ReturPrintService
 {
     // Mengambil objek pesanan yang memiliki catatan komplain retur atau pesanan terbaru untuk dicetak
     public function resolveOrder(?string $orderId): ?Order
@@ -27,31 +27,31 @@ class BeritaAcaraReturPrintService
     // Membangun payload data terstruktur untuk lembar cetak Berita Acara Retur dan penyelesaian kompensasi
     public function buildPrintData(?Order $order): array
     {
-        $items              = [];
-        $firstReturnedPrice = 0.0;
-        $firstReturnedQty   = 0.0;
+        $items = [];
+        $returPrice = 0.0;
+        $returQty = 0.0;
 
         if ($order) {
             foreach ($order->orderItems as $item) {
-                $returnedQty = (float) ($item->returned_weight ?: 0);
-                $orderedQty  = (float) $item->ordered_qty;
-                $acceptedQty = max(0, $orderedQty - $returnedQty);
-                $unitPrice   = (float) $item->unit_price;
+                $retur = (float) ($item->returned_weight ?: 0);
+                $ordered = (float) $item->ordered_qty;
+                $accepted = max(0, $ordered - $retur);
+                $price = (float) $item->unit_price;
 
-                if ($returnedQty > 0 || $order->orderItems->count() <= 3) {
-                    if ($firstReturnedPrice === 0.0 && $returnedQty > 0) {
-                        $firstReturnedPrice = $unitPrice;
-                        $firstReturnedQty   = $returnedQty;
+                if ($retur > 0 || $order->orderItems->count() <= 3) {
+                    if ($returPrice === 0.0 && $retur > 0) {
+                        $returPrice = $price;
+                        $returQty = $retur;
                     }
 
                     $items[] = [
                         'code'     => $item->product?->code ?: ('PRD-' . str_pad((string) $item->product_id, 3, '0', STR_PAD_LEFT)),
                         'name'     => $item->product?->name ?: 'Komoditas',
-                        'shipped'  => $orderedQty,
-                        'returned' => $returnedQty,
-                        'accepted' => $acceptedQty,
-                        'reason'   => $item->return_reason ?: ($returnedQty > 0 ? 'Selisih timbangan / kondisi saat serah terima' : 'Lolos QC Dapur Penerima'),
-                        'price'    => $unitPrice,
+                        'shipped'  => $ordered,
+                        'returned' => $retur,
+                        'accepted' => $accepted,
+                        'reason'   => $item->return_reason ?: ($retur > 0 ? 'Selisih timbangan / kondisi saat serah terima' : 'Lolos QC Dapur Penerima'),
+                        'price'    => $price,
                     ];
                 }
             }
@@ -97,8 +97,8 @@ class BeritaAcaraReturPrintService
             'items'      => $items,
             'totals'     => $totals,
             'settlement' => [
-                'returned_price'  => $firstReturnedPrice,
-                'returned_value'  => $firstReturnedQty * $firstReturnedPrice,
+                'returned_price'  => $returPrice,
+                'returned_value'  => $returQty * $returPrice,
                 'price_reference' => 'Harga Kontrak / Dasar Perjanjian GPA',
                 'selected_option' => 'Kompensasi kuota pengganti pada siklus pengiriman berikutnya',
                 'schedule'        => 'Jadwal distribusi terdekat',

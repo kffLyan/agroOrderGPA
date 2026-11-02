@@ -34,7 +34,7 @@ class FakturPrintService
             'signer_role'  => 'Koperasi Produsen Green Pasundan Agriculture',
         ];
 
-        $formatIndoDayDate = fn ($date) => $date ? Carbon::parse($date)->translatedFormat('l, d F Y') : '-';
+        $formatDateIndo = fn ($date) => $date ? Carbon::parse($date)->translatedFormat('l, d F Y') : '-';
 
         $client             = $invoiceModel?->user;
         $clientName         = $client?->company_name ?: ($client?->name ?: ($invoiceModel ? 'Mitra Klien' : '-'));
@@ -42,10 +42,10 @@ class FakturPrintService
         $contracts          = $client?->contracts ? $client->contracts->where('status', 'ACTIVE') : collect();
         $contractsByProduct = $contracts->keyBy('product_id');
 
-        $isContractClient = match ($requestedFormat) {
-            'kontrak'           => true,
+        $isContract = match ($requestedFormat) {
+            'kontrak'            => true,
             'reguler', 'standar' => false,
-            default             => ($client?->client_type === 'KONTRAK' || $contracts->isNotEmpty()),
+            default              => ($client?->client_type === 'KONTRAK' || $contracts->isNotEmpty()),
         };
 
         $poNumbers = $invoiceModel ? $invoiceModel->orders->pluck('order_number')->filter()->unique()->values() : collect();
@@ -56,12 +56,12 @@ class FakturPrintService
         $issuedDate = $invoiceModel?->created_at ?: now();
         $dueDate    = $invoiceModel?->due_date ?: $issuedDate->copy()->addDays(14);
 
-        $warehouseItems       = [];
-        $contractGroups       = [];
-        $regularItems         = [];
-        $totalWarehouseAmount = 0.0;
-        $totalContractAmount  = 0.0;
-        $totalRegularAmount   = 0.0;
+        $warehouseItems = [];
+        $contractGroups = [];
+        $regularItems   = [];
+        $totalWarehouse = 0.0;
+        $totalContract  = 0.0;
+        $totalRegular   = 0.0;
 
         if ($invoiceModel) {
             $orders = $invoiceModel->orders->sortBy(
@@ -70,7 +70,7 @@ class FakturPrintService
 
             foreach ($orders as $order) {
                 $orderDate = $order->target_delivery_date ?: ($order->departure_time ?: $order->created_at);
-                $dateShort = $orderDate ? Carbon::parse($orderDate)->format('d-M-y') : date('d-M-y');
+                $shortDate = $orderDate ? Carbon::parse($orderDate)->format('d-M-y') : date('d-M-y');
                 $branch    = $order->delivery_address ?: '';
 
                 foreach ($order->orderItems as $item) {
@@ -87,69 +87,69 @@ class FakturPrintService
                     }
 
                     $regularItems[] = [
-                        'date'   => $dateShort,
+                        'date'   => $shortDate,
                         'name'   => $fullName,
                         'qty'    => $qty,
                         'price'  => $price,
                         'amount' => $amount,
                     ];
-                    $totalRegularAmount += $amount;
+                    $totalRegular += $amount;
 
                     $contract = $product ? $contractsByProduct->get($product->id) : null;
 
-                    if ($contract && $isContractClient) {
+                    if ($contract && $isContract) {
                         $contractPrice = (float) ($contract->fixed_price_per_kg ?: $price);
-                        $quota         = (float) $contract->committed_volume_per_cycle;
+                        $contractQuota = (float) $contract->committed_volume_per_cycle;
 
-                        if ($quota > 0 && $qty > $quota) {
-                            $contractQty    = $quota;
-                            $contractPriceFinal = $contractPrice;
-                            $contractAmount = $contractQty * $contractPriceFinal;
+                        if ($contractQuota > 0 && $qty > $contractQuota) {
+                            $contractQty    = $contractQuota;
+                            $contractPrice  = $contractPrice;
+                            $contractAmount = $contractQty * $contractPrice;
 
-                            $regularQty     = $qty - $quota;
+                            $regularQty     = $qty - $contractQuota;
                             $regularPrice   = (float) ($product->base_price ?: $price);
                             $regularAmount  = $regularQty * $regularPrice;
-                            $rowTotal       = $contractAmount + $regularAmount;
+                            $lineTotal      = $contractAmount + $regularAmount;
                         } else {
-                            $contractQty        = $qty;
-                            $contractPriceFinal = $contractPrice;
-                            $contractAmount     = $qty * $contractPrice;
-                            $regularQty         = 0;
-                            $regularPrice       = 0;
-                            $regularAmount      = 0;
-                            $rowTotal           = $contractAmount;
+                            $contractQty    = $qty;
+                            $contractPrice  = $contractPrice;
+                            $contractAmount = $qty * $contractPrice;
+                            $regularQty     = 0;
+                            $regularPrice   = 0;
+                            $regularAmount  = 0;
+                            $lineTotal      = $contractAmount;
                         }
 
-                        $contractGroups[$dateShort][] = [
+                        $contractGroups[$shortDate][] = [
                             'name'     => $fullName,
                             'all_qty'  => $qty,
                             'c_qty'    => $contractQty,
-                            'c_price'  => $contractPriceFinal,
+                            'c_price'  => $contractPrice,
                             'c_amount' => $contractAmount,
                             'r_qty'    => $regularQty,
                             'r_price'  => $regularPrice,
                             'r_amount' => $regularAmount,
-                            'total'    => $rowTotal,
+                            'total'    => $lineTotal,
                         ];
 
-                        $totalContractAmount += $rowTotal;
+                        $totalContract += $lineTotal;
                     } else {
                         $warehouseItems[] = [
-                            'date'   => $dateShort,
+                            'date'   => $shortDate,
                             'name'   => $fullName,
                             'qty'    => $qty,
                             'price'  => $price,
                             'amount' => $amount,
                         ];
 
-                        $totalWarehouseAmount += $amount;
+                        $totalWarehouse += $amount;
                     }
                 }
             }
         }
 
         $contractPages = [];
-        $contractGrandSubtotal = [
+        $contractSummary = [
             'all_qty'  => 0,
             'c_qty'    => 0,
             'c_amount' => 0,
@@ -158,33 +158,33 @@ class FakturPrintService
             'total'    => 0,
         ];
 
-        foreach ($contractGroups as $cDate => $rows) {
-            $subAllQty  = array_sum(array_column($rows, 'all_qty'));
-            $subCQty    = array_sum(array_column($rows, 'c_qty'));
-            $subCAmount = array_sum(array_column($rows, 'c_amount'));
-            $subRQty    = array_sum(array_column($rows, 'r_qty'));
-            $subRAmount = array_sum(array_column($rows, 'r_amount'));
-            $subTotal   = array_sum(array_column($rows, 'total'));
+        foreach ($contractGroups as $groupDate => $rows) {
+            $subTotalQty     = array_sum(array_column($rows, 'all_qty'));
+            $subTotalContractQty = array_sum(array_column($rows, 'c_qty'));
+            $subTotalContractNom = array_sum(array_column($rows, 'c_amount'));
+            $subTotalRegularQty  = array_sum(array_column($rows, 'r_qty'));
+            $subTotalRegularNom  = array_sum(array_column($rows, 'r_amount'));
+            $subTotalLine        = array_sum(array_column($rows, 'total'));
 
             $contractPages[] = [
-                'date'     => $cDate,
+                'date'     => $groupDate,
                 'rows'     => $rows,
                 'subtotal' => [
-                    'all_qty'  => $subAllQty,
-                    'c_qty'    => $subCQty,
-                    'c_amount' => $subCAmount,
-                    'r_qty'    => $subRQty,
-                    'r_amount' => $subRAmount,
-                    'total'    => $subTotal,
+                    'all_qty'  => $subTotalQty,
+                    'c_qty'    => $subTotalContractQty,
+                    'c_amount' => $subTotalContractNom,
+                    'r_qty'    => $subTotalRegularQty,
+                    'r_amount' => $subTotalRegularNom,
+                    'total'    => $subTotalLine,
                 ],
             ];
 
-            $contractGrandSubtotal['all_qty']  += $subAllQty;
-            $contractGrandSubtotal['c_qty']    += $subCQty;
-            $contractGrandSubtotal['c_amount'] += $subCAmount;
-            $contractGrandSubtotal['r_qty']    += $subRQty;
-            $contractGrandSubtotal['r_amount'] += $subRAmount;
-            $contractGrandSubtotal['total']    += $subTotal;
+            $contractSummary['all_qty']  += $subTotalQty;
+            $contractSummary['c_qty']    += $subTotalContractQty;
+            $contractSummary['c_amount'] += $subTotalContractNom;
+            $contractSummary['r_qty']    += $subTotalRegularQty;
+            $contractSummary['r_amount'] += $subTotalRegularNom;
+            $contractSummary['total']    += $subTotalLine;
         }
 
         $shippingCost = 0.0;
@@ -201,24 +201,24 @@ class FakturPrintService
             }
         }
 
-        $subtotalAmount = $isContractClient ? ($totalWarehouseAmount + $totalContractAmount) : $totalRegularAmount;
-        if ($invoiceModel && $shippingCost <= 0 && $taxAmount <= 0 && ($invoiceModel->grand_total - $subtotalAmount) > 0) {
-            $shippingCost = (float) ($invoiceModel->grand_total - $subtotalAmount);
+        $subtotal = $isContract ? ($totalWarehouse + $totalContract) : $totalRegular;
+        if ($invoiceModel && $shippingCost <= 0 && $taxAmount <= 0 && ($invoiceModel->grand_total - $subtotal) > 0) {
+            $shippingCost = (float) ($invoiceModel->grand_total - $subtotal);
         }
 
-        $grandTotalFinal = $invoiceModel
-            ? (float) ($invoiceModel->grand_total ?: ($subtotalAmount + $shippingCost + $taxAmount))
+        $grandTotal = $invoiceModel
+            ? (float) ($invoiceModel->grand_total ?: ($subtotal + $shippingCost + $taxAmount))
             : 0;
 
         return [
             'company'           => $company,
             'brand'             => $company['full_brand'],
-            'is_contract'       => $isContractClient,
+            'is_contract'       => $isContract,
             'invoice'           => [
                 'id'        => $invoiceModel ? $invoiceModel->invoice_number : ($invoice ?: '-'),
                 'po_number' => $poDisplay,
-                'issued'    => $formatIndoDayDate($issuedDate),
-                'due'       => $formatIndoDayDate($dueDate),
+                'issued'    => $formatDateIndo($issuedDate),
+                'due'       => $formatDateIndo($dueDate),
                 'status'    => $invoiceModel ? $invoiceModel->status : 'DRAFT',
             ],
             'client'            => [
@@ -231,24 +231,24 @@ class FakturPrintService
             'warehouse'         => [
                 'title'    => 'Sayur Gudang Pasirimpun / Non-Kontrak',
                 'items'    => $warehouseItems,
-                'subtotal' => $totalWarehouseAmount,
+                'subtotal' => $totalWarehouse,
             ],
             'hasContractItems'  => !empty($contractPages),
             'contract'          => [
                 'title'          => 'Sayur Kontrak Mitra GPA',
                 'pages'          => $contractPages,
-                'grand_subtotal' => $contractGrandSubtotal,
+                'grand_subtotal' => $contractSummary,
             ],
             'regular'           => [
                 'title'    => 'Rincian Pasokan Komoditas Reguler',
                 'items'    => $regularItems,
-                'subtotal' => $totalRegularAmount,
+                'subtotal' => $totalRegular,
             ],
-            'subtotal'          => $subtotalAmount,
+            'subtotal'          => $subtotal,
             'shipping_cost'     => $shippingCost,
             'tax_amount'        => $taxAmount,
             'tax_label'         => $taxLabel ?: 'Bebas PPN 0% (DTP Pertanian)',
-            'grand_total'       => $grandTotalFinal,
+            'grand_total'       => $grandTotal,
         ];
     }
 }

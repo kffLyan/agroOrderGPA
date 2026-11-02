@@ -27,20 +27,20 @@ class PesananController extends Controller
     {
         $userId = Auth::guard('web')->id();
 
-        $rawOrders = Order::where('user_id', $userId)
+        $allOrders = Order::where('user_id', $userId)
             ->with(['orderItems.product', 'driver', 'verifier', 'invoice', 'payments'])
             ->orderBy('created_at', 'desc')
             ->get();
 
         // Mengelompokkan total kuantitas pesanan berdasarkan status operasional (verifikasi, bayar, kirim, selesai)
         $counts = [
-            'all'        => $rawOrders->count(),
-            'verifikasi' => $rawOrders->where('status', 'MENUNGGU_VERIFIKASI')->count(),
-            'bayar'      => $rawOrders->whereIn('status', ['MENUNGGU_PEMBAYARAN', 'LUNAS'])->count(),
-            'kemas'      => $rawOrders->where('status', 'SIAP_KIRIM')->count(),
-            'kirim'      => $rawOrders->where('status', 'DALAM_PENGIRIMAN')->count(),
-            'selesai'    => $rawOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count(),
-            'batal'      => $rawOrders->where('status', 'BATAL')->count(),
+            'all'        => $allOrders->count(),
+            'verifikasi' => $allOrders->where('status', 'MENUNGGU_VERIFIKASI')->count(),
+            'bayar'      => $allOrders->whereIn('status', ['MENUNGGU_PEMBAYARAN', 'LUNAS'])->count(),
+            'kemas'      => $allOrders->where('status', 'SIAP_KIRIM')->count(),
+            'kirim'      => $allOrders->where('status', 'DALAM_PENGIRIMAN')->count(),
+            'selesai'    => $allOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count(),
+            'batal'      => $allOrders->where('status', 'BATAL')->count(),
         ];
 
         $statusTabs = [
@@ -53,7 +53,7 @@ class PesananController extends Controller
             ['label' => 'Dibatalkan', 'value' => 'batal', 'count' => $counts['batal']],
         ];
 
-        $orders = $rawOrders;
+        $orders = $allOrders;
 
         $pagination = [
             'page'        => 1,
@@ -64,11 +64,11 @@ class PesananController extends Controller
         ];
 
         // Menghitung akumulasi tonase komoditas yang dipesan klien dalam kilogram
-        $totalKgOrder = (float) $rawOrders->sum(fn($order) => $order->orderItems ? $order->orderItems->sum('ordered_qty') : 0);
+        $totalKgOrder  = (float) $allOrders->sum(fn($order) => $order->orderItems ? $order->orderItems->sum('ordered_qty') : 0);
         $totalKgActual = $totalKgOrder;
 
         return view('klien.pesanan.index', [
-            'rawOrders'     => $rawOrders,
+            'rawOrders'     => $allOrders,
             'orders'        => $orders,
             'counts'        => $counts,
             'statusTabs'    => $statusTabs,
@@ -87,7 +87,7 @@ class PesananController extends Controller
     // Memproses pengajuan pesanan baru, memvalidasi idempotensi duplikasi, dan mengarahkan ke antrean verifikasi
     public function store(SimpanPesananRequest $request)
     {
-        $user = Auth::guard('web')->user();
+        $user            = Auth::guard('web')->user();
         $submissionToken = $request->input('submission_token');
 
         // Memeriksa token idempotensi untuk mencegah transaksi ganda akibat klik tombol berulang kali
@@ -95,7 +95,7 @@ class PesananController extends Controller
             $tokenCacheKey = "order_submission_token_{$user->id}_{$submissionToken}";
             if (Cache::has($tokenCacheKey)) {
                 $existingOrderId = Cache::get($tokenCacheKey);
-                $existingOrder = Order::where('user_id', $user->id)->find($existingOrderId);
+                $existingOrder   = Order::where('user_id', $user->id)->find($existingOrderId);
                 if ($existingOrder) {
                     return redirect()->route('klien.pesanan.show', $existingOrder->id)
                         ->with('info', "Pesanan {$existingOrder->order_number} telah berhasil diajukan sebelumnya.");
@@ -137,8 +137,8 @@ class PesananController extends Controller
 
             return redirect()->route('klien.pesanan.show', $order->id)
                 ->with('success', "Pesanan {$order->order_number} berhasil diajukan dan sedang masuk antrean verifikasi Sekretaris.");
-        } catch (Exception $exception) {
-            return back()->withInput()->withErrors(['error' => $exception->getMessage()]);
+        } catch (Exception $e) {
+            return back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
     }
 

@@ -12,10 +12,14 @@ class PrintLaporanController extends Controller
     // Menyiapkan cetak laporan resmi rekapitulasi penjualan eksekutif standar ukuran kertas A4
     public function __invoke(Request $request, LaporanPrintService $service): View
     {
+        $startDate = $request->query('start_date');
+        $endDate   = $request->query('end_date');
+        $clientId  = $request->query('client_id') ? (int) $request->query('client_id') : null;
+
         $data = $service->buildPrintData(
-            $request->query('start_date'),
-            $request->query('end_date'),
-            $request->query('client_id') ? (int) $request->query('client_id') : null
+            $startDate,
+            $endDate,
+            $clientId
         );
 
         return view('prints.report', $data);

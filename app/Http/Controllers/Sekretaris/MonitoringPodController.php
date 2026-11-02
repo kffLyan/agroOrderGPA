@@ -17,7 +17,7 @@ class MonitoringPodController extends Controller
     {
         $statusFilter = $request->query('status', 'all');
         $driverFilter = $request->query('driver_id', 'all');
-        $search = trim($request->query('search', ''));
+        $search       = trim($request->query('search', ''));
 
         $query = Order::with(['orderItems.product', 'user', 'driver', 'verifier', 'invoice'])
             ->where(function ($subQuery) {

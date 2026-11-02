@@ -36,7 +36,7 @@ class VerifikasiPesananController extends Controller
 
         $formattedOrders = VerifikasiPesananResource::collection($pendingOrders)->resolve();
         $b2bCount = count(array_filter($formattedOrders, fn($orderItem) => ($orderItem['channel'] ?? '') === 'b2b'));
-        $waCount = count($formattedOrders) - $b2bCount;
+        $waCount  = count($formattedOrders) - $b2bCount;
 
         return view('sekretaris.verifikasi', [
             'mappedOrders' => $formattedOrders,
@@ -55,30 +55,30 @@ class VerifikasiPesananController extends Controller
                 ? max(0.0, (float) $request->input('shipping_cost'))
                 : null;
 
-            $order = $this->orderService->approveOrder($order->id, $secretaryId, $manualShippingCost);
+            $approvedOrder = $this->orderService->approveOrder($order->id, $secretaryId, $manualShippingCost);
 
-            $message = "Pesanan {$order->order_number} berhasil disetujui. Kuota stok panen telah dikunci, Invoice tagihan telah diterbitkan, dan status pesanan kini Menunggu Pembayaran.";
+            $message = "Pesanan {$approvedOrder->order_number} berhasil disetujui. Kuota stok panen telah dikunci, Invoice tagihan telah diterbitkan, dan status pesanan kini Menunggu Pembayaran.";
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success'      => true,
                     'message'      => $message,
-                    'order_id'     => $order->id,
-                    'order_number' => $order->order_number,
-                    'status'       => $order->status,
+                    'order_id'     => $approvedOrder->id,
+                    'order_number' => $approvedOrder->order_number,
+                    'status'       => $approvedOrder->status,
                 ]);
             }
 
             return redirect()->route('sekretaris.verifikasi')->with('success', $message);
-        } catch (Exception $exception) {
+        } catch (Exception $e) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $exception->getMessage(),
+                    'message' => $e->getMessage(),
                 ], 422);
             }
 
-            return back()->withErrors(['error' => $exception->getMessage()]);
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 
@@ -86,32 +86,32 @@ class VerifikasiPesananController extends Controller
     public function reject(TolakPesananRequest $request, Order $order)
     {
         try {
-            $secretaryId = Auth::guard('web')->id();
+            $secretaryId     = Auth::guard('web')->id();
             $rejectionReason = $request->input('rejection_reason');
 
-            $order = $this->orderService->rejectOrder($order->id, $secretaryId, $rejectionReason);
+            $rejectedOrder = $this->orderService->rejectOrder($order->id, $secretaryId, $rejectionReason);
 
-            $message = "Pesanan {$order->order_number} telah ditolak.";
+            $message = "Pesanan {$rejectedOrder->order_number} telah ditolak.";
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success'      => true,
                     'message'      => $message,
-                    'order_id'     => $order->id,
-                    'order_number' => $order->order_number,
+                    'order_id'     => $rejectedOrder->id,
+                    'order_number' => $rejectedOrder->order_number,
                 ]);
             }
 
             return redirect()->route('sekretaris.verifikasi')->with('success', $message);
-        } catch (Exception $exception) {
+        } catch (Exception $e) {
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => $exception->getMessage(),
+                    'message' => $e->getMessage(),
                 ], 422);
             }
 
-            return back()->withErrors(['error' => $exception->getMessage()]);
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
     }
 }

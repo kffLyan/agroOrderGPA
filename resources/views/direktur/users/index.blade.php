@@ -8,41 +8,35 @@
 
         $directoryRows = [];
         foreach ($allUsers as $u) {
-            $roleKey = match (strtoupper($u->role)) {
-                'DIREKTUR'    => 'director',
-                'SEKRETARIS'  => 'admin',
-                'KOORDINATOR' => 'coordinator',
-                'ARMADA'      => 'driver',
-                default       => 'client',
-            };
+            $role = strtoupper($u->role);
 
-            $badge = match ($roleKey) {
-                'director'    => 'DIR',
-                'admin'       => 'ADM',
-                'coordinator' => 'KRD',
-                'driver'      => 'DVR',
+            $badge = match ($role) {
+                'DIREKTUR'    => 'DIR',
+                'SEKRETARIS'  => 'SKR',
+                'KOORDINATOR' => 'KRD',
+                'ARMADA'      => 'ARM',
                 default       => 'KLN',
             };
 
-            $division = match ($roleKey) {
-                'director'    => 'Direksi Pusat / Policy',
-                'admin'       => 'Central Office / Keuangan',
-                'coordinator' => 'STA & Timbangan Lapangan',
-                'driver'      => 'Armada & Distribusi Fisik',
+            $division = match ($role) {
+                'DIREKTUR'    => 'Direksi Pusat / Kebijakan',
+                'SEKRETARIS'  => 'Sekretariat Operasional / Keuangan',
+                'KOORDINATOR' => 'STA & Timbangan Lapangan',
+                'ARMADA'      => 'Armada & Distribusi Fisik',
                 default       => $u->company_name ?: 'Mitra B2B Buyer',
             };
 
-            $hub = match ($roleKey) {
-                'director'    => 'HQ Jakarta / All Hub',
-                'admin'       => 'Kantor Pusat GPA',
-                'coordinator' => 'STA Cianjur & Lembang',
-                'driver'      => 'Pool Distribusi Bandung',
+            $hub = match ($role) {
+                'DIREKTUR'    => 'Kantor Pusat GPA / Seluruh Hub',
+                'SEKRETARIS'  => 'Kantor Pusat GPA',
+                'KOORDINATOR' => 'STA Cianjur & Lembang',
+                'ARMADA'      => 'Pool Distribusi Bandung',
                 default       => 'Jawa Barat & Jabodetabek',
             };
 
             $directoryRows[] = [
                 'id'            => $u->id,
-                'role_key'      => $roleKey,
+                'role_key'      => $role,
                 'badge'         => $badge,
                 'name'          => $u->name,
                 'code'          => strtoupper($badge) . '-' . str_pad($u->id, 3, '0', STR_PAD_LEFT),
@@ -104,7 +98,7 @@
                     <a href="{{ route('direktur.users.create') }}"
                         class="inline-flex items-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-ink text-accent shadow-sub">
                         <x-gpa.icon name="plus" class="h-3.5 w-3.5 shrink-0" />
-                        + Tambah Pengguna Baru
+                        Tambah Pengguna Baru
                     </a>
                 </div>
             </header>
@@ -196,6 +190,11 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" @click="openRoleManagement()"
+                        class="inline-flex shrink-0 items-center gap-1.5 rounded bg-ink px-3 py-2 gpa-meta font-semibold text-accent shadow-sub transition-opacity hover:opacity-90">
+                        <x-gpa.icon name="shield" class="h-3.5 w-3.5 shrink-0" />
+                        Kelola Role
+                    </button>
                     <button type="button" @click="syncRbacPolicy()"
                         class="inline-flex shrink-0 items-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                         <x-gpa.icon name="refresh" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
@@ -230,146 +229,28 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-line-hair">
-                        {{-- Row 1: Order B2B --}}
-                        <tr class="transition-colors hover:bg-surface-shell/50">
-                            <th scope="row" class="px-3 py-4 text-left align-top font-normal">
-                                <p class="text-[12px] leading-5 text-ink font-semibold">Katalog &amp; Buat Order B2B</p>
-                                <p class="mt-0.5 text-[10px] leading-4 text-ink-body">Order PO-distribusi klien korporat dan price list kontrak</p>
-                            </th>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">Read / Create</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Form WA / Manual (Create)</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold text-ink-body">No Access</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold text-ink-body">No Access</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold bg-ink text-accent">Full Monitoring (Read)</span>
-                            </td>
-                        </tr>
-
-                        {{-- Row 2: Timbangan Aktual --}}
-                        <tr class="transition-colors hover:bg-surface-shell/50">
-                            <th scope="row" class="px-3 py-4 text-left align-top font-normal">
-                                <p class="text-[12px] leading-5 text-ink font-semibold">Timbangan Aktual &amp; Netto Panen</p>
-                                <p class="mt-0.5 text-[10px] leading-4 text-ink-body">Certifikasi bobot bersih timbangan elektronik</p>
-                            </th>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Read-Only</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Read Riil</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">Lock &amp; Certify</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold text-ink-body">No Access</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold bg-ink text-accent">Audit Calibration (Read)</span>
-                            </td>
-                        </tr>
-
-                        {{-- Row 3: Surat Jalan --}}
-                        <tr class="transition-colors hover:bg-surface-shell/50">
-                            <th scope="row" class="px-3 py-4 text-left align-top font-normal">
-                                <p class="text-[12px] leading-5 text-ink font-semibold">Terbitkan Surat Jalan</p>
-                                <p class="mt-0.5 text-[10px] leading-4 text-ink-body">Dokumen Predicate legalitas pengiriman kargo</p>
-                            </th>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold text-ink-body">No Access</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">Create &amp; Sign</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Read (Manifest)</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Read Digital</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold bg-ink text-accent">Read &amp; Invalidation</span>
-                            </td>
-                        </tr>
-
-                        {{-- Row 4: Faktur, Bayar & Rekonsiliasi --}}
-                        <tr class="transition-colors hover:bg-surface-shell/50">
-                            <th scope="row" class="px-3 py-4 text-left align-top font-normal">
-                                <p class="text-[12px] leading-5 text-ink font-semibold">Faktur, Bayar &amp; Rekonsiliasi Kas</p>
-                                <p class="mt-0.5 text-[10px] leading-4 text-ink-body">Settlement termin dan kliring rekening korporat</p>
-                            </th>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Read / Upload Bukti</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">Approve &amp; Reconcile</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold text-ink-body">No Access</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold text-ink-body">No Access</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold bg-ink text-accent">Executive Ledger Read</span>
-                            </td>
-                        </tr>
-
-                        {{-- Row 5: PoD Digital --}}
-                        <tr class="transition-colors hover:bg-surface-shell/50">
-                            <th scope="row" class="px-3 py-4 text-left align-top font-normal">
-                                <p class="text-[12px] leading-5 text-ink font-semibold">PoD Digital, Foto &amp; Catat Retur</p>
-                                <p class="mt-0.5 text-[10px] leading-4 text-ink-body">Bukti penerimaan barang dan catatan sengketa</p>
-                            </th>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">Digital Sign PoD</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Verify Dispute</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">Verify &amp; Stock Sync</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Upload &amp; Submit</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold bg-ink text-accent">Dispute Final Arbiter</span>
-                            </td>
-                        </tr>
-
-                        {{-- Row 6: Approval Kontrak & Kunci Audit --}}
-                        <tr class="transition-colors hover:bg-surface-shell/50 bg-accent/25">
-                            <th scope="row" class="px-3 py-4 text-left align-top font-normal">
-                                <p class="text-[12px] leading-5 text-ink font-bold">Approval Kontrak &amp; Kunci Audit</p>
-                                <p class="mt-0.5 text-[10px] leading-4 text-ink-body">Otorisasi monograf final dan sealing ledger</p>
-                            </th>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold text-ink">NONE (BLOCKED)</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold bg-surface-track text-ink">Draft / Review</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold text-ink">NONE (BLOCKED)</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold text-ink">NONE (BLOCKED)</span>
-                            </td>
-                            <td class="px-3 py-4 text-center align-top">
-                                <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-bold bg-ink text-accent outline outline-1 -outline-offset-1 outline-accent">SOLE APPROVER / LOCK</span>
-                            </td>
-                        </tr>
+                        <template x-for="feature in accessFeatures" :key="feature.key">
+                            <tr class="transition-colors hover:bg-surface-shell/50"
+                                :class="feature.key === 'contracts' ? 'bg-accent/25' : ''">
+                                <th scope="row" class="px-3 py-4 text-left align-top font-normal">
+                                    <p class="text-[12px] leading-5 text-ink font-semibold" x-text="feature.label"></p>
+                                    <p class="mt-0.5 text-[10px] leading-4 text-ink-body" x-text="feature.description"></p>
+                                </th>
+                                <template x-for="role in accessRoles" :key="role.key">
+                                    <td class="px-3 py-4 text-center align-top">
+                                        <span class="inline-block rounded px-2 py-1 text-[11px] leading-4 font-semibold"
+                                            :class="permissionBadgeClass(role.key, accessMatrix[feature.key][role.key])"
+                                            x-text="accessMatrix[feature.key][role.key]"></span>
+                                    </td>
+                                </template>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
+            <p class="gpa-note text-ink-body">
+                Pengaturan role pada halaman ini merupakan pratinjau frontend dan belum mengubah hak akses akun di server.
+            </p>
         </section>
 
         {{-- User directory --}}
@@ -394,30 +275,30 @@
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
                         Semua Role ({{ $totalUsers }})
                     </button>
-                    <button type="button" @click="setRole('director')"
-                        :class="roleClass('director')"
+                    <button type="button" @click="setRole('DIREKTUR')"
+                        :class="roleClass('DIREKTUR')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
-                        Direktur
+                        DIREKTUR
                     </button>
-                    <button type="button" @click="setRole('admin')"
-                        :class="roleClass('admin')"
+                    <button type="button" @click="setRole('SEKRETARIS')"
+                        :class="roleClass('SEKRETARIS')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
-                        Sekre/Admin
+                        SEKRETARIS
                     </button>
-                    <button type="button" @click="setRole('coordinator')"
-                        :class="roleClass('coordinator')"
+                    <button type="button" @click="setRole('KOORDINATOR')"
+                        :class="roleClass('KOORDINATOR')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
-                        Koordinator
+                        KOORDINATOR
                     </button>
-                    <button type="button" @click="setRole('driver')"
-                        :class="roleClass('driver')"
+                    <button type="button" @click="setRole('ARMADA')"
+                        :class="roleClass('ARMADA')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
-                        Supir
+                        ARMADA
                     </button>
-                    <button type="button" @click="setRole('client')"
-                        :class="roleClass('client')"
+                    <button type="button" @click="setRole('KLIEN')"
+                        :class="roleClass('KLIEN')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
-                        Klien
+                        KLIEN
                     </button>
                 </div>
             </header>
@@ -458,8 +339,8 @@
                                     <div class="flex items-start gap-2.5">
                                         <span @class([
                                             'mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-micro',
-                                            'bg-ink text-accent' => $row['role_key'] === 'director',
-                                            'bg-surface-track text-ink-body' => $row['role_key'] !== 'director',
+                                            'bg-ink text-accent' => $row['role'] === 'DIREKTUR',
+                                            'bg-surface-track text-ink-body' => $row['role'] !== 'DIREKTUR',
                                         ])>{{ $row['badge'] }}</span>
                                         <div class="min-w-0">
                                             <p class="text-[13px] font-bold leading-5 text-ink">{{ $row['name'] }}</p>
@@ -480,8 +361,8 @@
                                 <td class="px-3 py-4 align-top">
                                     <span @class([
                                         'inline-block rounded px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta',
-                                        'bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep' => $row['role_key'] === 'director',
-                                        'bg-surface-track text-ink-body' => $row['role_key'] !== 'director',
+                                        'bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep' => $row['role'] === 'DIREKTUR',
+                                        'bg-surface-track text-ink-body' => $row['role'] !== 'DIREKTUR',
                                     ])>2FA Aktif</span>
                                 </td>
                                 <td class="px-3 py-4 align-top">
@@ -568,6 +449,96 @@
                 </div>
             </footer>
         </section>
+
+        <div x-cloak x-show="roleManagementOpen" @keydown.escape.window="closeRoleManagement()"
+            class="fixed inset-0 z-[70] flex items-center justify-center bg-ink/60 p-3 sm:p-6"
+            @click.self="closeRoleManagement()">
+            <section role="dialog" aria-modal="true" aria-labelledby="role-management-title"
+                class="flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-surface shadow-card">
+                <header class="flex items-start justify-between gap-4 border-b border-line-board/60 px-5 py-4 sm:px-6">
+                    <div class="min-w-0">
+                        <p class="gpa-micro-bold uppercase tracking-wider text-ink-body">Manajemen Role</p>
+                        <h2 id="role-management-title" class="mt-1 text-lg font-bold text-ink">
+                            Kelola Hak Akses &amp; Wewenang
+                        </h2>
+                        <p class="mt-1 text-xs text-ink-body">
+                            Pilih role, lalu sesuaikan izin untuk setiap modul operasional.
+                        </p>
+                    </div>
+                    <button type="button" @click="closeRoleManagement()" aria-label="Tutup manajemen role"
+                        class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-body transition-colors hover:bg-surface-shell hover:text-ink">
+                        <x-gpa.icon name="x" class="h-4 w-4" />
+                    </button>
+                </header>
+
+                <div class="overflow-y-auto px-5 py-5 sm:px-6">
+                    <div class="mb-5 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+                        <template x-for="role in accessRoles" :key="role.key">
+                            <button type="button" @click="selectedAccessRole = role.key"
+                                :aria-pressed="selectedAccessRole === role.key"
+                                :class="selectedAccessRole === role.key
+                                    ? 'border-brand bg-brand text-white'
+                                    : 'border-line-board bg-surface text-ink-body hover:bg-surface-shell'"
+                                class="rounded-lg border px-3 py-2.5 text-left text-xs font-semibold transition-colors">
+                                <span class="block" x-text="role.label"></span>
+                                <span class="mt-1 block text-[10px] font-normal opacity-75">Atur izin role</span>
+                            </button>
+                        </template>
+                    </div>
+
+                    <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="text-sm font-bold text-ink"
+                                x-text="accessRoles.find((role) => role.key === selectedAccessRole)?.label"></h3>
+                            <p class="mt-0.5 gpa-note text-ink-body">Pilih tingkat akses untuk tiap fitur.</p>
+                        </div>
+                        <button type="button" @click="resetAccessRole()"
+                            class="rounded px-3 py-2 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-shell">
+                            Pulihkan default role
+                        </button>
+                    </div>
+
+                    <div class="overflow-hidden rounded-xl border border-line-board/70">
+                        <template x-for="feature in accessFeatures" :key="feature.key">
+                            <div class="flex flex-col gap-3 border-b border-line-hair p-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
+                                <div class="min-w-0">
+                                    <p class="text-xs font-semibold text-ink" x-text="feature.label"></p>
+                                    <p class="mt-1 text-[11px] leading-4 text-ink-body" x-text="feature.description"></p>
+                                </div>
+                                <label class="flex shrink-0 flex-col gap-1 sm:w-56">
+                                    <span class="sr-only" x-text="`Izin ${feature.label}`"></span>
+                                    <select x-model="draftAccessMatrix[feature.key][selectedAccessRole]"
+                                        class="w-full rounded-lg border border-line-board bg-surface-shell px-3 py-2 text-xs text-ink outline-none focus:border-success-deep focus:ring-2 focus:ring-success-deep/20">
+                                        <option :value="draftAccessMatrix[feature.key][selectedAccessRole]"
+                                            x-text="draftAccessMatrix[feature.key][selectedAccessRole]"></option>
+                                        <template x-for="option in accessOptions" :key="option">
+                                            <option :value="option" x-text="option"></option>
+                                        </template>
+                                    </select>
+                                </label>
+                            </div>
+                        </template>
+                    </div>
+
+                    <p class="mt-4 flex items-start gap-2 rounded-lg border border-warning/40 bg-warning-soft p-3 text-[11px] leading-4 text-warning-deep">
+                        <x-gpa.icon name="info" class="mt-0.5 h-4 w-4 shrink-0" />
+                        Perubahan hanya berlaku pada pratinjau halaman ini. Integrasi penyimpanan backend belum tersedia.
+                    </p>
+                </div>
+
+                <footer class="flex flex-wrap items-center justify-end gap-2 border-t border-line-board/60 px-5 py-4 sm:px-6">
+                    <button type="button" @click="closeRoleManagement()"
+                        class="rounded px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-shell">
+                        Batal
+                    </button>
+                    <button type="button" @click="saveRoleManagement()"
+                        class="inline-flex items-center gap-1.5 rounded bg-ink px-3 py-2 gpa-meta font-semibold text-accent shadow-sub transition-opacity hover:opacity-90">
+                        <x-gpa.icon name="check" class="h-3.5 w-3.5 shrink-0" />
+                        Terapkan ke Matriks
+                    </button>
+                </footer>
+            </section>
+        </div>
 
     </div>
 @endsection

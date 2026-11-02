@@ -138,7 +138,7 @@
                         <span class="text-gray-500">Tipe Pelanggan:</span>
                         <span class="col-span-2">
                             <span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-[10px] font-bold">
-                                {{ $contract->user->client_type ?? 'B2B_KONTRAK' }}
+                                {{ ($contract->user->client_type ?? 'B2B_KONTRAK') === 'B2B_KONTRAK' ? 'Mitra Kontrak B2B' : 'Klien Reguler' }}
                             </span>
                         </span>
                     </div>

@@ -293,6 +293,7 @@ Route::middleware(['auth', 'role:DIREKTUR'])->prefix('direktur')->name('direktur
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/verify-email-now', [ProfileController::class, 'verifyEmailDirectly'])->name('profile.verify-email-now');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Dokumen Cetak Format Resmi A4

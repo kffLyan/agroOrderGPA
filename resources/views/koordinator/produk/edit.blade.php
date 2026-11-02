@@ -103,7 +103,9 @@
                     <p class="text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Foto / Gambar Komoditas</p>
                     @if ($product->image_url)
                         <div class="flex items-center gap-3">
-                            <img src="{{ asset($product->image_url) }}" alt="{{ $product->name }}" class="h-14 w-14 rounded-lg border border-line-board object-cover">
+                            <img src="{{ asset($product->image_path) }}" alt="{{ $product->name }}"
+                                class="h-14 w-14 rounded-lg border border-line-board object-cover"
+                                onerror="this.onerror=null;this.src='{{ asset('gpaleaves.png') }}';">
                             <p class="text-[11px] leading-4 text-ink-body">Gambar saat ini tersimpan</p>
                         </div>
                     @endif

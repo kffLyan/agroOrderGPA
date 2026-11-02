@@ -431,15 +431,21 @@ class LaporanController extends Controller
                     $labelPeriode = 'Semua Riwayat';
                     break;
                 case 'bulan_ini':
-                default:
                     $start = (clone $now)->startOfMonth();
                     $end = (clone $now)->endOfMonth();
                     $labelPeriode = 'Bulan Ini (' . $now->translatedFormat('F Y') . ')';
                     break;
+                case 'semua':
+                default:
+                    $start = null;
+                    $end = null;
+                    $labelPeriode = 'Semua Riwayat Transaksi (Kumulatif Buku Besar)';
+                    break;
             }
         } else {
-            $start = (clone $now)->startOfMonth();
-            $end = (clone $now)->endOfMonth();
+            $start = null;
+            $end = null;
+            $labelPeriode = 'Semua Riwayat Transaksi (Kumulatif Buku Besar)';
         }
 
         $headerBerkas = [
@@ -449,14 +455,14 @@ class LaporanController extends Controller
 
         return response()->stream(function () use ($start, $end, $labelPeriode) {
             $penunjukBerkas = fopen('php://output', 'w');
-            fputs($penunjukBerkas, "\u{FEFF}");
+            fputs($penunjukBerkas, "\xEF\xBB\xBFsep=;\r\n");
 
-            fputcsv($penunjukBerkas, ['BUKU BESAR REKAPITULASI PENJUALAN EKSEKUTIF KOPERASI GREEN PASUNDAN AGRICULTURE']);
-            fputcsv($penunjukBerkas, ['CAKUPAN PERIODE', $labelPeriode]);
-            fputcsv($penunjukBerkas, ['STATUS AUDIT', 'DISAHKAN // SISTEM RESMI']);
-            fputcsv($penunjukBerkas, ['TANGGAL CETAK', date('d/m/Y H:i') . ' WIB']);
-            fputcsv($penunjukBerkas, []);
-            fputcsv($penunjukBerkas, ['Entitas Mitra B2B', 'No Kontrak', 'Frekuensi PO', 'Volume Tera Sah (kg)', 'Tagihan Bruto (Rp)', 'Settled / Kas Masuk (Rp)', 'Sisa Piutang (Rp)', 'Status']);
+            fputcsv($penunjukBerkas, ['BUKU BESAR REKAPITULASI PENJUALAN EKSEKUTIF KOPERASI GREEN PASUNDAN AGRICULTURE'], ';');
+            fputcsv($penunjukBerkas, ['CAKUPAN PERIODE', $labelPeriode], ';');
+            fputcsv($penunjukBerkas, ['STATUS AUDIT', 'DISAHKAN // SISTEM RESMI'], ';');
+            fputcsv($penunjukBerkas, ['TANGGAL CETAK', date('d/m/Y H:i') . ' WIB'], ';');
+            fputcsv($penunjukBerkas, [], ';');
+            fputcsv($penunjukBerkas, ['Entitas Mitra B2B', 'No Kontrak', 'Frekuensi PO', 'Volume Tera Sah (kg)', 'Tagihan Bruto (Rp)', 'Settled / Kas Masuk (Rp)', 'Sisa Piutang (Rp)', 'Status'], ';');
 
             $daftarKlien = User::where('role', 'KLIEN')->with(['orders.orderItems', 'invoices', 'contracts'])->get();
             foreach ($daftarKlien as $client) {
@@ -476,7 +482,7 @@ class LaporanController extends Controller
                 $outstanding = max(0, $gross - $settled);
                 $contract = $client->contracts->first();
                 $contractNo = $contract ? $contract->contract_number : ('CLI-' . str_pad((string) $client->id, 3, '0', STR_PAD_LEFT));
-                $status = $outstanding <= 0 ? 'LUNAS' : 'LANCAR';
+                $status = $outstanding <= 0 ? 'LUNAS' : 'BELUM LUNAS';
 
                 fputcsv($penunjukBerkas, [
                     $client->company_name ?: $client->name,
@@ -487,7 +493,7 @@ class LaporanController extends Controller
                     number_format($settled, 0, ',', '.'),
                     number_format($outstanding, 0, ',', '.'),
                     $status,
-                ]);
+                ], ';');
             }
 
             fclose($penunjukBerkas);

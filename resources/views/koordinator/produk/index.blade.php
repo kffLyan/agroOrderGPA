@@ -92,7 +92,7 @@
                             <th scope="col" class="px-3 py-3 text-right text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Min. Order</th>
                             <th scope="col" class="px-3 py-3 text-right text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Stok Riil</th>
                             <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Status</th>
-                            <th scope="col" class="px-3 py-3 text-right text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Aksi</th>
+                            <th scope="col" class="px-3 py-3 text-right text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body whitespace-nowrap">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-line-hair">
@@ -100,18 +100,16 @@
                             @php
                                 $stokTersedia = (float) $prod->harvestBatches->sum('available_quantity');
                             @endphp
-                            <tr class="align-top transition-colors hover:bg-surface-shell/50">
+                            <tr class="align-middle transition-colors hover:bg-surface-shell/50">
                                 <td class="px-3 py-3.5">
                                     <span class="gpa-note text-ink-body">{{ $idx + 1 }}</span>
                                 </td>
                                 <td class="px-3 py-3.5">
-                                    @if ($prod->image_url)
-                                        <img src="{{ asset($prod->image_url) }}" alt="{{ $prod->name }}" class="h-9 w-9 rounded-lg border border-line-board object-cover">
-                                    @else
-                                        <div class="h-9 w-9 rounded-lg border border-line-board bg-surface-shell flex items-center justify-center">
-                                            <x-gpa.icon name="image" class="h-4 w-4 text-ink-body" />
-                                        </div>
-                                    @endif
+                                    <div class="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-line-board bg-surface-shell shadow-sm flex items-center justify-center">
+                                        <img src="{{ asset($prod->image_path) }}" alt="{{ $prod->name }}"
+                                            class="h-full w-full object-cover"
+                                            onerror="this.onerror=null;this.src='{{ asset('gpaleaves.png') }}';">
+                                    </div>
                                 </td>
                                 <td class="px-3 py-3.5">
                                     <span class="font-mono text-[11px] font-semibold leading-5 text-ink">{{ $prod->sku }}</span>
@@ -142,27 +140,22 @@
                                     @else
                                         <span class="inline-block rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-surface-track text-ink-body outline outline-1 -outline-offset-1 outline-line-board">NONAKTIF</span>
                                     @endif
-                                </td>
-                                <td class="px-3 py-3.5 text-right">
-                                    <div class="flex flex-wrap items-center justify-end gap-1.5">
+                                </td>  
+                                <td class="px-3 py-3.5 text-right whitespace-nowrap">
+                                    <div class="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
                                         <a href="{{ route('koordinator.produk.show', $prod) }}"
                                             title="Lihat Detail Komoditas"
                                             class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                                             <x-gpa.icon name="eye" class="h-3 w-3 shrink-0" />
                                             Detail
                                         </a>
-                                        <form method="POST" action="{{ route('koordinator.produk.toggle-status', $prod) }}" class="inline">
-                                            @csrf
-                                            <button type="submit" class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
-                                                {{ $prod->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
-                                            </button>
-                                        </form>
+                                        
                                         <a href="{{ route('koordinator.produk.edit', $prod) }}"
                                             class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                                             <x-gpa.icon name="settings" class="h-3 w-3 shrink-0" />
                                             Edit
                                         </a>
-                                        <form method="POST" action="{{ route('koordinator.produk.destroy', $prod) }}" class="inline"
+                                        <form method="POST" action="{{ route('koordinator.produk.destroy', $prod) }}" class="inline m-0 p-0"
                                             data-gpa-confirm="Apakah Anda yakin ingin menghapus komoditas {{ $prod->name }}?"
                                             data-gpa-title="Hapus Komoditas"
                                             data-gpa-tone="danger"

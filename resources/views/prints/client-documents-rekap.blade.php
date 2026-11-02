@@ -16,6 +16,8 @@
                 background: #ffffff !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             .no-print {
@@ -30,6 +32,25 @@
                 padding: 0 !important;
                 box-shadow: none !important;
                 border: none !important;
+            }
+
+            .excel-table {
+                border-collapse: collapse !important;
+                width: 100% !important;
+                border: 1px solid #94a3b8 !important;
+            }
+
+            .excel-table th, .excel-table td {
+                border: 1px solid #cbd5e1 !important;
+            }
+
+            .excel-table thead th {
+                background-color: #f1f5f9 !important;
+                color: #0f172a !important;
+            }
+
+            .excel-table tfoot tr {
+                background-color: #f8fafc !important;
             }
 
             table {
@@ -72,6 +93,16 @@
             color: #191c18;
             padding: 10mm 12mm;
             box-sizing: border-box;
+        }
+
+        .excel-table {
+            border-collapse: collapse;
+            width: 100%;
+            border: 1px solid #94a3b8;
+        }
+
+        .excel-table th, .excel-table td {
+            border: 1px solid #cbd5e1;
         }
     </style>
 </head>
@@ -172,22 +203,22 @@
                 </div>
             </div>
 
-            <div class="rounded-lg border border-line-board bg-surface-shell p-2">
-                <p class="text-[7pt] font-bold uppercase tracking-wider text-brand">Ringkasan Posisi Keuangan Tagihan</p>
+            <div class="rounded-lg border border-slate-300 bg-slate-50/70 p-2">
+                <p class="text-[7pt] font-bold uppercase tracking-wider text-brand">Ringkasan Posisi Keuangan Tagihan (Spreadsheet)</p>
                 <div class="mt-1 grid grid-cols-4 gap-2 text-center">
-                    <div class="rounded border border-line-board bg-white p-1">
+                    <div class="rounded border border-slate-300 bg-white p-1 shadow-xs">
                         <span class="block text-[6.5pt] text-ink-muted uppercase">Total Faktur</span>
                         <span class="font-mono text-xs font-bold text-ink">{{ $invoices->count() }}</span>
                     </div>
-                    <div class="rounded border border-line-board bg-white p-1">
+                    <div class="rounded border border-slate-300 bg-white p-1 shadow-xs">
                         <span class="block text-[6.5pt] text-ink-muted uppercase">Netto Tera</span>
                         <span class="font-mono text-xs font-bold text-ink">{{ number_format($totalNetto, 1, ',', '.') }} kg</span>
                     </div>
-                    <div class="rounded border border-line-board bg-white p-1">
+                    <div class="rounded border border-slate-300 bg-white p-1 shadow-xs">
                         <span class="block text-[6.5pt] text-ink-muted uppercase">Tempo Berjalan</span>
                         <span class="font-mono text-xs font-extrabold text-amber-700">Rp {{ number_format($unpaidTotal, 0, ',', '.') }}</span>
                     </div>
-                    <div class="rounded border border-line-board bg-white p-1">
+                    <div class="rounded border border-slate-300 bg-white p-1 shadow-xs">
                         <span class="block text-[6.5pt] text-ink-muted uppercase">Lunas Sah</span>
                         <span class="font-mono text-xs font-extrabold text-brand">Rp {{ number_format($paidTotal, 0, ',', '.') }}</span>
                     </div>
@@ -195,23 +226,28 @@
             </div>
         </section>
 
-        {{-- Tabel Data Faktur Konsolidasi Rinci --}}
+        @php
+            $sekretarisName = \App\Models\User::where('role', 'SEKRETARIS')->first()?->name ?? 'Nurhayati, S.Ak';
+            $direkturName = \App\Models\User::where('role', 'DIREKTUR')->first()?->name ?? 'Ahmad Sanusi, S.P.';
+        @endphp
+
+        {{-- Tabel Data Faktur Konsolidasi Rinci (Excel Sheet View) --}}
         <section class="mt-3">
-            <table class="w-full border-collapse text-left text-[7.5pt]">
+            <table class="excel-table w-full border-collapse text-left text-[7.5pt]">
                 <thead>
-                    <tr class="border-b border-line-board bg-surface-shell">
-                        <th class="py-1 px-1.5 text-center font-bold text-ink" style="width: 25px;">No</th>
-                        <th class="py-1 px-1.5 font-bold text-ink" style="width: 110px;">No. Faktur Tagihan</th>
-                        <th class="py-1 px-1.5 font-bold text-ink" style="width: 80px;">Tgl Terbit</th>
-                        <th class="py-1 px-1.5 font-bold text-ink" style="width: 140px;">Periode Konsolidasi</th>
-                        <th class="py-1 px-1.5 text-center font-bold text-ink" style="width: 60px;">SJ Terlampir</th>
-                        <th class="py-1 px-1.5 text-right font-bold text-ink" style="width: 90px;">Netto Tera (Kg)</th>
-                        <th class="py-1 px-1.5 text-center font-bold text-ink" style="width: 85px;">Jatuh Tempo</th>
-                        <th class="py-1 px-1.5 text-center font-bold text-ink" style="width: 95px;">Status Faktur</th>
-                        <th class="py-1 px-1.5 text-right font-bold text-ink" style="width: 110px;">Total Tagihan (Rp)</th>
+                    <tr class="bg-slate-100 text-slate-800">
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 28px;">No</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]" style="width: 115px;">No. Faktur Tagihan</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]" style="width: 85px;">Tgl Terbit</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]" style="width: 145px;">Periode Konsolidasi</th>
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 65px;">SJ Terlampir</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 95px;">Netto Tera (Kg)</th>
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 90px;">Jatuh Tempo</th>
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 95px;">Status Faktur</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 115px;">Total Tagihan (Rp)</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-line-hair">
+                <tbody>
                     @forelse ($invoices as $idx => $inv)
                         @php
                             $invNetto = (float) $inv->orders->sum(function ($o) {
@@ -221,32 +257,32 @@
                             $periodStr = ($inv->period_start ? $inv->period_start->format('d/m/Y') : '-') . ' - ' . ($inv->period_end ? $inv->period_end->format('d/m/Y') : '-');
                             $isPaid = $inv->status === 'PAID';
                         @endphp
-                        <tr class="{{ $idx % 2 === 1 ? 'bg-surface-shell/40' : '' }}">
-                            <td class="py-1 px-1.5 text-center font-mono text-ink-muted">{{ $idx + 1 }}</td>
-                            <td class="py-1 px-1.5">
+                        <tr class="{{ $idx % 2 === 1 ? 'bg-slate-50/70' : 'bg-white' }} hover:bg-emerald-50/40">
+                            <td class="py-1.5 px-2 text-center font-mono text-ink-muted">{{ $idx + 1 }}</td>
+                            <td class="py-1.5 px-2">
                                 <strong class="font-mono text-brand">{{ $inv->invoice_number }}</strong>
                             </td>
-                            <td class="py-1 px-1.5 text-ink-muted font-mono">
+                            <td class="py-1.5 px-2 text-ink-muted font-mono">
                                 {{ $inv->created_at ? $inv->created_at->format('d/m/Y') : '-' }}
                             </td>
-                            <td class="py-1 px-1.5 text-ink-body font-mono text-[7pt]">
+                            <td class="py-1.5 px-2 text-ink-body font-mono text-[7pt]">
                                 {{ $periodStr }}
                             </td>
-                            <td class="py-1 px-1.5 text-center font-mono text-ink">
+                            <td class="py-1.5 px-2 text-center font-mono text-ink">
                                 {{ $sjCount }} Dokumen
                             </td>
-                            <td class="py-1 px-1.5 text-right font-mono font-bold text-ink">
+                            <td class="py-1.5 px-2 text-right font-mono font-bold text-ink">
                                 {{ number_format($invNetto, 1, ',', '.') }}
                             </td>
-                            <td class="py-1 px-1.5 text-center font-mono {{ $isPaid ? 'text-ink-muted' : ($inv->due_date && $inv->due_date->isPast() ? 'text-red-700 font-bold' : 'text-ink') }}">
+                            <td class="py-1.5 px-2 text-center font-mono {{ $isPaid ? 'text-ink-muted' : ($inv->due_date && $inv->due_date->isPast() ? 'text-red-700 font-bold' : 'text-ink') }}">
                                 {{ $inv->due_date ? $inv->due_date->format('d/m/Y') : 'TOP 30D' }}
                             </td>
-                            <td class="py-1 px-1.5 text-center">
-                                <span class="inline-block rounded px-1.5 py-0.5 text-[6.5pt] font-bold uppercase tracking-wider {{ $isPaid ? 'bg-brand/10 text-brand' : ($inv->due_date && $inv->due_date->isPast() ? 'bg-red-100 text-red-800' : 'bg-surface-pill text-ink-body') }}">
+                            <td class="py-1.5 px-2 text-center">
+                                <span class="inline-block rounded px-1.5 py-0.5 text-[6.5pt] font-bold uppercase tracking-wider {{ $isPaid ? 'bg-emerald-100 text-emerald-800' : ($inv->due_date && $inv->due_date->isPast() ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-700') }}">
                                     {{ $isPaid ? 'Lunas' : ($inv->due_date && $inv->due_date->isPast() ? 'Overdue' : 'Tempo 30') }}
                                 </span>
                             </td>
-                            <td class="py-1 px-1.5 text-right font-mono font-bold text-ink">
+                            <td class="py-1.5 px-2 text-right font-mono font-bold text-ink">
                                 Rp {{ number_format($inv->grand_total, 0, ',', '.') }}
                             </td>
                         </tr>
@@ -259,13 +295,13 @@
                     @endforelse
                 </tbody>
                 <tfoot>
-                    <tr class="border-t-2 border-brand bg-surface-shell font-bold">
-                        <td colspan="5" class="py-1 px-1.5 text-right text-brand uppercase tracking-wider text-[7.5pt]">
+                    <tr class="border-t-2 border-slate-700 bg-slate-100 font-bold border-b-[3px] border-double border-slate-800">
+                        <td colspan="5" class="py-2 px-2 text-right text-brand uppercase tracking-wider text-[7.5pt]">
                             TOTAL AKUMULASI FAKTUR KONSOLIDASI:
                         </td>
-                        <td class="py-1 px-1.5 text-right font-mono text-brand">{{ number_format($totalNetto, 1, ',', '.') }} kg</td>
+                        <td class="py-2 px-2 text-right font-mono text-brand">{{ number_format($totalNetto, 1, ',', '.') }} kg</td>
                         <td colspan="2"></td>
-                        <td class="py-1 px-1.5 text-right font-mono text-brand text-[8pt]">
+                        <td class="py-2 px-2 text-right font-mono text-brand text-[8pt]">
                             Rp {{ number_format($totalGrand, 0, ',', '.') }}
                         </td>
                     </tr>
@@ -314,7 +350,7 @@
                             RECONCILED &amp; AUDITED
                         </span>
                     </div>
-                    <p class="font-bold text-ink underline">Rina Marlina</p>
+                    <p class="font-bold text-ink underline">{{ $sekretarisName }}</p>
                     <p class="text-[6.5pt] text-ink-muted">Staf Administrasi &amp; Kas Masuk</p>
                 </div>
 
@@ -326,7 +362,7 @@
                             <span class="block font-mono text-[6pt] font-extrabold tracking-wider text-brand">LEGAL INVOICE PASUNDAN</span>
                         </div>
                     </div>
-                    <p class="font-bold text-brand underline">H. Ridwan Permana</p>
+                    <p class="font-bold text-brand underline">{{ $direkturName }}</p>
                     <p class="text-[6.5pt] text-ink-muted">Direktur / Authorized Signatory</p>
                 </div>
             </div>

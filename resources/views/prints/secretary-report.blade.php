@@ -7,8 +7,8 @@
     @vite(['resources/css/app.css'])
     <style>
         @page {
-            size: A4 portrait;
-            margin: 10mm 12mm;
+            size: A4 landscape;
+            margin: 8mm 10mm;
         }
 
         @media print {
@@ -16,6 +16,8 @@
                 background: #ffffff !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             .no-print {
@@ -30,6 +32,25 @@
                 padding: 0 !important;
                 box-shadow: none !important;
                 border: none !important;
+            }
+
+            .excel-table {
+                border-collapse: collapse !important;
+                width: 100% !important;
+                border: 1px solid #94a3b8 !important;
+            }
+
+            .excel-table th, .excel-table td {
+                border: 1px solid #cbd5e1 !important;
+            }
+
+            .excel-table thead th {
+                background-color: #f1f5f9 !important;
+                color: #0f172a !important;
+            }
+
+            .excel-table tfoot tr {
+                background-color: #f8fafc !important;
             }
 
             table {
@@ -61,17 +82,27 @@
         }
 
         .a4-canvas {
-            width: 210mm;
-            min-height: 297mm;
+            width: 297mm;
+            min-height: 210mm;
             margin: 20px auto;
             background: #ffffff;
             box-shadow: 0 10px 35px -15px rgba(21, 58, 1, 0.35);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            font-size: 8.5pt;
-            line-height: 1.5;
+            font-size: 8pt;
+            line-height: 1.45;
             color: #191c18;
-            padding: 12mm 14mm;
+            padding: 10mm 12mm;
             box-sizing: border-box;
+        }
+
+        .excel-table {
+            border-collapse: collapse;
+            width: 100%;
+            border: 1px solid #94a3b8;
+        }
+
+        .excel-table th, .excel-table td {
+            border: 1px solid #cbd5e1;
         }
     </style>
 </head>
@@ -79,7 +110,7 @@
 
     {{-- Topbar Kontrol Cetak (Layar Saja) --}}
     <div class="no-print sticky top-0 z-30 border-b border-line-board bg-white/95 backdrop-blur shadow-sub">
-        <div class="mx-auto flex max-w-[210mm] items-center justify-between gap-3 px-4 py-2.5">
+        <div class="mx-auto flex max-w-[297mm] items-center justify-between gap-3 px-4 py-2.5">
             <div class="flex items-center gap-2">
                 <a href="{{ route('sekretaris.laporan') }}"
                     class="inline-flex items-center gap-1.5 rounded-lg border border-line-board bg-surface px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-surface-shell">
@@ -87,14 +118,14 @@
                     Kembali ke Laporan
                 </a>
                 <span class="rounded bg-brand/10 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-brand">
-                    JURNAL OPERASIONAL SEKRETARIAT
+                    JURNAL REKAPITULASI RESMI (A4 LANDSCAPE)
                 </span>
             </div>
             <div class="flex items-center gap-2">
                 <a href="{{ route('sekretaris.laporan.export') }}"
                     class="inline-flex items-center gap-1.5 rounded-lg border border-line-board bg-surface px-3 py-1.5 text-xs font-semibold text-ink shadow-sub transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="download" class="h-3.5 w-3.5" />
-                    Unduh CSV
+                    Unduh Excel (CSV)
                 </a>
                 <button type="button" onclick="window.print()"
                     class="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-1.5 text-xs font-bold text-white shadow-sub transition-colors hover:bg-brand-deep">
@@ -153,30 +184,30 @@
             </div>
         </div>
 
-        {{-- Kartu Metrik Ringkasan Operasional --}}
+        {{-- Kartu Metrik Ringkasan Operasional (Spreadsheet Dashboard) --}}
         <div class="mt-4 grid grid-cols-4 gap-3">
-            <div class="rounded-lg border border-line-board bg-surface-shell p-2.5">
+            <div class="rounded-lg border border-slate-300 bg-slate-50/70 p-2.5 shadow-xs">
                 <span class="block text-[7pt] font-bold uppercase tracking-wider text-ink-muted">Total Netto Tera</span>
                 <p class="mt-0.5 font-mono text-xs font-extrabold text-ink">
                     {{ number_format($totalNet, 1, ',', '.') }} <span class="text-[7.5pt] font-normal">Kg</span>
                 </p>
                 <span class="text-[6.5pt] text-ink-quiet">Bobot riil timbang gudang</span>
             </div>
-            <div class="rounded-lg border border-line-board bg-surface-shell p-2.5">
+            <div class="rounded-lg border border-slate-300 bg-slate-50/70 p-2.5 shadow-xs">
                 <span class="block text-[7pt] font-bold uppercase tracking-wider text-ink-muted">Estimasi Awal PO</span>
                 <p class="mt-0.5 font-mono text-xs font-extrabold text-ink">
                     {{ number_format($totalEstimate, 0, ',', '.') }} <span class="text-[7.5pt] font-normal">Kg</span>
                 </p>
                 <span class="text-[6.5pt] text-ink-quiet">Permintaan buyer B2B</span>
             </div>
-            <div class="rounded-lg border border-line-board bg-surface-shell p-2.5">
+            <div class="rounded-lg border border-slate-300 bg-slate-50/70 p-2.5 shadow-xs">
                 <span class="block text-[7pt] font-bold uppercase tracking-wider text-ink-muted">Deviasi Bobot</span>
                 <p class="mt-0.5 font-mono text-xs font-extrabold {{ $overallDeviation < -1 ? 'text-red-700' : 'text-brand' }}">
                     {{ ($overallDeviation >= 0 ? '+' : '') . number_format($overallDeviation, 2, '.', '') }}%
                 </p>
                 <span class="text-[6.5pt] text-ink-quiet">Toleransi susut &lt; 0.5%</span>
             </div>
-            <div class="rounded-lg border border-line-board bg-surface-shell p-2.5">
+            <div class="rounded-lg border border-slate-300 bg-slate-50/70 p-2.5 shadow-xs">
                 <span class="block text-[7pt] font-bold uppercase tracking-wider text-ink-muted">Total Nilai Transaksi</span>
                 <p class="mt-0.5 font-mono text-xs font-extrabold text-brand">
                     Rp {{ number_format($totalValue, 0, ',', '.') }}
@@ -185,47 +216,51 @@
             </div>
         </div>
 
-        {{-- Tabel Jurnal Transaksi --}}
-        <section class="mt-5">
+        @php
+            $direkturName = \App\Models\User::where('role', 'DIREKTUR')->first()?->name ?? 'Ahmad Sanusi, S.P.';
+        @endphp
+
+        {{-- Tabel Jurnal Transaksi (Excel Sheet View) --}}
+        <section class="mt-4">
             <div class="flex items-center justify-between border-b border-brand pb-1">
                 <h3 class="text-[8pt] font-extrabold uppercase tracking-wider text-brand">
-                    Daftar Jurnal Transaksi, Surat Jalan &amp; Penimbangan Nyata
+                    Daftar Jurnal Transaksi, Surat Jalan &amp; Penimbangan Nyata (Spreadsheet)
                 </h3>
-                <span class="text-[7pt] text-ink-muted">{{ count($journalRows) }} Baris Transaksi</span>
+                <span class="text-[7pt] text-ink-muted font-mono">{{ count($journalRows) }} Baris Transaksi Terkonsolidasi</span>
             </div>
-            <table class="mt-2 w-full border-collapse text-left text-[7.5pt]">
+            <table class="excel-table mt-2 w-full border-collapse text-left text-[7.5pt]">
                 <thead>
-                    <tr class="border-b border-line-board bg-surface-shell">
-                        <th class="py-1.5 px-2 text-center font-bold text-ink" style="width: 25px;">No</th>
-                        <th class="py-1.5 px-2 font-bold text-ink" style="width: 105px;">No. PO / Invoice</th>
-                        <th class="py-1.5 px-2 font-bold text-ink" style="width: 105px;">Surat Jalan</th>
-                        <th class="py-1.5 px-2 font-bold text-ink">Mitra Klien Pembeli</th>
-                        <th class="py-1.5 px-2 font-bold text-ink">Komoditas</th>
-                        <th class="py-1.5 px-2 text-right font-bold text-ink" style="width: 70px;">Est. (Kg)</th>
-                        <th class="py-1.5 px-2 text-right font-bold text-ink" style="width: 75px;">Netto (Kg)</th>
-                        <th class="py-1.5 px-2 text-center font-bold text-ink" style="width: 60px;">Deviasi</th>
-                        <th class="py-1.5 px-2 text-right font-bold text-ink" style="width: 95px;">Total Nilai</th>
-                        <th class="py-1.5 px-2 text-center font-bold text-ink" style="width: 65px;">Status</th>
+                    <tr class="bg-slate-100 text-slate-800">
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 28px;">No</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]" style="width: 110px;">No. PO / Invoice</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]" style="width: 110px;">Surat Jalan</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]">Mitra Klien Pembeli</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]">Komoditas</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 75px;">Est. (Kg)</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 80px;">Netto (Kg)</th>
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 65px;">Deviasi</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 105px;">Total Nilai</th>
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 75px;">Status</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-line-hair">
+                <tbody>
                     @forelse($journalRows as $idx => $row)
-                        <tr class="{{ $idx % 2 === 1 ? 'bg-surface-shell/40' : '' }}">
-                            <td class="py-1 px-2 text-center font-mono text-ink-muted">{{ $row['no'] }}</td>
-                            <td class="py-1 px-2 font-mono font-bold text-brand">{{ $row['invoice'] }}</td>
-                            <td class="py-1 px-2 font-mono text-ink-muted">{{ $row['sj'] }}</td>
-                            <td class="py-1 px-2 font-semibold text-ink">{{ $row['client'] }}</td>
-                            <td class="py-1 px-2 text-ink-body">{{ $row['commodity'] }}</td>
-                            <td class="py-1 px-2 text-right font-mono text-ink-muted">{{ number_format($row['estimate'], 0, ',', '.') }}</td>
-                            <td class="py-1 px-2 text-right font-mono font-bold text-ink">{{ number_format($row['net'], 1, ',', '.') }}</td>
-                            <td class="py-1 px-2 text-center font-mono font-semibold {{ str_contains($row['deviation_label'], '-') ? 'text-red-700' : 'text-brand' }}">
+                        <tr class="{{ $idx % 2 === 1 ? 'bg-slate-50/70' : 'bg-white' }} hover:bg-emerald-50/40">
+                            <td class="py-1.5 px-2 text-center font-mono text-ink-muted">{{ $row['no'] }}</td>
+                            <td class="py-1.5 px-2 font-mono font-bold text-brand">{{ $row['invoice'] }}</td>
+                            <td class="py-1.5 px-2 font-mono text-ink-muted">{{ $row['sj'] }}</td>
+                            <td class="py-1.5 px-2 font-semibold text-ink">{{ $row['client'] }}</td>
+                            <td class="py-1.5 px-2 text-ink-body">{{ $row['commodity'] }}</td>
+                            <td class="py-1.5 px-2 text-right font-mono text-ink-muted">{{ number_format($row['estimate'], 0, ',', '.') }}</td>
+                            <td class="py-1.5 px-2 text-right font-mono font-bold text-ink">{{ number_format($row['net'], 1, ',', '.') }}</td>
+                            <td class="py-1.5 px-2 text-center font-mono font-semibold {{ str_contains($row['deviation_label'], '-') ? 'text-red-700' : 'text-brand' }}">
                                 {{ $row['deviation_label'] }}
                             </td>
-                            <td class="py-1 px-2 text-right font-mono font-bold text-ink">
+                            <td class="py-1.5 px-2 text-right font-mono font-bold text-ink">
                                 Rp {{ number_format($row['value'], 0, ',', '.') }}
                             </td>
-                            <td class="py-1 px-2 text-center">
-                                <span class="inline-block rounded px-1.5 py-0.5 text-[6.5pt] font-bold uppercase tracking-wider {{ $row['status_label'] === 'Lunas' ? 'bg-brand/10 text-brand' : 'bg-surface-pill text-ink-body' }}">
+                            <td class="py-1.5 px-2 text-center">
+                                <span class="inline-block rounded px-1.5 py-0.5 text-[6.5pt] font-bold uppercase tracking-wider {{ $row['status_label'] === 'Lunas' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700' }}">
                                     {{ $row['status_label'] }}
                                 </span>
                             </td>
@@ -239,16 +274,16 @@
                     @endforelse
                 </tbody>
                 <tfoot>
-                    <tr class="border-t-2 border-brand bg-surface-shell font-bold">
-                        <td colspan="5" class="py-1.5 px-2 text-right text-brand uppercase tracking-wider text-[7.5pt]">
+                    <tr class="border-t-2 border-slate-700 bg-slate-100 font-bold border-b-[3px] border-double border-slate-800">
+                        <td colspan="5" class="py-2 px-2 text-right text-brand uppercase tracking-wider text-[7.5pt]">
                             TOTAL KONSOLIDASI OPERASIONAL:
                         </td>
-                        <td class="py-1.5 px-2 text-right font-mono text-ink">{{ number_format($totalEstimate, 0, ',', '.') }}</td>
-                        <td class="py-1.5 px-2 text-right font-mono text-brand">{{ number_format($totalNet, 1, ',', '.') }}</td>
-                        <td class="py-1.5 px-2 text-center font-mono text-brand">
+                        <td class="py-2 px-2 text-right font-mono text-ink">{{ number_format($totalEstimate, 0, ',', '.') }}</td>
+                        <td class="py-2 px-2 text-right font-mono text-brand">{{ number_format($totalNet, 1, ',', '.') }}</td>
+                        <td class="py-2 px-2 text-center font-mono text-brand">
                             {{ ($overallDeviation >= 0 ? '+' : '') . number_format($overallDeviation, 2, '.', '') }}%
                         </td>
-                        <td class="py-1.5 px-2 text-right font-mono text-brand">
+                        <td class="py-2 px-2 text-right font-mono text-brand text-[8pt]">
                             Rp {{ number_format($totalValue, 0, ',', '.') }}
                         </td>
                         <td></td>
@@ -280,7 +315,7 @@
                             <span class="block text-[6pt] text-ink-quiet">AUDIT-TRAIL: VERIFIED</span>
                         </div>
                     </div>
-                    <p class="text-[8pt] font-extrabold text-brand underline">H. Ridwan Permana</p>
+                    <p class="text-[8pt] font-extrabold text-brand underline">{{ $direkturName }}</p>
                     <p class="text-[7pt] text-ink-muted">Direktur / Owner Koperasi Produsen GPA</p>
                 </div>
             </div>

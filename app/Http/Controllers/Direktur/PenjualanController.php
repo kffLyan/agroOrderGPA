@@ -326,12 +326,12 @@ class PenjualanController extends Controller
 
         return response()->stream(function () {
             $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF");
+            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
 
-            fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)']);
-            fputcsv($handle, ['REKAPITULASI RESMI PENJUALAN EKSEKUTIF & REALISASI OMZET']);
-            fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB']);
-            fputcsv($handle, []);
+            fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)'], ';');
+            fputcsv($handle, ['REKAPITULASI RESMI PENJUALAN EKSEKUTIF & REALISASI OMZET'], ';');
+            fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB'], ';');
+            fputcsv($handle, [], ';');
             fputcsv($handle, [
                 'No',
                 'Nomor Pesanan (PO)',
@@ -344,7 +344,7 @@ class PenjualanController extends Controller
                 'Nilai Transaksi (Rp)',
                 'Status Operasional',
                 'Status Faktur Penagihan',
-            ]);
+            ], ';');
 
             $orders = Order::with(['user', 'orderItems', 'invoice'])->latest()->get();
             $nomorUrut = 1;
@@ -354,19 +354,33 @@ class PenjualanController extends Controller
                 $hasWeighed = true;
                 $amount = (float) $order->grand_total;
 
+                $statusLabel = match ($order->status) {
+                    'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi',
+                    'MENUNGGU_PEMBAYARAN' => 'Menunggu Pembayaran',
+                    'LUNAS'               => 'Lunas',
+                    'SIAP_KIRIM'          => 'Siap Kirim',
+                    'DALAM_PENGIRIMAN'    => 'Dalam Pengiriman',
+                    'SELESAI'             => 'Selesai',
+                    'SELESAI_CATATAN'     => 'Selesai (Catatan)',
+                    'BATAL'               => 'Dibatalkan',
+                    default               => ucwords(strtolower(str_replace('_', ' ', $order->status))),
+                };
+
+                $clientTypeLabel = ($order->user?->client_type === 'B2B_KONTRAK') ? 'Mitra Kontrak B2B' : 'Klien Reguler';
+
                 fputcsv($handle, [
                     $nomorUrut++,
                     $order->order_number,
                     $order->created_at ? $order->created_at->format('d/m/Y H:i') : '-',
                     $order->user?->company_name ?: ($order->user?->name ?: 'Klien Umum'),
-                    $order->user?->client_type ?: 'B2B Partner',
+                    $clientTypeLabel,
                     $order->orderItems->count(),
                     number_format($orderedKg, 2, '.', ''),
                     $hasWeighed ? number_format($actualKg, 2, '.', '') : 'Menunggu Tera',
                     (float) $amount,
-                    $order->status,
+                    $statusLabel,
                     $order->invoice ? ($order->invoice->status === 'PAID' ? 'Lunas' : 'Faktur Terbit') : 'Belum Ditagihkan',
-                ]);
+                ], ';');
             }
 
             fclose($handle);

@@ -21,8 +21,13 @@
         'DITOLAK', 'FAILED', 'REJECTED' => 'Ditolak',
         'BATAL' => 'Dibatalkan',
         'ACTIVE' => 'Aktif',
-        'PENDING' => 'Menunggu',
-        default => strtoupper(str_replace('_', ' ', $statusKey)),
+        'B2B_KONTRAK' => 'Mitra B2B Kontrak',
+        'REGULER' => 'Klien Reguler',
+        'PAID' => 'Lunas Sah',
+        'UNPAID' => 'Belum Lunas',
+        'OVERDUE' => 'Jatuh Tempo',
+        'PARTIAL' => 'Dibayar Sebagian',
+        default => ucwords(strtolower(str_replace('_', ' ', $statusKey))),
     });
 
     // Resolusi tone warna UI

@@ -58,13 +58,11 @@
 
                 <div class="px-6 py-5 space-y-5">
                     <div class="flex justify-center">
-                        @if ($product->image_url)
-                            <img src="{{ asset($product->image_url) }}" alt="{{ $product->name }}" class="h-40 w-40 rounded-xl border border-line-board object-cover">
-                        @else
-                            <div class="h-40 w-40 rounded-xl border border-line-board bg-surface-shell flex items-center justify-center">
-                                <x-gpa.icon name="image" class="h-8 w-8 text-ink-body" />
-                            </div>
-                        @endif
+                        <div class="h-44 w-44 shrink-0 overflow-hidden rounded-2xl border border-line-board bg-surface-shell shadow-sm flex items-center justify-center">
+                            <img src="{{ asset($product->image_path) }}" alt="{{ $product->name }}"
+                                class="h-full w-full object-cover"
+                                onerror="this.onerror=null;this.src='{{ asset('gpaleaves.png') }}';">
+                        </div>
                     </div>
 
                     <div class="divide-y divide-line-hair">

@@ -6,11 +6,11 @@ export default function directorDashboard(operator = {}) {
         /* ---------- dashboard actions ---------- */
 
         exportExcel() {
-            window.location.href = '/direktur/reports/export';
+            window.location.href = '/direktur/laporan/export';
         },
 
         printPdf() {
-            window.open('/direktur/reports/download', '_blank');
+            window.open('/direktur/laporan/download', '_blank');
         },
 
         auditLog() {

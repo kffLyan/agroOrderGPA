@@ -350,15 +350,15 @@
                 <div class="flex min-w-0 flex-col gap-2">
                     <span
                         class="w-fit rounded bg-accent px-2.5 py-1 gpa-micro-bold text-success-ink">
-                        Fasilitas Mitra B2B
+                        Fasilitas Eksklusif Mitra Kontrak B2B
                     </span>
                     <h2 class="font-sans text-lg font-extrabold leading-6 text-white">Kebutuhan Pasokan Ad-Hoc &amp; Skala Tonase Khusus</h2>
-                    <p class="max-w-2xl text-sm leading-5 text-white/80">Membutuhkan penambahan alokasi komoditas di luar batas kuota kontrak reguler? Hubungi Account Executive GPA untuk pembukaan buffer panen darurat 24 jam.</p>
+                    <p class="max-w-2xl text-sm leading-5 text-white/80">Khusus bagi mitra kontrak resmi Koperasi GPA: Nikmati fasilitas alokasi buffer panen darurat 24 jam dan pasokan tonase skala besar di luar kuota harian dengan harga terikat.</p>
 
                     <ul class="mt-1 flex flex-col gap-1.5">
                         <li class="flex items-start gap-2">
                             <x-gpa.icon name="check-circle" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
-                            <p class="gpa-body text-white/90">Prioritas alokasi sortasi Grade Super dari green house binaan</p>
+                            <p class="gpa-body text-white/90">Jaminan kuota buffer darurat 24 jam tanpa terpengaruh fluktuasi harga pasar spot</p>
                         </li>
                         <li class="flex items-start gap-2">
                             <x-gpa.icon name="check-circle" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
@@ -368,12 +368,12 @@
                 </div>
 
                 <div class="flex shrink-0 flex-col items-start gap-2 lg:items-end">
-                    <button type="button" @click="$dispatch('gpa:toast', { title: 'Permintaan dikomunikasikan', message: 'Tim Key Account GPA akan menghubungi Anda dalam 1x24 jam.', tone: 'success' })"
+                    <button type="button" @click="openAdHocModal()"
                         class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-ink shadow-pop transition-colors hover:bg-accent-deep">
-                        <x-gpa.icon name="plus" class="h-4 w-4" />
-                        <span class="gpa-meta-lg font-bold">Ajukan Pasokan Khusus</span>
+                        <x-gpa.icon name="sparkles" class="h-4 w-4" />
+                        <span class="gpa-meta-lg font-bold">Pelajari Fasilitas Kontrak</span>
                     </button>
-                    <p class="gpa-micro text-white/60">Minimum batch 5 Ton · Penawaran 1x24 Jam</p>
+                    <p class="gpa-micro text-white/60">Fasilitas Khusus Mitra Kontrak B2B Aktif</p>
                 </div>
             </div>
         </section>
@@ -441,5 +441,137 @@
                 </a>
             </div>
         </section>
+
+        {{-- ---------------------------------------------------------------- --}}
+        {{-- MODAL PENGAJUAN PASOKAN KHUSUS (AD-HOC SKALA TONASE KHUSUS)      --}}
+        {{-- ---------------------------------------------------------------- --}}
+        {{-- ---------------------------------------------------------------- --}}
+        {{-- MODAL PROMOSI FASILITAS EKSKLUSIF KEMITRAAN KONTRAK B2B           --}}
+        {{-- ---------------------------------------------------------------- --}}
+        <div x-cloak x-show="adHocOpen" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+            <div class="fixed inset-0 bg-ink/60 backdrop-blur-sm transition-opacity" @click="adHocOpen = false"></div>
+            <div class="flex min-h-screen items-center justify-center p-4">
+                <div class="relative w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-black/5"
+                    @click.outside="adHocOpen = false">
+                    
+                    {{-- Modal Header --}}
+                    <div class="flex items-start justify-between border-b border-line-soft pb-4">
+                        <div class="flex items-center gap-3">
+                            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand text-accent">
+                                <x-gpa.icon name="shield" class="h-5 w-5" />
+                            </span>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h3 class="font-sans text-base font-bold text-ink">Fasilitas Eksklusif Mitra Kontrak B2B</h3>
+                                    <span class="rounded bg-accent px-2 py-0.5 text-[10px] font-bold text-success-ink">Program Eksekutif</span>
+                                </div>
+                                <p class="text-xs text-ink-body">Jaminan suplai buffer panen darurat 24 jam &amp; termin tempo 30 hari</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="adHocOpen = false" class="rounded-lg p-1 text-ink-body hover:bg-surface-shell hover:text-ink">
+                            <x-gpa.icon name="x" class="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    {{-- Konten Promosi & Fasilitas Kontrak --}}
+                    <div class="mt-4 flex flex-col gap-4">
+                        {{-- Status Akun Pengguna Saat Ini --}}
+                        <div class="rounded-xl border border-line-soft bg-surface-shell/80 p-4">
+                            <div class="flex items-center justify-between">
+                                <span class="gpa-micro text-ink-body font-semibold">STATUS AKUN ANDA</span>
+                                <span class="rounded {{ $isB2b ? 'bg-accent/30 text-success-ink' : 'bg-surface-pill text-ink-body' }} px-2 py-0.5 text-[10px] font-bold">
+                                    {{ $isB2b ? 'Mitra Kontrak B2B Aktif' : 'Klien Reguler Harian' }}
+                                </span>
+                            </div>
+                            <p class="mt-1 font-sans text-sm font-bold text-ink">
+                                {{ $user->company_name ?: $user->name }}
+                            </p>
+                            <p class="mt-0.5 text-xs text-ink-body">
+                                @if ($isB2b)
+                                    Akun Anda memiliki hak akses penuh ke fasilitas pembukaan alokasi buffer panen darurat dan tonase skala besar.
+                                @else
+                                    Akun Anda saat ini berada pada skema reguler harian. Tingkatkan ke kemitraan kontrak untuk membuka plafon tempo dan alokasi buffer darurat.
+                                @endif
+                            </p>
+                        </div>
+
+                        {{-- 4 Pilar Keuntungan Kemitraan Kontrak B2B --}}
+                        <div class="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+                            <div class="flex items-start gap-2.5 rounded-xl border border-line-soft p-3 bg-white">
+                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                                    <x-gpa.icon name="check-circle" class="h-4 w-4" />
+                                </span>
+                                <div>
+                                    <h4 class="text-xs font-bold text-ink">Buffer Panen 24 Jam</h4>
+                                    <p class="mt-0.5 text-[11px] text-ink-body leading-4">Jaminan alokasi darurat skala 5–20 Ton saat terjadi lonjakan kebutuhan dapur sentral.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-2.5 rounded-xl border border-line-soft p-3 bg-white">
+                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                                    <x-gpa.icon name="gauge" class="h-4 w-4" />
+                                </span>
+                                <div>
+                                    <h4 class="text-xs font-bold text-ink">Harga Mengikat (Fixed Price)</h4>
+                                    <p class="mt-0.5 text-[11px] text-ink-body leading-4">Bebas dari fluktuasi harga pasar sayuran dengan termin pembayaran TOP 30 hari.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-2.5 rounded-xl border border-line-soft p-3 bg-white">
+                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                                    <x-gpa.icon name="truck" class="h-4 w-4" />
+                                </span>
+                                <div>
+                                    <h4 class="text-xs font-bold text-ink">Sortasi Grade Super</h4>
+                                    <p class="mt-0.5 text-[11px] text-ink-body leading-4">Prioritas sortir panen pertama greenhouse binaan dengan armada chiller thermo king.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-2.5 rounded-xl border border-line-soft p-3 bg-white">
+                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700">
+                                    <x-gpa.icon name="badge-check" class="h-4 w-4" />
+                                </span>
+                                <div>
+                                    <h4 class="text-xs font-bold text-ink">Dedicated Account Executive</h4>
+                                    <p class="mt-0.5 text-[11px] text-ink-body leading-4">Layanan personal 24/7 via WhatsApp desk &amp; telepon untuk kepastian jadwal supply.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Kotak Ajakan / Kontak Resmi --}}
+                        <div class="rounded-xl bg-accent-soft/40 p-4 text-xs text-ink border border-accent-edge">
+                            <div class="flex items-center gap-2 font-bold text-success-deep">
+                                <x-gpa.icon name="message-circle" class="h-4 w-4" />
+                                <span>Konsultasi &amp; Penandatanganan PKS Kemitraan</span>
+                            </div>
+                            <p class="mt-1 text-ink-body">
+                                @if ($isB2b)
+                                    Untuk aktivasi alokasi pasokan ad-hoc atau penambahan tonase kuota darurat hari ini, hubungi Account Executive B2B GPA Anda secara langsung:
+                                @else
+                                    Ingin menikmati harga mengikat, termin pembayaran tempo 30 hari, dan buffer panen darurat untuk bisnis Horeka / Retail Anda? Hubungi desk kemitraan B2B kami:
+                                @endif
+                            </p>
+                            <p class="mt-2 font-mono text-xs font-bold text-ink">
+                                Hotline Kemitraan: <span class="text-brand">+62 811-2345-6789</span> (Senin - Sabtu, 24 Jam B2B On-Call)
+                            </p>
+                        </div>
+                    </div>
+
+                    {{-- Modal Footer --}}
+                    <div class="mt-6 flex items-center justify-end gap-2 border-t border-line-soft pt-4">
+                        <button type="button" @click="adHocOpen = false"
+                            class="rounded-lg border border-line-soft px-4 py-2 text-xs font-bold text-ink transition hover:bg-surface-muted">
+                            Tutup
+                        </button>
+                        <a href="https://wa.me/6281123456789?text={{ urlencode($isB2b ? 'Halo Account Executive Koperasi GPA, saya dari ' . ($user->company_name ?: $user->name) . ' (Mitra Kontrak B2B). Saya ingin konsultasi aktivasi buffer pasokan panen darurat / penambahan skala tonase khusus.' : 'Halo Tim Kemitraan Koperasi GPA, saya dari ' . ($user->company_name ?: $user->name) . '. Kami tertarik untuk berkonsultasi mengenai persyaratan upgrade ke Kemitraan Kontrak B2B (Fasilitas Buffer Panen & Tempo TOP 30 Hari).') }}"
+                            target="_blank" rel="noopener noreferrer"
+                            class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700">
+                            <x-gpa.icon name="message-circle" class="h-4 w-4" />
+                            <span>{{ $isB2b ? 'Hubungi Account Executive via WhatsApp' : 'Konsultasi Kemitraan Kontrak B2B' }}</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection

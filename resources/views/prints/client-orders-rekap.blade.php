@@ -16,6 +16,8 @@
                 background: #ffffff !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             .no-print {
@@ -30,6 +32,25 @@
                 padding: 0 !important;
                 box-shadow: none !important;
                 border: none !important;
+            }
+
+            .excel-table {
+                border-collapse: collapse !important;
+                width: 100% !important;
+                border: 1px solid #94a3b8 !important;
+            }
+
+            .excel-table th, .excel-table td {
+                border: 1px solid #cbd5e1 !important;
+            }
+
+            .excel-table thead th {
+                background-color: #f1f5f9 !important;
+                color: #0f172a !important;
+            }
+
+            .excel-table tfoot tr {
+                background-color: #f8fafc !important;
             }
 
             table {
@@ -72,6 +93,16 @@
             color: #191c18;
             padding: 10mm 12mm;
             box-sizing: border-box;
+        }
+
+        .excel-table {
+            border-collapse: collapse;
+            width: 100%;
+            border: 1px solid #94a3b8;
+        }
+
+        .excel-table th, .excel-table td {
+            border: 1px solid #cbd5e1;
         }
     </style>
 </head>
@@ -172,22 +203,22 @@
                 </div>
             </div>
 
-            <div class="rounded-lg border border-line-board bg-surface-shell p-2">
-                <p class="text-[7pt] font-bold uppercase tracking-wider text-brand">Ringkasan Konsolidasi Rekap</p>
+            <div class="rounded-lg border border-slate-300 bg-slate-50/70 p-2">
+                <p class="text-[7pt] font-bold uppercase tracking-wider text-brand">Ringkasan Konsolidasi Rekap (Spreadsheet)</p>
                 <div class="mt-1 grid grid-cols-4 gap-2 text-center">
-                    <div class="rounded border border-line-board bg-white p-1">
+                    <div class="rounded border border-slate-300 bg-white p-1 shadow-xs">
                         <span class="block text-[6.5pt] text-ink-muted uppercase">Total PO</span>
                         <span class="font-mono text-xs font-bold text-ink">{{ $countOrders }}</span>
                     </div>
-                    <div class="rounded border border-line-board bg-white p-1">
+                    <div class="rounded border border-slate-300 bg-white p-1 shadow-xs">
                         <span class="block text-[6.5pt] text-ink-muted uppercase">Est. Pesan</span>
                         <span class="font-mono text-xs font-bold text-ink">{{ number_format($totalKgOrder, 1, ',', '.') }} kg</span>
                     </div>
-                    <div class="rounded border border-line-board bg-white p-1">
+                    <div class="rounded border border-slate-300 bg-white p-1 shadow-xs">
                         <span class="block text-[6.5pt] text-ink-muted uppercase">Netto Tera</span>
                         <span class="font-mono text-xs font-bold text-brand">{{ number_format($totalKgActual, 1, ',', '.') }} kg</span>
                     </div>
-                    <div class="rounded border border-line-board bg-white p-1">
+                    <div class="rounded border border-slate-300 bg-white p-1 shadow-xs">
                         <span class="block text-[6.5pt] text-ink-muted uppercase">Total Nilai</span>
                         <span class="font-mono text-xs font-extrabold text-brand">Rp {{ number_format($totalValue, 0, ',', '.') }}</span>
                     </div>
@@ -195,22 +226,27 @@
             </div>
         </section>
 
-        {{-- Tabel Data Transaksi Rekapitulasi Rinci --}}
+        @php
+            $koordinatorName = \App\Models\User::where('role', 'KOORDINATOR')->first()?->name ?? 'Agung Wicaksono';
+            $sekretarisName = \App\Models\User::where('role', 'SEKRETARIS')->first()?->name ?? 'Nurhayati, S.Ak';
+        @endphp
+
+        {{-- Tabel Data Transaksi Rekapitulasi Rinci (Excel Sheet View) --}}
         <section class="mt-3">
-            <table class="w-full border-collapse text-left text-[7.5pt]">
+            <table class="excel-table w-full border-collapse text-left text-[7.5pt]">
                 <thead>
-                    <tr class="border-b border-line-board bg-surface-shell">
-                        <th class="py-1 px-1.5 text-center font-bold text-ink" style="width: 25px;">No</th>
-                        <th class="py-1 px-1.5 font-bold text-ink" style="width: 95px;">No. PO &amp; Tgl</th>
-                        <th class="py-1 px-1.5 font-bold text-ink">Rincian Komoditas &amp; Estimasi</th>
-                        <th class="py-1 px-1.5 text-right font-bold text-ink" style="width: 75px;">Pesan (Kg)</th>
-                        <th class="py-1 px-1.5 text-right font-bold text-ink" style="width: 80px;">Netto (Kg)</th>
-                        <th class="py-1 px-1.5 font-bold text-ink" style="width: 140px;">Surat Jalan &amp; Armada</th>
-                        <th class="py-1 px-1.5 text-center font-bold text-ink" style="width: 90px;">Status Siklus</th>
-                        <th class="py-1 px-1.5 text-right font-bold text-ink" style="width: 100px;">Total Nilai (Rp)</th>
+                    <tr class="bg-slate-100 text-slate-800">
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 28px;">No</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]" style="width: 105px;">No. PO &amp; Tgl</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]">Rincian Komoditas &amp; Estimasi</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 80px;">Pesan (Kg)</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 85px;">Netto (Kg)</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]" style="width: 145px;">Surat Jalan &amp; Armada</th>
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 95px;">Status Siklus</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 105px;">Total Nilai (Rp)</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-line-hair">
+                <tbody>
                     @forelse ($orders as $idx => $order)
                         @php
                             $orderedKg = (float) $order->orderItems->sum('ordered_qty');
@@ -234,22 +270,22 @@
                                 default               => strtoupper($order->status),
                             };
                         @endphp
-                        <tr class="{{ $idx % 2 === 1 ? 'bg-surface-shell/40' : '' }}">
-                            <td class="py-1 px-1.5 text-center font-mono text-ink-muted">{{ $idx + 1 }}</td>
-                            <td class="py-1 px-1.5">
+                        <tr class="{{ $idx % 2 === 1 ? 'bg-slate-50/70' : 'bg-white' }} hover:bg-emerald-50/40">
+                            <td class="py-1.5 px-2 text-center font-mono text-ink-muted">{{ $idx + 1 }}</td>
+                            <td class="py-1.5 px-2">
                                 <strong class="font-mono text-brand">{{ $order->order_number }}</strong><br>
-                                <span class="text-[6.5pt] text-ink-muted">{{ $order->created_at->format('d/m/Y H:i') }}</span>
+                                <span class="text-[6.5pt] text-ink-muted font-mono">{{ $order->created_at->format('d/m/Y H:i') }}</span>
                             </td>
-                            <td class="py-1 px-1.5 text-ink-body">
+                            <td class="py-1.5 px-2 text-ink-body">
                                 <span>{{ $commoditiesList ?: 'Komoditas Sayuran Segar Pasundan' }}</span>
                             </td>
-                            <td class="py-1 px-1.5 text-right font-mono text-ink-muted">
+                            <td class="py-1.5 px-2 text-right font-mono text-ink-muted">
                                 {{ number_format($orderedKg, 1, ',', '.') }}
                             </td>
-                            <td class="py-1 px-1.5 text-right font-mono font-bold text-ink">
+                            <td class="py-1.5 px-2 text-right font-mono font-bold text-ink">
                                 {{ $hasWeighed ? number_format($actualKg, 1, ',', '.') : 'Antrean Timbang' }}
                             </td>
-                            <td class="py-1 px-1.5 text-[7pt]">
+                            <td class="py-1.5 px-2 text-[7pt]">
                                 @if ($order->surat_jalan_number)
                                     <strong class="font-mono text-ink">{{ $order->surat_jalan_number }}</strong><br>
                                     <span class="text-ink-muted">
@@ -259,12 +295,12 @@
                                     <span class="italic text-ink-quiet">SJ Belum Terbit</span>
                                 @endif
                             </td>
-                            <td class="py-1 px-1.5 text-center">
-                                <span class="inline-block rounded px-1.5 py-0.5 text-[6.5pt] font-bold uppercase tracking-wider {{ $order->status === 'SELESAI' ? 'bg-brand/10 text-brand' : 'bg-surface-pill text-ink-body' }}">
+                            <td class="py-1.5 px-2 text-center">
+                                <span class="inline-block rounded px-1.5 py-0.5 text-[6.5pt] font-bold uppercase tracking-wider {{ $order->status === 'SELESAI' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700' }}">
                                     {{ $statusLabel }}
                                 </span>
                             </td>
-                            <td class="py-1 px-1.5 text-right font-mono font-bold text-ink">
+                            <td class="py-1.5 px-2 text-right font-mono font-bold text-ink">
                                 Rp {{ number_format($amount, 0, ',', '.') }}
                             </td>
                         </tr>
@@ -277,14 +313,14 @@
                     @endforelse
                 </tbody>
                 <tfoot>
-                    <tr class="border-t-2 border-brand bg-surface-shell font-bold">
-                        <td colspan="3" class="py-1 px-1.5 text-right text-brand uppercase tracking-wider text-[7.5pt]">
+                    <tr class="border-t-2 border-slate-700 bg-slate-100 font-bold border-b-[3px] border-double border-slate-800">
+                        <td colspan="3" class="py-2 px-2 text-right text-brand uppercase tracking-wider text-[7.5pt]">
                             TOTAL KESELURUHAN KONSOLIDASI:
                         </td>
-                        <td class="py-1 px-1.5 text-right font-mono text-ink">{{ number_format($totalKgOrder, 1, ',', '.') }} kg</td>
-                        <td class="py-1 px-1.5 text-right font-mono text-brand">{{ number_format($totalKgActual, 1, ',', '.') }} kg</td>
+                        <td class="py-2 px-2 text-right font-mono text-ink">{{ number_format($totalKgOrder, 1, ',', '.') }} kg</td>
+                        <td class="py-2 px-2 text-right font-mono text-brand">{{ number_format($totalKgActual, 1, ',', '.') }} kg</td>
                         <td colspan="2"></td>
-                        <td class="py-1 px-1.5 text-right font-mono text-brand text-[8pt]">
+                        <td class="py-2 px-2 text-right font-mono text-brand text-[8pt]">
                             Rp {{ number_format($totalValue, 0, ',', '.') }}
                         </td>
                     </tr>
@@ -325,7 +361,7 @@
                             QC PASUNDAN VALIDATED
                         </span>
                     </div>
-                    <p class="font-bold text-ink underline">Agus Hendrawan, S.Pt.</p>
+                    <p class="font-bold text-ink underline">{{ $koordinatorName }}</p>
                     <p class="text-[6.5pt] text-ink-muted">Koordinator Mutu &amp; Armada</p>
                 </div>
 
@@ -337,7 +373,7 @@
                             <span class="block font-mono text-[6pt] font-extrabold tracking-wider text-brand">GPA FINANCE VERIFIED</span>
                         </div>
                     </div>
-                    <p class="font-bold text-brand underline">Siti Aminah, S.E.</p>
+                    <p class="font-bold text-brand underline">{{ $sekretarisName }}</p>
                     <p class="text-[6.5pt] text-ink-muted">Administrasi &amp; Sekretariat Keuangan</p>
                 </div>
             </div>

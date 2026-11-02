@@ -18,6 +18,15 @@ export default function clientCatalog(items = []) {
             items.map((item) => [item.key, item.initial_qty]),
         ),
         draft: [],
+        adHocOpen: false,
+
+        openAdHocModal() {
+            this.adHocOpen = true;
+        },
+
+        closeAdHocModal() {
+            this.adHocOpen = false;
+        },
 
         init() {
             this.draft = readDraft();

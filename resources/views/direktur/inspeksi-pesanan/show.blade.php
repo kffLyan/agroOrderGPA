@@ -27,7 +27,7 @@
                 <div class="text-gray-600">
                     Akun: {{ $order->user->name }}<br>
                     Kontak: {{ $order->user->phone }}<br>
-                    Tipe: <span class="font-semibold text-blue-700">{{ $order->user->client_type ?? 'REGULER' }}</span>
+                    Tipe: <span class="font-semibold text-blue-700">{{ ($order->user->client_type ?? 'REGULER') === 'B2B_KONTRAK' ? 'Mitra Kontrak B2B' : 'Klien Reguler' }}</span>
                 </div>
                 <div class="pt-1 text-[11px] text-gray-500 border-t border-gray-100">
                     <strong>Tujuan:</strong> {{ $order->delivery_address }}

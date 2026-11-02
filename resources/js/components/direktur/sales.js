@@ -169,11 +169,11 @@ export default function directorSales(scopeKeys = [], trend = [], portfolio = []
         },
 
         exportSummary() {
-            window.location.href = '/direktur/sales/export';
+            window.location.href = '/direktur/penjualan/export';
         },
 
         printRecap() {
-            window.open('/direktur/reports/download', '_blank');
+            window.open('/direktur/laporan/download', '_blank');
         },
 
         /* ---------- toast ---------- */

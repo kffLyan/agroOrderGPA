@@ -16,10 +16,11 @@
     };
 
     $roleBadge = match($role) {
-        'ARMADA' => 'AWAK_ARMADA',
-        'DIREKTUR' => 'DIREKSI_GPA',
-        'SEKRETARIS' => 'SEKRETARIAT',
-        default => ($user->client_type === 'B2B_KONTRAK' || $contract) ? 'KLIEN_B2B_AKTIF' : 'KLIEN_REGULER',
+        'ARMADA' => 'Awak Armada Logistik',
+        'DIREKTUR' => 'Direksi Koperasi GPA',
+        'SEKRETARIS' => 'Sekretariat Operasional',
+        'KOORDINATOR' => 'Koordinator Panen',
+        default => ($user->client_type === 'B2B_KONTRAK' || $contract) ? 'Klien Kontrak B2B' : 'Klien Reguler',
     };
 
     $titleHeading = match($role) {
@@ -83,6 +84,16 @@
                 <span class="font-mono text-xs font-bold">Data profil dan keamanan berhasil diperbarui serta disinkronkan ke sistem.</span>
             </div>
             <span class="font-mono text-[10px] uppercase font-bold text-emerald-700">TERSIMPAN</span>
+        </div>
+    @endif
+
+    @if (session('status') === 'email-verified-directly')
+        <div class="mt-5 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-50 p-4 text-emerald-800">
+            <div class="flex items-center gap-2.5">
+                <x-gpa.icon name="check-circle" class="h-5 w-5 text-emerald-600" />
+                <span class="font-mono text-xs font-bold">Alamat email berhasil diverifikasi langsung! Akun Anda kini berstatus Terverifikasi Resmi.</span>
+            </div>
+            <span class="font-mono text-[10px] uppercase font-bold text-emerald-700">VERIFIKASI SUKSES</span>
         </div>
     @endif
 
@@ -214,6 +225,12 @@
                                                 <x-gpa.icon name="alert-triangle" class="h-3 w-3 text-amber-600" />
                                                 <span>BELUM VERIFIKASI</span>
                                             </span>
+                                            <button type="submit" form="direct-verify-email-form"
+                                                title="Klik untuk langsung memverifikasi alamat email ini"
+                                                class="inline-flex items-center gap-1 rounded bg-brand px-2 py-0.5 font-mono text-[10px] font-bold text-white shadow-xs transition-opacity hover:opacity-90">
+                                                <x-gpa.icon name="check-circle" class="h-3 w-3 text-accent" />
+                                                <span>Verifikasi Sekarang</span>
+                                            </button>
                                         @endif
                                         <button type="button" @click="editingEmail = !editingEmail"
                                             class="font-mono text-[10px] font-semibold text-brand hover:underline ml-1">
@@ -232,6 +249,19 @@
                                 <p x-show="editingEmail" class="mt-1 font-mono text-[10px] text-amber-700">
                                     Perhatian: Mengubah email akan memperbarui kontak korespondensi resmi akun Anda.
                                 </p>
+                                @if (! $user->hasVerifiedEmail())
+                                    <div x-show="!editingEmail" class="mt-2 flex items-center justify-between rounded-lg border border-amber-300 bg-amber-50/90 px-3 py-2 text-xs text-amber-900 shadow-xs">
+                                        <div class="flex items-center gap-2">
+                                            <x-gpa.icon name="alert-triangle" class="h-4 w-4 shrink-0 text-amber-600" />
+                                            <span class="font-medium">Email belum terverifikasi di sistem.</span>
+                                        </div>
+                                        <button type="submit" form="direct-verify-email-form"
+                                            class="inline-flex items-center gap-1 rounded bg-brand px-2.5 py-1 font-mono text-[11px] font-bold text-white hover:bg-brand-hover shadow-xs transition-colors">
+                                            <x-gpa.icon name="check-circle" class="h-3.5 w-3.5 text-accent" />
+                                            <span>Verifikasi Sekarang</span>
+                                        </button>
+                                    </div>
+                                @endif
                                 @error('email')
                                     <p class="mt-1 font-mono text-[11px] text-red-600">{{ $message }}</p>
                                 @enderror
@@ -489,7 +519,7 @@
                                 </h2>
                             </div>
                             <span class="rounded {{ $isB2b ? 'bg-ink text-accent' : 'bg-canvas border border-line text-ink' }} px-2 py-0.5 font-mono text-[10px] font-bold uppercase">
-                                {{ $isB2b ? 'B2B KONTRAK' : 'REGULER' }}
+                                {{ $isB2b ? 'Mitra Kontrak B2B' : 'Klien Reguler' }}
                             </span>
                         </div>
 
@@ -580,6 +610,11 @@
                 </div>
             </div>
         </div>
+    </form>
+
+    {{-- FORM TERSEMBUNYI UNTUK VERIFIKASI EMAIL INSTAN LANGSUNG DARI PROFIL --}}
+    <form id="direct-verify-email-form" method="POST" action="{{ route('profile.verify-email-now') }}" class="hidden">
+        @csrf
     </form>
 
     {{-- BOTTOM AUDIT & COMPLIANCE BAR --}}

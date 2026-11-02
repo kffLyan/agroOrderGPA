@@ -201,12 +201,12 @@ class UserController extends Controller
 
         return response()->stream(function () {
             $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF");
+            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
 
-            fputcsv($handle, ['KOPERASI GREEN PASUNDAN AGRICULTURE - MATRIKS HAK AKSES RBAC']);
-            fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB']);
-            fputcsv($handle, []);
-            fputcsv($handle, ['Modul & Fitur Operasional', 'Klien / Buyer B2B', 'Sekretaris / Finance', 'Koordinator Lapangan', 'Armada / Supir', 'Direktur / Owner']);
+            fputcsv($handle, ['KOPERASI GREEN PASUNDAN AGRICULTURE - MATRIKS HAK AKSES RBAC'], ';');
+            fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB'], ';');
+            fputcsv($handle, [], ';');
+            fputcsv($handle, ['Modul & Fitur Operasional', 'Klien / Buyer B2B', 'Sekretaris / Finance', 'Koordinator Lapangan', 'Armada / Supir', 'Direktur / Owner'], ';');
 
             $matrix = [
                 ['Katalog & Buat Order B2B', 'Read / Create', 'Form WA / Manual', 'No Access', 'No Access', 'Full Monitoring (Read)'],
@@ -218,7 +218,7 @@ class UserController extends Controller
             ];
 
             foreach ($matrix as $row) {
-                fputcsv($handle, $row);
+                fputcsv($handle, $row, ';');
             }
             fclose($handle);
         }, 200, $headers);

@@ -9,7 +9,7 @@
                 <div class="min-w-0 space-y-1">
                     <p class="gpa-micro-bold uppercase tracking-wider text-ink-body">Direktori Pengguna</p>
                     <h1 class="font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
-                        Ubah Data &amp; Hak Akses &middot; Ubah Data Akun: {{ $user->name }}
+                        Ubah Data Akun: {{ $user->name }}
                     </h1>
                     <p class="text-xs text-ink-body max-w-2xl">
                         Perbarui profil, peran, status keaktifan, dan kredensial pengguna.
@@ -50,11 +50,9 @@
         <section class="rounded-2xl bg-surface shadow-card overflow-hidden">
             <header class="border-b border-line-board/60 px-6 py-4">
                 <h2 class="gpa-section-title text-ink">Formulir Perubahan Data</h2>
-                <p class="mt-1 text-xs text-ink-body">Akun: <span class="font-semibold text-ink">{{ $user->name }}</span> ({{ $user->email }})</p>
             </header>
 
-            <form action="{{ route('direktur.users.update', $user->id) }}" method="POST" class="px-6 py-5 space-y-5"
-                x-data="{ role: '{{ old('role', $user->role) }}' }">
+            <form action="{{ route('direktur.users.update', $user->id) }}" method="POST" class="px-6 py-5 space-y-5">
                 @csrf
                 @method('PUT')
 
@@ -74,15 +72,14 @@
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Nomor Telepon / WA <span class="text-red-600">*</span></label>
+                        <label class="text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">No. Telepon <span class="text-red-600">*</span></label>
                         <input type="text" name="phone" value="{{ old('phone', $user->phone) }}" required
                             class="rounded bg-surface-shell py-2 px-3 text-[12px] leading-5 text-ink outline outline-1 -outline-offset-1 outline-line-board placeholder:text-ink-body/70 focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">
                     </div>
 
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Wewenang Peran <span class="text-red-600">*</span></label>
-                        <select name="role" id="role_select" required x-model="role"
-                            @change="if (role !== 'KLIEN') { $refs.clientType.value = ''; }"
+                        <label class="text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Role <span class="text-red-600">*</span></label>
+                        <select name="role" required
                             class="rounded bg-surface-shell py-2 px-3 text-[12px] leading-5 text-ink outline outline-1 -outline-offset-1 outline-line-board focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">
                             <option value="DIREKTUR" {{ old('role', $user->role) === 'DIREKTUR' ? 'selected' : '' }}>DIREKTUR</option>
                             <option value="SEKRETARIS" {{ old('role', $user->role) === 'SEKRETARIS' ? 'selected' : '' }}>SEKRETARIS</option>
@@ -93,7 +90,7 @@
                     </div>
 
                     <div class="flex flex-col gap-1.5">
-                        <label class="text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Status Keaktifan <span class="text-red-600">*</span></label>
+                        <label class="text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Status <span class="text-red-600">*</span></label>
                         <select name="is_active" required
                             class="rounded bg-surface-shell py-2 px-3 text-[12px] leading-5 text-ink outline outline-1 -outline-offset-1 outline-line-board focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">
                             <option value="1" {{ old('is_active', (string)(int)$user->is_active) === '1' ? 'selected' : '' }}>AKTIF</option>
@@ -105,20 +102,12 @@
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div class="flex flex-col gap-1.5">
                         <label class="text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Jenis Klien (Jika Role KLIEN)</label>
-                        <select name="client_type" id="client_type_select" x-ref="clientType"
-                            :disabled="role !== 'KLIEN'"
-                            :class="role !== 'KLIEN' ? 'opacity-50 cursor-not-allowed bg-surface-track text-ink-body' : ''"
-                            class="rounded bg-surface-shell py-2 px-3 text-[12px] leading-5 text-ink outline outline-1 -outline-offset-1 outline-line-board focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep transition-all">
-                            <option value="">-- Bukan Klien / Nonaktif --</option>
-                            <option value="REGULER" {{ old('client_type', $user->client_type) === 'REGULER' ? 'selected' : '' }}>REGULER</option>
-                            <option value="B2B_KONTRAK" {{ old('client_type', $user->client_type) === 'B2B_KONTRAK' ? 'selected' : '' }}>B2B_KONTRAK</option>
+                        <select name="client_type"
+                            class="rounded bg-surface-shell py-2 px-3 text-[12px] leading-5 text-ink outline outline-1 -outline-offset-1 outline-line-board focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">
+                            <option value="">-- Bukan Klien --</option>
+                            <option value="REGULER" {{ old('client_type', $user->client_type) === 'REGULER' ? 'selected' : '' }}>Klien Reguler</option>
+                            <option value="B2B_KONTRAK" {{ old('client_type', $user->client_type) === 'B2B_KONTRAK' ? 'selected' : '' }}>Klien Kontrak B2B</option>
                         </select>
-                        <p x-show="role !== 'KLIEN'" class="text-[10px] text-ink-body italic">
-                            Jenis klien otomatis dinonaktifkan karena peran bukan Klien.
-                        </p>
-                        <p x-show="role === 'KLIEN'" class="text-[10px] text-success-deep font-semibold">
-                            Tentukan jenis kemitraan untuk akun Klien (Reguler / B2B Kontrak).
-                        </p>
                     </div>
 
                     <div class="flex flex-col gap-1.5">
@@ -129,7 +118,7 @@
                 </div>
 
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Alamat Domisili / Pengiriman</label>
+                    <label class="text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Alamat</label>
                     <textarea name="address" rows="3"
                         class="rounded bg-surface-shell py-2 px-3 text-[12px] leading-5 text-ink outline outline-1 -outline-offset-1 outline-line-board placeholder:text-ink-body/70 focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">{{ old('address', $user->address) }}</textarea>
                 </div>
@@ -138,7 +127,6 @@
                     <p class="text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Ubah Kata Sandi (Opsional)</p>
                     <input type="password" name="password" placeholder="Kosongkan jika tidak ingin mengganti kata sandi"
                         class="w-full rounded bg-surface py-2 px-3 text-[12px] leading-5 text-ink outline outline-1 -outline-offset-1 outline-line-board placeholder:text-ink-body/70 focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">
-                    <p class="text-[11px] leading-4 text-ink-body">Jika diisi, kata sandi pengguna akan diganti dengan nilai baru.</p>
                 </div>
 
                 <footer class="flex flex-wrap items-center justify-end gap-2 border-t border-line-board/60 pt-4">
@@ -155,23 +143,4 @@
             </form>
         </section>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const roleEl = document.getElementById('role_select');
-            const clientTypeEl = document.getElementById('client_type_select');
-            if (!roleEl || !clientTypeEl) return;
-
-            function syncClientType() {
-                const isClient = roleEl.value === 'KLIEN';
-                clientTypeEl.disabled = !isClient;
-                if (!isClient) {
-                    clientTypeEl.value = '';
-                }
-            }
-
-            roleEl.addEventListener('change', syncClientType);
-            syncClientType();
-        });
-    </script>
 @endsection

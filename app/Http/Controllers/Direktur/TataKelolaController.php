@@ -150,12 +150,12 @@ class TataKelolaController extends Controller
 
         return response()->stream(function () use ($logs) {
             $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF");
+            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
 
-            fputcsv($handle, ['LOG AUDIT FORENSIK APPEND-ONLY SHA-256 - KOPERASI GPA']);
-            fputcsv($handle, ['TANGGAL CETAK', date('d-m-Y H:i:s') . ' WIB']);
-            fputcsv($handle, []);
-            fputcsv($handle, ['Timestamp', 'Kategori Aksi', 'Dokumen Ref', 'Aktor', 'Clearance Level', 'Status', 'Rincian Perubahan', 'Hash SHA-256']);
+            fputcsv($handle, ['LOG AUDIT FORENSIK APPEND-ONLY SHA-256 - KOPERASI GPA'], ';');
+            fputcsv($handle, ['TANGGAL CETAK', date('d-m-Y H:i:s') . ' WIB'], ';');
+            fputcsv($handle, [], ';');
+            fputcsv($handle, ['Timestamp', 'Kategori Aksi', 'Dokumen Ref', 'Aktor', 'Clearance Level', 'Status', 'Rincian Perubahan', 'Hash SHA-256'], ';');
 
             foreach ($logs as $log) {
                 fputcsv($handle, [
@@ -167,7 +167,7 @@ class TataKelolaController extends Controller
                     $log['status'] ?? '',
                     $log['details'] ?? '',
                     $log['hash'] ?? '',
-                ]);
+                ], ';');
             }
 
             fclose($handle);

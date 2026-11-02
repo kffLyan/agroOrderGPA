@@ -27,11 +27,11 @@ trait PresentsUserProfile
     // Menentukan nama divisi struktural atau nama korporasi mitra klien.
     public function getDivisionAttribute(): string
     {
-        return match ($this->role_key) {
-            'direktur'    => 'Direksi Pusat / Kebijakan',
-            'sekretaris'  => 'Sekretariat Operasional / Keuangan',
-            'koordinator' => 'STA & Timbangan Lapangan',
-            'armada'      => 'Armada & Distribusi Fisik',
+        return match (strtoupper((string) $this->role)) {
+            'DIREKTUR'    => 'Direksi Pusat / Kebijakan',
+            'SEKRETARIS'  => 'Sekretariat Operasional / Keuangan',
+            'KOORDINATOR' => 'STA & Timbangan Lapangan',
+            'ARMADA'      => 'Armada & Distribusi Fisik',
             default       => $this->company_name ?: ($this->name ?: 'Mitra B2B Buyer'),
         };
     }
@@ -39,11 +39,11 @@ trait PresentsUserProfile
     // Menentukan wilayah sentra operasional atau jangkauan logistik pengguna.
     public function getHubAttribute(): string
     {
-        return match ($this->role_key) {
-            'direktur'    => 'Kantor Pusat GPA / Seluruh Hub',
-            'sekretaris'  => 'Kantor Pusat GPA',
-            'koordinator' => 'STA Cianjur & Lembang',
-            'armada'      => 'Pool Distribusi Bandung',
+        return match (strtoupper((string) $this->role)) {
+            'DIREKTUR'    => 'Kantor Pusat GPA / Seluruh Hub',
+            'SEKRETARIS'  => 'Kantor Pusat GPA',
+            'KOORDINATOR' => 'STA Cianjur & Lembang',
+            'ARMADA'      => 'Pool Distribusi Bandung',
             default       => 'Jawa Barat & Jabodetabek',
         };
     }

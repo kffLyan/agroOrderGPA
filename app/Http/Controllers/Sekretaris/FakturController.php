@@ -67,12 +67,12 @@ class FakturController extends Controller
 
         return response()->stream(function () {
             $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF");
+            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
 
-            fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)']);
-            fputcsv($handle, ['BUKU BESAR FAKTUR PENAGIHAN & MONITORING TEMPO PEMBAYARAN (TOP)']);
-            fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB']);
-            fputcsv($handle, []);
+            fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)'], ';');
+            fputcsv($handle, ['BUKU BESAR FAKTUR PENAGIHAN & MONITORING TEMPO PEMBAYARAN (TOP)'], ';');
+            fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB'], ';');
+            fputcsv($handle, [], ';');
             fputcsv($handle, [
                 'No. Faktur',
                 'Tanggal Terbit',
@@ -83,7 +83,7 @@ class FakturController extends Controller
                 'Skema Tempo',
                 'Jatuh Tempo',
                 'Status Tagihan',
-            ]);
+            ], ';');
 
             $invoices = Invoice::with(['user', 'orders'])->latest()->get();
             foreach ($invoices as $invoice) {
@@ -101,7 +101,7 @@ class FakturController extends Controller
                     'Tempo 30 Hari',
                     $dueDate->format('d/m/Y'),
                     $invoice->status === 'PAID' ? 'Lunas' : ($invoice->status === 'OVERDUE' ? 'Jatuh Tempo' : 'Belum Lunas'),
-                ]);
+                ], ';');
             }
 
             fclose($handle);

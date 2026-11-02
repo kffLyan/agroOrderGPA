@@ -10,6 +10,7 @@
         search: '',
         selected: '{{ $rawInvoices->first()?->invoice_number ?? '' }}',
         proofMenuOpen: false,
+        financeModalOpen: false,
 
         // Fungsi penyaring baris tabel berdasarkan tab status, periode bulan, dan pencarian nomor faktur/SJ
         matches(no, status, period, keywords) {
@@ -651,15 +652,103 @@
                 </div>
             </div>
             <div class="flex shrink-0 flex-wrap items-center gap-2">
-                <button type="button" @click="contactFinance()"
+                <button type="button" @click="financeModalOpen = true"
                     class="rounded-lg border border-line-soft bg-surface px-3 py-1.5 text-[11px] font-semibold uppercase leading-[14px] tracking-[0.88px] text-ink transition-colors hover:bg-surface-muted">
                     Hubungi Finance GPA
                 </button>
-                <button type="button" @click="contactFinance()"
-                    class="rounded-lg bg-ink px-3 py-1.5 text-[11px] font-bold uppercase leading-[14px] tracking-[0.88px] text-white transition-colors hover:bg-brand-deep">
-                    Konfirmasi Pelunasan
-                </button>
+                <a href="{{ route('klien.bukti-pembayaran') }}"
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-ink px-3 py-1.5 text-[11px] font-bold uppercase leading-[14px] tracking-[0.88px] text-white transition-colors hover:bg-brand-deep">
+                    <x-gpa.icon name="badge-check" class="h-3.5 w-3.5 text-accent" />
+                    <span>Konfirmasi Pelunasan</span>
+                </a>
             </div>
         </section>
+
+        {{-- ------------------------------------------------------------------ --}}
+        {{-- MODAL REKONSILIASI & HELPDESK KEUANGAN GPA                         --}}
+        {{-- ------------------------------------------------------------------ --}}
+        <div x-cloak x-show="financeModalOpen" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+            <div class="fixed inset-0 bg-ink/60 backdrop-blur-sm transition-opacity" @click="financeModalOpen = false"></div>
+            <div class="flex min-h-screen items-center justify-center p-4">
+                <div class="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-black/5"
+                    @click.outside="financeModalOpen = false">
+                    <div class="flex items-start justify-between border-b border-line-soft pb-4">
+                        <div class="flex items-center gap-3">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-accent">
+                                <x-gpa.icon name="building" class="h-5 w-5" />
+                            </span>
+                            <div>
+                                <h3 class="font-sans text-base font-bold text-ink">Rekonsiliasi &amp; Helpdesk Keuangan GPA</h3>
+                                <p class="text-xs text-ink-body">Pusat layanan faktur pajak &amp; konfirmasi transfer tagihan tempo</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="financeModalOpen = false" class="rounded-lg p-1 text-ink-body hover:bg-surface-shell hover:text-ink">
+                            <x-gpa.icon name="x" class="h-5 w-5" />
+                        </button>
+                    </div>
+
+                    <div class="mt-4 flex flex-col gap-4">
+                        <div class="rounded-xl border border-line-soft bg-surface-shell/80 p-4">
+                            <div class="flex items-center justify-between">
+                                <span class="gpa-micro text-ink-body font-semibold">REKENING RESMI SETTLEMENT (BCA)</span>
+                                <span class="rounded bg-accent/30 px-2 py-0.5 text-[10px] font-bold text-success-ink">Akun Utama</span>
+                            </div>
+                            <div class="mt-2 flex items-center justify-between">
+                                <div>
+                                    <p class="font-mono text-lg font-extrabold tracking-wider text-ink">840-552-1920</p>
+                                    <p class="text-xs text-ink-body">a.n. <strong class="text-ink">Green Pasundan Agriculture</strong></p>
+                                </div>
+                                <button type="button" @click="copySettlementAccount()"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-line-soft bg-white px-3 py-1.5 text-xs font-bold text-ink shadow-sm transition hover:bg-surface-muted">
+                                    <x-gpa.icon name="clipboard" class="h-3.5 w-3.5 text-brand" />
+                                    <span>Salin</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="rounded-xl border border-line-soft bg-surface-shell/80 p-4">
+                            <div class="flex items-center justify-between">
+                                <span class="gpa-micro text-ink-body font-semibold">REKENING SEKUNDER (MANDIRI)</span>
+                                <span class="rounded bg-surface-pill px-2 py-0.5 text-[10px] font-bold text-ink-body">Opsional</span>
+                            </div>
+                            <div class="mt-2 flex items-center justify-between">
+                                <div>
+                                    <p class="font-mono text-base font-bold text-ink">132-00-9988-1234</p>
+                                    <p class="text-xs text-ink-body">a.n. <strong class="text-ink">Koperasi Produsen Agro Green Pasundan</strong></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2 rounded-xl bg-accent-soft/40 p-4 text-xs text-ink">
+                            <div class="flex items-center gap-2 font-bold text-success-deep">
+                                <x-gpa.icon name="check-circle" class="h-4 w-4" />
+                                <span>Kanal Langsung Tim Finance</span>
+                            </div>
+                            <p class="text-ink-body">
+                                Untuk penyesuaian nota retur, bukti potong PPh 22/23, atau klarifikasi faktur pajak elektronik, hubungi desk kami:
+                            </p>
+                            <div class="mt-1 flex flex-wrap gap-3 font-medium">
+                                <span>Hotline: <strong>(022) 278-9012</strong></span>
+                                <span>Email: <strong>finance@greenpasundan.co.id</strong></span>
+                                <span>Jam Kerja: <strong>Senin - Sabtu, 07:00 - 18:00 WIB</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex items-center justify-end gap-2 border-t border-line-soft pt-4">
+                        <button type="button" @click="financeModalOpen = false"
+                            class="rounded-lg border border-line-soft px-4 py-2 text-xs font-bold text-ink transition hover:bg-surface-muted">
+                            Tutup
+                        </button>
+                        <a href="https://wa.me/6281298765432?text=Halo%20Tim%20Finance%20GPA%2C%20saya%20ingin%20rekonsiliasi%20faktur%20konsolidasi%20tagihan%20tempo%20kemitraan%20kami."
+                            target="_blank" rel="noopener noreferrer"
+                            class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700">
+                            <x-gpa.icon name="message-circle" class="h-4 w-4" />
+                            <span>WhatsApp Finance Desk</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection

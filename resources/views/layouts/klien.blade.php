@@ -65,7 +65,7 @@
                                 </span>
                                 <span
                                     class="hidden shrink-0 rounded bg-ink px-2 py-0.5 text-[10px] font-bold uppercase leading-3 tracking-[0.1em] text-accent ring-1 ring-inset ring-accent/30 sm:inline-block">
-                                    {{ ($user && $user->client_type === 'B2B_KONTRAK') ? 'B2B KONTRAK' : 'REGULER' }}
+                                    {{ ($user && $user->client_type === 'B2B_KONTRAK') ? 'Mitra B2B Kontrak' : 'Klien Reguler' }}
                                 </span>
                             </span>
                             <span class="truncate text-[10px] font-medium leading-3 text-white/80 gpa-meta">

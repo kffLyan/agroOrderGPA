@@ -120,12 +120,12 @@ class KomoditasController extends Controller
 
         return response()->stream(function () {
             $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF");
+            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
 
-            fputcsv($handle, ['LAPORAN NERACA VOLUME KOMODITAS & SUPPLY CHAIN KOPERASI GPA']);
-            fputcsv($handle, ['WAKTU EKSPOR', date('d-m-Y H:i:s') . ' WIB']);
-            fputcsv($handle, []);
-            fputcsv($handle, ['ID', 'Nama Komoditas', 'Kebutuhan B2B (ton)', 'Realisasi Panen (ton)', 'Status Pasokan']);
+            fputcsv($handle, ['LAPORAN NERACA VOLUME KOMODITAS & SUPPLY CHAIN KOPERASI GPA'], ';');
+            fputcsv($handle, ['WAKTU EKSPOR', date('d-m-Y H:i:s') . ' WIB'], ';');
+            fputcsv($handle, [], ';');
+            fputcsv($handle, ['ID', 'Nama Komoditas', 'Kebutuhan B2B (ton)', 'Realisasi Panen (ton)', 'Status Pasokan'], ';');
 
             $allProducts = Product::orderBy('id')->get();
             foreach ($allProducts as $product) {
@@ -134,7 +134,7 @@ class KomoditasController extends Controller
                 $demandTon  = round($demandKg / 1000, 2);
                 $harvestTon = round($harvestKg / 1000, 2);
 
-                $status = $harvestTon >= $demandTon ? 'SURPLUS' : 'DEFISIT';
+                $status = $harvestTon >= $demandTon ? 'Surplus Pasokan' : 'Defisit Pasokan';
                 $diff = $demandTon > 0 ? round((($harvestTon - $demandTon) / $demandTon) * 100, 1) : 0;
                 $statusLabel = $status . ' (' . ($diff >= 0 ? '+' : '') . $diff . '%)';
 
@@ -144,7 +144,7 @@ class KomoditasController extends Controller
                     number_format($demandTon, 2, '.', ''),
                     number_format($harvestTon, 2, '.', ''),
                     $statusLabel,
-                ]);
+                ], ';');
             }
 
             fclose($handle);

@@ -179,7 +179,7 @@ export default function clientDocuments(defaults = {}) {
             }
 
             if (label.includes('Cetak') || label.includes('Print')) {
-                window.open('/klien/documents/print-rekap?auto_print=1', '_blank');
+                window.open('/klien/dokumen/print-rekap?auto_print=1', '_blank');
                 return;
             }
 

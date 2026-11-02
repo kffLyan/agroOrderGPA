@@ -102,13 +102,13 @@ class DokumenController extends Controller
 
         return response()->stream(function () use ($user, $invoices) {
             $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF");
+            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
 
-            fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)']);
-            fputcsv($handle, ['REKAPITULASI RESMI FAKTUR KONSOLIDASI & STATUS TAGIHAN TEMPO']);
-            fputcsv($handle, ['KLIEN / MITRA B2B', $user->company_name ?: $user->name]);
-            fputcsv($handle, ['WAKTU EKSPOR', date('d/m/Y H:i') . ' WIB']);
-            fputcsv($handle, []);
+            fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)'], ';');
+            fputcsv($handle, ['REKAPITULASI RESMI FAKTUR KONSOLIDASI & STATUS TAGIHAN TEMPO'], ';');
+            fputcsv($handle, ['KLIEN / MITRA B2B', $user->company_name ?: $user->name], ';');
+            fputcsv($handle, ['WAKTU EKSPOR', date('d/m/Y H:i') . ' WIB'], ';');
+            fputcsv($handle, [], ';');
             fputcsv($handle, [
                 'No',
                 'No. Faktur Tagihan',
@@ -119,7 +119,7 @@ class DokumenController extends Controller
                 'Total Tagihan (Rp)',
                 'Jatuh Tempo (TOP)',
                 'Status Pembayaran',
-            ]);
+            ], ';');
 
             $rowNumber = 1;
             foreach ($invoices as $invoice) {
@@ -133,7 +133,7 @@ class DokumenController extends Controller
                     'UNPAID'  => 'Menunggu Pembayaran (Tempo)',
                     'PARTIAL' => 'Dibayar Sebagian',
                     'OVERDUE' => 'Melewati Jatuh Tempo',
-                    default   => $invoice->status,
+                    default   => ucwords(strtolower(str_replace('_', ' ', $invoice->status))),
                 };
 
                 fputcsv($handle, [
@@ -146,7 +146,7 @@ class DokumenController extends Controller
                     (float) $invoice->grand_total,
                     $invoice->due_date ? $invoice->due_date->format('d/m/Y') : 'Tempo 30 Hari',
                     $statusLabel,
-                ]);
+                ], ';');
             }
 
             fclose($handle);

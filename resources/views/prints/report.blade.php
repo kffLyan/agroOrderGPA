@@ -7,8 +7,8 @@
     @vite(['resources/css/app.css'])
     <style>
         @page {
-            size: A4 portrait;
-            margin: 10mm 12mm;
+            size: A4 landscape;
+            margin: 8mm 10mm;
         }
 
         @media print {
@@ -16,6 +16,8 @@
                 background: #ffffff !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
 
             .no-print {
@@ -30,6 +32,25 @@
                 padding: 0 !important;
                 box-shadow: none !important;
                 border: none !important;
+            }
+
+            .excel-table {
+                border-collapse: collapse !important;
+                width: 100% !important;
+                border: 1px solid #94a3b8 !important;
+            }
+
+            .excel-table th, .excel-table td {
+                border: 1px solid #cbd5e1 !important;
+            }
+
+            .excel-table thead th {
+                background-color: #f1f5f9 !important;
+                color: #0f172a !important;
+            }
+
+            .excel-table tfoot tr {
+                background-color: #f8fafc !important;
             }
 
             table {
@@ -61,25 +82,40 @@
         }
 
         .a4-canvas {
-            width: 210mm;
-            min-height: 297mm;
+            width: 297mm;
+            min-height: 210mm;
             margin: 20px auto;
             background: #ffffff;
             box-shadow: 0 10px 35px -15px rgba(21, 58, 1, 0.35);
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            font-size: 8.5pt;
-            line-height: 1.5;
+            font-size: 8pt;
+            line-height: 1.45;
             color: #191c18;
-            padding: 12mm 14mm;
+            padding: 10mm 12mm;
             box-sizing: border-box;
+        }
+
+        .excel-table {
+            border-collapse: collapse;
+            width: 100%;
+            border: 1px solid #94a3b8;
+        }
+
+        .excel-table th, .excel-table td {
+            border: 1px solid #cbd5e1;
         }
     </style>
 </head>
 <body class="antialiased">
 
+    @php
+        $direkturName = \App\Models\User::where('role', 'DIREKTUR')->first()?->name ?? 'Ahmad Sanusi, S.P.';
+        $sekretarisName = \App\Models\User::where('role', 'SEKRETARIS')->first()?->name ?? 'Nurhayati, S.Ak';
+    @endphp
+
     {{-- Topbar Kontrol Cetak (Hanya tampil di layar) --}}
     <div class="no-print sticky top-0 z-30 border-b border-line-board bg-white/95 backdrop-blur shadow-sub">
-        <div class="mx-auto flex max-w-[210mm] items-center justify-between gap-3 px-4 py-2.5">
+        <div class="mx-auto flex max-w-[297mm] items-center justify-between gap-3 px-4 py-2.5">
             <div class="flex items-center gap-2">
                 <a href="{{ route('direktur.laporan.index', request()->query()) }}"
                     class="inline-flex items-center gap-1.5 rounded-lg border border-line-board bg-surface px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-surface-shell">
@@ -87,14 +123,14 @@
                     Kembali ke Laporan
                 </a>
                 <span class="rounded bg-brand/10 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-brand">
-                    ARSIP EKSEKUTIF DIREKTUR
+                    ARSIP EKSEKUTIF DIREKTUR (A4 LANDSCAPE)
                 </span>
             </div>
             <div class="flex items-center gap-2">
                 <a href="{{ route('direktur.laporan.export', request()->query()) }}"
                     class="inline-flex items-center gap-1.5 rounded-lg border border-line-board bg-surface px-3 py-1.5 text-xs font-semibold text-ink shadow-sub transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="download" class="h-3.5 w-3.5" />
-                    Unduh CSV
+                    Unduh Excel (CSV)
                 </a>
                 <button type="button" onclick="window.print()"
                     class="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-1.5 text-xs font-bold text-white shadow-sub transition-colors hover:bg-brand-deep">
@@ -153,27 +189,27 @@
             </div>
             <div class="text-right text-[7.5pt] text-ink-muted">
                 <div>Waktu Cetak: <span class="font-mono text-ink">{{ date('d/m/Y H:i') }} WIB</span></div>
-                <div>Otoritas: <span class="font-semibold text-ink">Direktur GPA (H. Ridwan Permana)</span></div>
+                <div>Otoritas: <span class="font-semibold text-ink">Direktur GPA ({{ $direkturName }})</span></div>
             </div>
         </div>
 
-        {{-- Kartu Metrik Ringkasan Eksekutif --}}
+        {{-- Kartu Metrik Ringkasan Eksekutif (Spreadsheet Dashboard) --}}
         <div class="mt-4 grid grid-cols-3 gap-3">
-            <div class="rounded-lg border border-line-board bg-surface-shell p-2.5">
+            <div class="rounded-lg border border-slate-300 bg-slate-50/70 p-2.5 shadow-xs">
                 <span class="block text-[7.5pt] font-bold uppercase tracking-wider text-ink-muted">Total Omzet Penjualan</span>
                 <p class="mt-0.5 font-mono text-sm font-extrabold text-brand">
                     Rp {{ number_format($totalRevenue, 0, ',', '.') }}
                 </p>
                 <span class="text-[7pt] text-ink-quiet">Akumulasi bruto invoice sah</span>
             </div>
-            <div class="rounded-lg border border-line-board bg-surface-shell p-2.5">
+            <div class="rounded-lg border border-slate-300 bg-slate-50/70 p-2.5 shadow-xs">
                 <span class="block text-[7.5pt] font-bold uppercase tracking-wider text-ink-muted">Total Tonase Terjual</span>
                 <p class="mt-0.5 font-mono text-sm font-extrabold text-ink">
                     {{ number_format($totalTonnageKg, 1, ',', '.') }} <span class="text-xs font-normal">Kg</span>
                 </p>
                 <span class="text-[7pt] text-ink-quiet">Netto timbangan tera sah gudang</span>
             </div>
-            <div class="rounded-lg border border-line-board bg-surface-shell p-2.5">
+            <div class="rounded-lg border border-slate-300 bg-slate-50/70 p-2.5 shadow-xs">
                 <span class="block text-[7.5pt] font-bold uppercase tracking-wider text-ink-muted">Volume Transaksi PO</span>
                 <p class="mt-0.5 font-mono text-sm font-extrabold text-ink">
                     {{ $orders->count() }} <span class="text-xs font-normal">Pesanan</span>
@@ -182,46 +218,46 @@
             </div>
         </div>
 
-        {{-- Bagian 1: Rekapitulasi Realisasi Penjualan Per Komoditas --}}
-        <section class="mt-5">
+        {{-- Bagian 1: Rekapitulasi Realisasi Penjualan Per Komoditas (Spreadsheet Sheet 1) --}}
+        <section class="mt-4">
             <div class="flex items-center justify-between border-b border-brand pb-1">
                 <h3 class="text-[8pt] font-extrabold uppercase tracking-wider text-brand">
-                    1. Realisasi Penjualan Berdasarkan Komoditas Sayuran Segar
+                    1. Realisasi Penjualan Berdasarkan Komoditas Sayuran Segar (Tabel Distribusi)
                 </h3>
-                <span class="text-[7pt] text-ink-muted">Distribusi Volume &amp; Nilai</span>
+                <span class="text-[7pt] text-ink-muted font-mono">Distribusi Volume &amp; Nilai</span>
             </div>
-            <table class="mt-2 w-full border-collapse text-left text-[8pt]">
+            <table class="excel-table mt-2 w-full border-collapse text-left text-[7.5pt]">
                 <thead>
-                    <tr class="border-b border-line-board bg-surface-shell">
-                        <th class="py-1.5 px-2 text-center font-bold text-ink" style="width: 25px;">No</th>
-                        <th class="py-1.5 px-2 font-bold text-ink">Nama Komoditas Sayuran</th>
-                        <th class="py-1.5 px-2 text-right font-bold text-ink">Total Bobot (Kg)</th>
-                        <th class="py-1.5 px-2 text-right font-bold text-ink">Rata-rata Harga</th>
-                        <th class="py-1.5 px-2 text-right font-bold text-ink">Total Nilai Penjualan</th>
-                        <th class="py-1.5 px-2 text-center font-bold text-ink" style="width: 80px;">Pangsa Omzet</th>
+                    <tr class="bg-slate-100 text-slate-800">
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 28px;">No</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]">Nama Komoditas Sayuran</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 110px;">Total Bobot (Kg)</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 120px;">Rata-rata Harga</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 140px;">Total Nilai Penjualan</th>
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 90px;">Pangsa Omzet</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-line-hair">
+                <tbody>
                     @forelse($commoditySummary as $index => $summary)
                         @php
                             $pct = $totalRevenue > 0 ? round(($summary->total_sales / $totalRevenue) * 100, 1) : 0;
                             $avgPrice = $summary->total_weight > 0 ? $summary->total_sales / $summary->total_weight : 0;
                         @endphp
-                        <tr class="{{ $index % 2 === 1 ? 'bg-surface-shell/40' : '' }}">
-                            <td class="py-1 px-2 text-center font-mono text-ink-muted">{{ $index + 1 }}</td>
-                            <td class="py-1 px-2 font-semibold text-ink">
+                        <tr class="{{ $index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white' }} hover:bg-emerald-50/40">
+                            <td class="py-1.5 px-2 text-center font-mono text-ink-muted">{{ $index + 1 }}</td>
+                            <td class="py-1.5 px-2 font-semibold text-ink">
                                 {{ $summary->product->name ?? 'Komoditas #' . $summary->product_id }}
                             </td>
-                            <td class="py-1 px-2 text-right font-mono text-ink">
+                            <td class="py-1.5 px-2 text-right font-mono text-ink">
                                 {{ number_format($summary->total_weight, 1, ',', '.') }}
                             </td>
-                            <td class="py-1 px-2 text-right font-mono text-ink-muted">
+                            <td class="py-1.5 px-2 text-right font-mono text-ink-muted">
                                 Rp {{ number_format($avgPrice, 0, ',', '.') }}
                             </td>
-                            <td class="py-1 px-2 text-right font-mono font-bold text-ink">
+                            <td class="py-1.5 px-2 text-right font-mono font-bold text-ink">
                                 Rp {{ number_format($summary->total_sales, 0, ',', '.') }}
                             </td>
-                            <td class="py-1 px-2 text-center font-mono font-semibold text-brand">
+                            <td class="py-1.5 px-2 text-center font-mono font-semibold text-brand">
                                 {{ $pct }}%
                             </td>
                         </tr>
@@ -236,53 +272,53 @@
             </table>
         </section>
 
-        {{-- Bagian 2: Rincian Daftar Transaksi Pemesanan --}}
+        {{-- Bagian 2: Rincian Daftar Transaksi Pemesanan (Spreadsheet Sheet 2) --}}
         <section class="mt-5">
             <div class="flex items-center justify-between border-b border-brand pb-1">
                 <h3 class="text-[8pt] font-extrabold uppercase tracking-wider text-brand">
                     2. Rincian Lengkap Buku Transaksi Pemesanan (PO)
                 </h3>
-                <span class="text-[7pt] text-ink-muted">Jurnal Operasional Sah</span>
+                <span class="text-[7pt] text-ink-muted font-mono">Jurnal Operasional Sah</span>
             </div>
-            <table class="mt-2 w-full border-collapse text-left text-[7.5pt]">
+            <table class="excel-table mt-2 w-full border-collapse text-left text-[7.5pt]">
                 <thead>
-                    <tr class="border-b border-line-board bg-surface-shell">
-                        <th class="py-1.5 px-2 text-center font-bold text-ink" style="width: 25px;">No</th>
-                        <th class="py-1.5 px-2 font-bold text-ink" style="width: 105px;">No. Pesanan</th>
-                        <th class="py-1.5 px-2 font-bold text-ink" style="width: 75px;">Tanggal</th>
-                        <th class="py-1.5 px-2 font-bold text-ink">Mitra Klien B2B</th>
-                        <th class="py-1.5 px-2 font-bold text-ink">Rincian Komoditas &amp; Netto</th>
-                        <th class="py-1.5 px-2 text-center font-bold text-ink" style="width: 85px;">Status</th>
-                        <th class="py-1.5 px-2 text-right font-bold text-ink" style="width: 110px;">Total Nilai (Rp)</th>
+                    <tr class="bg-slate-100 text-slate-800">
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 28px;">No</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]" style="width: 110px;">No. Pesanan</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]" style="width: 85px;">Tanggal</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]">Mitra Klien B2B</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]">Rincian Komoditas &amp; Netto</th>
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 95px;">Status</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 120px;">Total Nilai (Rp)</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-line-hair">
+                <tbody>
                     @forelse($orders as $index => $order)
                         @php
                             $amount = (float) $order->grand_total;
                         @endphp
-                        <tr class="{{ $index % 2 === 1 ? 'bg-surface-shell/40' : '' }}">
-                            <td class="py-1 px-2 text-center font-mono text-ink-muted">{{ $index + 1 }}</td>
-                            <td class="py-1 px-2 font-mono font-bold text-brand">
+                        <tr class="{{ $index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white' }} hover:bg-emerald-50/40">
+                            <td class="py-1.5 px-2 text-center font-mono text-ink-muted">{{ $index + 1 }}</td>
+                            <td class="py-1.5 px-2 font-mono font-bold text-brand">
                                 {{ $order->order_number }}
                             </td>
-                            <td class="py-1 px-2 text-ink-muted">
+                            <td class="py-1.5 px-2 text-ink-muted font-mono">
                                 {{ $order->created_at->format('d/m/Y') }}
                             </td>
-                            <td class="py-1 px-2 font-semibold text-ink">
+                            <td class="py-1.5 px-2 font-semibold text-ink">
                                 {{ $order->user->company_name ?? $order->user->name }}
                             </td>
-                            <td class="py-1 px-2 text-ink-body">
+                            <td class="py-1.5 px-2 text-ink-body">
                                 @foreach($order->orderItems as $item)
                                     <div>{{ $item->product->name ?? 'Sayuran' }}: <span class="font-mono">{{ number_format($item->ordered_qty, 1) }} kg</span></div>
                                 @endforeach
                             </td>
-                            <td class="py-1 px-2 text-center">
-                                <span class="inline-block rounded px-1.5 py-0.5 text-[7pt] font-bold uppercase tracking-wider {{ $order->status === 'SELESAI' ? 'bg-brand/10 text-brand' : 'bg-surface-pill text-ink-body' }}">
+                            <td class="py-1.5 px-2 text-center">
+                                <span class="inline-block rounded px-1.5 py-0.5 text-[6.5pt] font-bold uppercase tracking-wider {{ $order->status === 'SELESAI' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700' }}">
                                     {{ $order->status }}
                                 </span>
                             </td>
-                            <td class="py-1 px-2 text-right font-mono font-bold text-ink">
+                            <td class="py-1.5 px-2 text-right font-mono font-bold text-ink">
                                 Rp {{ number_format($amount, 0, ',', '.') }}
                             </td>
                         </tr>
@@ -295,11 +331,11 @@
                     @endforelse
                 </tbody>
                 <tfoot>
-                    <tr class="border-t-2 border-brand bg-surface-shell font-bold">
-                        <td colspan="6" class="py-1.5 px-2 text-right text-brand uppercase tracking-wider text-[8pt]">
+                    <tr class="border-t-2 border-slate-700 bg-slate-100 font-bold border-b-[3px] border-double border-slate-800">
+                        <td colspan="6" class="py-2 px-2 text-right text-brand uppercase tracking-wider text-[7.5pt]">
                             TOTAL KESELURUHAN OMZET TRANSAKSI:
                         </td>
-                        <td class="py-1.5 px-2 text-right font-mono text-[8.5pt] text-brand">
+                        <td class="py-2 px-2 text-right font-mono text-[8pt] text-brand">
                             Rp {{ number_format($totalRevenue, 0, ',', '.') }}
                         </td>
                     </tr>
@@ -318,7 +354,7 @@
                             VERIFIKASI SISTEM ELEKTRONIK
                         </span>
                     </div>
-                    <p class="text-[8pt] font-extrabold text-ink underline">Ibu Rina Marlina</p>
+                    <p class="text-[8pt] font-extrabold text-ink underline">{{ $sekretarisName }}</p>
                     <p class="text-[7pt] text-ink-muted">Staf Administrasi &amp; Verifikasi Kontrak</p>
                 </div>
                 <div class="text-center">
@@ -330,7 +366,7 @@
                             <span class="block text-[6pt] text-ink-quiet">HASH: 0x8F9C4A217B1E90D4</span>
                         </div>
                     </div>
-                    <p class="text-[8pt] font-extrabold text-brand underline">H. Ridwan Permana</p>
+                    <p class="text-[8pt] font-extrabold text-brand underline">{{ $direkturName }}</p>
                     <p class="text-[7pt] text-ink-muted">Direktur / Owner Koperasi Produsen GPA</p>
                 </div>
             </div>

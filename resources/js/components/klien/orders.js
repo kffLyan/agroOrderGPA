@@ -167,7 +167,7 @@ export default function clientOrders(defaults = {}) {
 
         exportRecap() {
             const statusParam = encodeURIComponent(this.status || 'all');
-            const printUrl = `/klien/orders/print-rekap?status=${statusParam}&auto_print=1`;
+            const printUrl = `/klien/pesanan/print-rekap?status=${statusParam}&auto_print=1`;
 
             window.open(printUrl, '_blank');
 

@@ -92,6 +92,17 @@ class ProfileController extends Controller
         return Redirect::route('profile.edit')->with('status', 'profile-updated');
     }
 
+    // Memverifikasi alamat email pengguna secara instan langsung dari formulir profil
+    public function verifyEmailDirectly(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        if (!$user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
+        }
+
+        return Redirect::route('profile.edit')->with('status', 'email-verified-directly');
+    }
+
     // Menghapus akun pengguna setelah verifikasi kata sandi dan mengakhiri sesi autentikasi.
     public function destroy(Request $request): RedirectResponse
     {

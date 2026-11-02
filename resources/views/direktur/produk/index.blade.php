@@ -187,6 +187,7 @@
                                     <div class="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-line-hair bg-surface-muted shadow-sub">
                                         <img src="{{ asset($prod->image_path) }}" alt="{{ $prod->name }}"
                                             class="h-full w-full object-cover"
+                                            onerror="this.onerror=null;this.src='{{ asset('gpaleaves.png') }}';"
                                             x-on:error="$event.target.src = '{{ asset('gpaleaves.png') }}'">
                                     </div>
                                     <div class="min-w-0">
@@ -254,8 +255,8 @@
                             </td>
 
                             {{-- Aksi --}}
-                            <td class="px-3 py-3.5 text-right">
-                                <div class="flex items-center justify-end gap-1.5">
+                            <td class="px-3 py-3.5 text-right whitespace-nowrap">
+                                <div class="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
                                     <a href="{{ route('direktur.produk.show', $prod->id) }}"
                                         title="Rincian Komoditas"
                                         class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">

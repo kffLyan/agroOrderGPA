@@ -96,4 +96,24 @@ class ProfileTest extends TestCase
 
         $this->assertNotNull($user->fresh());
     }
+
+    public function test_user_can_verify_email_directly_from_profile(): void
+    {
+        $user = User::factory()->unverified()->create();
+
+        $this->assertNull($user->email_verified_at);
+
+        $response = $this
+            ->actingAs($user)
+            ->post('/profile/verify-email-now');
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('status', 'email-verified-directly')
+            ->assertRedirect('/profile');
+
+        $this->assertNotNull($user->refresh()->email_verified_at);
+        $this->assertTrue($user->hasVerifiedEmail());
+    }
 }
+

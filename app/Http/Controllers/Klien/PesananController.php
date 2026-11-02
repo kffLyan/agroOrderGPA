@@ -302,14 +302,14 @@ class PesananController extends Controller
 
         return response()->stream(function () use ($user, $orders, $statusFilter) {
             $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF");
+            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
 
-            fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)']);
-            fputcsv($handle, ['REKAPITULASI RESMI TRANSAKSI PEMESANAN (PURCHASE ORDER)']);
-            fputcsv($handle, ['KLIEN / MITRA B2B', $user->company_name ?: $user->name]);
-            fputcsv($handle, ['WAKTU EKSPOR', date('d/m/Y H:i') . ' WIB']);
-            fputcsv($handle, ['FILTER STATUS', strtoupper($statusFilter)]);
-            fputcsv($handle, []);
+            fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)'], ';');
+            fputcsv($handle, ['REKAPITULASI RESMI TRANSAKSI PEMESANAN (PURCHASE ORDER)'], ';');
+            fputcsv($handle, ['KLIEN / MITRA B2B', $user->company_name ?: $user->name], ';');
+            fputcsv($handle, ['WAKTU EKSPOR', date('d/m/Y H:i') . ' WIB'], ';');
+            fputcsv($handle, ['FILTER STATUS', ucwords(strtolower(str_replace('_', ' ', $statusFilter)))], ';');
+            fputcsv($handle, [], ';');
             fputcsv($handle, [
                 'No',
                 'No. Pesanan (PO)',
@@ -323,7 +323,7 @@ class PesananController extends Controller
                 'Status Siklus',
                 'Total Nilai (Rp)',
                 'Status Faktur',
-            ]);
+            ], ';');
 
             $no = 1;
             foreach ($orders as $order) {
@@ -335,6 +335,18 @@ class PesananController extends Controller
                 $commoditiesList = $order->commodities_summary;
                 $diffPct = 0;
 
+                $statusLabel = match ($order->status) {
+                    'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi',
+                    'MENUNGGU_PEMBAYARAN' => 'Menunggu Pembayaran',
+                    'LUNAS'               => 'Lunas',
+                    'SIAP_KIRIM'          => 'Siap Kirim',
+                    'DALAM_PENGIRIMAN'    => 'Dalam Pengiriman',
+                    'SELESAI'             => 'Selesai',
+                    'SELESAI_CATATAN'     => 'Selesai (Catatan)',
+                    'BATAL'               => 'Dibatalkan',
+                    default               => ucwords(strtolower(str_replace('_', ' ', $order->status))),
+                };
+
                 fputcsv($handle, [
                     $no++,
                     $order->order_number,
@@ -345,10 +357,10 @@ class PesananController extends Controller
                     $hasWeighed ? (($diffPct >= 0 ? '+' : '') . $diffPct . '%') : '-',
                     $order->surat_jalan_number ?: '-',
                     $order->vehicle ?: ($order->vehicle_plate_number ?: '-'),
-                    $order->status,
+                    $statusLabel,
                     (float) $amount,
                     $order->invoice ? ($order->invoice->status === 'PAID' ? 'Lunas' : 'Faktur Terbit') : 'Belum Ditagihkan',
-                ]);
+                ], ';');
             }
 
             fclose($handle);

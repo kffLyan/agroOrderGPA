@@ -51,12 +51,12 @@ class LaporanController extends Controller
 
         return response()->stream(function () {
             $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBF");
+            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
 
-            fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)']);
-            fputcsv($handle, ['JURNAL REKAPITULASI OPERASIONAL, PENIMBANGAN & PENJUALAN']);
-            fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB']);
-            fputcsv($handle, []);
+            fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)'], ';');
+            fputcsv($handle, ['JURNAL REKAPITULASI OPERASIONAL, PENIMBANGAN & PENJUALAN'], ';');
+            fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB'], ';');
+            fputcsv($handle, [], ';');
             fputcsv($handle, [
                 'No',
                 'No. PO / Invoice',
@@ -71,7 +71,7 @@ class LaporanController extends Controller
                 'Harga Satuan (Rp)',
                 'Total Nilai (Rp)',
                 'Status Pembayaran',
-            ]);
+            ], ';');
 
             $orders = Order::with(['user', 'orderItems.product', 'invoice'])->latest()->get();
             $rowNumber = 1;
@@ -102,8 +102,8 @@ class LaporanController extends Controller
                     ($diffPct >= 0 ? '+' : '') . $diffPct . '%',
                     $unitPrice,
                     $orderTotal,
-                    $isPaid ? 'Lunas' : 'Tempo 30',
-                ]);
+                    $isPaid ? 'Lunas' : 'Tempo 30 Hari',
+                ], ';');
             }
 
             fclose($handle);

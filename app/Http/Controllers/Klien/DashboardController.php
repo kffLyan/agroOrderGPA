@@ -146,7 +146,49 @@ class DashboardController extends Controller
         $dockName = 'DOCK UTAMA — ' . ($user->company_name ?: ($user->name ?: 'KLIEN GPA'));
         $creditBarWidth = max(0, min(100, $creditPercent)) . '%';
 
-        $ordersTable = $recentOrders;
+        $ordersTable = $recentOrders->map(function ($order) {
+            $orderedKg = (float) $order->items->sum('ordered_qty');
+            $commodities = $order->items->map(function ($item) {
+                return ($item->product?->name ?: 'Komoditas') . ' (' . number_format($item->ordered_qty, 0, ',', '.') . ' kg)';
+            })->filter()->join(', ');
+
+            $statusLabel = match ($order->status) {
+                'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi',
+                'MENUNGGU_PEMBAYARAN' => 'Menunggu Pembayaran',
+                'LUNAS'               => 'Lunas',
+                'SIAP_KIRIM'          => 'Siap Kirim',
+                'DALAM_PENGIRIMAN'    => 'Dalam Pengiriman',
+                'SELESAI'             => 'Selesai',
+                'SELESAI_CATATAN'     => 'Selesai (Catatan)',
+                'BATAL'               => 'Dibatalkan',
+                default               => ucwords(strtolower(str_replace('_', ' ', $order->status))),
+            };
+
+            $statusTone = match ($order->status) {
+                'LUNAS', 'SELESAI'                   => 'accent',
+                'MENUNGGU_VERIFIKASI', 'SIAP_KIRIM'  => 'neutral',
+                'MENUNGGU_PEMBAYARAN', 'DALAM_PENGIRIMAN' => 'warning',
+                'BATAL'                              => 'neutral',
+                default                              => 'neutral',
+            };
+
+            return [
+                'po'           => $order->order_number,
+                'date'         => $order->created_at ? $order->created_at->format('d/m/Y H:i') : '-',
+                'commodities'  => $commodities ?: 'Komoditas Sayuran Segar GPA',
+                'packaging'    => 'Krat Plastik Higienis Cold-Chain',
+                'weight'       => number_format($orderedKg, 1, ',', '.') . ' kg',
+                'weight_note'  => $order->surat_jalan_number ? '(Netto Tera)' : '(Estimasi)',
+                'scale_note'   => 'Timbangan Digital Tera Hub Lembang',
+                'driver'       => $order->driver?->name ?: null,
+                'sj'           => $order->surat_jalan_number ?: null,
+                'driver_note'  => $order->driver ? ('Supir GPA • ' . ($order->vehicle_plate_number ?: 'Truk Chiller')) : 'Armada belum ditugaskan',
+                'status'       => $statusLabel,
+                'raw_status'   => $order->status,
+                'status_tone'  => $statusTone,
+                'url'          => route('klien.pesanan.show', $order->id),
+            ];
+        })->values()->all();
 
         // Ambil data kontrak aktif produk secara efisien tanpa N+1 query
         $userContractsMap = $isContractClient 

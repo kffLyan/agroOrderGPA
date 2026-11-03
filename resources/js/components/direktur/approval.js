@@ -115,7 +115,7 @@ export default function directorApproval(rows = [], labels = {}) {
         /* ---------- row actions ---------- */
 
         detail(id) {
-            window.location.href = `/direktur/contracts/${id}`;
+            window.location.href = `/direktur/kontrak/${id}`;
         },
 
         async approve(id) {
@@ -124,7 +124,7 @@ export default function directorApproval(rows = [], labels = {}) {
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
             try {
-                const response = await fetch(`/direktur/contracts/${targetId}/approve`, {
+                const response = await fetch(`/direktur/kontrak/${targetId}/setujui`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -157,7 +157,7 @@ export default function directorApproval(rows = [], labels = {}) {
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
             try {
-                const response = await fetch('/direktur/contracts/batch-approve', {
+                const response = await fetch('/direktur/kontrak/setujui-serentak', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -199,7 +199,7 @@ export default function directorApproval(rows = [], labels = {}) {
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
             try {
-                const response = await fetch(`/direktur/contracts/${targetId}/revision`, {
+                const response = await fetch(`/direktur/kontrak/${targetId}/revisi`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -240,7 +240,7 @@ export default function directorApproval(rows = [], labels = {}) {
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
             try {
-                const response = await fetch(`/direktur/contracts/${targetId}/reject`, {
+                const response = await fetch(`/direktur/kontrak/${targetId}/tolak`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

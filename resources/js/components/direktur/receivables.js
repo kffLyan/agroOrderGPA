@@ -14,11 +14,18 @@ export default function directorReceivables(rows = [], policy = {}, verification
         topFilter: 'all',
         activeContracts: numberOf(activeContracts),
         selectedRow: null,
+        auditOpen: false,
         openDetail(row) {
             this.selectedRow = row;
         },
         closeDetail() {
             this.selectedRow = null;
+        },
+        openAudit() {
+            this.auditOpen = true;
+        },
+        closeAudit() {
+            this.auditOpen = false;
         },
         rows: (Array.isArray(rows) ? rows : []).map((row) => ({
             id: row.id,
@@ -113,7 +120,7 @@ export default function directorReceivables(rows = [], policy = {}, verification
         async toggleFreeze(row) {
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             try {
-                const response = await fetch(`/direktur/receivables/${row.id}/toggle-freeze`, {
+                const response = await fetch(`/direktur/piutang/${row.id}/toggle-freeze`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -141,7 +148,7 @@ export default function directorReceivables(rows = [], policy = {}, verification
         async sendReminder(row) {
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             try {
-                const response = await fetch(`/direktur/receivables/${row.id}/reminder`, {
+                const response = await fetch(`/direktur/piutang/${row.id}/reminder`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -180,7 +187,7 @@ export default function directorReceivables(rows = [], policy = {}, verification
 
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             try {
-                const response = await fetch(`/direktur/receivables/${row.id}/restructure`, {
+                const response = await fetch(`/direktur/piutang/${row.id}/restructure`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

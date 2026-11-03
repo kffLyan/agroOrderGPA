@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\Direktur;
 
 use App\Http\Controllers\Controller;
+use App\Models\Contract;
+use App\Models\Invoice;
 use App\Models\User;
 use App\Services\TataKelolaService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 // Controller tata kelola, kebijakan bisnis, dan audit trail untuk Direktur Utama
@@ -24,10 +27,23 @@ class TataKelolaController extends Controller
         $storedLogs = $this->tataKelolaService->getAuditLogs();
         $paymentChannels = $this->tataKelolaService->getPaymentChannels();
 
+        // Hitung batas eksposur plafon kredit korporat dan total piutang berjalan mitra B2B
+        $totalContractsPlafon = (float) Contract::where('status', 'ACTIVE')
+            ->sum(DB::raw('fixed_price_per_kg * committed_volume_per_cycle * 2'));
+        $defaultCeiling = (float) ($settings['default_top_credit_ceiling'] ?? 100000000);
+        $clientCount = max(1, User::where('role', 'KLIEN')->count());
+        $totalCeilingLimit = $totalContractsPlafon > 0 ? $totalContractsPlafon : ($defaultCeiling * $clientCount);
+
+        $totalUtilizedCredit = (float) Invoice::whereIn('status', ['UNPAID', 'OVERDUE'])->sum('grand_total');
+        $exposurePercent = $totalCeilingLimit > 0 ? round(($totalUtilizedCredit / $totalCeilingLimit) * 100, 1) : 0;
+
         return view('direktur.tata-kelola', compact(
             'settings',
             'storedLogs',
-            'paymentChannels'
+            'paymentChannels',
+            'totalCeilingLimit',
+            'totalUtilizedCredit',
+            'exposurePercent'
         ));
     }
 

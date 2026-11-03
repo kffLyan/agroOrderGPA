@@ -212,7 +212,7 @@ export default function secretaryVerification(orders = [], checklistTotal = 0) {
                     || '';
 
                 try {
-                    const response = await fetch(`/sekretaris/orders/${order.order_id}/reject`, {
+                    const response = await fetch(`/sekretaris/verifikasi/${order.order_id}/tolak`, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': csrf,
@@ -277,7 +277,7 @@ export default function secretaryVerification(orders = [], checklistTotal = 0) {
                     || '';
 
                 try {
-                    const response = await fetch(`/sekretaris/orders/${order.order_id}/approve`, {
+                    const response = await fetch(`/sekretaris/verifikasi/${order.order_id}/setujui`, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': csrf,

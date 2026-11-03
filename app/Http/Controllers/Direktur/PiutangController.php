@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Direktur\BukuBesarPiutangResource;
 use App\Models\Contract;
 use App\Models\Invoice;
+use App\Models\Order;
+use App\Models\Payment;
 use App\Models\User;
 use App\Services\TataKelolaService;
 use Illuminate\Contracts\View\View;
@@ -74,15 +76,26 @@ class PiutangController extends Controller
         $ledgerTotal = array_sum(array_column($ledgerRows, 'outstanding'));
         $activeContractsCount = Contract::where('status', 'ACTIVE')->count() ?: $dbClients->count();
 
+        $pendingVerificationCount = Order::where('status', 'MENUNGGU_VERIFIKASI')->count();
+        $pendingSettlementValue = (float) Payment::where('status', 'PENDING')->sum('amount');
+        $pendingOrders = Order::where('status', 'MENUNGGU_VERIFIKASI')
+            ->with(['user', 'orderItems.product'])
+            ->latest()
+            ->take(6)
+            ->get();
+
         return view('direktur.piutang', [
-            'totalReceivable' => $totalReceivable,
-            'stage1Val'       => $stage1Val,
-            'stage2Val'       => $stage2Val,
-            'stage3Val'       => $stage3Val,
-            'stage4Val'       => $stage4Val,
-            'ledgerRows'      => $ledgerRows,
-            'ledgerTotal'     => $ledgerTotal,
-            'activeContracts' => $activeContractsCount,
+            'totalReceivable'          => $totalReceivable,
+            'stage1Val'                => $stage1Val,
+            'stage2Val'                => $stage2Val,
+            'stage3Val'                => $stage3Val,
+            'stage4Val'                => $stage4Val,
+            'ledgerRows'               => $ledgerRows,
+            'ledgerTotal'              => $ledgerTotal,
+            'activeContracts'          => $activeContractsCount,
+            'pendingVerificationCount' => $pendingVerificationCount,
+            'pendingSettlementValue'   => $pendingSettlementValue,
+            'pendingOrders'            => $pendingOrders,
         ]);
     }
 

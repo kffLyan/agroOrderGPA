@@ -24,6 +24,14 @@ class BuktiTerimaController extends Controller
         $user = Auth::user();
         $targetOrderId = $request->query('order_id') ? (int) $request->query('order_id') : null;
 
+        // Validasi keamanan: cegah supir lain membuka lembar PoD pesanan milik supir lain via query param
+        if ($targetOrderId) {
+            $checkOrder = Order::find($targetOrderId);
+            if ($checkOrder && $checkOrder->driver_id && $checkOrder->driver_id !== $user->id) {
+                abort(403, 'Akses Ditolak: Bukti serah terima ini ditugaskan kepada supir armada lain.');
+            }
+        }
+
         $currentOrder = $this->armadaService->resolveCurrentDeliveryOrder($targetOrderId, $user);
         $plate = $currentOrder?->vehicle_plate_number ?: '—';
 

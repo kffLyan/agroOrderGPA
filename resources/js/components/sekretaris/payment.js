@@ -221,7 +221,7 @@ export default function secretaryPayments(queue = [], filters = [], operatorCode
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
             try {
-                const response = await fetch(`/sekretaris/pembayaran/${targetId}/approve`, {
+                const response = await fetch(`/sekretaris/pembayaran/${targetId}/setujui`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -261,7 +261,7 @@ export default function secretaryPayments(queue = [], filters = [], operatorCode
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
             try {
-                const response = await fetch(`/sekretaris/pembayaran/${targetId}/reject`, {
+                const response = await fetch(`/sekretaris/pembayaran/${targetId}/tolak`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

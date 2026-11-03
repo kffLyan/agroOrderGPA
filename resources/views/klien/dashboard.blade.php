@@ -122,7 +122,7 @@
                             </div>
                         </div>
                         <div class="flex shrink-0 items-center gap-2">
-                            <a href="https://wa.me/6281112233445?text=Halo%20Direksi%20GPA,%20saya%20telah%20mengajukan%20kontrak%20B2B%20nomor%20{{ $pendingContract->contract_number }}" target="_blank"
+                            <a href="https://wa.me/{{ config('app.contact_wa', '6281112233445') }}?text=Halo%20Direksi%20GPA,%20saya%20telah%20mengajukan%20kontrak%20B2B%20nomor%20{{ $pendingContract->contract_number }}" target="_blank"
                                 class="inline-flex items-center gap-2 rounded-xl bg-surface-pill px-4 py-2.5 font-sans text-xs font-bold text-ink outline outline-1 outline-line-hair transition-all hover:bg-surface-disabled">
                                 <x-gpa.icon name="message-square" class="h-4 w-4 text-success-deep" />
                                 <span>Konfirmasi via WhatsApp</span>
@@ -855,10 +855,10 @@
                                 </span>
                                 <div>
                                     <p class="font-bold text-ink">Hotline WhatsApp Tim Kemitraan GPA</p>
-                                    <p class="text-[10px] text-ink-body">Konsultasi langsung PKS: <strong>+62 811-1223-3445</strong></p>
+                                    <p class="text-[10px] text-ink-body">Konsultasi langsung PKS: <strong>{{ config('app.contact_phone', '+62 811-1223-3445') }}</strong></p>
                                 </div>
                             </div>
-                            <a href="https://wa.me/6281112233445?text=Halo%20Tim%20Kemitraan%20GPA,%20saya%20ingin%20berkonsultasi%20mengenai%20kontrak%20B2B" target="_blank" rel="noopener noreferrer"
+                            <a href="https://wa.me/{{ config('app.contact_wa', '6281112233445') }}?text=Halo%20Tim%20Kemitraan%20GPA,%20saya%20ingin%20berkonsultasi%20mengenai%20kontrak%20B2B" target="_blank" rel="noopener noreferrer"
                                 class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-surface px-2.5 py-1 font-mono text-[10px] font-bold text-emerald-800 border border-emerald-300 hover:bg-emerald-50 transition">
                                 <x-gpa.icon name="phone" class="h-3 w-3 text-emerald-700" />
                                 <span>Hubungi GPA</span>

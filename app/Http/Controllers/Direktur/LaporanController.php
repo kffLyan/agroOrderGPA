@@ -122,6 +122,17 @@ class LaporanController extends Controller
             ->sum(DB::raw('returned_weight * unit_price'));
         $tolerancePercent = $totalRevenue > 0 ? round(($shrinkageClaim / $totalRevenue) * 100, 2) : 0;
 
+        // Hitung total nilai diskon komoditas dari kontrak B2B terhadap harga acuan pasar
+        $contractDiscount = 0.0;
+        foreach ($orders as $order) {
+            foreach ($order->orderItems as $item) {
+                $basePrice = (float) ($item->product?->base_price ?? $item->unit_price);
+                if ($basePrice > (float) $item->unit_price) {
+                    $contractDiscount += ($basePrice - (float) $item->unit_price) * (float) $item->ordered_qty;
+                }
+            }
+        }
+
         // 4. Analitik komoditas terjual dalam periode
         $products = Product::take(5)->get();
         $cAnalytics = $this->buildCommodityAnalytics($products, $orderIds);
@@ -173,6 +184,7 @@ class LaporanController extends Controller
             'settledPercent',
             'shrinkageClaim',
             'tolerancePercent',
+            'contractDiscount',
             'commodityList',
             'poTotal',
             'teraTotal',

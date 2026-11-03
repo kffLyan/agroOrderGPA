@@ -108,7 +108,7 @@ export default function secretaryDispatch(rows = []) {
 
             const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             try {
-                const response = await fetch(`/sekretaris/surat-jalan/${orderId}/assign-driver`, {
+                const response = await fetch(`/sekretaris/surat-jalan/${orderId}/tugaskan-supir`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

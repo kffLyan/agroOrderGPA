@@ -471,12 +471,12 @@
                     x-text="shownLabel()">Menampilkan {{ count($ledgerRows ?? []) }} dari {{ $activeContracts ?? 0 }} Klien Kontrak Aktif B2B</p>
                 <div class="flex items-center gap-2">
                     <button type="button" disabled
-                        class="cursor-not-allowed rounded bg-surface px-3 py-1 text-[11px] font-semibold leading-[14px] tracking-[0.88px] text-ink-body outline outline-1 -outline-offset-1 outline-line-board">
+                        class="cursor-not-allowed rounded bg-surface px-3 py-1 text-[11px] font-semibold leading-[14px] tracking-[0.88px] text-ink-subtle opacity-60 outline outline-1 -outline-offset-1 outline-line-board">
                         Prev
                     </button>
                     <span class="text-[11px] font-bold leading-[14px] tracking-[0.88px] text-ink {{ $mono }}">Halaman 1 / 1</span>
-                    <button type="button"
-                        class="rounded bg-surface px-3 py-1 text-[11px] font-semibold leading-[14px] tracking-[0.88px] text-ink-body outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:text-ink">
+                    <button type="button" disabled
+                        class="cursor-not-allowed rounded bg-surface px-3 py-1 text-[11px] font-semibold leading-[14px] tracking-[0.88px] text-ink-subtle opacity-60 outline outline-1 -outline-offset-1 outline-line-board">
                         Next
                     </button>
                 </div>
@@ -494,27 +494,97 @@
                     <div class="flex flex-col gap-2 pt-2">
                         <div class="flex items-center justify-between gap-3 rounded-lg bg-surface-shell p-2.5">
                             <span class="text-[12px] leading-4 text-ink">Antrean Verifikasi Masuk:</span>
-                            <span class="text-[12px] font-bold leading-4 text-ink {{ $mono }}">3 Faktur</span>
+                            <span class="text-[12px] font-bold leading-4 text-ink {{ $mono }}">{{ $pendingVerificationCount ?? 0 }} Antrean PO</span>
                         </div>
                         <div class="flex items-center justify-between gap-3 rounded-lg bg-surface-shell p-2.5">
                             <span class="text-[12px] leading-4 text-ink">Total Nilai Menunggu Kliring:</span>
-                            <span class="text-[12px] font-bold leading-4 text-success-deep {{ $mono }}">Rp 78.400.000</span>
+                            <span class="text-[12px] font-bold leading-4 text-success-deep {{ $mono }}">Rp {{ number_format($pendingSettlementValue ?? 0, 0, ',', '.') }}</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex flex-col gap-2 border-t border-line-board pt-4">
-                    <a href="{{ route('sekretaris.verifikasi') }}"
+                    <button type="button" @click="openAudit()"
                         class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-deep px-4 py-3 text-[16px] font-bold leading-6 text-ink shadow-sub transition-colors hover:bg-accent">
                         <x-gpa.icon name="clipboard" class="h-3.5 w-3.5 shrink-0" />
-                        Buka Antrean Verifikasi Sekre
-                    </a>
+                        Audit Antrean Verifikasi
+                    </button>
                     <p class="text-center font-mono text-[10px] leading-[15px] tracking-[0.88px] text-ink-body">
                         SLO VERIFIKASI MAKSIMAL: 1x24 JAM DARI TANGGAL MUTASI
                     </p>
                 </div>
             </article>
         </section>
+
+        {{-- Modal Audit Pengawasan Antrean Verifikasi Sekretariat --}}
+        <div x-show="auditOpen" x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm"
+            @keydown.escape.window="closeAudit()">
+            <div class="w-full max-w-xl rounded-2xl bg-surface p-6 shadow-2xl border border-line-board"
+                @click.outside="closeAudit()">
+                <div class="flex items-start justify-between border-b border-line-hair pb-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-base font-bold text-ink">Audit Kepatuhan Verifikasi Sekretariat</h3>
+                            <span class="inline-flex items-center rounded-full bg-accent/30 px-2 py-0.5 text-[11px] font-bold text-accent-deep font-mono">SLO 1x24 Jam</span>
+                        </div>
+                        <p class="mt-0.5 text-xs text-ink-body">Pengawasan eksekutif terhadap draf pesanan masuk yang menunggu persetujuan dan kliring dana.</p>
+                    </div>
+                    <button type="button" @click="closeAudit()" class="rounded-lg p-1 text-ink-subtle hover:bg-surface-shell">
+                        <x-gpa.icon name="x" class="h-5 w-5" />
+                    </button>
+                </div>
+
+                <div class="mt-4 flex flex-col gap-3">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="rounded-xl border border-line-hair bg-surface-shell p-3">
+                            <span class="block text-[11px] font-medium text-ink-body">Antrean Masuk</span>
+                            <span class="mt-1 block font-mono text-base font-extrabold text-ink">{{ $pendingVerificationCount ?? 0 }} Antrean PO</span>
+                        </div>
+                        <div class="rounded-xl border border-line-hair bg-surface-shell p-3">
+                            <span class="block text-[11px] font-medium text-ink-body">Nilai Belum Kliring</span>
+                            <span class="mt-1 block font-mono text-base font-extrabold text-success-deep">Rp {{ number_format($pendingSettlementValue ?? 0, 0, ',', '.') }}</span>
+                        </div>
+                    </div>
+
+                    @if (($pendingVerificationCount ?? 0) === 0)
+                        <div class="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-line-board bg-surface-shell/50 py-8 text-center">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-success/20 text-success">
+                                <x-gpa.icon name="check" class="h-5 w-5" />
+                            </div>
+                            <h4 class="text-sm font-bold text-ink">Antrean Bersih & Kepatuhan 100%</h4>
+                            <p class="max-w-xs text-xs text-ink-body">Seluruh pesanan masuk telah diverifikasi tepat waktu oleh tim Sekretariat. Tidak ada pesanan tertahan.</p>
+                        </div>
+                    @else
+                        <div class="flex flex-col gap-2 max-h-60 overflow-y-auto pr-1">
+                            @foreach ($pendingOrders ?? [] as $order)
+                                <div class="flex items-center justify-between gap-3 rounded-xl border border-line-hair bg-surface p-3 transition-colors hover:border-line-board">
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-mono text-xs font-bold text-ink">{{ $order->order_number }}</span>
+                                            <span class="rounded bg-accent/20 px-1.5 py-0.5 font-mono text-[10px] font-bold text-ink">{{ $order->created_at?->diffForHumans() }}</span>
+                                        </div>
+                                        <p class="truncate text-xs text-ink-body mt-0.5">{{ $order->user?->name ?? 'Klien Mitra' }} &bull; Rp {{ number_format($order->grand_total, 0, ',', '.') }}</p>
+                                    </div>
+                                    <a href="{{ route('direktur.inspeksi-pesanan.show', $order->id) }}"
+                                        class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-line-hair bg-surface-shell px-3 py-1.5 text-xs font-bold text-ink hover:bg-line-hair transition-colors">
+                                        <x-gpa.icon name="search" class="h-3.5 w-3.5 text-accent-deep" />
+                                        Inspeksi 360
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+
+                <div class="mt-6 flex justify-end border-t border-line-hair pt-4">
+                    <button type="button" @click="closeAudit()"
+                        class="rounded-lg bg-surface-shell px-4 py-2 text-xs font-bold text-ink hover:bg-surface-track transition-colors">
+                        Tutup Lembar Audit
+                    </button>
+                </div>
+            </div>
+        </div>
 
         {{-- Modal Detail Faktur & Evaluasi Plafon Klien --}}
         <div x-show="selectedRow !== null" x-cloak

@@ -740,7 +740,7 @@
                             class="rounded-lg border border-line-soft px-4 py-2 text-xs font-bold text-ink transition hover:bg-surface-muted">
                             Tutup
                         </button>
-                        <a href="https://wa.me/6281298765432?text=Halo%20Tim%20Finance%20GPA%2C%20saya%20ingin%20rekonsiliasi%20faktur%20konsolidasi%20tagihan%20tempo%20kemitraan%20kami."
+                        <a href="https://wa.me/{{ config('app.contact_wa', '6281112233445') }}?text=Halo%20Tim%20Finance%20GPA%2C%20saya%20ingin%20rekonsiliasi%20faktur%20konsolidasi%20tagihan%20tempo%20kemitraan%20kami."
                             target="_blank" rel="noopener noreferrer"
                             class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700">
                             <x-gpa.icon name="message-circle" class="h-4 w-4" />

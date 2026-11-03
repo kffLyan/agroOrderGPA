@@ -214,7 +214,6 @@ Route::middleware(['auth', 'role:ARMADA'])->prefix('armada')->name('armada.')->g
 
     // 4. Status Kendaraan, Telemetri IoT & Kelaikan Shift
     Route::get('/status-kendaraan', [ArmadaStatusKendaraanController::class, 'index'])->name('status-kendaraan');
-    Route::post('/status-kendaraan/tutup-shift', [ArmadaStatusKendaraanController::class, 'closeShift'])->name('status-kendaraan.tutup-shift');
 });
 
 // Modul eksekutif Direktur Utama untuk analitika omzet, otorisasi margin kontrak, audit trail, dan tata kelola

@@ -668,7 +668,7 @@
                                         <span class="text-[11px] font-semibold text-white/70 uppercase tracking-wider block">Total Tagihan</span>
                                         <span class="mt-1.5 font-mono text-2xl font-black text-white block" x-text="rupiah(total)"></span>
                                     </div>
-                                    <span class="text-[10px] text-white/60 mt-2 block">Termasuk ongkir flat (Rp 75.000)</span>
+                                    <span class="text-[10px] text-white/60 mt-2 block">Termasuk ongkir flat (Rp {{ number_format($logisticsData['default_fee'] ?? 75000, 0, ',', '.') }})</span>
                                 </div>
 
                                 {{-- Input Nominal Diterima --}}

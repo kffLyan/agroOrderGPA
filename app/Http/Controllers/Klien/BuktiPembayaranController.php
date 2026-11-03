@@ -315,7 +315,7 @@ class BuktiPembayaranController extends Controller
                 ], 500);
             }
 
-            return back()->withInput()->with('error', 'Gagal memproses bukti pembayaran: ' . $e->getMessage());
+            return back()->withInput()->with('error', 'Gagal memproses bukti pembayaran: ' . $exception->getMessage());
         }
     }
 }

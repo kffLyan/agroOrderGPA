@@ -131,4 +131,55 @@ class ArmadaTest extends TestCase
             'received_by_name' => 'Muha',
         ]);
     }
+
+    public function test_driver_only_sees_their_own_assigned_orders_in_queue(): void
+    {
+        $driverJoko = User::factory()->create([
+            'name'      => 'Joko Driver',
+            'role'      => 'ARMADA',
+            'is_active' => true,
+        ]);
+
+        $driverBudi = User::factory()->create([
+            'name'      => 'Budi Driver',
+            'role'      => 'ARMADA',
+            'is_active' => true,
+        ]);
+
+        $client = User::factory()->create(['role' => 'KLIEN', 'name' => 'Klien Mitra']);
+
+        $orderJoko = Order::create([
+            'order_number'         => 'ORD-JOKO-001',
+            'user_id'              => $client->id,
+            'driver_id'            => $driverJoko->id,
+            'order_source'         => 'WEB_PORTAL',
+            'status'               => 'SIAP_KIRIM',
+            'target_delivery_date' => now()->addDay(),
+            'vehicle_plate_number' => 'B 9014 KPA',
+            'surat_jalan_number'   => 'SJ-20261103-0001',
+            'delivery_address'     => 'Restoran Pasundan',
+            'grand_total'          => 2000000,
+        ]);
+
+        // 1. Login sebagai Joko -> Harus melihat pesanan miliknya
+        $responseJoko = $this->actingAs($driverJoko)->get('/armada/tugas');
+        $responseJoko->assertStatus(200);
+        $responseJoko->assertSee('SJ-20261103-0001');
+        $responseJoko->assertSee('Restoran Pasundan');
+
+        // 2. Login sebagai Budi -> TIDAK BOLEH melihat pesanan milik Joko
+        $responseBudi = $this->actingAs($driverBudi)->get('/armada/tugas');
+        $responseBudi->assertStatus(200);
+        $responseBudi->assertDontSee('SJ-20261103-0001');
+        $responseBudi->assertDontSee('Restoran Pasundan');
+        $responseBudi->assertSee('Belum Ada Tugas Pengantaran');
+
+        // 3. Budi mencoba mengakses surat jalan Joko via URL parameter -> Harus 403 Ditolak
+        $responseBudiSj = $this->actingAs($driverBudi)->get('/armada/surat-jalan?order_id=' . $orderJoko->id);
+        $responseBudiSj->assertStatus(403);
+
+        // 4. Budi mencoba mengakses halaman PoD Joko via URL parameter -> Harus 403 Ditolak
+        $responseBudiPod = $this->actingAs($driverBudi)->get('/armada/bukti-terima?order_id=' . $orderJoko->id);
+        $responseBudiPod->assertStatus(403);
+    }
 }

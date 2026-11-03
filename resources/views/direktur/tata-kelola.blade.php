@@ -164,20 +164,20 @@
                             CEILING LIMIT
                         </span>
                     </div>
-                    <p class="gpa-figure text-[22px] leading-7 text-ink">Rp 2.500.000.000</p>
+                    <p class="gpa-figure text-[22px] leading-7 text-ink">Rp {{ number_format($totalCeilingLimit, 0, ',', '.') }}</p>
                     <p class="text-[11px] leading-4 text-ink-body">Plafon kredit korporat maksimum</p>
                     <div class="flex flex-col gap-1">
                         <div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
-                            <div class="h-full rounded-full bg-success-deep" style="width: 47.4%"></div>
+                            <div class="h-full rounded-full bg-success-deep" style="width: {{ min(100, $exposurePercent) }}%"></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
                     <span class="gpa-note text-ink-body">Terutilisasi</span>
-                    <span class="gpa-note font-bold text-success-deep">Rp 1.185.000.000</span>
+                    <span class="gpa-note font-bold text-success-deep">Rp {{ number_format($totalUtilizedCredit, 0, ',', '.') }}</span>
                 </div>
-                <p class="gpa-note font-semibold text-success-deep">47.4% Exposure Aman</p>
+                <p class="gpa-note font-semibold text-success-deep">{{ $exposurePercent }}% Exposure Aman</p>
             </article>
 
             {{-- Metric 3: Dir Approval Status --}}

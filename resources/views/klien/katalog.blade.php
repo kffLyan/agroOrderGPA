@@ -563,7 +563,7 @@
                             class="rounded-lg border border-line-soft px-4 py-2 text-xs font-bold text-ink transition hover:bg-surface-muted">
                             Tutup
                         </button>
-                        <a href="https://wa.me/6281123456789?text={{ urlencode($isB2b ? 'Halo Account Executive Koperasi GPA, saya dari ' . ($user->company_name ?: $user->name) . ' (Mitra Kontrak B2B). Saya ingin konsultasi aktivasi buffer pasokan panen darurat / penambahan skala tonase khusus.' : 'Halo Tim Kemitraan Koperasi GPA, saya dari ' . ($user->company_name ?: $user->name) . '. Kami tertarik untuk berkonsultasi mengenai persyaratan upgrade ke Kemitraan Kontrak B2B (Fasilitas Buffer Panen & Tempo TOP 30 Hari).') }}"
+                        <a href="https://wa.me/{{ config('app.contact_wa', '6281112233445') }}?text={{ urlencode($isB2b ? 'Halo Account Executive Koperasi GPA, saya dari ' . ($user->company_name ?: $user->name) . ' (Mitra Kontrak B2B). Saya ingin konsultasi aktivasi buffer pasokan panen darurat / penambahan skala tonase khusus.' : 'Halo Tim Kemitraan Koperasi GPA, saya dari ' . ($user->company_name ?: $user->name) . '. Kami tertarik untuk berkonsultasi mengenai persyaratan upgrade ke Kemitraan Kontrak B2B (Fasilitas Buffer Panen & Tempo TOP 30 Hari).') }}"
                             target="_blank" rel="noopener noreferrer"
                             class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700">
                             <x-gpa.icon name="message-circle" class="h-4 w-4" />

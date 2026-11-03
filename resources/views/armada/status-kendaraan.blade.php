@@ -249,11 +249,11 @@
                 <span>LAPOR KENDALA KENDARAAN / JALAN</span>
             </button>
 
-            <a href="tel:0218901234"
+            <a href="tel:081112233445"
                 class="flex items-center justify-between rounded-xl bg-surface-shell p-3 outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-disabled transition-colors">
                 <div class="flex flex-col text-left">
                     <span class="font-mono text-[9px] text-ink-quiet uppercase">KOORDINATOR DISPATCH GUDANG SENTRA</span>
-                    <span class="font-mono text-xs font-bold text-ink">Telepon Hotline: (021) 890-1234</span>
+                    <span class="font-mono text-xs font-bold text-ink">Telepon Hotline: +62 811-1223-3445</span>
                 </div>
                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ink text-accent">
                     <x-gpa.icon name="phone" class="h-4 w-4" />
@@ -271,19 +271,9 @@
                 </span>
             </button>
 
-            {{-- Form tutup shift --}}
-            <form id="close-shift-form" method="POST" action="{{ route('armada.status-kendaraan.tutup-shift') }}" class="hidden">
-                @csrf
-            </form>
+            
 
-            <div class="flex flex-col gap-2 border-t border-surface-shell pt-3">
-                <button type="button" @click="closeShift(); document.getElementById('close-shift-form')?.submit();"
-                    :disabled="closed"
-                    class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-accent font-mono text-xs font-bold uppercase tracking-wider text-ink shadow-pop transition-transform active:scale-[0.98]">
-                    <x-gpa.icon name="check-circle" class="h-4 w-4" />
-                    <span>SELESAIKAN SHIFT &amp; TUTUP TUGAS PENGANTARAN</span>
-                </button>
-
+            <div class="flex flex-col gap-2 border-t border-surface-shell pt-3"?>
                 <p class="text-center font-mono text-[10px] text-ink-body">
                     *Pastikan seluruh bukti terima PoD telah diunggah sebelum menutup shift harian.
                 </p>

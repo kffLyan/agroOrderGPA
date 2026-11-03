@@ -8,32 +8,23 @@ use Illuminate\Support\Collection;
 
 class ArmadaService
 {
-    // Mengambil daftar pesanan tugas pengantaran armada untuk supir tertentu atau pesanan siap kirim.
+    // Mengambil daftar pesanan tugas pengantaran armada khusus supir yang ditugaskan (terisolasi per supir)
     public function getActiveOrdersForDriver(?User $driver): Collection
     {
-        $orders = Order::with(['orderItems.product', 'user', 'driver', 'verifier'])
-            ->where(function ($query) use ($driver) {
-                if ($driver) {
-                    $query->where('driver_id', $driver->id)
-                        ->orWhereIn('status', ['DALAM_PENGIRIMAN', 'SIAP_KIRIM']);
-                } else {
-                    $query->whereIn('status', ['DALAM_PENGIRIMAN', 'SIAP_KIRIM']);
-                }
-            })
-            ->whereNotIn('status', ['DRAFT', 'BATAL'])
-            ->latest()
-            ->get();
-
-        // Fallback mengambil riwayat pengiriman jika belum ada tugas aktif baru
-        if ($orders->isEmpty()) {
-            $orders = Order::with(['orderItems.product', 'user', 'driver', 'verifier'])
-                ->whereIn('status', ['LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'])
-                ->latest()
-                ->take(5)
-                ->get();
+        if (!$driver) {
+            return collect();
         }
 
-        return $orders;
+        return Order::with(['orderItems.product', 'user', 'driver', 'verifier'])
+            ->where('driver_id', $driver->id)
+            ->whereNotIn('status', ['DRAFT', 'BATAL'])
+            ->orderByRaw("CASE 
+                WHEN status = 'DALAM_PENGIRIMAN' THEN 1 
+                WHEN status = 'SIAP_KIRIM' THEN 2 
+                WHEN status IN ('SELESAI', 'SELESAI_CATATAN') THEN 3 
+                ELSE 4 END")
+            ->latest('updated_at')
+            ->get();
     }
 
     // Mengidentifikasi nomor pelat armada operasional kendaraan yang ditugaskan pada pesanan aktif.
@@ -45,13 +36,18 @@ class ArmadaService
     // Menghitung total bobot tonase muatan pengantaran sayur dan komoditas dalam satuan kilogram.
     public function calculateTotalWeightKg(Collection $orders): float
     {
-        return (float) $orders->sum(fn ($order) => $order->orderItems->sum('ordered_qty'));
+        return (float) $orders->sum(fn ($order) => $order->orderItems ? $order->orderItems->sum('ordered_qty') : 0);
     }
 
-    // Mengambil pesanan pengantaran spesifik berdasarkan ID atau pesanan aktif pertama armada.
+    // Mengambil pesanan pengantaran spesifik milik supir berdasarkan ID atau pesanan aktif pertama armada.
     public function resolveCurrentDeliveryOrder(?int $orderId, ?User $driver): ?Order
     {
-        $query = Order::with(['orderItems.product', 'user', 'driver', 'verifier']);
+        if (!$driver) {
+            return null;
+        }
+
+        $query = Order::with(['orderItems.product', 'user', 'driver', 'verifier'])
+            ->where('driver_id', $driver->id);
 
         if ($orderId) {
             $order = $query->find($orderId);

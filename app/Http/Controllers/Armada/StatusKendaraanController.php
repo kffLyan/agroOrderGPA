@@ -31,11 +31,4 @@ class StatusKendaraanController extends Controller
         ]);
     }
 
-    // Menutup shift operasional harian supir armada dan merekam kepulangan kendaraan ke sentra
-    public function closeShift(Request $request): RedirectResponse
-    {
-        return redirect()
-            ->route('armada.status-kendaraan')
-            ->with('success', 'Shift harian berhasil ditutup! Terima kasih atas pengantaran hari ini.');
-    }
 }

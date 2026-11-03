@@ -7,6 +7,10 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Verifikasi Alamat Email &middot; Green Pasundan Agriculture</title>
 
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon.png') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" href="{{ asset('gpaleaves.png') }}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -91,8 +95,8 @@
                     {{-- Bantuan --}}
                     <p class="mt-6 text-[11px] text-ink-subtle">
                         Butuh bantuan aktivasi? Hubungi Desk Sekretariat GPA di
-                        <a href="https://wa.me/6281112233445" target="_blank" class="font-bold text-brand hover:underline">
-                            +62 811-1223-3445
+                        <a href="https://wa.me/{{ config('app.contact_wa', '6281112233445') }}" target="_blank" class="font-bold text-brand hover:underline">
+                            {{ config('app.contact_phone', '+62 811-1223-3445') }}
                         </a>
                     </p>
                 </div>

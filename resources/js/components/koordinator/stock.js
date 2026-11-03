@@ -248,7 +248,7 @@ export default function coordinatorStock(commodities = [], filterOptions = [], i
             this.logTotal += 1;
 
             // Simpan ke database via AJAX
-            fetch('/koordinator/stok/batch', {
+            fetch('/koordinator/stok', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -335,7 +335,7 @@ export default function coordinatorStock(commodities = [], filterOptions = [], i
             this.form.quantity = 0;
 
             // Simpan ke database via AJAX
-            fetch('/koordinator/stok/batch', {
+            fetch('/koordinator/stok', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -123,4 +123,7 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'contact_wa' => env('APP_CONTACT_WA', '6281112233445'),
+    'contact_phone' => env('APP_CONTACT_PHONE', '+62 811-1223-3445'),
+
 ];

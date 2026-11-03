@@ -114,7 +114,7 @@
                                     <p class="text-sm font-semibold leading-5 text-brand-strong">WhatsApp Hotline B2B</p>
                                     <p class="gpa-mono-xs mt-0.5 text-ink-subtle">Layanan Konsultasi &amp; Info Draf Kontrak</p>
                                 </div>
-                                <p class="font-mono text-xs font-bold text-success sm:text-right">+62 821-2345-6789</p>
+                                <p class="font-mono text-xs font-bold text-success sm:text-right">{{ config('app.contact_phone', '+62 811-1223-3445') }}</p>
                             </li>
                             <li class="flex flex-col gap-1 rounded-lg border border-line-hair bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                 <div>
@@ -128,7 +128,7 @@
                                     <p class="text-sm font-semibold leading-5 text-brand-strong">Helpdesk Dispatch Logistik</p>
                                     <p class="gpa-mono-xs mt-0.5 text-ink-subtle">Monitoring Armada Pengiriman Subuh</p>
                                 </div>
-                                <p class="font-mono text-xs font-bold text-success sm:text-right">+62 811-9876-5432</p>
+                                <p class="font-mono text-xs font-bold text-success sm:text-right">{{ config('app.contact_phone', '+62 811-1223-3445') }} (Hub Bogor)</p>
                             </li>
                         </ul>
                     </article>
@@ -150,7 +150,41 @@
                         </div>
 
                         <form class="flex flex-col gap-5"
-                            x-on:submit.prevent="$dispatch('gpa:toast', { title: 'Permohonan Kemitraan Terkirim', message: 'Tim representatif GPA akan menghubungi Anda dalam waktu maksimal 2 jam kerja.', tone: 'success' })">
+                            x-data="{
+                                submitInquiry(e) {
+                                    const f = new FormData(e.target);
+                                    const pic = f.get('pic') || '';
+                                    const company = f.get('company') || '';
+                                    const phone = f.get('phone') || '';
+                                    const email = f.get('email') || '';
+                                    const bType = f.get('business_type') || '';
+                                    const vol = f.get('volume') || '';
+                                    const pay = f.get('pembayaran') || '';
+                                    const notes = f.get('catatan') || '';
+                                    const komoditas = f.getAll('komoditas[]').join(', ');
+
+                                    const msg = `Halo Tim Kemitraan GPA, saya ingin mengajukan permohonan pasokan komoditas:%0A` +
+                                        `• PIC: ${pic}%0A` +
+                                        `• Perusahaan: ${company}%0A` +
+                                        `• Kontak: ${phone} (${email})%0A` +
+                                        `• Kategori Usaha: ${bType}%0A` +
+                                        (komoditas ? `• Komoditas: ${komoditas}%0A` : '') +
+                                        (vol ? `• Estimasi Volume: ${vol}%0A` : '') +
+                                        `• Preferensi TOP: ${pay}%0A` +
+                                        (notes ? `• Catatan: ${notes}` : '');
+
+                                    const waUrl = `https://wa.me/{{ config('app.contact_wa', '6281112233445') }}?text=${encodeURIComponent(msg)}`;
+                                    window.open(waUrl, '_blank');
+
+                                    this.$dispatch('gpa:toast', {
+                                        title: 'Permohonan Kemitraan Diteruskan',
+                                        message: 'Data formulir telah dialihkan ke WhatsApp resmi GPA. Tim kami akan segera menindaklanjuti.',
+                                        tone: 'success'
+                                    });
+                                    e.target.reset();
+                                }
+                            }"
+                            x-on:submit.prevent="submitInquiry($event)">
 
                             <div class="flex flex-col gap-4 sm:flex-row">
                                 <div class="sm:flex-1">

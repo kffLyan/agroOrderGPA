@@ -23,24 +23,50 @@ export default function armadaStatus() {
             this.refreshStatus();
         },
 
-        openReport() {
-            this.run(
-                'Lapor Kendala',
-                'Jika ada kendala kendaraan atau jalan, segera hubungi kontak dispatch operasional.',
-                'info',
-            );
+        async openReport() {
+            if (typeof window.$prompt === 'function') {
+                const kendala = await window.$prompt({
+                    title: 'Lapor Kendala Pengiriman',
+                    message: 'Deskripsikan kendala kendaraan / kendala perjalanan armada:',
+                    placeholder: 'Contoh: Kendala mesin atau kemacetan parah di KM 28...',
+                    icon: 'alert-triangle',
+                    tone: 'warning',
+                    confirmText: 'Teruskan ke Dispatcher',
+                    cancelText: 'Batal',
+                });
+                if (kendala) {
+                    const waUrl = `https://wa.me/6281112233445?text=${encodeURIComponent('LAPORAN KENDALA ARMADA: ' + kendala)}`;
+                    window.open(waUrl, '_blank');
+                    this.run('Kendala Terkirim', 'Laporan diteruskan ke WhatsApp hotline Dispatcher Sentral.', 'warning');
+                }
+            } else {
+                this.run(
+                    'Lapor Kendala',
+                    'Jika ada kendala kendaraan atau jalan, segera hubungi hotline dispatch operasional di 0811-1223-3445.',
+                    'warning',
+                );
+            }
         },
 
-        callDispatch(phone = '021-884-9021') {
+        callDispatch(phone = '0811-1223-3445') {
             window.location.href = 'tel:' + phone.replace(/[^0-9+]/g, '');
         },
 
         openSop() {
-            this.run(
-                'Panduan SOP Mutu',
-                'Pastikan barang pesanan disusun rapi, terlindung dari terik matahari dan hujan, serta sesuai Surat Jalan.',
-                'info',
-            );
+            if (typeof window.$alert === 'function') {
+                window.$alert({
+                    title: 'SOP Mutu & Standar Pengiriman GPA',
+                    message: '1. Pastikan boks kendaraan tertutup rapat dan higienis.\n2. Susun krat sayur sesuai urutan titik bongkar dock.\n3. Periksa kesesuaian fisik dan lembar Surat Jalan.\n4. Mintakan tanda tangan & stempel basah penerima.\n5. Unggah 2 foto bukti serah terima (PoD) sebelum berangkat ke titik berikutnya.',
+                    icon: 'file-text',
+                    tone: 'info',
+                });
+            } else {
+                this.run(
+                    'Panduan SOP Mutu',
+                    'Pastikan barang pesanan disusun rapi, terlindung dari terik matahari dan hujan, serta sesuai Surat Jalan.',
+                    'info',
+                );
+            }
         },
 
         closeShift() {

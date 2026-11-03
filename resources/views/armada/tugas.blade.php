@@ -243,11 +243,11 @@
 
                     <div class="flex flex-col">
                         <span class="font-mono text-[10px] font-bold uppercase text-ink-quiet">BANTUAN OPERASIONAL DISPATCH</span>
-                        <span class="font-mono text-xs font-bold text-ink">(021) 890-1234</span>
+                        <span class="font-mono text-xs font-bold text-ink">+62 811-1223-3445</span>
                     </div>
                 </div>
 
-                <a href="tel:0218901234"
+                <a href="tel:081112233445"
                     class="flex h-9 items-center gap-1.5 rounded-lg bg-ink px-3.5 font-mono text-xs font-bold text-white shadow-sub transition-transform active:scale-95">
                     <x-gpa.icon name="phone" class="h-3 w-3 shrink-0" />
                     HUBUNGI

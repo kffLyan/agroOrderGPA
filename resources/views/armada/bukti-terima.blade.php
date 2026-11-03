@@ -27,6 +27,19 @@
     <div class="mx-auto flex w-full max-w-[512px] flex-col gap-4 px-3 pb-24"
         x-data="armadaPod()">
 
+        @if (!$currentOrder)
+            <section class="flex flex-col items-center justify-center gap-3 rounded-2xl bg-surface p-8 text-center shadow-card">
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-shell text-ink-quiet">
+                    <x-gpa.icon name="qrcode" class="h-8 w-8" />
+                </div>
+                <h2 class="text-base font-bold text-ink">Belum Ada Pengantaran Siap PoD</h2>
+                <p class="max-w-xs text-xs text-ink-body">Tidak ada pengiriman aktif yang ditugaskan kepada Anda untuk dilakukan proses serah terima barang saat ini.</p>
+                <a href="{{ route('armada.tugas') }}" class="mt-2 inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 font-mono text-xs font-bold text-white shadow-sub hover:opacity-90 transition-opacity">
+                    <x-gpa.icon name="clipboard" class="h-3.5 w-3.5" />
+                    Cek Antrean Tugas
+                </a>
+            </section>
+        @else
         {{-- Target surat jalan --}}
         <section class="flex flex-col gap-3 rounded-2xl bg-surface p-4 shadow-card">
             <header class="flex items-center justify-between gap-2 border-b border-surface-shell pb-2.5">
@@ -308,7 +321,7 @@
 
             <footer class="flex items-center justify-between border-t border-surface-shell pt-2.5">
                 <p class="text-xs text-ink-body">Butuh koordinasi penyesuaian timbangan/retur?</p>
-                <a href="tel:0218901234"
+                <a href="tel:081112233445"
                     class="flex items-center gap-1.5 rounded-lg bg-surface-disabled px-2.5 py-1 text-xs font-bold text-ink hover:bg-surface-soft">
                     <x-gpa.icon name="headset" class="h-3.5 w-3.5 text-success-deep" />
                     <span>Hubungi Dispatch Sentral Hub</span>
@@ -330,5 +343,6 @@
                 Langkah wajib belum lengkap: <span x-text="blockers().join(', ')"></span>
             </p>
         </section>
+        @endif
     </div>
 @endsection

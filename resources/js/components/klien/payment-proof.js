@@ -375,7 +375,7 @@ export default function clientPaymentProof(defaults = {}) {
                     formData.append('proof_file', this.rawFile);
                 }
 
-                const response = await fetch('/klien/payment-proof', {
+                const response = await fetch('/klien/bukti-pembayaran', {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': csrfToken,

@@ -183,6 +183,14 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
                 'Faktur Konsolidasi Terbit',
                 `${this.documentsLabel()} atas nama ${this.client.name} — total tagihan ${this.rupiah(this.totalValue())}, jatuh tempo ${this.dueDate()}. Dokumen PDF & QR penagihan dikirim ke portal klien B2B.`
             );
+
+            if (this.client?.name) {
+                this.query = this.client.name;
+                const ledgerSection = document.getElementById('buku-besar-faktur');
+                if (ledgerSection) {
+                    ledgerSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
         },
 
         termCount(days) {

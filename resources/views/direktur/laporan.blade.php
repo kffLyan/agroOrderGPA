@@ -205,7 +205,7 @@
                         Diskon Kontrak Sah:
                     </span>
                     <span class="text-right font-semibold text-warning">
-                        -Rp 14.800.000
+                        {{ $contractDiscount > 0 ? '-Rp ' . number_format($contractDiscount, 0, ',', '.') : 'Rp 0 (Tarif Acuan)' }}
                     </span>
                 </div>
             </article>

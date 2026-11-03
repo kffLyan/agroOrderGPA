@@ -23,13 +23,22 @@ class SuratJalanArmadaController extends Controller
         $user = Auth::user();
         $targetOrderId = $request->query('order_id') ? (int) $request->query('order_id') : null;
 
+        // Validasi keamanan: cegah supir lain membuka surat jalan pesanan milik supir lain via query param
+        if ($targetOrderId) {
+            $checkOrder = Order::find($targetOrderId);
+            if ($checkOrder && $checkOrder->driver_id && $checkOrder->driver_id !== $user->id) {
+                abort(403, 'Akses Ditolak: Surat jalan ini ditugaskan kepada supir armada lain.');
+            }
+        }
+
         $currentOrder = $this->armadaService->resolveCurrentDeliveryOrder($targetOrderId, $user);
 
-        // Mengambil daftar rute pengantaran aktif hari ini untuk panduan multi-tujuan supir
+        // Mengambil daftar rute pengantaran aktif supir yang bersangkutan (terisolasi per supir)
         $activeOrders = Order::with(['user', 'orderItems.product'])
-            ->whereIn('status', ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI'])
-            ->latest()
-            ->take(3)
+            ->where('driver_id', $user->id)
+            ->whereIn('status', ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'])
+            ->latest('updated_at')
+            ->take(5)
             ->get();
 
         if ($activeOrders->isEmpty() && $currentOrder) {

@@ -47,6 +47,20 @@
             <p class="text-xs text-ink-body">Verifikasi kesesuaian fisik muatan & segel timbangan tera sebelum keberangkatan.</p>
         </section>
 
+        @if (!$currentOrder)
+            {{-- Tampilan siaga ketika supir belum memiliki penugasan aktif --}}
+            <section class="flex flex-col items-center justify-center gap-3 rounded-2xl bg-surface p-8 text-center shadow-card">
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-shell text-ink-quiet">
+                    <x-gpa.icon name="truck" class="h-8 w-8" />
+                </div>
+                <h2 class="text-base font-bold text-ink">Belum Ada Surat Jalan Ditugaskan</h2>
+                <p class="max-w-xs text-xs text-ink-body">Anda belum memiliki jadwal pengiriman aktif yang ditugaskan oleh bagian Dispatch Sekretariat.</p>
+                <a href="{{ route('armada.tugas') }}" class="mt-2 inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 font-mono text-xs font-bold text-white shadow-sub hover:opacity-90 transition-opacity">
+                    <x-gpa.icon name="clipboard" class="h-3.5 w-3.5" />
+                    Cek Antrean Tugas
+                </a>
+            </section>
+        @else
         {{-- Rute pengantaran --}}
         <section class="no-print flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
             <header class="flex items-center justify-between gap-2 border-b border-surface-shell pb-2">
@@ -364,5 +378,6 @@
                 </button>
             </div>
         </section>
+        @endif
     </div>
 @endsection

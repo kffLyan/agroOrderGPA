@@ -195,7 +195,7 @@
                         </p>
                         <p class="gpa-micro-bold tracking-[1.08px] text-success-deep">
                             SISA PLAFON:
-                            <span class="font-mono" x-text="rupiah(creditSisa())">Rp 85.800.000</span>
+                            <span class="font-mono" x-text="rupiah(creditSisa())">—</span>
                         </p>
                     </div>
 
@@ -300,7 +300,7 @@
                                     Kesepakatan Tempo Pembayaran
                                 </p>
                                 <p class="mt-0.5 font-sans text-sm font-bold leading-5 text-ink" x-text="dueLabel()">
-                                    45 Hari Kalender (Jatuh Tempo: 08 Des 2024)
+                                    —
                                 </p>
                             </div>
 
@@ -309,7 +309,7 @@
                                     Total Nilai Faktur Tagihan
                                 </p>
                                 <p class="mt-0.5 font-sans text-lg font-bold leading-6 text-ink" x-text="rupiah(totalValue())">
-                                    Rp 114.200.000
+                                    Rp 0
                                 </p>
                             </div>
                         </div>
@@ -327,7 +327,7 @@
             </div>
         </section>
 
-        <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
+        <section id="buku-besar-faktur" class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="min-w-0">
                     <h2 class="flex items-center gap-2 font-sans text-lg font-bold leading-6 text-ink">

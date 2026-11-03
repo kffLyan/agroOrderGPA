@@ -356,14 +356,14 @@
                         </span>
                     </p>
                     <div class="flex shrink-0 items-center gap-2">
-                        <button type="button" @click="openAuditNote()"
+                        <a href="{{ route('direktur.piutang.index') }}"
                             class="rounded bg-surface-track px-2.5 py-1 text-center text-[12px] font-bold leading-4 text-ink gpa-meta outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-disabled">
-                            Lihat catatan
-                        </button>
-                        <button type="button" @click="dispensation()"
+                            Lihat catatan AR
+                        </a>
+                        <a href="{{ route('direktur.piutang.index') }}"
                             class="rounded bg-ink px-2.5 py-1 text-center text-[12px] font-bold leading-4 text-white gpa-meta transition-opacity hover:opacity-90">
-                            Ajukan pengecualian
-                        </button>
+                            Restrukturisasi Tenor
+                        </a>
                     </div>
                 </div>
             @endif

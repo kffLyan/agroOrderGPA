@@ -13,7 +13,7 @@
     </style>
 @endonce
 
-<div class="gpa-toast fixed right-4 top-16 z-[99999] w-[calc(100%-2rem)] max-w-[460px] pointer-events-auto" style="animation-duration: {{ $duration }}s">
+<div class="gpa-toast fixed left-3 right-3 top-14 sm:top-16 sm:left-auto sm:right-6 sm:w-full z-[99999] max-w-sm sm:max-w-[400px] pointer-events-auto mx-auto sm:mx-0" style="animation-duration: {{ $duration }}s">
     <x-gpa.notification-banner :title="$title" :description="$description" :time="$time" :type="$type ?? $tone" class="shadow-lg">
         {{ $slot }}
         @if ($slot->isEmpty())

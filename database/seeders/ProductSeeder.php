@@ -83,6 +83,20 @@ class ProductSeeder extends Seeder
                 'created_at'    => now(),
                 'updated_at'    => now(),
             ],
+            [
+                'id'            => 6,
+                'sku'           => 'GPA-VGT-WRT06',
+                'name'          => 'Wortel Brastagi / Cipanas',
+                'unit'          => 'kg',
+                'grade'         => 'Grade A',
+                'base_price'    => 14000.00,
+                'minimum_order' => 5.00,
+                'image_url'     => 'products/wortel.jpg',
+                'description'   => 'Wortel manis segar kaya vitamin A langsung dari petani binaan Cipanas.',
+                'is_active'     => true,
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ],
         ]);
     }
 }

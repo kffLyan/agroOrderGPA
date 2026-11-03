@@ -4,6 +4,9 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon.png') }}?v=2">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}?v=2">
+    <link rel="apple-touch-icon" href="{{ asset('gpaleaves.png') }}?v=2">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="description" content="Dashboard Eksekutif Monitoring Bisnis &amp; Otorisasi Direktur AgroOrder GPA.">
 

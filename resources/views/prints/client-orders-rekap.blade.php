@@ -179,7 +179,7 @@
             </div>
             <div class="text-right">
                 <span class="rounded border border-brand/40 bg-brand/5 px-2 py-0.5 font-mono text-[7pt] font-bold text-brand uppercase">
-                    FILTER: {{ $statusFilter === 'all' ? 'SELURUH PESANAN' : strtoupper($statusFilter) }}
+                    FILTER: {{ $statusFilter === 'all' ? 'SELURUH PESANAN' : strtoupper(str_replace('_', ' ', $statusFilter)) }}
                 </span>
             </div>
         </div>
@@ -265,9 +265,9 @@
                                 'SIAP_KIRIM'          => 'SURAT JALAN TERBIT',
                                 'DALAM_PENGIRIMAN'    => 'DALAM PENGIRIMAN',
                                 'SELESAI'             => 'SELESAI DITERIMA',
-                                'SELESAI_CATATAN'     => 'SELESAI (CATATAN)',
+                                'SELESAI_CATATAN'     => 'SELESAI CATATAN BERITA ACARA',
                                 'BATAL'               => 'DIBATALKAN',
-                                default               => strtoupper($order->status),
+                                default               => strtoupper(str_replace('_', ' ', $order->status_label ?? $order->status)),
                             };
                         @endphp
                         <tr class="{{ $idx % 2 === 1 ? 'bg-slate-50/70' : 'bg-white' }} hover:bg-emerald-50/40">

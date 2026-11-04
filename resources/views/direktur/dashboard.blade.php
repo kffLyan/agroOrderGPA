@@ -385,7 +385,7 @@
                             </div>
                             <div class="text-right">
                                 <span class="font-semibold text-ink">Rp {{ number_format($order->grand_total, 0, ',', '.') }}</span>
-                                <span class="block text-[10px] text-accent-deep font-bold">{{ $order->status }}</span>
+                                <span class="block text-[10px] text-accent-deep font-bold">{{ $order->status_label ?? str_replace('_', ' ', $order->status) }}</span>
                             </div>
                         </div>
                     @empty
@@ -408,7 +408,7 @@
                             </div>
                             <div class="text-right">
                                 <span class="font-semibold text-ink">Rp {{ number_format($contract->fixed_price_per_kg, 0, ',', '.') }}/kg</span>
-                                <span class="block text-[10px] font-bold {{ $contract->status === 'ACTIVE' ? 'text-success-deep' : 'text-warning-caution' }}">{{ $contract->status }}</span>
+                                <span class="block text-[10px] font-bold {{ $contract->status === 'ACTIVE' ? 'text-success-deep' : 'text-warning-caution' }}">{{ $contract->status_label ?? str_replace('_', ' ', $contract->status) }}</span>
                             </div>
                         </div>
                     @empty

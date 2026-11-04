@@ -8,7 +8,7 @@
     <style>
         @page {
             size: A4 landscape;
-            margin: 8mm 10mm;
+            margin: 6mm 8mm;
         }
 
         @media print {
@@ -37,11 +37,14 @@
             .excel-table {
                 border-collapse: collapse !important;
                 width: 100% !important;
+                table-layout: auto !important;
                 border: 1px solid #94a3b8 !important;
             }
 
             .excel-table th, .excel-table td {
                 border: 1px solid #cbd5e1 !important;
+                word-wrap: break-word !important;
+                overflow-wrap: break-word !important;
             }
 
             .excel-table thead th {
@@ -127,10 +130,10 @@
                 </span>
             </div>
             <div class="flex items-center gap-2">
-                <a href="{{ route('direktur.laporan.export', request()->query()) }}"
+                <a href="{{ route('direktur.laporan.export', array_merge(request()->query(), ['format' => 'excel'])) }}"
                     class="inline-flex items-center gap-1.5 rounded-lg border border-line-board bg-surface px-3 py-1.5 text-xs font-semibold text-ink shadow-sub transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="download" class="h-3.5 w-3.5" />
-                    Unduh Excel (CSV)
+                    Unduh Excel (.xls)
                 </a>
                 <button type="button" onclick="window.print()"
                     class="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-1.5 text-xs font-bold text-white shadow-sub transition-colors hover:bg-brand-deep">
@@ -176,14 +179,14 @@
         <div class="mt-4 flex items-center justify-between border-b border-line-board pb-3">
             <div>
                 <h2 class="text-xs font-bold uppercase tracking-wider text-brand">
-                    REKAPITULASI RESMI PENJUALAN KOMODITAS &amp; KINERJA OMZET B2B
+                    REKAPITULASI RESMI PENJUALAN KOMODITAS &amp; KINERJA OMZET KONSOLIDASI (B2B &amp; REGULER)
                 </h2>
                 <p class="text-[8pt] text-ink-body">
                     Periode: <strong class="text-ink">{{ $periodName ?? (date('d F Y', strtotime($startDate)) . ' s.d ' . date('d F Y', strtotime($endDate))) }}</strong>
                     @if(!empty($clientFilterName))
-                        &bull; Filter Mitra: <strong class="text-brand">{{ $clientFilterName }}</strong>
+                        &bull; Filter Entitas: <strong class="text-brand">{{ $clientFilterName }}</strong>
                     @else
-                        &bull; Cakupan: <strong>Seluruh Mitra B2B Konsolidasi</strong>
+                        &bull; Cakupan: <strong>Konsolidasi Mitra B2B &amp; Transaksi Reguler (Kasir / QRIS / Bank)</strong>
                     @endif
                 </p>
             </div>
@@ -230,11 +233,11 @@
                 <thead>
                     <tr class="bg-slate-100 text-slate-800">
                         <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 28px;">No</th>
-                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]">Nama Komoditas Sayuran</th>
-                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 110px;">Total Bobot (Kg)</th>
-                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 120px;">Rata-rata Harga</th>
-                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 140px;">Total Nilai Penjualan</th>
-                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 90px;">Pangsa Omzet</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]" style="min-width: 180px;">Nama Komoditas Sayuran</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt] whitespace-nowrap" style="width: 110px;">Total Bobot (Kg)</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt] whitespace-nowrap" style="width: 120px;">Rata-rata Harga</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt] whitespace-nowrap" style="width: 140px;">Total Nilai Penjualan</th>
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt] whitespace-nowrap" style="width: 90px;">Pangsa Omzet</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -245,19 +248,19 @@
                         @endphp
                         <tr class="{{ $index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white' }} hover:bg-emerald-50/40">
                             <td class="py-1.5 px-2 text-center font-mono text-ink-muted">{{ $index + 1 }}</td>
-                            <td class="py-1.5 px-2 font-semibold text-ink">
+                            <td class="py-1.5 px-2 font-semibold text-ink leading-tight">
                                 {{ $summary->product->name ?? 'Komoditas #' . $summary->product_id }}
                             </td>
-                            <td class="py-1.5 px-2 text-right font-mono text-ink">
+                            <td class="py-1.5 px-2 text-right font-mono text-ink whitespace-nowrap">
                                 {{ number_format($summary->total_weight, 1, ',', '.') }}
                             </td>
-                            <td class="py-1.5 px-2 text-right font-mono text-ink-muted">
+                            <td class="py-1.5 px-2 text-right font-mono text-ink-muted whitespace-nowrap">
                                 Rp {{ number_format($avgPrice, 0, ',', '.') }}
                             </td>
-                            <td class="py-1.5 px-2 text-right font-mono font-bold text-ink">
+                            <td class="py-1.5 px-2 text-right font-mono font-bold text-ink whitespace-nowrap">
                                 Rp {{ number_format($summary->total_sales, 0, ',', '.') }}
                             </td>
-                            <td class="py-1.5 px-2 text-center font-mono font-semibold text-brand">
+                            <td class="py-1.5 px-2 text-center font-mono font-semibold text-brand whitespace-nowrap">
                                 {{ $pct }}%
                             </td>
                         </tr>
@@ -276,55 +279,80 @@
         <section class="mt-5">
             <div class="flex items-center justify-between border-b border-brand pb-1">
                 <h3 class="text-[8pt] font-extrabold uppercase tracking-wider text-brand">
-                    2. Rincian Lengkap Buku Transaksi Pemesanan (PO)
+                    2. Rincian Lengkap Buku Transaksi Pemesanan Konsolidasi (B2B &amp; Reguler)
                 </h3>
-                <span class="text-[7pt] text-ink-muted font-mono">Jurnal Operasional Sah</span>
+                <span class="text-[7pt] text-ink-muted font-mono">Jurnal Operasional Sah &bull; Bebas Singkatan Underscore</span>
             </div>
             <table class="excel-table mt-2 w-full border-collapse text-left text-[7.5pt]">
                 <thead>
                     <tr class="bg-slate-100 text-slate-800">
                         <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 28px;">No</th>
-                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]" style="width: 110px;">No. Pesanan</th>
-                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]" style="width: 85px;">Tanggal</th>
-                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]">Mitra Klien B2B</th>
-                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]">Rincian Komoditas &amp; Netto</th>
-                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt]" style="width: 95px;">Status</th>
-                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt]" style="width: 120px;">Total Nilai (Rp)</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt] whitespace-nowrap" style="width: 120px;">No. Pesanan</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt] whitespace-nowrap" style="width: 75px;">Tanggal</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]" style="min-width: 135px;">Entitas / Pembeli</th>
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt] whitespace-nowrap" style="width: 100px;">Kategori</th>
+                        <th class="py-2 px-2 font-bold uppercase tracking-wider text-[7pt]" style="min-width: 160px;">Komoditas &amp; Netto</th>
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt] whitespace-nowrap" style="width: 105px;">Metode Bayar</th>
+                        <th class="py-2 px-2 text-center font-bold uppercase tracking-wider text-[7pt] whitespace-nowrap" style="width: 120px;">Status Transaksi</th>
+                        <th class="py-2 px-2 text-right font-bold uppercase tracking-wider text-[7pt] whitespace-nowrap" style="width: 115px;">Total Nilai (Rp)</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($orders as $index => $order)
                         @php
                             $amount = (float) $order->grand_total;
+                            $statusToneClass = match($order->status) {
+                                'SELESAI'             => 'bg-emerald-100 text-emerald-800',
+                                'SELESAI_CATATAN'     => 'bg-amber-100 text-amber-800',
+                                'DALAM_PENGIRIMAN'    => 'bg-blue-100 text-blue-800',
+                                'SIAP_KIRIM'          => 'bg-sky-100 text-sky-800',
+                                'LUNAS'               => 'bg-teal-100 text-teal-800',
+                                'MENUNGGU_VERIFIKASI' => 'bg-yellow-100 text-yellow-800',
+                                'MENUNGGU_PEMBAYARAN' => 'bg-orange-100 text-orange-800',
+                                'BATAL'               => 'bg-rose-100 text-rose-800',
+                                default               => 'bg-slate-100 text-slate-700',
+                            };
+                            $clientCat = $order->client_type_label ?? ($order->user?->client_type_label ?? ($order->user?->is_b2b ? 'Mitra B2B Kontrak' : 'Pelanggan Reguler'));
+                            $payMethod = $order->payment_method_label ?? ($order->payment?->method_label ?? str_replace('_', ' ', $order->payment_method ?? 'Kredit Tempo TOP'));
                         @endphp
                         <tr class="{{ $index % 2 === 1 ? 'bg-slate-50/70' : 'bg-white' }} hover:bg-emerald-50/40">
                             <td class="py-1.5 px-2 text-center font-mono text-ink-muted">{{ $index + 1 }}</td>
-                            <td class="py-1.5 px-2 font-mono font-bold text-brand">
+                            <td class="py-1.5 px-2 font-mono font-bold text-brand whitespace-nowrap text-[7pt]">
                                 {{ $order->order_number }}
                             </td>
-                            <td class="py-1.5 px-2 text-ink-muted font-mono">
+                            <td class="py-1.5 px-2 text-ink-muted font-mono whitespace-nowrap text-[7pt]">
                                 {{ $order->created_at->format('d/m/Y') }}
                             </td>
-                            <td class="py-1.5 px-2 font-semibold text-ink">
+                            <td class="py-1.5 px-2 font-semibold text-ink leading-tight">
                                 {{ $order->user->company_name ?? $order->user->name }}
                             </td>
-                            <td class="py-1.5 px-2 text-ink-body">
+                            <td class="py-1.5 px-2 text-center whitespace-nowrap">
+                                <span class="text-[7pt] font-semibold {{ str_contains($clientCat, 'Reguler') ? 'text-amber-800 font-bold' : 'text-emerald-800' }}">
+                                    {{ $clientCat }}
+                                </span>
+                            </td>
+                            <td class="py-1.5 px-2 text-ink-body text-[7pt] leading-tight">
                                 @foreach($order->orderItems as $item)
-                                    <div>{{ $item->product->name ?? 'Sayuran' }}: <span class="font-mono">{{ number_format($item->ordered_qty, 1) }} kg</span></div>
+                                    <div>{{ $item->product->name ?? 'Sayuran' }}: <span class="font-mono font-semibold">{{ number_format($item->ordered_qty, 1) }} kg</span></div>
                                 @endforeach
                             </td>
                             <td class="py-1.5 px-2 text-center">
-                                <span class="inline-block rounded px-1.5 py-0.5 text-[6.5pt] font-bold uppercase tracking-wider {{ $order->status === 'SELESAI' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700' }}">
-                                    {{ $order->status }}
+                                <span class="inline-block rounded border border-slate-300 bg-slate-50 px-1 py-0.5 font-mono text-[6.5pt] text-slate-700 leading-tight whitespace-normal break-words">
+                                    {{ $payMethod }}
                                 </span>
                             </td>
-                            <td class="py-1.5 px-2 text-right font-mono font-bold text-ink">
+                            <td class="py-1.5 px-2 text-center">
+                                <span class="inline-block rounded px-1.5 py-0.5 text-[6.5pt] font-bold uppercase leading-tight whitespace-normal break-words {{ $statusToneClass }}">
+                                    {{ $order->status_label ?? str_replace('_', ' ', $order->status) }}
+                                </span>
+                            </td>
+                            <td class="py-1.5 px-2 text-right font-mono font-bold text-ink whitespace-nowrap text-[7.5pt]">
                                 Rp {{ number_format($amount, 0, ',', '.') }}
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="py-3 text-center text-ink-muted italic">
+                            <td colspan="9" class="py-3 text-center text-ink-muted italic">
                                 Tidak ada transaksi pada periode yang dipilih.
                             </td>
                         </tr>
@@ -332,7 +360,7 @@
                 </tbody>
                 <tfoot>
                     <tr class="border-t-2 border-slate-700 bg-slate-100 font-bold border-b-[3px] border-double border-slate-800">
-                        <td colspan="6" class="py-2 px-2 text-right text-brand uppercase tracking-wider text-[7.5pt]">
+                        <td colspan="8" class="py-2 px-2 text-right text-brand uppercase tracking-wider text-[7.5pt]">
                             TOTAL KESELURUHAN OMZET TRANSAKSI:
                         </td>
                         <td class="py-2 px-2 text-right font-mono text-[8pt] text-brand">

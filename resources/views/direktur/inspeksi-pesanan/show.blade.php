@@ -46,7 +46,7 @@
                     Target Kirim: <strong class="text-emerald-800">{{ $order->target_delivery_date ? $order->target_delivery_date->format('d F Y') : '-' }}</strong>
                 </div>
                 <div class="pt-1 text-[11px] text-gray-500 border-t border-gray-100">
-                    Jalur Order: <span class="font-semibold">{{ $order->order_source }}</span>
+                    Jalur Order: <span class="font-semibold">{{ $order->order_source_label ?? str_replace('_', ' ', $order->order_source) }}</span>
                 </div>
             </div>
 
@@ -74,11 +74,11 @@
                 </div>
                 <div class="text-gray-600">
                     Faktur: <span class="font-mono">{{ $order->invoice->invoice_number ?? 'Belum terbit' }}</span><br>
-                    Status Faktur: <strong class="text-blue-700">{{ $order->invoice->status ?? 'UNPAID' }}</strong><br>
+                    Status Faktur: <strong class="text-blue-700">{{ $order->invoice ? ($order->invoice->status_label ?? str_replace('_', ' ', $order->invoice->status)) : 'Belum Terbit' }}</strong><br>
                     Jatuh Tempo: {{ $order->invoice && $order->invoice->due_date ? date('d/m/Y', strtotime($order->invoice->due_date)) : '-' }}
                 </div>
                 <div class="pt-1 text-[11px] text-gray-500 border-t border-gray-100">
-                    Pembayaran: {{ $order->payments->first() ? $order->payments->first()->status : 'Belum tercatat' }}
+                    Pembayaran: {{ $order->payments->first() ? ($order->payments->first()->status_label ?? str_replace('_', ' ', $order->payments->first()->status)) : 'Belum tercatat' }}
                 </div>
             </div>
         </div>
@@ -177,10 +177,10 @@
                     <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-1">
                         <div class="flex items-center justify-between">
                             <span class="font-mono font-bold text-gray-800">{{ $payment->payment_reference }}</span>
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800">{{ $payment->status }}</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800">{{ $payment->status_label ?? str_replace('_', ' ', $payment->status) }}</span>
                         </div>
                         <div class="text-sm font-bold text-emerald-800">
-                            Rp {{ number_format($payment->amount, 0, ',', '.') }} via {{ $payment->payment_method }}
+                            Rp {{ number_format($payment->amount, 0, ',', '.') }} via {{ $payment->method_label ?? str_replace('_', ' ', $payment->payment_method) }}
                         </div>
                         <div class="text-[10px] text-gray-500">
                             Diverifikasi: {{ $payment->verifier->name ?? 'Sekretaris' }} pada {{ $payment->paid_at ? date('d/m/Y H:i', strtotime($payment->paid_at)) : '-' }}

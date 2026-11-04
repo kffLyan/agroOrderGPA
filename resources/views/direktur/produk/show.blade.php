@@ -188,7 +188,7 @@
                             </td>
                             <td class="py-2.5 px-3 text-center">
                                 <span class="rounded px-2 py-0.5 text-[10px] font-bold {{ $contract->status === 'ACTIVE' ? 'bg-accent text-success-ink' : 'bg-surface-shell text-ink-body' }}">
-                                    {{ $contract->status }}
+                                    {{ $contract->status_label ?? str_replace('_', ' ', $contract->status) }}
                                 </span>
                             </td>
                         </tr>

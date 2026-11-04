@@ -259,6 +259,62 @@ class HarvestBatchSeeder extends Seeder
                 'created_at'         => now()->subDays(28)->setTime(7, 0),
                 'updated_at'         => now()->subDays(28)->setTime(7, 0),
             ],
+            [
+                'id'                 => 17,
+                'product_id'         => 6, // Wortel Brastagi
+                'source_type'        => 'PETANI_BINAAN',
+                'supplier_name'      => 'Kelompok Tani Cipanas Sejahtera',
+                'batch_date'         => now()->subDays(1)->toDateString(),
+                'initial_quantity'   => 3200.00,
+                'available_quantity' => 1900.00,
+                'grade'              => 'Grade A',
+                'qc_notes'           => 'Wortel mulus, umbi padat seragam kualitas super grade A.',
+                'inputted_by'        => 4,
+                'created_at'         => now()->subDays(1)->setTime(6, 15),
+                'updated_at'         => now()->subDays(1)->setTime(6, 15),
+            ],
+            [
+                'id'                 => 18,
+                'product_id'         => 6, // Wortel Brastagi
+                'source_type'        => 'BUFFER_LUAR',
+                'supplier_name'      => 'Mitra Distribusi Sayur Pacet',
+                'batch_date'         => now()->subDays(7)->toDateString(),
+                'initial_quantity'   => 2600.00,
+                'available_quantity' => 450.00,
+                'grade'              => 'Grade A',
+                'qc_notes'           => 'Buffer stok untuk pemenuhan kontrak katering dan restoran.',
+                'inputted_by'        => 4,
+                'created_at'         => now()->subDays(7)->setTime(7, 45),
+                'updated_at'         => now()->subDays(7)->setTime(7, 45),
+            ],
+            [
+                'id'                 => 19,
+                'product_id'         => 4, // Stroberi Ciwidey
+                'source_type'        => 'PETANI_BINAAN',
+                'supplier_name'      => 'Kelompok Tani Stroberi Alamendah',
+                'batch_date'         => now()->subDays(5)->toDateString(),
+                'initial_quantity'   => 1600.00,
+                'available_quantity' => 250.00,
+                'grade'              => 'Grade A',
+                'qc_notes'           => 'Panen berkala kebun stroberi blok Rancabali.',
+                'inputted_by'        => 5,
+                'created_at'         => now()->subDays(5)->setTime(6, 30),
+                'updated_at'         => now()->subDays(5)->setTime(6, 30),
+            ],
+            [
+                'id'                 => 20,
+                'product_id'         => 2, // Brokoli Super
+                'source_type'        => 'PETANI_BINAAN',
+                'supplier_name'      => 'Gapoktan Sayur Lembang Dataran Tinggi',
+                'batch_date'         => now()->toDateString(),
+                'initial_quantity'   => 2800.00,
+                'available_quantity' => 1750.00,
+                'grade'              => 'Grade A',
+                'qc_notes'           => 'Pemetikan segar subuh hari, siap didistribusikan.',
+                'inputted_by'        => 4,
+                'created_at'         => now()->subHours(4),
+                'updated_at'         => now()->subHours(4),
+            ],
         ]);
 
         Schema::enableForeignKeyConstraints();

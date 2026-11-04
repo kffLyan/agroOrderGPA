@@ -91,7 +91,7 @@
                         Seluruh kewajiban pembayaran faktur <strong class="text-ink font-mono" x-text="current?.po"></strong> sebesar <strong class="text-ink" x-text="current?.payable_label"></strong> telah diterima di rekening giro resmi GPA dan diverifikasi sah oleh <strong class="text-ink" x-text="current?.verifier_name || 'Staf Sekretariat Keuangan GPA'"></strong>. Plafon kredit tempo Anda telah dipulihkan.
                     </p>
                     <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-ink-body border-t border-success-deep/20 pt-2">
-                        <span>Kanal: <strong class="text-ink" x-text="current?.payment_method"></strong></span>
+                        <span>Kanal: <strong class="text-ink" x-text="(current?.payment_method_label || current?.payment_method || 'Transfer Bank').replaceAll('_', ' ')"></strong></span>
                         <span>&bull;</span>
                         <span>Ref Mutasi: <strong class="font-mono text-ink" x-text="current?.payment_ref || '-'"></strong></span>
                         <template x-if="current?.proof_url">
@@ -501,7 +501,7 @@
 
                                 <div class="flex flex-col gap-1 bg-surface p-3 rounded-lg border border-line-soft">
                                     <span class="text-[10px] font-bold uppercase tracking-wider text-ink-quiet">Metode &amp; Kanal Pembayaran:</span>
-                                    <span class="font-semibold text-ink" x-text="current?.payment_method || 'TRANSFER_BANK'"></span>
+                                    <span class="font-semibold text-ink" x-text="(current?.payment_method_label || current?.payment_method || 'Transfer Bank').replaceAll('_', ' ')"></span>
                                 </div>
 
                                 <div class="flex flex-col gap-1 bg-surface p-3 rounded-lg border border-line-soft">
@@ -1057,7 +1057,7 @@
                                 </td>
                                 <td class="px-3 py-3">
                                     <span class="inline-flex items-center rounded border border-line-soft bg-surface-pill px-2 py-1 font-mono text-[9px] font-semibold uppercase tracking-[1.08px] text-ink">
-                                        {{ $row->payment_method ?? ($row['method'] ?? 'TRANSFER_BANK') }}
+                                        {{ $row->method_label ?? str_replace('_', ' ', $row->payment_method ?? ($row['method'] ?? 'Transfer Bank')) }}
                                     </span>
                                 </td>
                                 <td class="px-3 py-3">
@@ -1071,7 +1071,7 @@
                                     <div class="flex flex-col gap-0.5">
                                         <x-gpa.status-badge 
                                             :status="$row->status ?? ($row['status'] ?? null)" 
-                                            :label="$row->status_label ?? ($row['status'] ?? null)" 
+                                            :label="$row->status_label ?? str_replace('_', ' ', $row->status ?? ($row['status'] ?? ''))" 
                                             :tone="$row->status_tone ?? ($row['status_tone'] ?? null)" />
                                         @if (!empty($note) && $isDanger)
                                             <span class="text-[10px] text-danger max-w-[14rem] truncate" title="{{ $note }}">

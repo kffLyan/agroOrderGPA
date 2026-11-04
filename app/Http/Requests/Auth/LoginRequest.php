@@ -27,6 +27,16 @@ class LoginRequest extends FormRequest
         ];
     }
 
+    // Pesan kustom validasi input
+    public function messages(): array
+    {
+        return [
+            'email.required'    => 'Alamat email wajib diisi.',
+            'email.email'       => 'Format alamat email tidak valid.',
+            'password.required' => 'Kata sandi wajib diisi.',
+        ];
+    }
+
     // Eksekusi otentikasi kredensial pengguna
     public function authenticate(): void
     {
@@ -36,7 +46,7 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
+                'email' => 'Email atau kata sandi yang Anda masukkan salah. Silakan periksa kembali.',
             ]);
         }
 
@@ -55,10 +65,7 @@ class LoginRequest extends FormRequest
         $detikTunggu = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
-                'seconds' => $detikTunggu,
-                'minutes' => ceil($detikTunggu / 60),
-            ]),
+            'email' => "Terlalu banyak percobaan masuk. Silakan coba lagi dalam {$detikTunggu} detik.",
         ]);
     }
 

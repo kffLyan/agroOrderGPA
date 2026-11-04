@@ -239,10 +239,10 @@
             <div class="receipt-font-compact space-y-0.5 text-gray-800">
                 <div class="flex justify-between">
                     <span class="text-gray-500">Metode Bayar</span>
-                    <span class="font-semibold text-black">{{ $payment_method }}</span>
+                    <span class="font-semibold text-black">{{ $payment_method_label ?? str_replace('_', ' ', $payment_method) }}</span>
                 </div>
 
-                @if ($payment_method === 'CASH' || $payment_method === 'TUNAI')
+                @if ($payment_method === 'CASH' || $payment_method === 'TUNAI' || str_contains(strtoupper($payment_method_label ?? ''), 'TUNAI'))
                     <div class="flex justify-between">
                         <span class="text-gray-500">Tunai Diterima</span>
                         <span class="font-mono text-black">Rp {{ $cash_received ?: number_format($grand_total, 0, ',', '.') }}</span>
@@ -255,7 +255,7 @@
 
                 <div class="flex justify-between items-center pt-0.5">
                     <span class="text-gray-500">Status</span>
-                    <span class="font-bold text-black uppercase tracking-wider">[ {{ $payment_status }} ]</span>
+                    <span class="font-bold text-black uppercase tracking-wider">[ {{ $payment_status_label ?? str_replace('_', ' ', $payment_status) }} ]</span>
                 </div>
 
                 @if ($payment_ref)

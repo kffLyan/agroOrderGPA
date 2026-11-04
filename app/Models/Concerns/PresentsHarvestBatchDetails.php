@@ -52,6 +52,15 @@ trait PresentsHarvestBatchDetails
         return $this->note;
     }
 
+    public function getSourceTypeLabelAttribute(): string
+    {
+        return match ($this->source_type) {
+            'PETANI_BINAAN' => 'Petani Binaan',
+            'BUFFER_LUAR'   => 'Mitra Buffer Luar',
+            default         => ucwords(strtolower(str_replace('_', ' ', (string) $this->source_type))),
+        };
+    }
+
     public function getNameAttribute(): string
     {
         return $this->supplier_name ?: 'Mitra Tani Binaan';

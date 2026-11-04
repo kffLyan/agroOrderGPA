@@ -59,6 +59,18 @@ trait PresentsInvoiceDetails
         return $this->created_at?->isCurrentMonth() ? 'current' : 'last-month';
     }
 
+    // Label status pelunasan faktur bebas underscore
+    public function getStatusLabelAttribute(): string
+    {
+        return match ($this->status) {
+            'PAID'    => 'Lunas Sah',
+            'UNPAID'  => 'Belum Lunas',
+            'OVERDUE' => 'Jatuh Tempo',
+            'PARTIAL' => 'Dibayar Sebagian',
+            default   => ucwords(strtolower(str_replace('_', ' ', (string) $this->status))),
+        };
+    }
+
     // Menggabungkan nomor faktur dan nomor surat jalan sebagai token indeks pencarian cepat.
     public function getSearchKeywordsAttribute(): string
     {

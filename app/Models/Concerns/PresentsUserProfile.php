@@ -65,4 +65,14 @@ trait PresentsUserProfile
     {
         return $this->pic_name ?: ($this->name ?: '—');
     }
+
+    // Label tipe entitas kemitraan klien bebas underscore
+    public function getClientTypeLabelAttribute(): string
+    {
+        return match ($this->client_type) {
+            'B2B_KONTRAK' => 'Mitra B2B Kontrak',
+            'REGULER'     => 'Pelanggan Reguler',
+            default       => $this->client_type ? ucwords(strtolower(str_replace('_', ' ', $this->client_type))) : 'Pelanggan Reguler',
+        };
+    }
 }

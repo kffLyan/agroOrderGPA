@@ -150,25 +150,46 @@ class PrintStrukThermalController extends Controller
 
         $taxLabel = $taxLabel ?: 'Bebas PPN 0% (DTP Pertanian)';
 
+        $paymentMethodLabel = match (strtoupper($paymentMethod)) {
+            'TRANSFER_BANK' => 'Transfer Bank',
+            'QRIS'          => 'QRIS Instan',
+            'CASH', 'TUNAI' => 'Tunai Kasir',
+            'TEMPO_TOP', 'TOP' => 'Kredit Tempo (TOP)',
+            'COD'           => 'COD (Bayar di Tempat)',
+            'SK_DIREKTUR'   => 'Kebijakan Khusus Direktur',
+            default         => ucwords(strtolower(str_replace('_', ' ', $paymentMethod))),
+        };
+
+        $paymentStatusLabel = match (strtoupper($paymentStatus)) {
+            'LUNAS', 'SUCCESS', 'PAID', 'VERIFIED' => 'Lunas Sah',
+            'MENUNGGU_VERIFIKASI', 'PENDING'       => 'Menunggu Verifikasi',
+            'MENUNGGU_PEMBAYARAN'                  => 'Menunggu Pembayaran',
+            'DITOLAK', 'REJECTED'                  => 'Ditolak',
+            'BATAL', 'CANCELLED'                   => 'Dibatalkan',
+            default                                => ucwords(strtolower(str_replace('_', ' ', $paymentStatus))),
+        };
+
         return view('prints.thermal-receipt', [
-            'company'         => $company,
-            'receipt_number'  => $receiptNumber,
-            'invoice_number'  => $invoiceNumber,
-            'po_number'       => $poNumber,
-            'date_formatted'  => Carbon::parse($issuedDate)->format('d/m/Y H:i') . ' WIB',
-            'cashier'         => $cashier,
-            'client_name'     => $clientName,
-            'items'           => $items,
-            'subtotal'        => $subtotal,
-            'shipping_cost'   => $shippingCost,
-            'tax_amount'      => $taxAmount,
-            'tax_label'       => $taxLabel,
-            'grand_total'     => $grandTotal,
-            'payment_method'  => strtoupper($paymentMethod),
-            'payment_status'  => $paymentStatus,
-            'payment_ref'     => $paymentRef,
-            'cash_received'   => $cashReceived,
-            'cash_change'     => $cashChange,
+            'company'              => $company,
+            'receipt_number'       => $receiptNumber,
+            'invoice_number'       => $invoiceNumber,
+            'po_number'            => $poNumber,
+            'date_formatted'       => Carbon::parse($issuedDate)->format('d/m/Y H:i') . ' WIB',
+            'cashier'              => $cashier,
+            'client_name'          => $clientName,
+            'items'                => $items,
+            'subtotal'             => $subtotal,
+            'shipping_cost'        => $shippingCost,
+            'tax_amount'           => $taxAmount,
+            'tax_label'            => $taxLabel,
+            'grand_total'          => $grandTotal,
+            'payment_method'       => strtoupper($paymentMethod),
+            'payment_method_label' => $paymentMethodLabel,
+            'payment_status'       => $paymentStatus,
+            'payment_status_label' => $paymentStatusLabel,
+            'payment_ref'          => $paymentRef,
+            'cash_received'        => $cashReceived,
+            'cash_change'          => $cashChange,
         ]);
     }
 }

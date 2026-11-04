@@ -20,7 +20,7 @@ export default function clientOrders(defaults = {}) {
         total: defaults.pagination?.total ?? 0,
         perPage: defaults.pagination?.per_page ?? 5,
         status: 'all',
-        range: defaults.filters?.range?.value ?? '30 Hari Terakhir',
+        range: defaults.filters?.range?.value ?? 'all',
         hub: 'all',
         payment: 'all',
         deviationOnly: false,
@@ -30,7 +30,7 @@ export default function clientOrders(defaults = {}) {
             this.lastPage = defaults.pagination?.last_page ?? 1;
             this.total = defaults.pagination?.total ?? 0;
             this.perPage = defaults.pagination?.per_page ?? 5;
-            this.range = defaults.filters?.range?.value ?? '30 Hari Terakhir';
+            this.range = defaults.filters?.range?.value ?? 'all';
         },
 
         money(value) {
@@ -50,7 +50,37 @@ export default function clientOrders(defaults = {}) {
                 return true;
             }
 
-            return order.payment === this.payment;
+            return String(order.payment ?? '').toLowerCase() === String(this.payment).toLowerCase();
+        },
+
+        matchesRange(order) {
+            if (! this.range || this.range === 'all') {
+                return true;
+            }
+
+            const rawDate = order.created_at || order.target_delivery_date;
+            if (! rawDate) {
+                return true;
+            }
+
+            const orderDate = new Date(rawDate);
+            if (isNaN(orderDate.getTime())) {
+                return true;
+            }
+
+            const now = new Date();
+
+            if (this.range === '30d') {
+                const diffTime = now.getTime() - orderDate.getTime();
+                const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                return diffDays >= -1 && diffDays <= 30;
+            }
+
+            if (this.range === 'mtd') {
+                return orderDate.getFullYear() === now.getFullYear() && orderDate.getMonth() === now.getMonth();
+            }
+
+            return true;
         },
 
         matchesDeviation(order) {
@@ -64,7 +94,22 @@ export default function clientOrders(defaults = {}) {
                 return true;
             }
 
-            return [order.po, order.sj, order.vehicle]
+            const searchTargets = [
+                order.po,
+                order.order_number,
+                order.sj,
+                order.surat_jalan_number,
+                order.vehicle,
+                order.vehicle_plate_number,
+                order.driver?.name,
+                order.driver_name,
+                order.driver_note,
+                order.commodities_summary,
+                order.delivery_address,
+                order.status_label,
+            ];
+
+            return searchTargets
                 .filter(Boolean)
                 .some((value) => String(value).toLowerCase().includes(keyword));
         },
@@ -73,6 +118,7 @@ export default function clientOrders(defaults = {}) {
             return this.matchesTab(order)
                 && this.matchesHub(order)
                 && this.matchesPayment(order)
+                && this.matchesRange(order)
                 && this.matchesDeviation(order)
                 && this.matchesSearch(order);
         },
@@ -89,6 +135,7 @@ export default function clientOrders(defaults = {}) {
             return this.status !== 'all'
                 || this.hub !== 'all'
                 || (this.payment !== 'all' && Boolean(this.payment))
+                || (this.range !== 'all' && Boolean(this.range))
                 || this.deviationOnly
                 || this.search.trim() !== '';
         },
@@ -97,7 +144,7 @@ export default function clientOrders(defaults = {}) {
             this.status = 'all';
             this.hub = 'all';
             this.payment = 'all';
-            this.range = defaults.filters?.range?.value ?? '30 Hari Terakhir';
+            this.range = 'all';
             this.deviationOnly = false;
             this.search = '';
             this.page = 1;

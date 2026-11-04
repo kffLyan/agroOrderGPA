@@ -15,7 +15,7 @@
 @section('content')
     <div x-data="clientCatalog(@js($commodities))" class="flex flex-col gap-5">
         {{-- ---------------------------------------------------------------- --}}
-        {{-- Kop halaman + aksi ekspor / matrix --}}
+        {{-- Kop halaman  --}}
         {{-- ---------------------------------------------------------------- --}}
         <section class="gpa-card flex flex-col gap-4 p-5 lg:flex-row lg:items-start lg:justify-between lg:gap-6 lg:p-6">
             <div class="flex min-w-0 flex-col gap-2">
@@ -36,14 +36,6 @@
                     Agriculture. Harga franco gudang penerima, terintegrasi dengan validasi kuota kontrak B2B
                     dan jadwal pengiriman subuh.
                 </p>
-            </div>
-
-            <div class="flex shrink-0 flex-wrap items-center gap-2">
-                <button type="button" @click="exportSpec()"
-                    class="inline-flex items-center gap-2 rounded-lg border border-line-soft bg-surface-pill px-3.5 py-2 transition-colors hover:border-brand hover:bg-surface-muted">
-                    <x-gpa.icon name="download" class="h-3.5 w-3.5 text-ink" />
-                    <span class="gpa-meta-lg text-ink">Export Spesifikasi (PDF)</span>
-                </button>
             </div>
         </section>
 
@@ -187,29 +179,24 @@
                 </button>
             </div>
 
-            <div class="flex flex-col gap-2 border-t border-line-hair pt-3 lg:flex-row lg:items-center">
-                <label class="sr-only" for="filter-sentra">Sentra panen</label>
-                <select id="filter-sentra" x-model="origin" class="gpa-control lg:max-w-[15rem]">
-                    <option value="all">Semua Sentra Panen (Ciwidey &amp; Lembang Agro-Hub)</option>
-                    <option value="lembang">Sentra Panen Lembang (Ketinggian 1.200 mdpl)</option>
-                    <option value="ciwidey">Sentra Panen Ciwidey (Ketinggian 1.400 mdpl)</option>
-                    <option value="pangalengan">Sentra Pangalengan (Buffer Stock Gudang)</option>
-                </select>
-
+            <div class="flex flex-col gap-2.5 border-t border-line-hair pt-3 lg:flex-row lg:items-center">
                 <label class="sr-only" for="filter-urutkan">Urutkan komoditas</label>
-                <select id="filter-urutkan" x-model="sort" class="gpa-control lg:max-w-[17rem]">
-                    <option value="name-asc">Nama Komoditas (A - Z)</option>
-                    <option value="price-asc">Harga Termurah</option>
-                    <option value="price-desc">Harga Tertinggi</option>
-                    <option value="stock-desc">Stok Tersedia Terbanyak</option>
-                </select>
+                <div class="relative inline-flex h-10 items-center rounded-full border border-line-soft bg-surface px-3.5 shadow-xs transition-colors hover:border-line-board focus-within:border-brand lg:w-72">
+                    <x-gpa.icon name="filter" class="mr-2 h-4 w-4 shrink-0 text-ink-body" />
+                    <select id="filter-urutkan" x-model="sort" class="w-full cursor-pointer border-0 bg-transparent py-0 pl-0 pr-6 text-xs font-semibold text-ink focus:ring-0">
+                        <option value="name-asc">Nama Komoditas (A - Z)</option>
+                        <option value="price-asc">Harga Termurah</option>
+                        <option value="price-desc">Harga Tertinggi</option>
+                        <option value="stock-desc">Stok Tersedia Terbanyak</option>
+                    </select>
+                </div>
 
                 <div class="relative flex-1">
-                    <x-gpa.icon name="search" class="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-body" />
+                    <x-gpa.icon name="search" class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-body" />
                     <label class="sr-only" for="filter-pencarian">Cari komoditas</label>
                     <input id="filter-pencarian" type="search" x-model.debounce.200ms="query"
                         placeholder="Cari nama komoditas, grade, atau ID sentra panen..."
-                        class="gpa-control pl-8">
+                        class="h-10 w-full rounded-full border border-line-soft bg-surface pl-10 pr-4 text-xs font-medium text-ink placeholder:text-ink-subtle shadow-xs transition-colors focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand">
                 </div>
 
                 <div class="flex shrink-0 items-center gap-2">

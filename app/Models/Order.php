@@ -44,6 +44,8 @@ class Order extends Model
         'weight_label_value',
         'weight_chip',
         'scale_note',
+        'payment',
+        'driver_name',
     ];
 
     protected function casts(): array

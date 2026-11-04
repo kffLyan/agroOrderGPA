@@ -3,16 +3,19 @@
 namespace App\Http\Controllers\Direktur;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Prints\PrintLaporanController;
 use App\Models\Invoice;
 use Carbon\Carbon;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\TataKelolaService;
 use App\Services\LaporanPrintService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -278,16 +281,26 @@ class LaporanController extends Controller
             if ($start && $end) {
                 $invQuery->whereBetween('created_at', [$start, $end]);
             }
-            $settled = (float) (clone $invQuery)->where('status', 'PAID')->sum('grand_total');
+            $settledInv = (float) (clone $invQuery)->where('status', 'PAID')->sum('grand_total');
+            $settledDirectPayments = (float) Payment::whereIn('order_id', $clientOrders->pluck('id'))
+                ->whereNull('invoice_id')
+                ->where('status', 'LUNAS')
+                ->sum('amount');
+            $settled = $settledInv + $settledDirectPayments;
+
+            $isB2b = ($client->client_type === 'B2B_KONTRAK');
             $contract = $client->contracts->first();
-            $termDays = $contract ? (int) $contract->top_days : 30;
+            $termDays = $contract ? (int) $contract->top_days : ($isB2b ? 30 : 0);
             $earliestDue = (clone $invQuery)->whereIn('status', ['UNPAID', 'OVERDUE'])->min('due_date');
-            $dueLabel = $earliestDue ? ('JT: ' . Carbon::parse($earliestDue)->translatedFormat('d M')) : 'Lancar';
+            $dueLabel = $earliestDue ? ('JT: ' . Carbon::parse($earliestDue)->translatedFormat('d M')) : ($termDays > 0 ? 'Lancar' : 'Tunai / QRIS');
             $rec = max(0, $gross - $settled);
+
+            $statusLabel = $rec <= 0 ? 'Lunas 100%' : ($isB2b ? ('Lancar (' . $dueLabel . ')') : 'Menunggu Bayar');
 
             $list[] = [
                 'name'             => $client->company_name ?: $client->name,
-                'code'             => $contract ? $contract->contract_number : ('CLI-' . str_pad((string) $client->id, 3, '0', STR_PAD_LEFT)),
+                'category'         => $isB2b ? 'Mitra B2B Kontrak' : 'Pelanggan Reguler',
+                'code'             => $contract ? $contract->contract_number : ('REG-' . str_pad((string) $client->id, 3, '0', STR_PAD_LEFT)),
                 'po_count'         => $poCount,
                 'volume_kg'        => $volumeKg,
                 'gross'            => $gross,
@@ -300,9 +313,9 @@ class LaporanController extends Controller
                 'settled_label'    => 'Rp ' . number_format($settled, 0, ',', '.'),
                 'receivable'       => $rec,
                 'receivable_label' => $rec > 0 ? 'Rp ' . number_format($rec, 0, ',', '.') : 'Rp 0',
-                'term_label'       => $termDays > 0 ? 'TOP ' . $termDays . ' Hari' : $dueLabel,
+                'term_label'       => $termDays > 0 ? ('TOP ' . $termDays . ' Hari') : 'Tunai / QRIS Instan',
                 'status'           => $rec <= 0 ? 'LUNAS' : 'LANCAR',
-                'status_label'     => $rec <= 0 ? 'LUNAS 100%' : ('LANCAR (' . $dueLabel . ')'),
+                'status_label'     => $statusLabel,
                 'status_tone'      => $rec <= 0 ? 'lunas' : 'lancar',
             ];
         }
@@ -391,124 +404,15 @@ class LaporanController extends Controller
             ->with('success', "Kunci audit periode {$namaPeriode} dibuka sementara oleh Direktur Utama.");
     }
 
-    // Tampilan siap cetak dokumen pengesahan resmi PDF
-    public function download(Request $request, LaporanPrintService $service): View
+    // Tampilan siap cetak dokumen pengesahan resmi PDF (Dikelola oleh Controller Dokumen Prints)
+    public function download(Request $request, PrintLaporanController $printController, LaporanPrintService $service): View
     {
-        $dataCetak = $service->buildPrintData(
-            $request->query('start_date'),
-            $request->query('end_date'),
-            $request->query('client_id') ? (int) $request->query('client_id') : null,
-            $request->query('period')
-        );
-
-        return view('prints.report', $dataCetak);
+        return $printController($request, $service);
     }
 
-    // Unduh buku besar penjualan (.CSV)
-    public function exportCsv(Request $request): StreamedResponse
+    // Unduh berkas laporan eksekutif resmi Excel / CSV (Dikelola oleh Controller Dokumen Prints)
+    public function exportCsv(Request $request, PrintLaporanController $printController, LaporanPrintService $printService): Response|StreamedResponse
     {
-        $period = $request->query('period');
-        $startDate = $request->query('start_date');
-        $endDate = $request->query('end_date');
-
-        $now = now();
-        $start = null;
-        $end = null;
-        $labelPeriode = 'Bulan Ini (' . $now->translatedFormat('F Y') . ')';
-
-        if ($startDate && $endDate) {
-            $start = Carbon::parse($startDate)->startOfDay();
-            $end = Carbon::parse($endDate)->endOfDay();
-            $labelPeriode = 'Periode: ' . $start->format('d/m/Y') . ' - ' . $end->format('d/m/Y');
-        } elseif ($period) {
-            switch ($period) {
-                case 'hari_ini':
-                    $start = (clone $now)->startOfDay();
-                    $end = (clone $now)->endOfDay();
-                    $labelPeriode = 'Hari Ini (' . $now->format('d/m/Y') . ')';
-                    break;
-                case 'minggu_ini':
-                    $start = (clone $now)->startOfWeek();
-                    $end = (clone $now)->endOfWeek();
-                    $labelPeriode = 'Minggu Ini';
-                    break;
-                case 'tahun_ini':
-                    $start = (clone $now)->startOfYear();
-                    $end = (clone $now)->endOfYear();
-                    $labelPeriode = 'Tahun Ini (' . $now->format('Y') . ')';
-                    break;
-                case 'semua':
-                    $start = null;
-                    $end = null;
-                    $labelPeriode = 'Semua Riwayat';
-                    break;
-                case 'bulan_ini':
-                    $start = (clone $now)->startOfMonth();
-                    $end = (clone $now)->endOfMonth();
-                    $labelPeriode = 'Bulan Ini (' . $now->translatedFormat('F Y') . ')';
-                    break;
-                case 'semua':
-                default:
-                    $start = null;
-                    $end = null;
-                    $labelPeriode = 'Semua Riwayat Transaksi (Kumulatif Buku Besar)';
-                    break;
-            }
-        } else {
-            $start = null;
-            $end = null;
-            $labelPeriode = 'Semua Riwayat Transaksi (Kumulatif Buku Besar)';
-        }
-
-        $headerBerkas = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="Buku_Besar_Penjualan_' . date('Ymd_His') . '.csv"',
-        ];
-
-        return response()->stream(function () use ($start, $end, $labelPeriode) {
-            $penunjukBerkas = fopen('php://output', 'w');
-            fputs($penunjukBerkas, "\xEF\xBB\xBFsep=;\r\n");
-
-            fputcsv($penunjukBerkas, ['BUKU BESAR REKAPITULASI PENJUALAN EKSEKUTIF KOPERASI GREEN PASUNDAN AGRICULTURE'], ';');
-            fputcsv($penunjukBerkas, ['CAKUPAN PERIODE', $labelPeriode], ';');
-            fputcsv($penunjukBerkas, ['STATUS AUDIT', 'DISAHKAN // SISTEM RESMI'], ';');
-            fputcsv($penunjukBerkas, ['TANGGAL CETAK', date('d/m/Y H:i') . ' WIB'], ';');
-            fputcsv($penunjukBerkas, [], ';');
-            fputcsv($penunjukBerkas, ['Entitas Mitra B2B', 'No Kontrak', 'Frekuensi PO', 'Volume Tera Sah (kg)', 'Tagihan Bruto (Rp)', 'Settled / Kas Masuk (Rp)', 'Sisa Piutang (Rp)', 'Status'], ';');
-
-            $daftarKlien = User::where('role', 'KLIEN')->with(['orders.orderItems', 'invoices', 'contracts'])->get();
-            foreach ($daftarKlien as $client) {
-                $clientOrders = $client->orders->whereNotIn('status', ['BATAL']);
-                if ($start && $end) {
-                    $clientOrders = $clientOrders->whereBetween('created_at', [$start, $end]);
-                }
-                $poCount = $clientOrders->count();
-                $volumeKg = (float) $clientOrders->sum(fn($pesanan) => $pesanan->orderItems->sum('ordered_qty'));
-                $gross = (float) $clientOrders->sum('grand_total');
-
-                $invQuery = $client->invoices();
-                if ($start && $end) {
-                    $invQuery->whereBetween('created_at', [$start, $end]);
-                }
-                $settled = (float) (clone $invQuery)->where('status', 'PAID')->sum('grand_total');
-                $outstanding = max(0, $gross - $settled);
-                $contract = $client->contracts->first();
-                $contractNo = $contract ? $contract->contract_number : ('CLI-' . str_pad((string) $client->id, 3, '0', STR_PAD_LEFT));
-                $status = $outstanding <= 0 ? 'LUNAS' : 'BELUM LUNAS';
-
-                fputcsv($penunjukBerkas, [
-                    $client->company_name ?: $client->name,
-                    $contractNo,
-                    $poCount,
-                    number_format($volumeKg, 2, '.', ''),
-                    number_format($gross, 0, ',', '.'),
-                    number_format($settled, 0, ',', '.'),
-                    number_format($outstanding, 0, ',', '.'),
-                    $status,
-                ], ';');
-            }
-
-            fclose($penunjukBerkas);
-        }, 200, $headerBerkas);
+        return $printController->export($request, $printService);
     }
 }

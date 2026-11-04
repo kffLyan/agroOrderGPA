@@ -11,7 +11,7 @@ export default function clientCatalog(items = []) {
         items,
         category: 'all',
         origin: 'all',
-        sort: 'stock',
+        sort: 'name-asc',
         query: '',
         availableOnly: false,
         quantities: Object.fromEntries(
@@ -89,16 +89,22 @@ export default function clientCatalog(items = []) {
             const visible = this.items.filter((item) => this.matches(item.key));
 
             switch (this.sort) {
+                case 'price-asc':
                 case 'price_asc':
-                    return visible.sort((a, b) => a.price - b.price);
+                    return visible.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+                case 'price-desc':
                 case 'price_desc':
-                    return visible.sort((a, b) => b.price - a.price);
+                    return visible.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
                 case 'moq':
-                    return visible.sort((a, b) => a.moq - b.moq);
+                    return visible.sort((a, b) => (Number(a.moq) || 0) - (Number(b.moq) || 0));
+                case 'name-asc':
                 case 'name':
-                    return visible.sort((a, b) => a.name.localeCompare(b.name, 'id'));
+                    return visible.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'id'));
+                case 'stock-desc':
+                case 'stock':
+                    return visible.sort((a, b) => (Number(b.stock) || 0) - (Number(a.stock) || 0));
                 default:
-                    return visible.sort((a, b) => b.stock - a.stock);
+                    return visible;
             }
         },
 

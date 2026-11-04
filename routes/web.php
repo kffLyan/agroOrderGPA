@@ -306,6 +306,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/cetak/laporan-eksekutif', PrintLaporanController::class)
         ->middleware('role:DIREKTUR,SEKRETARIS')
         ->name('prints.report');
+    Route::get('/cetak/laporan-eksekutif/export', [PrintLaporanController::class, 'export'])
+        ->middleware('role:DIREKTUR,SEKRETARIS')
+        ->name('prints.report.export');
 });
 
 // Fallback rute untuk file bukti serah terima PoD agar tidak terblokir 403

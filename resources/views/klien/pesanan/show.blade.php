@@ -44,11 +44,11 @@
                         </h1>
                         <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 ring-inset {{ $statusStyles[$order->status] ?? 'bg-surface-pill text-ink' }}">
                             <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
-                            {{ $statusLabels[$order->status] ?? $order->status }}
+                            {{ $statusLabels[$order->status] ?? ($order->status_label ?? str_replace('_', ' ', $order->status)) }}
                         </span>
                     </div>
                     <p class="gpa-body text-ink-body">
-                        Dipesan pada {{ $order->created_at->format('d F Y, H:i') }} WIB &bull; Sumber: {{ $order->order_source }}
+                        Dipesan pada {{ $order->created_at->format('d F Y, H:i') }} WIB &bull; Sumber: {{ $order->order_source_label ?? str_replace('_', ' ', $order->order_source) }}
                     </p>
                 </div>
 
@@ -886,11 +886,11 @@
                             <div class="flex justify-between font-bold">
                                 <span>{{ $payment->payment_reference }}</span>
                                 <span class="{{ $isPayRejected ? 'text-danger font-extrabold' : ($isPaySuccess ? 'text-success-deep' : 'text-warning-deep') }}">
-                                    {{ $payment->status === 'DITOLAK' ? 'Ditolak Verifikator' : $payment->status }}
+                                    {{ $payment->status === 'DITOLAK' ? 'Ditolak Verifikator' : ($payment->status_label ?? str_replace('_', ' ', $payment->status)) }}
                                 </span>
                             </div>
                             <div class="flex justify-between text-ink-body">
-                                <span>Metode: {{ $payment->payment_method }}</span>
+                                <span>Metode: {{ $payment->method_label ?? str_replace('_', ' ', $payment->payment_method) }}</span>
                                 <span class="font-semibold text-ink">{{ $rupiah($payment->amount) }}</span>
                             </div>
                             @if ($isPayRejected && $payment->verification_note)

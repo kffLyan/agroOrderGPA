@@ -235,9 +235,13 @@
                                                     <span class="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse"></span>
                                                     Dalam Pengiriman
                                                 </span>
+                                            @elseif ($isReady)
+                                                <span class="inline-flex items-center gap-1 rounded bg-amber-50 px-2 py-0.5 text-[9px] font-bold uppercase text-amber-700 ring-1 ring-inset ring-amber-300">
+                                                    Siap Kirim
+                                                </span>
                                             @else
                                                 <span class="inline-flex items-center gap-1 rounded bg-surface-pill px-2 py-0.5 text-[9px] font-bold uppercase text-ink-body ring-1 ring-inset ring-line-board">
-                                                    {{ $order->status }}
+                                                    {{ $order->status_label ?? str_replace('_', ' ', $order->status) }}
                                                 </span>
                                             @endif
                                         </div>

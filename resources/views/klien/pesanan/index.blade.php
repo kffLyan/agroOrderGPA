@@ -55,10 +55,6 @@
             <div class="flex min-w-0 flex-col gap-1">
                 <div class="flex flex-wrap items-center gap-2">
                     <h1 class="gpa-section-title text-ink">Daftar Pesanan &amp; Pelacakan Armada</h1>
-                    <span
-                        class="rounded-full bg-accent px-2.5 py-0.5 gpa-micro-bold text-success-ink">
-                        Real-time Tracking
-                    </span>
                 </div>
                 <p class="max-w-[56rem] gpa-body text-ink-body">Pantau status pesanan, penimbangan netto fisik gudang, dan pergerakan armada chiller secara transparan.</p>
             </div>
@@ -116,67 +112,47 @@
         {{-- ------------------------------------------------------------------ --}}
         {{-- Filter rentang tanggal, gudang, pembayaran, dan pencarian --}}
         {{-- ------------------------------------------------------------------ --}}
-        <section class="gpa-card flex flex-col gap-3 p-4 lg:flex-row lg:items-center lg:justify-between">
+        <section class="gpa-card flex flex-col gap-3 p-3 sm:p-4 lg:flex-row lg:items-center lg:justify-between">
             <div class="flex flex-wrap items-center gap-2">
-                {{-- Rentang Waktu --}}
-                <label class="flex h-[5.5rem] flex-col justify-center gap-1 rounded-lg border border-line-soft/70 bg-canvas px-3 py-1.5">
-                    <span class="gpa-micro text-ink-body">Rentang Waktu</span>
+                {{-- Rentang Waktu (Pill Lonjong) --}}
+                <label class="relative inline-flex h-10 items-center rounded-full border border-line-soft bg-surface px-3.5 shadow-xs transition-colors hover:border-line-board focus-within:border-brand">
+                    <x-gpa.icon name="calendar" class="h-4 w-4 shrink-0 text-ink-body" />
+                    <span class="ml-1.5 mr-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink-body">Waktu:</span>
                     <select x-model="range"
-                        class="-ml-1 w-full min-w-[7.5rem] cursor-pointer border-0 bg-transparent p-0 pr-6 text-xs font-semibold leading-4 text-ink focus:ring-0">
+                        class="cursor-pointer border-0 bg-transparent py-0 pl-1 pr-7 text-xs font-semibold text-ink focus:ring-0">
                         <option value="all">Semua Waktu</option>
                         <option value="30d">30 Hari Terakhir</option>
                         <option value="mtd">Bulan Berjalan</option>
                     </select>
                 </label>
 
-                {{-- Sentra Panen --}}
-                <label class="flex h-[5.5rem] flex-col justify-center gap-1 rounded-lg border border-line-soft/70 bg-canvas px-3 py-1.5">
-                    <span class="gpa-micro text-ink-body">Sentra Panen</span>
-                    <select x-model="hub"
-                        class="-ml-1 w-full min-w-[7.5rem] cursor-pointer border-0 bg-transparent p-0 pr-6 text-xs font-semibold leading-4 text-ink focus:ring-0">
-                        <option value="all">Semua Sentra GPA</option>
-                        <option value="lembang">Sentra Lembang</option>
-                        <option value="ciwidey">Sentra Ciwidey</option>
-                    </select>
-                </label>
-
-                {{-- Metode Bayar --}}
-                <label class="flex h-[5.5rem] flex-col justify-center gap-1 rounded-lg border border-line-soft/70 bg-canvas px-3 py-1.5">
-                    <span class="gpa-micro text-ink-body">Metode Bayar</span>
+                {{-- Metode Bayar (Pill Lonjong) --}}
+                <label class="relative inline-flex h-10 items-center rounded-full border border-line-soft bg-surface px-3.5 shadow-xs transition-colors hover:border-line-board focus-within:border-brand">
+                    <x-gpa.icon name="credit-card" class="h-4 w-4 shrink-0 text-ink-body" />
+                    <span class="ml-1.5 mr-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink-body">Bayar:</span>
                     <select x-model="payment"
-                        class="-ml-1 w-full min-w-[7.5rem] cursor-pointer border-0 bg-transparent p-0 pr-6 text-xs font-semibold leading-4 text-ink focus:ring-0">
+                        class="cursor-pointer border-0 bg-transparent py-0 pl-1 pr-7 text-xs font-semibold text-ink focus:ring-0">
                         <option value="all">Semua Metode</option>
                         <option value="tempo">Term of Payment (Tempo)</option>
-                        <option value="transfer">Transfer Bank BCA/Mandiri</option>
-                        <option value="qris">QRIS Dinamis GPA</option>
+                        <option value="transfer">Transfer Bank</option>
+                        <option value="qris">QRIS Dinamis</option>
                     </select>
                 </label>
 
-                <button type="button" @click="deviationOnly = ! deviationOnly" role="switch"
-                    :aria-checked="deviationOnly ? 'true' : 'false'" aria-label="Hanya Deviasi Timbang > 1%"
-                    class="flex h-[5.5rem] items-center gap-2 rounded-lg border border-line-soft/70 bg-canvas px-3 py-1.5 transition-colors hover:border-brand"
-                    :class="deviationOnly ? 'border-brand bg-surface-muted' : ''">
-                    <span
-                        class="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded bg-ink text-white">
-                        <x-gpa.icon name="gauge" class="h-3 w-3" />
-                    </span>
-                    <span class="max-w-[9rem] text-left font-mono text-[11px] font-medium leading-[14px] text-ink">
-                        Hanya Deviasi Timbang &gt; 1%
-                    </span>
-                </button>
-
                 <button type="button" x-cloak x-show="hasFilters()" @click="resetFilters()"
-                    class="h-[5.5rem] rounded-lg px-2 text-[11px] font-semibold leading-[14px] text-ink-quiet underline underline-offset-4 transition-colors hover:text-ink">
-                    Reset filter
+                    class="inline-flex h-10 items-center gap-1.5 rounded-full border border-line-soft bg-surface px-3.5 text-xs font-semibold text-ink-body shadow-xs transition-colors hover:border-brand hover:text-ink">
+                    <x-gpa.icon name="refresh" class="h-3.5 w-3.5" />
+                    <span>Reset Filter</span>
                 </button>
             </div>
 
-            <label class="relative flex w-full items-center lg:w-72">
+            {{-- Kolom Pencarian (Pill Lonjong) --}}
+            <label class="relative flex w-full items-center lg:w-80">
                 <span class="sr-only">Cari no PO, nama komoditas, supir, plat nomor...</span>
-                <x-gpa.icon name="search" class="pointer-events-none absolute left-3.5 h-3.5 w-3.5 text-ink-body" />
+                <x-gpa.icon name="search" class="pointer-events-none absolute left-3.5 h-4 w-4 text-ink-body" />
                 <input type="search" x-model.debounce.200ms="search"
-                    placeholder="Cari no PO, nama komoditas, supir, plat nomor..."
-                    class="gpa-control h-10 w-full rounded-lg border-line-soft bg-surface pl-10 text-sm">
+                    placeholder="Cari no PO, nama komoditas, supir, plat..."
+                    class="h-10 w-full rounded-full border border-line-soft bg-surface pl-10 pr-4 text-xs font-medium text-ink placeholder:text-ink-subtle shadow-xs transition-colors focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand">
             </label>
         </section>
 

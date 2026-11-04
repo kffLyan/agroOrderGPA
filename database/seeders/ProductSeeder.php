@@ -4,13 +4,16 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class ProductSeeder extends Seeder
 {
-    // Menyiapkan data master 5 komoditas unggulan sayuran segar GPA beserta harga dasar dan spesifikasi mutu
+    // Menyiapkan data master 6 komoditas unggulan sayuran segar GPA beserta harga dasar dan spesifikasi mutu
     public function run(): void
     {
+        Schema::disableForeignKeyConstraints();
         DB::table('products')->truncate();
+        Schema::enableForeignKeyConstraints();
 
         DB::table('products')->insert([
             [

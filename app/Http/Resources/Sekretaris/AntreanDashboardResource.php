@@ -50,7 +50,9 @@ class AntreanDashboardResource extends JsonResource
                     'SIAP_KIRIM'          => 'Siap Terbit SJ',
                     'DALAM_PENGIRIMAN'    => 'Dalam Pengiriman',
                     'SELESAI'             => 'Terkirim Selesai',
-                    default               => 'Draft PO',
+                    'SELESAI_CATATAN'     => 'Selesai (Catatan)',
+                    'BATAL'               => 'Dibatalkan',
+                    default               => ucwords(strtolower(str_replace('_', ' ', (string) $order->status))),
                 },
                 'class' => match ($order->status) {
                     'MENUNGGU_VERIFIKASI' => 'border-warning/40 bg-warning-wash font-bold text-warning-deep',

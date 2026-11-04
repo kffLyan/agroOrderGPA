@@ -210,35 +210,10 @@
                         {{-- Email & Telepon Grid --}}
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div x-data="{ editingEmail: false }">
-                                <div class="flex items-center justify-between">
-                                    <label for="email" class="block font-mono text-[11px] font-bold uppercase tracking-wider text-ink">
-                                        Alamat Email Resmi <span class="text-red-500">*</span>
-                                    </label>
-                                    <div class="flex items-center gap-1.5">
-                                        @if ($user->hasVerifiedEmail())
-                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-0.5 font-mono text-[10px] font-bold text-emerald-700 border border-emerald-300 shadow-xs">
-                                                <x-gpa.icon name="check-circle" class="h-3.5 w-3.5 text-emerald-600" />
-                                                <span>TERVERIFIKASI OTP</span>
-                                            </span>
-                                        @else
-                                            <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2.5 py-0.5 font-mono text-[10px] font-bold text-amber-700 border border-amber-300">
-                                                <x-gpa.icon name="alert-triangle" class="h-3 w-3 text-amber-600" />
-                                                <span>BELUM VERIFIKASI</span>
-                                            </span>
-                                            <button type="submit" form="direct-verify-email-form"
-                                                title="Klik untuk langsung memverifikasi alamat email ini"
-                                                class="inline-flex items-center gap-1 rounded bg-brand px-2 py-0.5 font-mono text-[10px] font-bold text-white shadow-xs transition-opacity hover:opacity-90">
-                                                <x-gpa.icon name="check-circle" class="h-3 w-3 text-accent" />
-                                                <span>Verifikasi Sekarang</span>
-                                            </button>
-                                        @endif
-                                        <button type="button" @click="editingEmail = !editingEmail"
-                                            class="font-mono text-[10px] font-semibold text-brand hover:underline ml-1">
-                                            <span x-text="editingEmail ? 'Batal' : 'Ubah'"></span>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="relative mt-1.5">
+                                <label for="email" class="block font-mono text-[11px] font-bold uppercase tracking-wider text-ink">
+                                    Alamat Email Resmi <span class="text-red-500">*</span>
+                                </label>
+                                <div class="mt-1.5">
                                     <input id="email" name="email" type="email" required
                                         value="{{ old('email', $user->email) }}"
                                         :readonly="!editingEmail"
@@ -246,7 +221,28 @@
                                         placeholder="purchasing@kulinerprima.co.id"
                                         class="block w-full rounded-lg border border-line px-3.5 py-2.5 font-sans text-sm text-ink placeholder:text-ink-subtle/60 focus:outline-none transition-colors">
                                 </div>
-                                <p x-show="editingEmail" class="mt-1 font-mono text-[10px] text-amber-700">
+
+                                {{-- Status Verifikasi & Tombol Ubah di Bawah Input (Tidak Menutupi Teks Email) --}}
+                                <div class="mt-2 flex flex-wrap items-center gap-2">
+                                    @if ($user->hasVerifiedEmail())
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 font-mono text-[10px] font-bold text-emerald-700 border border-emerald-300 shadow-xs">
+                                            <x-gpa.icon name="check-circle" class="h-3 w-3 text-emerald-600" />
+                                            <span>TERVERIFIKASI OTP</span>
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 font-mono text-[10px] font-bold text-amber-700 border border-amber-300 shadow-xs">
+                                            <x-gpa.icon name="alert-triangle" class="h-3 w-3 text-amber-600" />
+                                            <span>BELUM TERVERIFIKASI</span>
+                                        </span>
+                                    @endif
+
+                                    <button type="button" @click="editingEmail = !editingEmail"
+                                        class="font-mono text-[11px] font-semibold text-brand hover:underline">
+                                        <span x-text="editingEmail ? 'Batal Ubah' : 'Ubah Email'"></span>
+                                    </button>
+                                </div>
+
+                                <p x-show="editingEmail" class="mt-1.5 font-mono text-[10px] text-amber-700">
                                     Perhatian: Mengubah email akan memperbarui kontak korespondensi resmi akun Anda.
                                 </p>
                                 @if (! $user->hasVerifiedEmail())

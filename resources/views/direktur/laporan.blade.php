@@ -50,12 +50,12 @@
                         <x-gpa.icon name="printer" class="h-3.5 w-3.5" />
                         CETAK DOKUMEN LAPORAN RESMI (PDF)
                     </a>
-                    <a href="{{ route('direktur.laporan.export', request()->query()) }}"
+                    <a href="{{ route('direktur.laporan.export', array_merge(request()->query(), ['format' => 'excel'])) }}"
                         download
                         data-no-progress
                         class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-[11px] font-bold tracking-[0.88px] text-white transition-colors hover:bg-white/20 gpa-meta">
                         <x-gpa.icon name="download" class="h-3.5 w-3.5" />
-                        UNDUH BUKU BESAR (CSV / EXCEL)
+                        UNDUH LAPORAN EXCEL (.XLS)
                     </a>
                     <button type="button" @click="revealAudit()"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-[11px] font-bold tracking-[0.88px] text-white transition-colors hover:bg-white/20 gpa-meta">
@@ -533,7 +533,7 @@
                                 <td class="py-2.5 px-3 text-ink-body">{{ $ord->target_delivery_date ? date('d M Y', strtotime($ord->target_delivery_date)) : '-' }}</td>
                                 <td class="py-2.5 px-3 text-right font-semibold text-ink">Rp {{ number_format($ord->grand_total, 0, ',', '.') }}</td>
                                 <td class="py-2.5 px-3 text-center">
-                                    <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-accent/40 text-success-deep">{{ $ord->status }}</span>
+                                    <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-accent/40 text-success-deep">{{ $ord->status_label ?? str_replace('_', ' ', $ord->status) }}</span>
                                 </td>
                             </tr>
                         @endforeach
@@ -602,12 +602,19 @@
                 {{-- Kolom 3: Aksi Unduh & Cetak --}}
                 <div class="flex flex-col gap-2.5 lg:col-span-3">
                     <span class="text-[10px] font-bold uppercase tracking-wider text-ink-subtle">Ekspor &amp; Cetak Arsip</span>
-                    <a href="{{ route('direktur.laporan.export', request()->query()) }}"
+                    <a href="{{ route('direktur.laporan.export', array_merge(request()->query(), ['format' => 'excel'])) }}"
                         download
                         data-no-progress
-                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-bold text-ink hover:bg-surface-muted transition-colors shadow-sm">
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-xs font-bold text-ink hover:bg-accent-deep transition-colors shadow-sm">
+                        <x-gpa.icon name="download" class="h-3.5 w-3.5 text-ink" />
+                        Unduh Buku Besar Excel (.xls)
+                    </a>
+                    <a href="{{ route('direktur.laporan.export', array_merge(request()->query(), ['format' => 'csv'])) }}"
+                        download
+                        data-no-progress
+                        class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 py-2 text-xs font-medium text-ink-subtle hover:bg-surface-muted transition-colors shadow-sm">
                         <x-gpa.icon name="download" class="h-3.5 w-3.5 text-ink-subtle" />
-                        Unduh Buku Besar (.csv)
+                        Ekspor Data CSV Mentah (.csv)
                     </a>
                     <a href="{{ route('direktur.laporan.download', request()->query()) }}"
                         target="_blank"

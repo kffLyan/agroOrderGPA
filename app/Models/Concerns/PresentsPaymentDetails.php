@@ -28,6 +28,19 @@ trait PresentsPaymentDetails
         return $this->formatted_amount;
     }
 
+    public function getMethodLabelAttribute(): string
+    {
+        return match (strtoupper((string) $this->payment_method)) {
+            'TRANSFER_BANK' => 'Transfer Bank (BCA / Mandiri)',
+            'QRIS'          => 'QRIS Instan',
+            'CASH', 'TUNAI' => 'Tunai / Kasir',
+            'COD'           => 'Cash on Delivery (COD)',
+            'TEMPO_TOP'     => 'Tempo B2B (TOP)',
+            'SK_DIREKTUR'   => 'Dispensasi SK Direktur',
+            default         => ucwords(strtolower(str_replace('_', ' ', (string) $this->payment_method))),
+        };
+    }
+
     public function getCodeAttribute(): string
     {
         return 'PAY-' . str_pad((string) $this->id, 5, '0', STR_PAD_LEFT);

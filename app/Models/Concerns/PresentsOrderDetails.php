@@ -57,6 +57,31 @@ trait PresentsOrderDetails
             : null;
     }
 
+    // Mengambil metode pembayaran pesanan (tempo, transfer, qris, cash)
+    public function getPaymentAttribute(): string
+    {
+        $latestPayment = $this->payments->sortByDesc('id')->first();
+        if ($latestPayment && !empty($latestPayment->payment_method)) {
+            $method = strtoupper((string) $latestPayment->payment_method);
+            if (str_contains($method, 'TRANSFER')) return 'transfer';
+            if (str_contains($method, 'QRIS')) return 'qris';
+            if (str_contains($method, 'TEMPO')) return 'tempo';
+            if (str_contains($method, 'CASH')) return 'cash';
+        }
+
+        if (in_array($this->order_source, ['CONTRACT', 'ROUTINE_SCHEDULE'], true)) {
+            return 'tempo';
+        }
+
+        return 'transfer';
+    }
+
+    // Mengambil nama supir yang ditugaskan
+    public function getDriverNameAttribute(): ?string
+    {
+        return $this->driver?->name;
+    }
+
     // Memformat path file foto menjadi URL aset yang valid
     protected function formatPhotoAssetUrl(?string $path): ?string
     {
@@ -277,7 +302,46 @@ trait PresentsOrderDetails
             'SELESAI'             => 'Selesai Diterima Dock',
             'SELESAI_CATATAN'     => 'Selesai (Ada Catatan Retur)',
             'BATAL'               => 'Pesanan Dibatalkan',
-            default               => (string) $this->status,
+            default               => ucwords(strtolower(str_replace('_', ' ', (string) $this->status))),
+        };
+    }
+
+    // Label sumber pemesanan yang ramah tampilan pengguna (bebas underscore)
+    public function getOrderSourceLabelAttribute(): string
+    {
+        return match ($this->order_source) {
+            'WEB_PORTAL'        => 'Portal Web Klien',
+            'WHATSAPP_ADMIN'    => 'WhatsApp Admin / Kasir',
+            'ROUTINE_SCHEDULE'  => 'Jadwal Rutin Kemitraan',
+            'MANUAL_SEKRETARIS' => 'Input Manual Sekretariat',
+            default             => ucwords(strtolower(str_replace('_', ' ', (string) $this->order_source))),
+        };
+    }
+
+    // Label klasifikasi segmen kemitraan pembeli (B2B Kontrak vs Reguler)
+    public function getClientTypeLabelAttribute(): string
+    {
+        return match ($this->user?->client_type) {
+            'B2B_KONTRAK' => 'Mitra B2B Kontrak',
+            'REGULER'     => 'Pelanggan Reguler',
+            default       => $this->user?->client_type ? ucwords(strtolower(str_replace('_', ' ', $this->user->client_type))) : 'Pelanggan Reguler',
+        };
+    }
+
+    // Label representasi metode pembayaran pesanan (bebas underscore)
+    public function getPaymentMethodLabelAttribute(): string
+    {
+        $payment = $this->payments ? $this->payments->sortByDesc('id')->first() : null;
+        $method = $payment?->payment_method ?: ($this->user?->client_type === 'B2B_KONTRAK' ? 'TEMPO_TOP' : 'TRANSFER_BANK');
+
+        return match (strtoupper((string) $method)) {
+            'TRANSFER_BANK' => 'Transfer Bank',
+            'QRIS'          => 'QRIS Instan',
+            'CASH', 'TUNAI' => 'Tunai / Kasir',
+            'COD'           => 'Cash on Delivery (COD)',
+            'TEMPO_TOP'     => 'Tempo B2B (TOP 30D)',
+            'SK_DIREKTUR'   => 'Dispensasi SK Direktur',
+            default         => ucwords(strtolower(str_replace('_', ' ', (string) $method))),
         };
     }
 

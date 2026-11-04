@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 
 class OrderSeeder extends Seeder
 {
-    // Menyiapkan data awal transaksi pesanan, rincian komoditas, faktur tagihan, dan bukti pembayaran
+    // Menyiapkan data awal transaksi pesanan, rincian komoditas, faktur tagihan, dan bukti pembayaran konsolidasi (B2B & Reguler)
     public function run(): void
     {
         Schema::disableForeignKeyConstraints();
@@ -154,12 +154,44 @@ class OrderSeeder extends Seeder
                 'created_at'      => now()->subDays(20),
                 'updated_at'      => now()->subDays(19),
             ],
+            // FAKTUR REGULER / SPOT ORDER BARU
+            [
+                'id'              => 10,
+                'invoice_number'  => 'INV-GPA-202611-0095',
+                'user_id'         => 16, // Katering Bu Siti Soreang
+                'period_start'    => now()->subDays(2)->toDateString(),
+                'period_end'      => now()->toDateString(),
+                'subtotal_amount' => 4750000.00,
+                'grand_total'     => 4750000.00,
+                'due_date'        => now()->addDays(7)->toDateString(),
+                'status'          => 'UNPAID',
+                'pdf_file_path'   => 'invoices/INV-GPA-202611-0095.pdf',
+                'created_at'      => now()->subDays(1),
+                'updated_at'      => now()->subDays(1),
+            ],
+            [
+                'id'              => 11,
+                'invoice_number'  => 'INV-GPA-202611-0096',
+                'user_id'         => 17, // Warung Steak Ciwidey (Tunai Kasir Selesai)
+                'period_start'    => now()->subDays(1)->toDateString(),
+                'period_end'      => now()->toDateString(),
+                'subtotal_amount' => 1850000.00,
+                'grand_total'     => 1850000.00,
+                'due_date'        => now()->toDateString(),
+                'status'          => 'PAID',
+                'pdf_file_path'   => 'invoices/INV-GPA-202611-0096.pdf',
+                'created_at'      => now()->subDays(1),
+                'updated_at'      => now()->subDays(1),
+            ],
         ]);
 
         // =====================================================================
-        // 2. SEED ORDERS (Pesanan Riil Sesuai Alur & Tahap Siklus Bisnis)
+        // 2. SEED ORDERS (Pesanan Riil B2B & Reguler Konsolidasi)
         // =====================================================================
         DB::table('orders')->insert([
+            // -----------------------------------------------------------------
+            // STATUS 1: MENUNGGU_VERIFIKASI (3 Pesanan)
+            // -----------------------------------------------------------------
             // Order 1: MENUNGGU_VERIFIKASI (Grand Pangrango - B2B Jadwal)
             [
                 'id'                   => 1,
@@ -226,6 +258,10 @@ class OrderSeeder extends Seeder
                 'created_at'           => now()->subHours(4),
                 'updated_at'           => now()->subHours(4),
             ],
+
+            // -----------------------------------------------------------------
+            // STATUS 2: MENUNGGU_PEMBAYARAN (3 Pesanan)
+            // -----------------------------------------------------------------
             // Order 4: MENUNGGU_PEMBAYARAN (Pak Hendra Pratama - Reguler Web)
             [
                 'id'                   => 4,
@@ -248,7 +284,7 @@ class OrderSeeder extends Seeder
                 'created_at'           => now()->subDays(1),
                 'updated_at'           => now()->subHours(5),
             ],
-            // Order 5: MENUNGGU_PEMBAYARAN (Resto Dapur Sunda Asli)
+            // Order 5: MENUNGGU_PEMBAYARAN (Resto Dapur Sunda Asli - B2B)
             [
                 'id'                   => 5,
                 'order_number'         => 'ORD-GPA-202611-0099',
@@ -270,7 +306,33 @@ class OrderSeeder extends Seeder
                 'created_at'           => now()->subHours(14),
                 'updated_at'           => now()->subHours(8),
             ],
-            // Order 6: LUNAS (CV Mitra Boga Nusantara - Siap Alokasi Gudang)
+            // Order 21: MENUNGGU_PEMBAYARAN (Ibu Siti Rahmawati - Katering Soreang, QRIS Pending)
+            [
+                'id'                   => 21,
+                'order_number'         => 'ORD-GPA-202611-0104',
+                'user_id'              => 16,
+                'invoice_id'           => 10,
+                'order_source'         => 'WEB_PORTAL',
+                'target_delivery_date' => now()->addDays(1)->toDateString(),
+                'delivery_address'     => 'Katering Bu Siti Soreang, Jl. Raya Soreang No. 88, Kab. Bandung',
+                'grand_total'          => 4750000.00,
+                'status'               => 'MENUNGGU_PEMBAYARAN',
+                'verified_by'          => 2,
+                'surat_jalan_number'   => null,
+                'driver_id'            => null,
+                'vehicle_plate_number' => null,
+                'departure_time'       => null,
+                'arrival_time'         => null,
+                'pod_photo_url'        => null,
+                'received_by_name'     => null,
+                'created_at'           => now()->subHours(6),
+                'updated_at'           => now()->subHours(2),
+            ],
+
+            // -----------------------------------------------------------------
+            // STATUS 3: LUNAS (4 Pesanan: Transfer Bank, Tunai Kasir, QRIS)
+            // -----------------------------------------------------------------
+            // Order 6: LUNAS (CV Mitra Boga Nusantara - B2B Transfer Bank)
             [
                 'id'                   => 6,
                 'order_number'         => 'ORD-GPA-202611-0094',
@@ -292,7 +354,7 @@ class OrderSeeder extends Seeder
                 'created_at'           => now()->subDays(1),
                 'updated_at'           => now()->subHours(6),
             ],
-            // Order 7: LUNAS (PT Aerofood ACS - Siap Penerbitan Surat Jalan)
+            // Order 7: LUNAS (PT Aerofood ACS - B2B Transfer Bank)
             [
                 'id'                   => 7,
                 'order_number'         => 'ORD-GPA-202611-0095',
@@ -314,6 +376,54 @@ class OrderSeeder extends Seeder
                 'created_at'           => now()->subDays(1),
                 'updated_at'           => now()->subHours(4),
             ],
+            // Order 22: LUNAS (Budi Santoso - Warung Steak Ciwidey, Tunai Kasir Lunas)
+            [
+                'id'                   => 22,
+                'order_number'         => 'ORD-GPA-202611-0096',
+                'user_id'              => 17,
+                'invoice_id'           => 11,
+                'order_source'         => 'WHATSAPP_ADMIN',
+                'target_delivery_date' => now()->toDateString(),
+                'delivery_address'     => 'Warung Steak & Shake Ciwidey, Jl. Raya Ciwidey - Patengan Km 2',
+                'grand_total'          => 1850000.00,
+                'status'               => 'LUNAS',
+                'verified_by'          => 2,
+                'surat_jalan_number'   => null,
+                'driver_id'            => null,
+                'vehicle_plate_number' => null,
+                'departure_time'       => null,
+                'arrival_time'         => null,
+                'pod_photo_url'        => null,
+                'received_by_name'     => null,
+                'created_at'           => now()->subDays(1),
+                'updated_at'           => now()->subHours(5),
+            ],
+            // Order 23: LUNAS (Ibu Maya Anggraeni - Toko Buah Segar Buah Batu, QRIS Instan Lunas)
+            [
+                'id'                   => 23,
+                'order_number'         => 'ORD-GPA-202611-0097',
+                'user_id'              => 18,
+                'invoice_id'           => null,
+                'order_source'         => 'WEB_PORTAL',
+                'target_delivery_date' => now()->toDateString(),
+                'delivery_address'     => 'Toko Buah & Sayur Segar, Jl. Buah Batu No. 210, Turangga, Bandung',
+                'grand_total'          => 2450000.00,
+                'status'               => 'LUNAS',
+                'verified_by'          => 2,
+                'surat_jalan_number'   => null,
+                'driver_id'            => null,
+                'vehicle_plate_number' => null,
+                'departure_time'       => null,
+                'arrival_time'         => null,
+                'pod_photo_url'        => null,
+                'received_by_name'     => null,
+                'created_at'           => now()->subHours(10),
+                'updated_at'           => now()->subHours(3),
+            ],
+
+            // -----------------------------------------------------------------
+            // STATUS 4: SIAP_KIRIM (3 Pesanan)
+            // -----------------------------------------------------------------
             // Order 8: SIAP_KIRIM (PT Boga Rasa - Supir Joko Ditugaskan)
             [
                 'id'                   => 8,
@@ -358,6 +468,32 @@ class OrderSeeder extends Seeder
                 'created_at'           => now()->subDays(1),
                 'updated_at'           => now()->subHours(2),
             ],
+            // Order 24: SIAP_KIRIM (Ibu Siti Rahmawati - Katering Bu Siti, Reguler Siap Kirim)
+            [
+                'id'                   => 24,
+                'order_number'         => 'ORD-GPA-202611-0090',
+                'user_id'              => 16,
+                'invoice_id'           => null,
+                'order_source'         => 'WHATSAPP_ADMIN',
+                'target_delivery_date' => now()->toDateString(),
+                'delivery_address'     => 'Katering Bu Siti Soreang, Jl. Raya Soreang No. 88, Soreang',
+                'grand_total'          => 3600000.00,
+                'status'               => 'SIAP_KIRIM',
+                'verified_by'          => 2,
+                'surat_jalan_number'   => 'SJ-GPA-202611-0083',
+                'driver_id'            => 6, // Joko Prasetyo
+                'vehicle_plate_number' => 'B 9014 KPA',
+                'departure_time'       => null,
+                'arrival_time'         => null,
+                'pod_photo_url'        => null,
+                'received_by_name'     => null,
+                'created_at'           => now()->subDays(1),
+                'updated_at'           => now()->subHours(1),
+            ],
+
+            // -----------------------------------------------------------------
+            // STATUS 5: DALAM_PENGIRIMAN (3 Pesanan)
+            // -----------------------------------------------------------------
             // Order 10: DALAM_PENGIRIMAN (Aerofood ACS - Driver Joko On The Road)
             [
                 'id'                   => 10,
@@ -402,6 +538,32 @@ class OrderSeeder extends Seeder
                 'created_at'           => now()->subDays(1),
                 'updated_at'           => now()->subHours(1)->subMinutes(45),
             ],
+            // Order 25: DALAM_PENGIRIMAN (Budi Santoso - Steak Ciwidey, Driver Ujang On The Road)
+            [
+                'id'                   => 25,
+                'order_number'         => 'ORD-GPA-202611-0079',
+                'user_id'              => 17,
+                'invoice_id'           => null,
+                'order_source'         => 'WHATSAPP_ADMIN',
+                'target_delivery_date' => now()->toDateString(),
+                'delivery_address'     => 'Warung Steak & Shake Ciwidey, Jl. Raya Ciwidey - Patengan Km 2',
+                'grand_total'          => 2900000.00,
+                'status'               => 'DALAM_PENGIRIMAN',
+                'verified_by'          => 2,
+                'surat_jalan_number'   => 'SJ-GPA-202611-0079',
+                'driver_id'            => 7, // Ujang Koswara
+                'vehicle_plate_number' => 'D 8124 AB',
+                'departure_time'       => now()->subMinutes(45),
+                'arrival_time'         => null,
+                'pod_photo_url'        => null,
+                'received_by_name'     => null,
+                'created_at'           => now()->subDays(1),
+                'updated_at'           => now()->subMinutes(45),
+            ],
+
+            // -----------------------------------------------------------------
+            // STATUS 6: SELESAI (8 Pesanan Bersih Sah)
+            // -----------------------------------------------------------------
             // Order 12: SELESAI (Aerofood - 2 Hari Lalu)
             [
                 'id'                   => 12,
@@ -423,28 +585,6 @@ class OrderSeeder extends Seeder
                 'received_by_name'     => 'Chef Ridwan (QC Aerofood)',
                 'created_at'           => now()->subDays(3),
                 'updated_at'           => now()->subDays(2)->setTime(8, 30),
-            ],
-            // Order 13: SELESAI_CATATAN (Grand Pangrango - H-3 / Retur Sortir Ringan)
-            [
-                'id'                   => 13,
-                'order_number'         => 'ORD-GPA-202611-0071',
-                'user_id'              => 9,
-                'invoice_id'           => 2,
-                'order_source'         => 'WEB_PORTAL',
-                'target_delivery_date' => now()->subDays(3)->toDateString(),
-                'delivery_address'     => 'Gudang Basah Hotel Grand Pangrango Bogor',
-                'grand_total'          => 58500000.00,
-                'status'               => 'SELESAI_CATATAN',
-                'verified_by'          => 2,
-                'surat_jalan_number'   => 'SJ-GPA-202611-0071',
-                'driver_id'            => 7,
-                'vehicle_plate_number' => 'D 8124 AB',
-                'departure_time'       => now()->subDays(3)->setTime(5, 0),
-                'arrival_time'         => now()->subDays(3)->setTime(8, 15),
-                'pod_photo_url'        => 'uploads/pod/pod_8_1793417539.webp,uploads/pod/dock_9_1793418349.png',
-                'received_by_name'     => 'Pak Suryana',
-                'created_at'           => now()->subDays(4),
-                'updated_at'           => now()->subDays(3)->setTime(8, 15),
             ],
             // Order 14: SELESAI (PT Boga Rasa - 6 Hari Lalu / W-1)
             [
@@ -534,28 +674,6 @@ class OrderSeeder extends Seeder
                 'created_at'           => now()->subDays(21),
                 'updated_at'           => now()->subDays(20)->setTime(8, 45),
             ],
-            // Order 18: SELESAI_CATATAN (PT AEON Indonesia - 22 Hari Lalu / W-3 / Mika Retak)
-            [
-                'id'                   => 18,
-                'order_number'         => 'ORD-GPA-202610-0045',
-                'user_id'              => 14,
-                'invoice_id'           => 9,
-                'order_source'         => 'WEB_PORTAL',
-                'target_delivery_date' => now()->subDays(22)->toDateString(),
-                'delivery_address'     => 'AEON Mall BSD Store, Tangerang',
-                'grand_total'          => 24500000.00,
-                'status'               => 'SELESAI_CATATAN',
-                'verified_by'          => 2,
-                'surat_jalan_number'   => 'SJ-GPA-202610-0045',
-                'driver_id'            => 6,
-                'vehicle_plate_number' => 'B 9014 KPA',
-                'departure_time'       => now()->subDays(22)->setTime(5, 30),
-                'arrival_time'         => now()->subDays(22)->setTime(8, 50),
-                'pod_photo_url'        => 'uploads/pod/pod_9_1793418349.webp',
-                'received_by_name'     => 'Dewi Anggraeni',
-                'created_at'           => now()->subDays(23),
-                'updated_at'           => now()->subDays(22)->setTime(8, 50),
-            ],
             // Order 19: SELESAI (Aerofood ACS - 27 Hari Lalu / W-4)
             [
                 'id'                   => 19,
@@ -599,6 +717,146 @@ class OrderSeeder extends Seeder
                 'received_by_name'     => 'Pak Suryana',
                 'created_at'           => now()->subDays(29),
                 'updated_at'           => now()->subDays(28)->setTime(8, 30),
+            ],
+            // Order 26: SELESAI (Ibu Maya Anggraeni - Toko Buah Segar, Reguler Kasir Tunai Selesai di Gudang)
+            [
+                'id'                   => 26,
+                'order_number'         => 'ORD-GPA-202611-0080',
+                'user_id'              => 18,
+                'invoice_id'           => null,
+                'order_source'         => 'WHATSAPP_ADMIN',
+                'target_delivery_date' => now()->subDays(1)->toDateString(),
+                'delivery_address'     => 'Toko Buah & Sayur Segar, Jl. Buah Batu No. 210, Bandung (Ambil Mandiri / Gudang)',
+                'grand_total'          => 1400000.00,
+                'status'               => 'SELESAI',
+                'verified_by'          => 2,
+                'surat_jalan_number'   => 'SJ-GPA-202611-0080',
+                'driver_id'            => 6,
+                'vehicle_plate_number' => 'B 9014 KPA',
+                'departure_time'       => now()->subDays(1)->setTime(9, 0),
+                'arrival_time'         => now()->subDays(1)->setTime(10, 15),
+                'pod_photo_url'        => 'uploads/pod/pod_1_1793334890.png',
+                'received_by_name'     => 'Ibu Maya Anggraeni',
+                'created_at'           => now()->subDays(1)->setTime(8, 30),
+                'updated_at'           => now()->subDays(1)->setTime(10, 15),
+            ],
+
+            // -----------------------------------------------------------------
+            // STATUS 7: SELESAI_CATATAN (3 Pesanan Berita Acara Retur)
+            // -----------------------------------------------------------------
+            // Order 13: SELESAI_CATATAN (Grand Pangrango - H-3 / Retur Sortir Ringan)
+            [
+                'id'                   => 13,
+                'order_number'         => 'ORD-GPA-202611-0071',
+                'user_id'              => 9,
+                'invoice_id'           => 2,
+                'order_source'         => 'WEB_PORTAL',
+                'target_delivery_date' => now()->subDays(3)->toDateString(),
+                'delivery_address'     => 'Gudang Basah Hotel Grand Pangrango Bogor',
+                'grand_total'          => 58500000.00,
+                'status'               => 'SELESAI_CATATAN',
+                'verified_by'          => 2,
+                'surat_jalan_number'   => 'SJ-GPA-202611-0071',
+                'driver_id'            => 7,
+                'vehicle_plate_number' => 'D 8124 AB',
+                'departure_time'       => now()->subDays(3)->setTime(5, 0),
+                'arrival_time'         => now()->subDays(3)->setTime(8, 15),
+                'pod_photo_url'        => 'uploads/pod/pod_8_1793417539.webp,uploads/pod/dock_9_1793418349.png',
+                'received_by_name'     => 'Pak Suryana',
+                'created_at'           => now()->subDays(4),
+                'updated_at'           => now()->subDays(3)->setTime(8, 15),
+            ],
+            // Order 18: SELESAI_CATATAN (PT AEON Indonesia - 22 Hari Lalu / W-3 / Mika Retak)
+            [
+                'id'                   => 18,
+                'order_number'         => 'ORD-GPA-202610-0045',
+                'user_id'              => 14,
+                'invoice_id'           => 9,
+                'order_source'         => 'WEB_PORTAL',
+                'target_delivery_date' => now()->subDays(22)->toDateString(),
+                'delivery_address'     => 'AEON Mall BSD Store, Tangerang',
+                'grand_total'          => 24500000.00,
+                'status'               => 'SELESAI_CATATAN',
+                'verified_by'          => 2,
+                'surat_jalan_number'   => 'SJ-GPA-202610-0045',
+                'driver_id'            => 6,
+                'vehicle_plate_number' => 'B 9014 KPA',
+                'departure_time'       => now()->subDays(22)->setTime(5, 30),
+                'arrival_time'         => now()->subDays(22)->setTime(8, 50),
+                'pod_photo_url'        => 'uploads/pod/pod_9_1793418349.webp',
+                'received_by_name'     => 'Dewi Anggraeni',
+                'created_at'           => now()->subDays(23),
+                'updated_at'           => now()->subDays(22)->setTime(8, 50),
+            ],
+            // Order 27: SELESAI_CATATAN (Pak Hendra - Barokah Kuliner, Retur Kol Layu 15 kg)
+            [
+                'id'                   => 27,
+                'order_number'         => 'ORD-GPA-202611-0070',
+                'user_id'              => 15,
+                'invoice_id'           => null,
+                'order_source'         => 'WHATSAPP_ADMIN',
+                'target_delivery_date' => now()->subDays(4)->toDateString(),
+                'delivery_address'     => 'CV Barokah Kuliner Bandung, Jl. Buah Batu No. 142, Kota Bandung',
+                'grand_total'          => 2800000.00,
+                'status'               => 'SELESAI_CATATAN',
+                'verified_by'          => 2,
+                'surat_jalan_number'   => 'SJ-GPA-202611-0070',
+                'driver_id'            => 7,
+                'vehicle_plate_number' => 'D 8124 AB',
+                'departure_time'       => now()->subDays(4)->setTime(6, 0),
+                'arrival_time'         => now()->subDays(4)->setTime(7, 30),
+                'pod_photo_url'        => 'uploads/pod/pod_2_1793366379.webp',
+                'received_by_name'     => 'Pak Hendra Pratama',
+                'created_at'           => now()->subDays(5),
+                'updated_at'           => now()->subDays(4)->setTime(7, 30),
+            ],
+
+            // -----------------------------------------------------------------
+            // STATUS 8: BATAL (2 Pesanan Dibatalkan)
+            // -----------------------------------------------------------------
+            // Order 28: BATAL (Pak Hendra - Batal karena Salah Komoditas)
+            [
+                'id'                   => 28,
+                'order_number'         => 'ORD-GPA-202611-0060',
+                'user_id'              => 15,
+                'invoice_id'           => null,
+                'order_source'         => 'WEB_PORTAL',
+                'target_delivery_date' => now()->subDays(5)->toDateString(),
+                'delivery_address'     => 'CV Barokah Kuliner Bandung, Jl. Buah Batu No. 142, Kota Bandung',
+                'grand_total'          => 1800000.00,
+                'status'               => 'BATAL',
+                'verified_by'          => 2,
+                'surat_jalan_number'   => null,
+                'driver_id'            => null,
+                'vehicle_plate_number' => null,
+                'departure_time'       => null,
+                'arrival_time'         => null,
+                'pod_photo_url'        => null,
+                'received_by_name'     => null,
+                'created_at'           => now()->subDays(5),
+                'updated_at'           => now()->subDays(5)->setTime(10, 0),
+            ],
+            // Order 29: BATAL (Resto Dapur Sunda - Batal karena Reschedule Menu)
+            [
+                'id'                   => 29,
+                'order_number'         => 'ORD-GPA-202610-0040',
+                'user_id'              => 13,
+                'invoice_id'           => null,
+                'order_source'         => 'WEB_PORTAL',
+                'target_delivery_date' => now()->subDays(10)->toDateString(),
+                'delivery_address'     => 'Resto Dapur Sunda Asli, Jl. Dr. Setiabudi No. 102, Bandung',
+                'grand_total'          => 5200000.00,
+                'status'               => 'BATAL',
+                'verified_by'          => 2,
+                'surat_jalan_number'   => null,
+                'driver_id'            => null,
+                'vehicle_plate_number' => null,
+                'departure_time'       => null,
+                'arrival_time'         => null,
+                'pod_photo_url'        => null,
+                'received_by_name'     => null,
+                'created_at'           => now()->subDays(11),
+                'updated_at'           => now()->subDays(10)->setTime(9, 30),
             ],
         ]);
 
@@ -766,14 +1024,14 @@ class OrderSeeder extends Seeder
                 'updated_at'      => now()->subHours(3),
             ],
 
-            // Order 9 (AEON): Stroberi 600 pack @ 25.000, Selada Romaine 380 kg @ 15.000
+            // Order 9 (AEON): Stroberi Ciwidey 800 pack @ 24.500, Selada 80 kg @ 13.750
             [
                 'id'              => 13,
                 'order_id'        => 9,
                 'product_id'      => 4,
-                'ordered_qty'     => 600.00,
-                'unit_price'      => 25000.00,
-                'subtotal'        => 15000000.00,
+                'ordered_qty'     => 800.00,
+                'unit_price'      => 24500.00,
+                'subtotal'        => 19600000.00,
                 'returned_weight' => 0.00,
                 'return_reason'   => null,
                 'created_at'      => now()->subDays(1),
@@ -783,16 +1041,16 @@ class OrderSeeder extends Seeder
                 'id'              => 14,
                 'order_id'        => 9,
                 'product_id'      => 1,
-                'ordered_qty'     => 380.00,
-                'unit_price'      => 15000.00,
-                'subtotal'        => 5700000.00,
+                'ordered_qty'     => 80.00,
+                'unit_price'      => 13750.00,
+                'subtotal'        => 1100000.00,
                 'returned_weight' => 0.00,
                 'return_reason'   => null,
                 'created_at'      => now()->subDays(1),
                 'updated_at'      => now()->subHours(2),
             ],
 
-            // Order 10 (Aerofood): Selada 2500 kg @ 14.000, Brokoli 1000 kg @ 21.500
+            // Order 10 (Aerofood): Selada Romaine 2500 kg @ 14.000, Brokoli 1000 kg @ 21.500
             [
                 'id'              => 15,
                 'order_id'        => 10,
@@ -832,7 +1090,7 @@ class OrderSeeder extends Seeder
                 'updated_at'      => now()->subHours(1)->subMinutes(45),
             ],
 
-            // Order 12 (Aerofood): Selada 2000 kg @ 14.000, Tomat Beef 870.97 kg @ 15.500
+            // Order 12 (Aerofood): Selada Romaine 2000 kg @ 14.000, Wortel 900 kg @ 15.000
             [
                 'id'              => 18,
                 'order_id'        => 12,
@@ -848,9 +1106,9 @@ class OrderSeeder extends Seeder
             [
                 'id'              => 19,
                 'order_id'        => 12,
-                'product_id'      => 3,
-                'ordered_qty'     => 870.97,
-                'unit_price'      => 15500.00,
+                'product_id'      => 6, // Wortel
+                'ordered_qty'     => 900.00,
+                'unit_price'      => 15000.00,
                 'subtotal'        => 13500000.00,
                 'returned_weight' => 0.00,
                 'return_reason'   => null,
@@ -858,16 +1116,16 @@ class OrderSeeder extends Seeder
                 'updated_at'      => now()->subDays(2)->setTime(8, 30),
             ],
 
-            // Order 13 (Grand Pangrango): Tomat Beef 3800 kg @ 15.000, Selada 100 kg @ 15.000
+            // Order 13 (Grand Pangrango): Tomat Beef 3000 kg @ 15.500, Selada 857 kg @ 14.000 (Retur 25 kg tomat)
             [
                 'id'              => 20,
                 'order_id'        => 13,
                 'product_id'      => 3,
-                'ordered_qty'     => 3800.00,
-                'unit_price'      => 15000.00,
-                'subtotal'        => 57000000.00,
-                'returned_weight' => 35.00,
-                'return_reason'   => 'Sortir kematangan tinggi / memar ringan',
+                'ordered_qty'     => 3000.00,
+                'unit_price'      => 15500.00,
+                'subtotal'        => 46500000.00,
+                'returned_weight' => 25.00,
+                'return_reason'   => 'Sortir kematangan lewat batas (kulit lunak) 25 kg',
                 'created_at'      => now()->subDays(4),
                 'updated_at'      => now()->subDays(3)->setTime(8, 15),
             ],
@@ -875,9 +1133,9 @@ class OrderSeeder extends Seeder
                 'id'              => 21,
                 'order_id'        => 13,
                 'product_id'      => 1,
-                'ordered_qty'     => 100.00,
-                'unit_price'      => 15000.00,
-                'subtotal'        => 1500000.00,
+                'ordered_qty'     => 857.14,
+                'unit_price'      => 14000.00,
+                'subtotal'        => 12000000.00,
                 'returned_weight' => 0.00,
                 'return_reason'   => null,
                 'created_at'      => now()->subDays(4),
@@ -912,7 +1170,7 @@ class OrderSeeder extends Seeder
                 'updated_at'      => now()->subDays(12)->setTime(7, 30),
             ],
 
-            // Order 16 (Segar Makmur): Kol Putih 4000 kg @ 7.500, Selada 166.67 kg @ 15.000
+            // Order 16 (Segar Makmur): Kol Putih 4000 kg @ 7.500, Wortel 178.5 kg @ 14.000
             [
                 'id'              => 24,
                 'order_id'        => 16,
@@ -928,9 +1186,9 @@ class OrderSeeder extends Seeder
             [
                 'id'              => 25,
                 'order_id'        => 16,
-                'product_id'      => 1,
-                'ordered_qty'     => 166.67,
-                'unit_price'      => 15000.00,
+                'product_id'      => 6,
+                'ordered_qty'     => 178.57,
+                'unit_price'      => 14000.00,
                 'subtotal'        => 2500000.00,
                 'returned_weight' => 0.00,
                 'return_reason'   => null,
@@ -952,7 +1210,7 @@ class OrderSeeder extends Seeder
                 'updated_at'      => now()->subDays(20)->setTime(8, 45),
             ],
 
-            // Order 18 (AEON): Stroberi Ciwidey 1000 pack @ 24.500
+            // Order 18 (AEON): Stroberi Ciwidey 1000 pack @ 24.500 (Retur 18 pack)
             [
                 'id'              => 27,
                 'order_id'        => 18,
@@ -993,10 +1251,220 @@ class OrderSeeder extends Seeder
                 'created_at'      => now()->subDays(29),
                 'updated_at'      => now()->subDays(28)->setTime(8, 30),
             ],
+
+            // Order 21 (Katering Bu Siti Soreang): Brokoli 125 kg @ 22.000, Wortel 142.8 kg @ 14.000
+            [
+                'id'              => 30,
+                'order_id'        => 21,
+                'product_id'      => 2,
+                'ordered_qty'     => 125.00,
+                'unit_price'      => 22000.00,
+                'subtotal'        => 2750000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subHours(6),
+                'updated_at'      => now()->subHours(2),
+            ],
+            [
+                'id'              => 31,
+                'order_id'        => 21,
+                'product_id'      => 6,
+                'ordered_qty'     => 142.85,
+                'unit_price'      => 14000.00,
+                'subtotal'        => 2000000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subHours(6),
+                'updated_at'      => now()->subHours(2),
+            ],
+
+            // Order 22 (Warung Steak Ciwidey - Kasir Tunai): Brokoli 50 kg @ 22.000, Wortel 53.5 kg @ 14.000
+            [
+                'id'              => 32,
+                'order_id'        => 22,
+                'product_id'      => 2,
+                'ordered_qty'     => 50.00,
+                'unit_price'      => 22000.00,
+                'subtotal'        => 1100000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subDays(1),
+                'updated_at'      => now()->subHours(5),
+            ],
+            [
+                'id'              => 33,
+                'order_id'        => 22,
+                'product_id'      => 6,
+                'ordered_qty'     => 53.57,
+                'unit_price'      => 14000.00,
+                'subtotal'        => 750000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subDays(1),
+                'updated_at'      => now()->subHours(5),
+            ],
+
+            // Order 23 (Toko Buah Segar Buah Batu - QRIS): Stroberi Ciwidey 70 pack @ 25.000, Tomat Beef 43.7 kg @ 16.000
+            [
+                'id'              => 34,
+                'order_id'        => 23,
+                'product_id'      => 4,
+                'ordered_qty'     => 70.00,
+                'unit_price'      => 25000.00,
+                'subtotal'        => 1750000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subHours(10),
+                'updated_at'      => now()->subHours(3),
+            ],
+            [
+                'id'              => 35,
+                'order_id'        => 23,
+                'product_id'      => 3,
+                'ordered_qty'     => 43.75,
+                'unit_price'      => 16000.00,
+                'subtotal'        => 700000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subHours(10),
+                'updated_at'      => now()->subHours(3),
+            ],
+
+            // Order 24 (Katering Bu Siti Soreang - Siap Kirim): Selada 100 kg @ 15.000, Tomat 100 kg @ 16.000, Kol 62.5 kg @ 8.000
+            [
+                'id'              => 36,
+                'order_id'        => 24,
+                'product_id'      => 1,
+                'ordered_qty'     => 100.00,
+                'unit_price'      => 15000.00,
+                'subtotal'        => 1500000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subDays(1),
+                'updated_at'      => now()->subHours(1),
+            ],
+            [
+                'id'              => 37,
+                'order_id'        => 24,
+                'product_id'      => 3,
+                'ordered_qty'     => 100.00,
+                'unit_price'      => 16000.00,
+                'subtotal'        => 1600000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subDays(1),
+                'updated_at'      => now()->subHours(1),
+            ],
+            [
+                'id'              => 38,
+                'order_id'        => 24,
+                'product_id'      => 5,
+                'ordered_qty'     => 62.50,
+                'unit_price'      => 8000.00,
+                'subtotal'        => 500000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subDays(1),
+                'updated_at'      => now()->subHours(1),
+            ],
+
+            // Order 25 (Warung Steak Ciwidey - OTW): Brokoli 100 kg @ 22.000, Kol 87.5 kg @ 8.000
+            [
+                'id'              => 39,
+                'order_id'        => 25,
+                'product_id'      => 2,
+                'ordered_qty'     => 100.00,
+                'unit_price'      => 22000.00,
+                'subtotal'        => 2200000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subDays(1),
+                'updated_at'      => now()->subMinutes(45),
+            ],
+            [
+                'id'              => 40,
+                'order_id'        => 25,
+                'product_id'      => 5,
+                'ordered_qty'     => 87.50,
+                'unit_price'      => 8000.00,
+                'subtotal'        => 700000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subDays(1),
+                'updated_at'      => now()->subMinutes(45),
+            ],
+
+            // Order 26 (Toko Buah Segar - Kasir Gudang Selesai): Stroberi 40 pack @ 25.000, Selada 26.6 kg @ 15.000
+            [
+                'id'              => 41,
+                'order_id'        => 26,
+                'product_id'      => 4,
+                'ordered_qty'     => 40.00,
+                'unit_price'      => 25000.00,
+                'subtotal'        => 1000000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subDays(1)->setTime(8, 30),
+                'updated_at'      => now()->subDays(1)->setTime(10, 15),
+            ],
+            [
+                'id'              => 42,
+                'order_id'        => 26,
+                'product_id'      => 1,
+                'ordered_qty'     => 26.67,
+                'unit_price'      => 15000.00,
+                'subtotal'        => 400000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subDays(1)->setTime(8, 30),
+                'updated_at'      => now()->subDays(1)->setTime(10, 15),
+            ],
+
+            // Order 27 (Pak Hendra - Retur Catatan): Kol Putih 350 kg @ 8.000 (Retur 15 kg)
+            [
+                'id'              => 43,
+                'order_id'        => 27,
+                'product_id'      => 5,
+                'ordered_qty'     => 350.00,
+                'unit_price'      => 8000.00,
+                'subtotal'        => 2800000.00,
+                'returned_weight' => 15.00,
+                'return_reason'   => 'Sebagian daun luar layu saat perjalanan 15 kg',
+                'created_at'      => now()->subDays(5),
+                'updated_at'      => now()->subDays(4)->setTime(7, 30),
+            ],
+
+            // Order 28 (Pak Hendra - Batal): Brokoli 81.8 kg @ 22.000
+            [
+                'id'              => 44,
+                'order_id'        => 28,
+                'product_id'      => 2,
+                'ordered_qty'     => 81.82,
+                'unit_price'      => 22000.00,
+                'subtotal'        => 1800000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subDays(5),
+                'updated_at'      => now()->subDays(5)->setTime(10, 0),
+            ],
+
+            // Order 29 (Resto Dapur Sunda - Batal): Selada Romaine 358.6 kg @ 14.500
+            [
+                'id'              => 45,
+                'order_id'        => 29,
+                'product_id'      => 1,
+                'ordered_qty'     => 358.62,
+                'unit_price'      => 14500.00,
+                'subtotal'        => 5200000.00,
+                'returned_weight' => 0.00,
+                'return_reason'   => null,
+                'created_at'      => now()->subDays(11),
+                'updated_at'      => now()->subDays(10)->setTime(9, 30),
+            ],
         ]);
 
         // =====================================================================
-        // 4. SEED PAYMENTS (Pelunasan Pembayaran Realisasi Kas & Bukti Transfer)
+        // 4. SEED PAYMENTS (Pelunasan Kasir Tunai, QRIS, Transfer Bank & Ditolak)
         // =====================================================================
         DB::table('payments')->insert([
             // Payment 1: Pending verifikasi sekretaris untuk pesanan Pak Hendra (Order 4)
@@ -1142,6 +1610,102 @@ class OrderSeeder extends Seeder
                 'verification_note' => 'Nominal transfer tidak sesuai tagihan (kurang Rp 800.000). Mohon unggah bukti transfer pelunasan penuh.',
                 'created_at'        => now()->subDays(1),
                 'updated_at'        => now()->subDays(1),
+            ],
+            // Payment 10: Kasir Tunai Lunas (Order 22 - Budi Santoso Warung Steak Ciwidey)
+            [
+                'id'                => 10,
+                'order_id'          => 22,
+                'invoice_id'        => 11,
+                'payment_reference' => 'CSH-GPA-20261103-0001',
+                'payment_method'    => 'CASH',
+                'amount'            => 1850000.00,
+                'proof_url'         => null,
+                'status'            => 'LUNAS',
+                'verified_by'       => 2,
+                'paid_at'           => now()->subDays(1),
+                'verification_note' => 'Diterima Rp 2.000.000, Kembalian Rp 150.000. Transaksi Kasir Langsung Meja Pelayanan GPA Panundaan',
+                'created_at'        => now()->subDays(1),
+                'updated_at'        => now()->subDays(1),
+            ],
+            // Payment 11: QRIS Instan Lunas (Order 23 - Ibu Maya Toko Buah Segar Buah Batu)
+            [
+                'id'                => 11,
+                'order_id'          => 23,
+                'invoice_id'        => null,
+                'payment_reference' => 'QRS-GPA-20261103-0002',
+                'payment_method'    => 'QRIS',
+                'amount'            => 2450000.00,
+                'proof_url'         => 'payment-channels/qris-gpa-default.png',
+                'status'            => 'LUNAS',
+                'verified_by'       => 2,
+                'paid_at'           => now()->subHours(3),
+                'verification_note' => 'Settlement QRIS Dynamic ShopeePay/BCA Instant ID: 994821039',
+                'created_at'        => now()->subHours(3),
+                'updated_at'        => now()->subHours(3),
+            ],
+            // Payment 12: Kasir Tunai Selesai di Gudang (Order 26 - Ibu Maya Toko Buah Segar)
+            [
+                'id'                => 12,
+                'order_id'          => 26,
+                'invoice_id'        => null,
+                'payment_reference' => 'CSH-GPA-20261102-0003',
+                'payment_method'    => 'CASH',
+                'amount'            => 1400000.00,
+                'proof_url'         => null,
+                'status'            => 'LUNAS',
+                'verified_by'          => 2,
+                'paid_at'           => now()->subDays(1)->setTime(10, 15),
+                'verification_note' => 'Diterima Rp 1.500.000, Kembalian Rp 100.000. Pembayaran Kasir Timbangan Gudang Ciwidey',
+                'created_at'        => now()->subDays(1)->setTime(10, 15),
+                'updated_at'        => now()->subDays(1)->setTime(10, 15),
+            ],
+            // Payment 13: QRIS Kasir Lunas (Order 24 - Ibu Siti Rahmawati Katering Bu Siti)
+            [
+                'id'                => 13,
+                'order_id'          => 24,
+                'invoice_id'        => null,
+                'payment_reference' => 'QRS-GPA-20261102-0004',
+                'payment_method'    => 'QRIS',
+                'amount'            => 3600000.00,
+                'proof_url'         => 'payment-channels/qris-gpa-default.png',
+                'status'            => 'LUNAS',
+                'verified_by'       => 2,
+                'paid_at'           => now()->subHours(1),
+                'verification_note' => 'Pembayaran QRIS Statis Toko/Kasir GPA validasi instan',
+                'created_at'        => now()->subHours(1),
+                'updated_at'        => now()->subHours(1),
+            ],
+            // Payment 14: Transfer Bank BRI Lunas (Order 25 - Budi Santoso Warung Steak Ciwidey)
+            [
+                'id'                => 14,
+                'order_id'          => 25,
+                'invoice_id'        => null,
+                'payment_reference' => 'TRF-BRI-20261101-0088',
+                'payment_method'    => 'TRANSFER_BANK',
+                'amount'            => 2900000.00,
+                'proof_url'         => 'payments/UpdOzCIV8wgGcnl7yvKcewO7EoSeLeM5CJBGSQRJ.png',
+                'status'            => 'LUNAS',
+                'verified_by'       => 2,
+                'paid_at'           => now()->subMinutes(40),
+                'verification_note' => 'Transfer bank BRI Syariah terverifikasi rekening koran',
+                'created_at'        => now()->subMinutes(40),
+                'updated_at'        => now()->subMinutes(40),
+            ],
+            // Payment 15: Pembayaran Ditolak untuk Order 28 (Pak Hendra)
+            [
+                'id'                => 15,
+                'order_id'          => 28,
+                'invoice_id'        => null,
+                'payment_reference' => 'TRF-BCA-20261028-0099',
+                'payment_method'    => 'TRANSFER_BANK',
+                'amount'            => 1800000.00,
+                'proof_url'         => 'payments/ijfFLks5X3pgv1WAIOlDCdE0MY6XncIvkPk0OdTB.png',
+                'status'            => 'DITOLAK',
+                'verified_by'       => 2,
+                'paid_at'           => now()->subDays(5),
+                'verification_note' => 'Bukti transfer tidak dapat diverifikasi pada mutasi rekening koran BCA GPA.',
+                'created_at'        => now()->subDays(5),
+                'updated_at'        => now()->subDays(5),
             ],
         ]);
 

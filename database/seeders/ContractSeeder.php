@@ -158,6 +158,36 @@ class ContractSeeder extends Seeder
                 'created_at'                 => now()->subMonths(1),
                 'updated_at'                 => now()->subMonths(1),
             ],
+            // 1 Kontrak Kadaluarsa (Expired)
+            [
+                'id'                         => 11,
+                'user_id'                    => 12, // CV Mitra Boga Nusantara
+                'product_id'                 => 6, // Wortel Brastagi
+                'contract_number'            => 'CTR-B2B-2025-EXP01',
+                'fixed_price_per_kg'         => 13500.00,
+                'top_days'                   => 30,
+                'committed_volume_per_cycle' => 2500.00,
+                'status'                     => 'EXPIRED',
+                'approved_by'                => 1,
+                'approved_at'                => now()->subMonths(12),
+                'created_at'                 => now()->subMonths(12),
+                'updated_at'                 => now()->subMonths(1),
+            ],
+            // 1 Kontrak Selesai / Diterminasi
+            [
+                'id'                         => 12,
+                'user_id'                    => 9, // Hotel Grand Pangrango
+                'product_id'                 => 5, // Kol Putih
+                'contract_number'            => 'CTR-B2B-2025-TRM02',
+                'fixed_price_per_kg'         => 7800.00,
+                'top_days'                   => 14,
+                'committed_volume_per_cycle' => 2000.00,
+                'status'                     => 'TERMINATED',
+                'approved_by'                => 1,
+                'approved_at'                => now()->subMonths(6),
+                'created_at'                 => now()->subMonths(6),
+                'updated_at'                 => now()->subMonths(1),
+            ],
         ]);
 
         Schema::enableForeignKeyConstraints();

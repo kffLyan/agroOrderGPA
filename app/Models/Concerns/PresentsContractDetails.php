@@ -41,11 +41,14 @@ trait PresentsContractDetails
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {
-            'ACTIVE'     => 'Aktif',
-            'PENDING'    => 'Menunggu Persetujuan',
-            'TERMINATED' => 'Dihentikan',
-            'REJECTED'   => 'Ditolak',
-            default      => (string) $this->status,
+            'ACTIVE'                      => 'Aktif Berjalan',
+            'PENDING', 'PENDING_APPROVAL' => 'Menunggu Otorisasi',
+            'REVISION'                    => 'Perlu Revisi',
+            'TERMINATED'                  => 'Dihentikan',
+            'REJECTED'                    => 'Ditolak',
+            'DRAFT'                       => 'Draf Pengajuan',
+            'EXPIRED'                     => 'Kedaluwarsa',
+            default                       => ucwords(strtolower(str_replace('_', ' ', (string) $this->status))),
         };
     }
 

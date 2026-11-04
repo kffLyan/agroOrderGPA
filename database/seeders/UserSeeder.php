@@ -5,13 +5,16 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 
 class UserSeeder extends Seeder
 {
     // Menyiapkan akun pengguna awal untuk seluruh peran Direktur, Sekretaris, Koordinator, Armada, dan Klien
     public function run(): void
     {
+        Schema::disableForeignKeyConstraints();
         DB::table('users')->truncate();
+        Schema::enableForeignKeyConstraints();
 
         $defaultPassword = Hash::make('password123');
 
@@ -267,6 +270,57 @@ class UserSeeder extends Seeder
                 'address'      => 'Jl. Buah Batu No. 142, Kota Bandung',
                 'pic_name'     => 'Hendra Pratama',
                 'pic_phone'    => '08198765432',
+                'is_active'    => true,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ],
+            // 16. KLIEN REGULER: Katering Bu Siti Soreang
+            [
+                'id'           => 16,
+                'name'         => 'Ibu Siti Rahmawati',
+                'email'        => 'siti.katering@gmail.com',
+                'phone'        => '081234455660',
+                'password'     => $defaultPassword,
+                'role'         => 'KLIEN',
+                'client_type'  => 'REGULER',
+                'company_name' => 'Katering Bu Siti Soreang',
+                'address'      => 'Jl. Raya Soreang No. 88, Kec. Soreang, Kab. Bandung',
+                'pic_name'     => 'Ibu Siti Rahmawati',
+                'pic_phone'    => '081234455660',
+                'is_active'    => true,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ],
+            // 17. KLIEN REGULER: Warung Steak & Shake Ciwidey
+            [
+                'id'           => 17,
+                'name'         => 'Budi Santoso',
+                'email'        => 'budi.steak@gmail.com',
+                'phone'        => '085678901234',
+                'password'     => $defaultPassword,
+                'role'         => 'KLIEN',
+                'client_type'  => 'REGULER',
+                'company_name' => 'Warung Steak & Shake Ciwidey',
+                'address'      => 'Jl. Raya Ciwidey - Patengan Km 2, Ciwidey, Kab. Bandung',
+                'pic_name'     => 'Budi Santoso',
+                'pic_phone'    => '085678901234',
+                'is_active'    => true,
+                'created_at'   => now(),
+                'updated_at'   => now(),
+            ],
+            // 18. KLIEN REGULER: Toko Buah & Sayur Segar Buah Batu
+            [
+                'id'           => 18,
+                'name'         => 'Ibu Maya Anggraeni',
+                'email'        => 'maya.buah@gmail.com',
+                'phone'        => '087788992211',
+                'password'     => $defaultPassword,
+                'role'         => 'KLIEN',
+                'client_type'  => 'REGULER',
+                'company_name' => 'Toko Buah Segar Buah Batu',
+                'address'      => 'Jl. Buah Batu No. 210, Turangga, Kota Bandung',
+                'pic_name'     => 'Ibu Maya Anggraeni',
+                'pic_phone'    => '087788992211',
                 'is_active'    => true,
                 'created_at'   => now(),
                 'updated_at'   => now(),

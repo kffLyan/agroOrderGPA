@@ -76,7 +76,7 @@
                         </div>
                     @else
                         <div class="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-100 text-red-800 border border-red-300">
-                            {{ $contract->status }}
+                            {{ $contract->status_label ?? str_replace('_', ' ', $contract->status) }}
                         </div>
                     @endif
                 </div>
@@ -282,7 +282,7 @@
                                 </td>
                                 <td class="p-3">
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800">
-                                        {{ $order->status }}
+                                        {{ $order->status_label ?? str_replace('_', ' ', $order->status) }}
                                     </span>
                                 </td>
                                 <td class="p-3">

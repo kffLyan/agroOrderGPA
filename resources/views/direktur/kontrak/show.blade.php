@@ -76,7 +76,7 @@
                         </div>
                     @else
                         <div class="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-100 text-red-800 border border-red-300">
-                            {{ $contract->status_label ?? str_replace('_', ' ', $contract->status) }}
+                            {{ $contract->status }}
                         </div>
                     @endif
                 </div>
@@ -123,7 +123,7 @@
                                 }
                             @endphp
                             @if($waNo)
-                                <a href="https://wa.me/{{ $waNo }}?text={{ urlencode('Halo Bapak/Ibu ' . ($contract->user->pic_name ?? $contract->user->name) . ', kami dari Direksi Green Pasundan Agriculture terkait Kontrak ' . $contract->contract_number) }}"
+                                <a href="https://wa.me/{{ $waNo }}?text={{ urlencode('Halo Bapak/Ibu ' . ($contract->user->pic_name ?? $contract->user->name) . ', kami dari Direksi PT Giri Purwa Agro terkait Kontrak ' . $contract->contract_number) }}"
                                    target="_blank" rel="noopener noreferrer"
                                    class="inline-flex items-center gap-1 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 text-[10px] font-bold hover:bg-emerald-200 transition">
                                     <span>WhatsApp PIC: {{ $rawPh }}</span>
@@ -138,7 +138,7 @@
                         <span class="text-gray-500">Tipe Pelanggan:</span>
                         <span class="col-span-2">
                             <span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded text-[10px] font-bold">
-                                {{ ($contract->user->client_type ?? 'B2B_KONTRAK') === 'B2B_KONTRAK' ? 'Mitra Kontrak B2B' : 'Klien Reguler' }}
+                                {{ $contract->user->client_type ?? 'B2B_KONTRAK' }}
                             </span>
                         </span>
                     </div>
@@ -282,7 +282,7 @@
                                 </td>
                                 <td class="p-3">
                                     <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800">
-                                        {{ $order->status_label ?? str_replace('_', ' ', $order->status) }}
+                                        {{ $order->status }}
                                     </span>
                                 </td>
                                 <td class="p-3">

@@ -74,8 +74,8 @@
                         <label class="block font-bold text-gray-700 mb-1">Jenis Klien (Khusus Role KLIEN)</label>
                         <select name="client_type" class="w-full text-xs border-gray-300 rounded focus:ring-[#153a01]">
                             <option value="">-- Bukan Klien / Opsional --</option>
-                            <option value="REGULER" {{ old('client_type') === 'REGULER' ? 'selected' : '' }}>Klien Reguler</option>
-                            <option value="B2B_KONTRAK" {{ old('client_type') === 'B2B_KONTRAK' ? 'selected' : '' }}>Klien Kontrak B2B</option>
+                            <option value="REGULER" {{ old('client_type') === 'REGULER' ? 'selected' : '' }}>REGULER</option>
+                            <option value="B2B_KONTRAK" {{ old('client_type') === 'B2B_KONTRAK' ? 'selected' : '' }}>B2B_KONTRAK</option>
                         </select>
                     </div>
                 </div>

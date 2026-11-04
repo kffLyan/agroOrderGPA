@@ -10,28 +10,27 @@
         $settlementRows = $settlementRows ?? [];
         $totalChVal = array_sum(array_column($channelRows, 'value'));
         $settlementTotal = array_sum(array_column($settlementRows, 'value'));
-        $bep = $bep ?? 65000000;
-        $ceiling = $ceiling ?? (!empty($trendRows) ? max(array_column($trendRows, 'value')) : 120000000);
-        $ceiling = max($ceiling, $bep * 1.25, 100000000);
-        $bepBottomPct = max(5, min(92, round($bep / ($ceiling ?: 1) * 100, 1)));
+        $bep = 65000000;
+        $ceiling = !empty($trendRows) ? max(array_column($trendRows, 'value')) : 120000000;
+        $ceiling = $ceiling > 0 ? $ceiling * 1.2 : 120000000;
         $peakRow = !empty($trendRows) ? ($trendRows[array_search(max(array_column($trendRows, 'value')), array_column($trendRows, 'value'))] ?? null) : null;
     @endphp
 
     <div class="mx-auto flex max-w-[1280px] flex-col gap-6"
-        x-data="direkturSales(['MTD', 'WTD', 'YTD'], @js($trendRows), @js($portfolioRows ?? []))">
+        x-data="directorSales(['MTD', 'WTD', 'YTD'], @js($trendRows), @js($portfolioRows ?? []))">
 
         {{-- Page header + scope pita KPI --}}
-        <section class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
+        <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
             <div class="min-w-0 space-y-1">
                 <p class="gpa-meta text-xs font-bold uppercase tracking-wider text-accent-deep">
                     Monitoring Penjualan &amp; Analisis Revenue Eksekutif
                 </p>
-                <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
+                <h1 class="font-sans text-2xl sm:text-3xl font-bold leading-8 sm:leading-10 tracking-[-0.01em] text-ink">
                     Analisis Revenue Eksekutif
                 </h1>
             </div>
 
-            <div class="flex shrink-0 flex-col items-stretch gap-3">
+            <div class="flex w-full flex-col sm:w-auto sm:items-end gap-2.5 sm:gap-3">
                 <div class="flex flex-wrap items-center gap-2">
                     <span
                         class="inline-flex items-center gap-1.5 rounded-lg bg-surface-track px-3 py-2 outline outline-1 -outline-offset-1 outline-line-board">
@@ -50,16 +49,14 @@
                     @endforeach
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2">
+                <div class="flex w-full flex-col sm:w-auto sm:flex-row sm:items-center gap-2">
                     <a href="{{ route('direktur.penjualan.export') }}"
-                        download
-                        data-no-progress
-                        class="inline-flex items-center gap-1.5 rounded-lg bg-surface px-4 py-2.5 outline outline-1 -outline-offset-1 outline-ink-quiet transition-colors hover:bg-surface-shell">
+                        class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg bg-surface px-4 py-2.5 outline outline-1 -outline-offset-1 outline-ink-quiet transition-colors hover:bg-surface-shell">
                         <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0" />
                         <span class="text-xs font-semibold leading-4 text-ink font-inter">Unduh Data Penjualan (CSV / Excel)</span>
                     </a>
                     <a href="{{ route('direktur.laporan.download') }}" target="_blank"
-                        class="inline-flex items-center gap-1.5 rounded-lg bg-ink-strong px-4 py-2.5 text-white outline outline-1 -outline-offset-1 outline-ink-quiet transition-colors hover:bg-brand-hover">
+                        class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded-lg bg-ink-strong px-4 py-2.5 text-white outline outline-1 -outline-offset-1 outline-ink-quiet transition-colors hover:bg-brand-hover">
                         <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0" />
                         <span class="text-xs font-semibold leading-4 text-white font-inter">Cetak Laporan Penjualan (PDF)</span>
                     </a>
@@ -103,7 +100,7 @@
                                 </div>
 
                                 <p class="flex flex-wrap items-center justify-between gap-2">
-                                    <span class="gpa-note {{ $sisa > 0 ? 'text-warning-caution' : 'text-success-deep' }} font-semibold">{{ $sisa > 0 ? 'Defisit: Rp ' . number_format($sisa, 0, ',', '.') : 'Target Tercapai!' }}</span>
+                                    <span class="gpa-note text-warning-caution font-semibold">Defisit: Rp {{ number_format($sisa, 0, ',', '.') }}</span>
                                     <span class="gpa-note text-success-deep font-medium">{{ $sc['days'] }} Hari Buku</span>
                                 </p>
                             </div>
@@ -210,7 +207,7 @@
         <section class="flex flex-col gap-6 rounded-2xl bg-surface p-6 shadow-card">
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 pb-4">
                 <div class="min-w-0">
-                    <h2 class="font-sans text-lg font-semibold leading-6 text-ink">{{ $trendTitle ?? 'Tren Realisasi 5 Pekan Terakhir' }}</h2>
+                    <h2 class="font-sans text-lg font-semibold leading-6 text-ink">Direksi (W40 - W44)</h2>
                 </div>
 
                 <ul class="flex flex-wrap items-center gap-3">
@@ -220,18 +217,18 @@
                     </li>
                     <li class="flex items-center gap-1.5">
                         <span class="h-2.5 w-2 shrink-0 rounded bg-accent-deep" aria-hidden="true"></span>
-                        <span class="gpa-note text-ink">Batas Atas (Ceiling)</span>
+                        <span class="gpa-note text-ink">Ceiling</span>
                     </li>
                     <li class="flex items-center gap-1.5">
                         <span class="h-2.5 w-2 shrink-0 rounded bg-warning-caution" aria-hidden="true"></span>
-                        <span class="gpa-note text-ink">Titik Impas (BEP)</span>
+                        <span class="gpa-note text-ink">BEP</span>
                     </li>
                 </ul>
             </header>
 
             <div class="relative pt-8">
                 <span
-                    class="absolute left-0 top-0 rounded bg-accent px-2 py-1 gpa-note font-semibold text-ink-strong">Batas Kapasitas: Rp {{ number_format($ceiling / 1000000, 0, ',', '.') }} Jt / Mgg</span>
+                    class="absolute left-0 top-0 rounded bg-accent px-2 py-1 gpa-note text-ink-strong">Target Cap: Rp 120M / Mgg</span>
 
                 <div class="flex h-10 items-end gap-3">
                     @foreach ($trendRows as $row)
@@ -245,21 +242,21 @@
                 <div class="relative mt-1 h-44">
                     <div class="absolute inset-x-0 top-0 border-t border-dashed border-ink-strong" aria-hidden="true"></div>
                     <div class="absolute inset-x-0 border-t border-dashed border-warning-caution"
-                        style="bottom: {{ $bepBottomPct }}%" aria-hidden="true"></div>
+                        style="bottom: {{ round($bep / $ceiling * 100, 1) }}%" aria-hidden="true"></div>
 
                     <span
-                        class="absolute left-0 z-10 -translate-y-full rounded bg-warning-cream px-2 py-1 gpa-note font-semibold text-warning-caution"
-                        style="bottom: {{ $bepBottomPct }}%">BEP Koperasi: Rp {{ number_format($bep / 1000000, 0, ',', '.') }} Jt</span>
+                        class="absolute left-0 z-10 -translate-y-full rounded bg-warning-cream px-2 py-1 gpa-note text-warning-caution"
+                        style="bottom: {{ round($bep / $ceiling * 100, 1) }}%">BEP Baseline: Rp 65M</span>
 
                     <div class="flex h-full items-end gap-3">
                         @foreach ($trendRows as $row)
                             <div class="flex h-full flex-1 items-end justify-center">
                                 <div class="relative h-full w-12 rounded bg-surface-track">
                                     <div class="absolute inset-x-0 bottom-0 rounded {{ $row['fill'] }}"
-                                        style="height: {{ max(4, min(100, $row['share'])) }}%"></div>
+                                        style="height: {{ $row['share'] }}%"></div>
                                     @if ($row['status'] === 'running')
                                         <div class="absolute inset-x-0 border-t-2 border-dashed border-ink-strong"
-                                            style="bottom: {{ max(4, min(100, $row['share'])) }}%" aria-hidden="true"></div>
+                                            style="bottom: {{ $row['share'] }}%" aria-hidden="true"></div>
                                     @endif
                                 </div>
                             </div>
@@ -275,7 +272,7 @@
             </div>
 
             <footer class="flex flex-wrap items-center justify-between gap-2 border-t border-line-board/60 pt-4">
-                <p class="gpa-note font-bold text-ink">Puncak Realisasi: {{ $peakRow && $peakRow['value'] > 0 ? ($peakRow['week'] . ' (' . $peakRow['label'] . ')') : '—' }}</p>
+                <p class="gpa-note font-bold text-ink">Puncak Realisasi: {{ $peakRow && $peakRow['value'] > 0 ? ($peakRow['week'] . ' (' . $peakRow['label'] . ')') : 'â€”' }}</p>
             </footer>
         </section>
 

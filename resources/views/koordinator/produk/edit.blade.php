@@ -12,9 +12,6 @@
                     <h1 class="font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
                         Edit Komoditas
                     </h1>
-                    <p class="text-xs text-ink-body max-w-2xl">
-                        Perbarui spesifikasi, harga, gambar, dan status tayang komoditas di katalog klien.
-                    </p>
                 </div>
 
                 <div class="flex shrink-0 flex-wrap items-center gap-2">
@@ -101,11 +98,9 @@
 
                 <div class="rounded-xl border border-line-board bg-surface-shell/40 p-4 space-y-3">
                     <p class="text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Foto / Gambar Komoditas</p>
-                    @if ($product->image_url)
+                    @if ($product->image_path || $product->image_url)
                         <div class="flex items-center gap-3">
-                            <img src="{{ asset($product->image_path) }}" alt="{{ $product->name }}"
-                                class="h-14 w-14 rounded-lg border border-line-board object-cover"
-                                onerror="this.onerror=null;this.src='{{ asset('gpaleaves.png') }}';">
+                            <img src="{{ asset($product->image_path ?: $product->image_url) }}" alt="{{ $product->name }}" class="h-14 w-14 rounded-lg border border-line-board object-cover" onerror="this.onerror=null;this.src='{{ asset('gpaleaves.png') }}';">
                             <p class="text-[11px] leading-4 text-ink-body">Gambar saat ini tersimpan</p>
                         </div>
                     @endif

@@ -26,23 +26,17 @@
 @endphp
 
 @section('content')
-    <div class="space-y-6" x-data="secretaryReports(@js($journalRows), @js($filterConfig), @js($tabConfig), {{ count($journalRows) }}, @js($hash))"
+    <div class="space-y-3" x-data="secretaryReports(@js($journalRows), @js($filterConfig), @js($tabConfig), {{ count($journalRows) }}, @js($hash))"
         @gpa:search.window="query = $event.detail">
-        <section class="flex flex-col gap-5 border-b border-line-board pb-6 xl:flex-row xl:items-start xl:justify-between">
+        <section class="flex flex-col gap-3 rounded-xl bg-surface p-3 sm:p-3.5 shadow-card ring-1 ring-line-hair xl:flex-row xl:items-center xl:justify-between">
             <div class="min-w-0">
-                <p class="flex items-center gap-2 gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">
-                    <x-gpa.icon name="chart" class="h-[15px] w-[15px] shrink-0 text-success-deep" />
+                <p class="flex items-center gap-2 gpa-micro-bold uppercase tracking-[1.08px] text-ink-body">
                     Rekapitulasi Laporan
                 </p>
 
-                <h1 class="mt-2 font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
-                    Laporan Rekapitulasi Operasional,<br />
-                    Pengiriman Sayur &amp; Penjualan
+                <h1 class="mt-1 font-sans text-lg sm:text-xl font-bold leading-6 tracking-[-0.01em] text-ink">
+                    Laporan Rekapitulasi Operasional, Pengiriman Sayur &amp; Penjualan
                 </h1>
-
-                <p class="mt-3 max-w-3xl text-sm leading-5 text-ink-body">
-                    Rekapitulasi data transaksi harian, volume timbangan nyata, dan surat jalan pengiriman untuk pelaporan resmi ke Direktur.
-                </p>
             </div>
 
             <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center xl:flex-col xl:items-stretch">
@@ -156,8 +150,8 @@
         </section>
 
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <article class="flex min-h-[15.5rem] flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
                         TOTAL BERAT SAYUR TERKIRIM
                     </h2>
@@ -184,8 +178,8 @@
                 </div>
             </article>
 
-            <article class="flex min-h-[15.5rem] flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
                         TOTAL NILAI PENJUALAN
                     </h2>
@@ -212,8 +206,8 @@
                 </div>
             </article>
 
-            <article class="flex min-h-[15.5rem] flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
                         KETEPATAN PENGIRIMAN
                     </h2>
@@ -240,8 +234,8 @@
                 </div>
             </article>
 
-            <article class="flex min-h-[15.5rem] flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
                         RATA-RATA SUSUT TIMBANGAN
                     </h2>
@@ -669,7 +663,7 @@
                         </div>
 
                         <p class="mt-2 max-w-4xl text-xs leading-5 text-ink-body">
-                            Laporan ini merupakan rekapitulasi resmi transaksi Green Pasundan Agriculture yang siap diserahkan kepada Direksi.
+                            Laporan ini merupakan rekapitulasi resmi transaksi PT Green Pasundan Agriculture yang siap diserahkan kepada Direksi.
                         </p>
                     </div>
                 </div>

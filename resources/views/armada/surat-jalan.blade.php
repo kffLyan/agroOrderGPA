@@ -47,20 +47,6 @@
             <p class="text-xs text-ink-body">Verifikasi kesesuaian fisik muatan & segel timbangan tera sebelum keberangkatan.</p>
         </section>
 
-        @if (!$currentOrder)
-            {{-- Tampilan siaga ketika supir belum memiliki penugasan aktif --}}
-            <section class="flex flex-col items-center justify-center gap-3 rounded-2xl bg-surface p-8 text-center shadow-card">
-                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-surface-shell text-ink-quiet">
-                    <x-gpa.icon name="truck" class="h-8 w-8" />
-                </div>
-                <h2 class="text-base font-bold text-ink">Belum Ada Surat Jalan Ditugaskan</h2>
-                <p class="max-w-xs text-xs text-ink-body">Anda belum memiliki jadwal pengiriman aktif yang ditugaskan oleh bagian Dispatch Sekretariat.</p>
-                <a href="{{ route('armada.tugas') }}" class="mt-2 inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 font-mono text-xs font-bold text-white shadow-sub hover:opacity-90 transition-opacity">
-                    <x-gpa.icon name="clipboard" class="h-3.5 w-3.5" />
-                    Cek Antrean Tugas
-                </a>
-            </section>
-        @else
         {{-- Rute pengantaran --}}
         <section class="no-print flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
             <header class="flex items-center justify-between gap-2 border-b border-surface-shell pb-2">
@@ -68,7 +54,7 @@
                 <p class="font-mono text-[10px] font-bold text-success-deep uppercase tracking-wider">MULTI-DROP HARIAN</p>
             </header>
 
-            <div class="flex w-full items-stretch gap-2 overflow-x-auto pt-1">
+            <div class="flex w-full flex-col gap-2 pt-1">
                 @foreach ($activeOrders as $index => $ord)
                     @php
                         $isActive = $currentOrder && $ord->id === $currentOrder->id;
@@ -76,7 +62,7 @@
                         $ordSjNum = $ord->surat_jalan_number ?: ('SJ-' . date('Ymd', strtotime($ord->created_at)) . '-' . str_pad($ord->id, 4, '0', STR_PAD_LEFT));
                     @endphp
                     <div @class([
-                        'relative flex min-w-[200px] flex-1 flex-col items-start gap-1 overflow-hidden p-3 rounded-xl transition-all',
+                        'relative flex w-full flex-col items-start gap-1 overflow-hidden rounded-xl p-3 transition-all',
                         $isActive
                             ? 'bg-surface shadow-sub outline outline-2 -outline-offset-2 outline-accent'
                             : 'bg-surface-shell opacity-80 outline outline-1 -outline-offset-1 outline-line-board',
@@ -204,7 +190,7 @@
         {{-- Rincian muatan sayur --}}
         <section class="flex flex-col gap-3 rounded-2xl bg-surface p-4 shadow-card">
             <header class="flex items-center justify-between border-b border-surface-shell pb-2">
-                <span class="font-mono text-[10px] font-bold text-ink-body uppercase">RINCIAN MUATAN PESANAN (SURAT JALAN)</span>
+                <span class="font-mono text-[10px] font-bold text-ink-body uppercase">RINCIAN MUATAN PESANAN</span>
                 <span class="rounded bg-accent/40 px-2 py-0.5 font-mono text-[9px] font-bold text-ink">TERVERIFIKASI</span>
             </header>
 
@@ -256,7 +242,7 @@
             {{-- Total akumulasi netto --}}
             <div class="flex flex-col gap-2.5 rounded-xl bg-brand p-3.5 text-white">
                 <div class="flex items-center justify-between">
-                    <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-accent">TOTAL AKUMULASI MUATAN SURAT JALAN</span>
+                    <span class="font-mono text-[10px] font-bold uppercase tracking-wider text-accent">TOTAL AKUMULASI</span>
                     <x-gpa.icon name="calculator" class="h-4 w-4 text-accent" />
                 </div>
 
@@ -278,8 +264,8 @@
                 <div class="flex items-center justify-between text-xs font-mono text-white/90">
                     <span>Bruto Muatan: {{ number_format($totalWeight + $totalTare, 1, ',', '.') }} kg</span>
                     <span class="flex items-center gap-1 text-accent">
-                        <x-gpa.icon name="check-circle" class="h-3.5 w-3.5" />
-                        <span>Muatan Terverifikasi Lengkap</span>
+                        <x-gpa.icon name="thermometer" class="h-3.5 w-3.5" />
+                        <span>+3.8°C (Suhu Cold Chain Optimal)</span>
                     </span>
                 </div>
             </div>
@@ -318,7 +304,7 @@
                 </div>
 
                 <span class="rounded bg-accent px-2 py-0.5 font-mono text-[10px] font-bold text-ink">
-                    BERLAKU: <span x-text="expired() ? 'KEDALUWARSA' : expiryLabel()">45:00</span>
+                    EXP: <span x-text="expired() ? 'EXPIRED' : expiryLabel()">45:00</span>
                 </span>
             </header>
 
@@ -326,8 +312,8 @@
                 <div class="flex h-20 w-20 items-center justify-center rounded-xl bg-ink text-accent">
                     <x-gpa.icon name="qrcode" class="h-12 w-12" />
                 </div>
-                <p class="pt-2 font-mono text-xs font-bold text-ink">KODE GERBANG: GPA-{{ $currentOrder?->id ?? '1' }}-SEC</p>
-                <p class="text-[10px] text-ink-body">Tunjukkan ke pos keamanan gerbang hub utama &amp; dok penerima.</p>
+                <p class="pt-2 font-mono text-xs font-bold text-ink">TOKEN: GPA-{{ $currentOrder?->id ?? '1' }}-SEC</p>
+                <p class="text-[10px] text-ink-body">Tunjukkan ke pos security gerbang sentral hub & dock penerima.</p>
             </div>
 
             <button type="button" @click="verifySeal()"
@@ -374,10 +360,9 @@
                 <button type="button" @click="reportIssue()"
                     class="flex h-9 w-full items-center justify-center gap-1.5 rounded-xl bg-surface font-mono text-xs font-bold text-warning-deep outline outline-1 -outline-offset-1 outline-warning-border hover:bg-warning-cream/30">
                     <x-gpa.icon name="alert-triangle" class="h-3.5 w-3.5" />
-                    Lapor Kendala / Keterlambatan
+                    Lapor Kendala
                 </button>
             </div>
         </section>
-        @endif
     </div>
 @endsection

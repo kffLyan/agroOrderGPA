@@ -41,6 +41,11 @@ class Product extends Model
         'crate_kg',
         'pack_label',
         'extra',
+        'supply',
+        'buffer',
+        'total_stock',
+        'group',
+        'order',
     ];
 
     protected function casts(): array

@@ -5,72 +5,41 @@
 @section('content')
     @php
         $user = auth()->user();
-        $operatorCode = $operatorCode ?? ($user ? 'SK-' . str_pad($user->id, 4, '0', STR_PAD_LEFT) : 'SK-001');
+        $operatorCode = $user ? 'SK-' . str_pad($user->id, 4, '0', STR_PAD_LEFT) : 'SK-001';
         $queueRows = $queueRows ?? [];
         $auditRows = $auditRows ?? [];
         $default = $queueRows[0] ?? null;
     @endphp
 
-    <div class="space-y-6" x-data="secretaryPayments(@js($queueRows), [
+    <div class="space-y-3" x-data="secretaryPayments(@js($queueRows), [
             {key: 'all', label: 'Semua Bukti'},
             {key: 'bank', label: 'Transfer Bank BCA / Mandiri'},
             {key: 'qris', label: 'QRIS'},
             {key: 'giro', label: 'Giro / Tempo B2B'}
         ], @js($operatorCode), {{ count($auditRows) }})"
         @gpa:search.window="query = $event.detail">
-        <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
-            <div class="min-w-0">
-                <p class="flex items-center gap-2 gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">
+        <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
+            <div class="min-w-0 flex-1">
+                <p class="flex items-center gap-2 gpa-micro-bold uppercase tracking-[1.08px] text-ink-body">
                     <x-gpa.icon name="banknote" class="h-[15px] w-[15px] shrink-0 text-success-deep" />
                     Pemeriksaan Pembayaran &amp; Kas
                 </p>
 
-                <h1 class="mt-2 font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
-                    Verifikasi Bukti Pembayaran &amp;<br />
-                    Pencocokan Rekening Bank
+                <h1 class="mt-1 sm:mt-2 font-sans text-xl sm:text-2xl lg:text-3xl font-bold leading-tight sm:leading-10 tracking-[-0.01em] text-ink">
+                    Verifikasi Bukti Pembayaran &amp; Pencocokan Rekening Bank
                 </h1>
-
-                <p class="mt-3 max-w-3xl text-sm leading-5 text-ink-body">
-                    Pemeriksaan dan persetujuan bukti transfer bank / QRIS dari pembeli untuk
-                    <span class="font-semibold text-ink">memastikan uang pembayaran telah benar-benar masuk ke rekening resmi GPA.</span>
-                </p>
             </div>
 
-            <div class="flex shrink-0 items-center gap-3 rounded-xl bg-surface px-4 py-3 shadow-card outline outline-1 outline-line-hair">
+            <div class="flex max-w-full flex-wrap items-center gap-2 sm:gap-3 rounded-xl bg-surface px-3 py-2 sm:px-4 sm:py-3 shadow-card outline outline-1 outline-line-hair">
                 <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-accent-deep" aria-hidden="true"></span>
-                <span class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">Status Rekening:</span>
-                <span class="gpa-meta-lg font-bold tracking-[0.88px] text-success-deep">Rekening Bank BCA / Mandiri</span>
+                <span class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet text-[10px] sm:text-xs">Status Rekening:</span>
+                <span class="text-xs sm:text-sm font-bold tracking-[0.5px] text-success-deep truncate">Rekening Bank BCA / Mandiri</span>
             </div>
         </section>
 
-        <section class="flex flex-col gap-3 rounded-xl bg-brand-deep p-4 outline outline-2 outline-accent-deep/40 sm:flex-row sm:items-center">
-            <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent-deep">
-                <x-gpa.icon name="receipt" class="h-5 w-5 shrink-0 text-ink" />
-            </span>
-
-            <div class="min-w-0">
-                <div class="flex flex-wrap items-center gap-2">
-                    <p class="gpa-micro-bold uppercase tracking-[1.08px] text-accent-deep">
-                        Ketentuan Pemeriksaan Pembayaran:
-                    </p>
-                    <span class="rounded bg-success/40 px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-accent">
-                        Wajib Diperiksa Sekretaris
-                    </span>
-                </div>
-
-                <p class="mt-1.5 text-sm leading-5 text-white">
-                    Bukti transfer yang diunggah klien
-                    <span class="font-semibold text-accent-deep underline decoration-accent-deep underline-offset-2">
-                        belum langsung dianggap lunas otomatis
-                    </span>
-                    . Sekretaris wajib mencocokkan nominal pada slip dengan mutasi rekening koran bank sebelum menyetujui transaksi.
-                </p>
-            </div>
-        </section>
-
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <article class="flex min-h-[15.5rem] flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
                         Menunggu Verifikasi
                     </h2>
@@ -99,9 +68,9 @@
                 </div>
             </article>
 
-            <article class="flex min-h-[15.5rem] flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
-                    <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
+                    <h2 class="gpa-micro-bold uppercase leading-3 tracking-[0.9px] text-ink-body">
                         Disetujui Hari Ini
                     </h2>
                     <span class="shrink-0 rounded-lg p-1.5 bg-accent/60">
@@ -129,8 +98,8 @@
                 </div>
             </article>
 
-            <article class="flex min-h-[15.5rem] flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
                         Bukti Belum Sesuai
                     </h2>
@@ -159,8 +128,8 @@
                 </div>
             </article>
 
-            <article class="flex min-h-[15.5rem] flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
                         Total Pembayaran Masuk
                     </h2>
@@ -190,7 +159,7 @@
         </div>
 
         <div class="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_30rem]">
-            <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
+            <section class="flex flex-col gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
                 <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft pb-4">
                     <div class="flex min-w-0 items-center gap-3">
                         <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-track">
@@ -269,7 +238,7 @@
                                     <span @if ($loop->first) style="display:none" @endif
                                         x-show="paymentId !== @js($row['id']) && ! isSettled(@js($row)) && ! isRejected(@js($row))"
                                         class="rounded-full bg-surface-pill px-2.5 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-ink-body outline outline-1 outline-line-board">
-                                        Menunggu Verifikasi
+                                        Pending
                                     </span>
                                 </span>
 
@@ -310,7 +279,7 @@
                 </div>
             </section>
 
-            <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card outline outline-2 outline-success min-w-0 overflow-hidden">
+            <section class="flex flex-col gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card outline outline-2 outline-success min-w-0 overflow-hidden">
                 <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft pb-4">
                     <div class="flex min-w-0 items-center gap-2">
                         <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-accent-deep" aria-hidden="true"></span>
@@ -535,7 +504,7 @@
             </section>
         </div>
 
-        <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
+        <section class="flex flex-col gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft pb-4">
                 <div class="flex min-w-0 items-center gap-3">
                     <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-surface-track">
@@ -555,7 +524,7 @@
             </div>
 
             <div class="gpa-scroll-x rounded-xl outline outline-1 outline-line-board/60">
-                <table class="w-full border-collapse text-left">
+                <table class="w-full min-w-[760px] border-collapse text-left">
                     <thead class="border-b border-line-soft bg-surface-shell">
                         <tr>
                             <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">Waktu</th>
@@ -571,34 +540,34 @@
 
                     <tbody class="divide-y divide-line-soft">
                         @forelse ($auditRows as $row)
-                            <tr @class(['transition-colors hover:bg-surface-shell/50', ($row->status ?? ($row['status'] ?? '')) === 'rejected' ? 'bg-danger-soft/20' : ''])>
+                            <tr @class(['transition-colors hover:bg-surface-shell/50', $row['status'] === 'rejected' ? 'bg-danger-soft/20' : ''])>
                                 <td class="px-4 py-4 font-mono text-2xs font-medium tracking-[0.88px] text-ink-quiet">
-                                    {{ $row->timestamp ?? $row['timestamp'] }}
+                                    {{ $row['timestamp'] }}
                                 </td>
 
-                                <td class="px-4 py-4 font-mono text-xs font-bold tracking-[0.88px] text-ink">{{ $row->code ?? $row['id'] }}</td>
+                                <td class="px-4 py-4 font-mono text-xs font-bold tracking-[0.88px] text-ink">{{ $row['id'] }}</td>
 
-                                <td class="px-4 py-4 font-mono text-2xs font-medium tracking-[0.88px] text-ink-body">{{ $row->invoice_code ?? $row['invoice'] }}</td>
+                                <td class="px-4 py-4 font-mono text-2xs font-medium tracking-[0.88px] text-ink-body">{{ $row['invoice'] }}</td>
 
-                                <td class="px-4 py-4 font-sans text-sm font-semibold leading-5 text-ink">{{ $row->client_name ?? $row['client'] }}</td>
+                                <td class="px-4 py-4 font-sans text-sm font-semibold leading-5 text-ink">{{ $row['client'] }}</td>
 
-                                <td class="px-4 py-4 font-mono text-xs font-bold tracking-[0.88px] {{ $row->amount_class ?? ($row['amount_class'] ?? 'text-ink') }}">
-                                    {{ $row->amount_formatted ?? $row['amount_label'] }}
+                                <td class="px-4 py-4 font-mono text-xs font-bold tracking-[0.88px] {{ $row['amount_class'] }}">
+                                    {{ $row['amount_label'] }}
                                 </td>
 
                                 <td class="px-4 py-4">
                                     <span @class([
                                         'inline-flex rounded-full px-2.5 py-1 gpa-micro-bold uppercase tracking-[1.08px]',
-                                        $row->status_class ?? ($row['status_class'] ?? ''),
-                                    ])>{{ $row->status_label ?? $row['status_label'] }}</span>
+                                        $row['status_class'],
+                                    ])>{{ $row['status_label'] }}</span>
                                 </td>
 
-                                <td class="px-4 py-4 font-mono text-2xs font-bold tracking-[0.88px] text-ink-body">{{ $row->operator ?? $row['operator'] }}</td>
+                                <td class="px-4 py-4 font-mono text-2xs font-bold tracking-[0.88px] text-ink-body">{{ $row['operator'] }}</td>
 
                                 <td @class([
                                     'px-4 py-4 gpa-note leading-5',
-                                    ($row->status ?? ($row['status'] ?? '')) === 'rejected' ? 'text-danger' : 'text-ink-body',
-                                ])>{{ $row->verification_note ?? ($row['note'] ?? '—') }}</td>
+                                    $row['status'] === 'rejected' ? 'text-danger' : 'text-ink-body',
+                                ])>{{ $row['note'] }}</td>
                             </tr>
                         @empty
                             <tr>
@@ -697,7 +666,7 @@
                         <div class="flex flex-col items-center gap-2 p-8 text-center text-white/80">
                             <x-gpa.icon name="alert-triangle" class="h-12 w-12 text-warning-caution" />
                             <p class="font-bold text-sm">Pratinjau Berkas Belum Tersedia</p>
-                            <p class="text-xs text-white/60">Klien belum melampirkan berkas foto fisik transfer atau bukti belum tersedia di sistem.</p>
+                            <p class="text-xs text-white/60">Klien belum melampirkan berkas foto fisik transfer atau file tidak ditemukan di server.</p>
                         </div>
                     </template>
                 </div>

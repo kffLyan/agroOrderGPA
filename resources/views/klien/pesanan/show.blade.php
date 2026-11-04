@@ -6,28 +6,47 @@
     $rupiah = fn ($value) => 'Rp ' . number_format($value, 0, ',', '.');
     $kilogram = fn ($value) => number_format($value, 1, ',', '.') . ' kg';
 
-    $hasPendingProof = $hasPendingProof ?? ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_pending_proof);
-    $podPhotos = $podPhotos ?? $order->pod_photo_asset_urls;
-    $manifestPhoto = $manifestPhoto ?? ($podPhotos[0] ?? null);
-    $dockPhoto = $dockPhoto ?? ($podPhotos[1] ?? ($podPhotos[0] ?? null));
-    $hasTwoPhotos = $hasTwoPhotos ?? (count($podPhotos) >= 2);
-    $hasAnyPhoto = $hasAnyPhoto ?? (!empty($podPhotos));
-    $statusStyles = $statusStyles ?? [];
-    $statusLabels = $statusLabels ?? [];
-    $stepStates = $stepStates ?? [1 => 'done', 2 => 'pending', 3 => 'pending', 4 => 'pending', 5 => 'pending'];
+    $hasPendingProof = ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_pending_proof);
+
+    $statusStyles = [
+        'MENUNGGU_VERIFIKASI' => 'bg-warning-soft text-warning-deep ring-warning/40',
+        'MENUNGGU_PEMBAYARAN' => $hasPendingProof ? 'bg-warning-soft text-warning-deep ring-warning/40' : 'bg-brand/10 text-brand ring-brand/30',
+        'LUNAS'               => 'bg-accent/40 text-success-deep ring-success/30',
+        'SIAP_KIRIM'          => 'bg-accent text-ink ring-accent-edge',
+        'DALAM_PENGIRIMAN'    => 'bg-brand text-white ring-accent',
+        'SELESAI'             => 'bg-accent text-success-ink ring-accent',
+        'SELESAI_CATATAN'     => 'bg-warning-soft text-warning-deep ring-warning',
+        'BATAL'               => 'bg-surface-pill text-ink-quiet ring-line-board',
+    ];
+
+    $statusLabels = [
+        'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi Pesanan',
+        'MENUNGGU_PEMBAYARAN' => $hasPendingProof ? 'Menunggu Verifikasi Pembayaran' : 'Menunggu Pembayaran',
+        'LUNAS'               => 'Pembayaran Lunas',
+        'SIAP_KIRIM'          => 'Surat Jalan Terbit (Siap Kirim)',
+        'DALAM_PENGIRIMAN'    => 'Armada Menuju Dock',
+        'SELESAI'             => 'Selesai & Diterima',
+        'SELESAI_CATATAN'     => 'Selesai (Ada Catatan Retur)',
+        'BATAL'               => 'Pesanan Dibatalkan',
+    ];
+
+    $statusOrder = $order->status;
+
+    $stepStates = [
+        1 => 'done',
+        2 => in_array($statusOrder, ['MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? 'done' : ($statusOrder === 'MENUNGGU_VERIFIKASI' ? 'active' : 'pending'),
+        3 => in_array($statusOrder, ['LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? 'done' : ($statusOrder === 'MENUNGGU_PEMBAYARAN' ? 'active' : 'pending'),
+        4 => in_array($statusOrder, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? 'done' : ($statusOrder === 'LUNAS' ? 'active' : 'pending'),
+        5 => in_array($statusOrder, ['SELESAI', 'SELESAI_CATATAN']) ? 'done' : (in_array($statusOrder, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN']) ? 'active' : 'pending'),
+    ];
+
+    if ($statusOrder === 'BATAL') {
+        $stepStates = [1 => 'done', 2 => 'cancelled', 3 => 'pending', 4 => 'pending', 5 => 'pending'];
+    }
 @endphp
 
 @section('content')
-    <div x-data="{
-        podModalOpen: false,
-        activePhotoIdx: 0,
-        podViewMode: '{{ $hasTwoPhotos ? 'both' : 'single' }}',
-        openPodModal(idx = 0) {
-            this.activePhotoIdx = idx;
-            this.podViewMode = {{ $hasTwoPhotos ? "'both'" : "'single'" }};
-            this.podModalOpen = true;
-        }
-    }" class="flex flex-col gap-6">
+    <div x-data="{ podModalOpen: false }" class="flex flex-col gap-6">
         {{-- Navigasi kembali & Header --}}
         <div class="flex flex-col gap-3 border-b border-line-soft pb-4">
             <a href="{{ route('klien.pesanan.index') }}"
@@ -44,11 +63,11 @@
                         </h1>
                         <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 ring-inset {{ $statusStyles[$order->status] ?? 'bg-surface-pill text-ink' }}">
                             <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
-                            {{ $statusLabels[$order->status] ?? ($order->status_label ?? str_replace('_', ' ', $order->status)) }}
+                            {{ $statusLabels[$order->status] ?? $order->status }}
                         </span>
                     </div>
                     <p class="gpa-body text-ink-body">
-                        Dipesan pada {{ $order->created_at->format('d F Y, H:i') }} WIB &bull; Sumber: {{ $order->order_source_label ?? str_replace('_', ' ', $order->order_source) }}
+                        Dipesan pada {{ $order->created_at->format('d F Y, H:i') }} WIB &bull; Sumber: {{ $order->order_source }}
                     </p>
                 </div>
 
@@ -89,7 +108,7 @@
         {{-- Banner Notifikasi Tagihan Menunggu Pembayaran / Bukti Ditolak --}}
         @if ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_rejected_proof)
             @php
-                $rejectedPayment = $rejectedPayment ?? $order->rejected_proof_payment;
+                $rejectedPayment = $order->rejected_proof_payment;
             @endphp
             <div class="flex flex-col gap-3 rounded-2xl border-2 border-danger/60 bg-danger-soft/40 p-5 shadow-card sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex items-start gap-3.5 min-w-0">
@@ -212,11 +231,11 @@
                 </div>
 
                 <div class="flex shrink-0 flex-wrap items-center gap-2 sm:self-center">
-                    @if ($hasAnyPhoto)
+                    @if ($order->pod_photo_asset_url)
                         <button type="button" @click="document.getElementById('pod-section')?.scrollIntoView({ behavior: 'smooth' })"
                             class="inline-flex items-center gap-1.5 rounded-xl bg-accent px-4 py-2.5 font-sans text-xs font-extrabold uppercase tracking-wider text-ink shadow-md transition-transform hover:scale-105 hover:bg-accent-deep">
-                            <x-gpa.icon name="shield-check" class="h-4 w-4 text-ink" />
-                            Lihat {{ $hasTwoPhotos ? '2 ' : '' }}Bukti Serah Terima
+                            <x-gpa.icon name="shield" class="h-4 w-4 text-ink" />
+                            Lihat Bukti PoD
                         </button>
                     @endif
                     <a href="{{ route('prints.surat-jalan', ['order_id' => $order->id]) }}" target="_blank"
@@ -329,7 +348,7 @@
                     <x-gpa.icon name="truck" class="h-5 w-5 text-success-deep" />
                     <h2 class="font-sans text-base font-bold text-ink">Pelacakan Alur Operasional (5 Tahap)</h2>
                 </div>
-                <span class="text-xs font-semibold text-ink-quiet">Standar Mutu Rantai Dingin GPA</span>
+                <span class="text-xs font-semibold text-ink-quiet">SLA Standar Cold-Chain GPA</span>
             </div>
 
             <ol class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -399,7 +418,7 @@
                         </span>
 
                         <span class="text-[9px] font-bold uppercase tracking-wider {{ $s2 === 'active' ? 'text-success-deep' : 'text-ink-quiet' }}">
-                            {{ $order->verifier ? ($order->updated_at ? $order->updated_at->format('d M Y, H:i') . ' WIB' : '-') : 'Target < 2 Jam' }}
+                            {{ $order->verifier ? ($order->updated_at ? $order->updated_at->format('d M Y, H:i') . ' WIB' : '-') : 'SLA < 2 Jam' }}
                         </span>
                     </div>
 
@@ -520,7 +539,7 @@
                         </span>
 
                         <span class="text-[9px] font-bold uppercase tracking-wider {{ $s5 === 'active' ? 'text-success-deep' : 'text-ink-quiet' }}">
-                            {{ $order->arrival_time ? $order->arrival_time->format('d M Y, H:i') . ' WIB' : 'Pengantaran & Bukti Kirim' }}
+                            {{ $order->arrival_time ? $order->arrival_time->format('d M Y, H:i') . ' WIB' : 'Pengantaran & PoD' }}
                         </span>
                     </div>
 
@@ -533,187 +552,6 @@
                 </li>
             </ol>
         </section>
-
-        {{-- Seksi Bukti Serah Terima Resmi (Proof of Delivery / PoD) --}}
-        @if ($hasAnyPhoto || $order->received_by_name || in_array($order->status, ['SELESAI', 'SELESAI_CATATAN']))
-            <section id="pod-section" class="gpa-card overflow-hidden scroll-mt-20 border-2 border-emerald-500/30 shadow-card">
-                {{-- Header --}}
-                <div class="flex flex-col gap-3 border-b border-line-hair bg-gradient-to-r from-surface-shell via-surface to-emerald-50/40 p-5 sm:flex-row sm:items-center sm:justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-ink shadow-sub">
-                            <x-gpa.icon name="shield-check" class="h-6 w-6 text-ink" />
-                        </span>
-                        <div class="flex flex-col">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <h2 class="font-sans text-base font-extrabold text-ink sm:text-lg">
-                                    Dokumentasi Resmi Bukti Serah Terima (Proof of Delivery)
-                                </h2>
-                                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-emerald-800 ring-1 ring-inset ring-emerald-600/30">
-                                    <x-gpa.icon name="check-circle" class="h-3 w-3 text-emerald-700" />
-                                    {{ $hasTwoPhotos ? '2 Berkas Foto Lengkap & Sah' : 'Berkas Fisik Terverifikasi' }}
-                                </span>
-                            </div>
-                            <p class="text-xs text-ink-body">
-                                Verifikasi legalitas serah terima barang di dock gudang mitra &bull; Surat Jalan: <strong class="text-ink font-mono">{{ $order->surat_jalan_number ?: '-' }}</strong>
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="flex shrink-0 items-center gap-2">
-                        @if ($order->surat_jalan_number)
-                            <a href="{{ route('prints.surat-jalan', ['order_id' => $order->id]) }}" target="_blank"
-                                class="inline-flex items-center gap-1.5 rounded-xl border border-line-soft bg-surface px-3.5 py-2 text-xs font-bold text-ink shadow-xs transition-colors hover:bg-surface-muted">
-                                <x-gpa.icon name="printer" class="h-3.5 w-3.5 text-ink-body" />
-                                <span>Cetak Surat Jalan</span>
-                            </a>
-                        @endif
-                    </div>
-                </div>
-
-                {{-- Metadata Strip / Ringkasan Serah Terima --}}
-                <div class="grid grid-cols-2 gap-3 border-b border-line-hair bg-surface-muted/40 p-4 sm:grid-cols-4 lg:grid-cols-5 text-xs">
-                    <div class="flex flex-col gap-0.5">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-quiet">PIC Penerima Dock</span>
-                        <span class="font-bold text-ink">{{ $order->received_by_name ?: 'Staf Receiving Dock' }}</span>
-                    </div>
-                    <div class="flex flex-col gap-0.5">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-quiet">Waktu Serah Terima</span>
-                        <span class="font-bold text-ink">{{ $order->arrival_time ? $order->arrival_time->format('d M Y, H:i') . ' WIB' : 'Telah diverifikasi' }}</span>
-                    </div>
-                    <div class="flex flex-col gap-0.5">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-quiet">Supir &amp; Armada GPA</span>
-                        <span class="font-bold text-ink">{{ $order->driver ? $order->driver->name : 'Armada GPA' }} ({{ $order->vehicle_plate_number ?: 'Plat Terdaftar' }})</span>
-                    </div>
-                    <div class="flex flex-col gap-0.5">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-quiet">Status Fisik Bongkar</span>
-                        @if ($order->status === 'SELESAI_CATATAN')
-                            <span class="inline-flex items-center gap-1 font-bold text-warning-deep">
-                                <x-gpa.icon name="alert-triangle" class="h-3.5 w-3.5 text-warning-deep" />
-                                Ada Catatan Retur
-                            </span>
-                        @else
-                            <span class="inline-flex items-center gap-1 font-bold text-emerald-800">
-                                <x-gpa.icon name="check" class="h-3.5 w-3.5 text-emerald-600" />
-                                Utuh &amp; Bobot Sesuai
-                            </span>
-                        @endif
-                    </div>
-                    <div class="col-span-2 sm:col-span-4 lg:col-span-1 flex flex-col gap-0.5">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-ink-quiet">Lokasi Bongkar</span>
-                        <span class="font-medium text-ink truncate" title="{{ $order->delivery_address }}">{{ Str::limit($order->delivery_address, 30) }}</span>
-                    </div>
-                </div>
-
-                {{-- 2 Kartu Foto Berdampingan --}}
-                <div class="p-5">
-                    <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
-                        {{-- Kartu Foto 1: Surat Jalan --}}
-                        <div class="flex flex-col overflow-hidden rounded-2xl border border-line-soft bg-surface shadow-xs transition-all hover:shadow-sub">
-                            <div class="flex items-center justify-between border-b border-line-hair bg-surface-shell px-4 py-3">
-                                <div class="flex items-center gap-2">
-                                    <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-ink text-xs font-black text-accent">1</span>
-                                    <div class="flex flex-col">
-                                        <h3 class="font-sans text-xs font-bold text-ink">Foto Lembar Fisik Surat Jalan</h3>
-                                        <p class="text-[10px] text-ink-quiet">Stempel basah &amp; tanda tangan penerima dock</p>
-                                    </div>
-                                </div>
-                                <span class="rounded bg-accent/40 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-ink ring-1 ring-accent-edge">
-                                    Dokumen
-                                </span>
-                            </div>
-
-                            @if ($manifestPhoto)
-                                <div class="group relative flex h-64 sm:h-72 w-full items-center justify-center overflow-hidden bg-black cursor-pointer"
-                                    @click="openPodModal(0)">
-                                    <img src="{{ $manifestPhoto }}" alt="Foto Surat Jalan Berstempel"
-                                        class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                        onerror="this.onerror=null;this.style.opacity='0.4';">
-                                    <div class="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100">
-                                        <span class="inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2 text-xs font-bold text-ink shadow-xl">
-                                            <x-gpa.icon name="eye" class="h-4 w-4 text-ink" />
-                                            Perbesar Foto Dokumen
-                                        </span>
-                                    </div>
-                                    <div class="absolute bottom-2 left-2 rounded-md bg-ink/80 backdrop-blur-xs px-2.5 py-1 text-[10px] font-bold text-white">
-                                        Lembar Asli Tertera Cap Penerima
-                                    </div>
-                                </div>
-                                <div class="flex items-center justify-between border-t border-line-hair bg-surface px-4 py-2.5 text-xs text-ink-body">
-                                    <button type="button" @click="openPodModal(0)"
-                                        class="inline-flex items-center gap-1.5 font-bold text-ink hover:text-success-deep">
-                                        <x-gpa.icon name="eye" class="h-3.5 w-3.5" />
-                                        <span>Buka Pratinjau Penuh</span>
-                                    </button>
-                                    <a href="{{ $manifestPhoto }}" target="_blank"
-                                        class="inline-flex items-center gap-1 font-semibold text-success-deep hover:underline">
-                                        <span>Buka Tab Baru</span>
-                                        <x-gpa.icon name="external-link" class="h-3 w-3" />
-                                    </a>
-                                </div>
-                            @else
-                                <div class="flex h-64 sm:h-72 w-full flex-col items-center justify-center gap-2 bg-surface-shell text-ink-quiet p-6 text-center">
-                                    <x-gpa.icon name="file-text" class="h-8 w-8 text-ink-quiet" />
-                                    <p class="text-xs font-semibold text-ink">Foto Lembar Surat Jalan Belum Diunggah</p>
-                                    <p class="text-[11px] text-ink-body max-w-xs">Pengemudi armada mengonfirmasi serah terima fisik secara digital.</p>
-                                </div>
-                            @endif
-                        </div>
-
-                        {{-- Kartu Foto 2: Muatan di Dock --}}
-                        <div class="flex flex-col overflow-hidden rounded-2xl border border-line-soft bg-surface shadow-xs transition-all hover:shadow-sub">
-                            <div class="flex items-center justify-between border-b border-line-hair bg-surface-shell px-4 py-3">
-                                <div class="flex items-center gap-2">
-                                    <span class="flex h-6 w-6 items-center justify-center rounded-lg bg-accent text-xs font-black text-ink">2</span>
-                                    <div class="flex flex-col">
-                                        <h3 class="font-sans text-xs font-bold text-ink">Foto Fisik Muatan di Dock Klien</h3>
-                                        <p class="text-[10px] text-ink-quiet">Dokumentasi pembongkaran muatan &amp; timbangan</p>
-                                    </div>
-                                </div>
-                                <span class="rounded bg-brand/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-brand ring-1 ring-brand/30">
-                                    Muatan &amp; Dock
-                                </span>
-                            </div>
-
-                            @if ($dockPhoto)
-                                <div class="group relative flex h-64 sm:h-72 w-full items-center justify-center overflow-hidden bg-black cursor-pointer"
-                                    @click="openPodModal(1)">
-                                    <img src="{{ $dockPhoto }}" alt="Foto Fisik Muatan Dock"
-                                        class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                        onerror="this.onerror=null;this.style.opacity='0.4';">
-                                    <div class="absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100">
-                                        <span class="inline-flex items-center gap-2 rounded-xl bg-surface px-4 py-2 text-xs font-bold text-ink shadow-xl">
-                                            <x-gpa.icon name="eye" class="h-4 w-4 text-ink" />
-                                            Perbesar Foto Muatan
-                                        </span>
-                                    </div>
-                                    <div class="absolute bottom-2 left-2 rounded-md bg-ink/80 backdrop-blur-xs px-2.5 py-1 text-[10px] font-bold text-white">
-                                        Area Dock &amp; Timbangan Bongkar
-                                    </div>
-                                </div>
-                                <div class="flex items-center justify-between border-t border-line-hair bg-surface px-4 py-2.5 text-xs text-ink-body">
-                                    <button type="button" @click="openPodModal(1)"
-                                        class="inline-flex items-center gap-1.5 font-bold text-ink hover:text-success-deep">
-                                        <x-gpa.icon name="eye" class="h-3.5 w-3.5" />
-                                        <span>Buka Pratinjau Penuh</span>
-                                    </button>
-                                    <a href="{{ $dockPhoto }}" target="_blank"
-                                        class="inline-flex items-center gap-1 font-semibold text-success-deep hover:underline">
-                                        <span>Buka Tab Baru</span>
-                                        <x-gpa.icon name="external-link" class="h-3 w-3" />
-                                    </a>
-                                </div>
-                            @else
-                                <div class="flex h-64 sm:h-72 w-full flex-col items-center justify-center gap-2 bg-surface-shell text-ink-quiet p-6 text-center">
-                                    <x-gpa.icon name="truck" class="h-8 w-8 text-ink-quiet" />
-                                    <p class="text-xs font-semibold text-ink">Foto Muatan Dock Tambahan Tidak Tersedia</p>
-                                    <p class="text-[11px] text-ink-body max-w-xs">Seluruh komoditas telah diterima utuh sesuai verifikasi lembar surat jalan.</p>
-                                </div>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-            </section>
-        @endif
 
         {{-- Grid Detail Pesanan & Logistik --}}
         <div class="grid gap-6 lg:grid-cols-3">
@@ -729,7 +567,7 @@
                         </div>
                     </header>
 
-                    <div class="gpa-scroll-x">
+                    <div class="hidden md:block gpa-scroll-x">
                         <table class="w-full border-collapse text-left">
                             <thead>
                                 <tr class="border-b border-line-hair bg-surface-muted text-xs font-bold uppercase text-ink-body">
@@ -773,55 +611,61 @@
                                     </tr>
                                 @endforeach
                             </tbody>
-                            <tfoot class="border-t-2 border-line-soft bg-surface-shell text-xs">
+                            <tfoot class="border-t-2 border-line-soft bg-surface-shell">
                                 <tr>
-                                    <td colspan="4" class="px-4 py-2 text-right font-medium text-ink-body">
-                                        Subtotal Komoditas:
-                                    </td>
-                                    <td class="px-4 py-2 text-right font-bold text-ink">
-                                        {{ $rupiah($order->subtotal_amount) }}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="4" class="px-4 py-2 text-right font-medium text-ink-body">
-                                        Biaya Distribusi Logistik (Armada Chiller):
-                                    </td>
-                                    <td class="px-4 py-2 text-right font-bold {{ $order->shipping_cost > 0 ? 'text-ink' : 'text-success-deep' }}">
-                                        {{ $order->shipping_cost > 0 ? $rupiah($order->shipping_cost) : 'Bebas Ongkir (Rp 0)' }}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="4" class="px-4 py-2 text-right font-medium text-ink-body">
-                                        Pajak Pertambahan Nilai ({{ $order->tax_label }}):
-                                    </td>
-                                    <td class="px-4 py-2 text-right font-bold {{ $order->tax_amount > 0 ? 'text-amber-700' : 'text-ink-quiet' }}">
-                                        {{ $order->tax_amount > 0 ? $rupiah($order->tax_amount) : 'Rp 0 (Bebas Pajak)' }}
-                                    </td>
-                                </tr>
-                                <tr class="border-t border-line-soft bg-surface-muted/60 text-sm">
                                     <td colspan="4" class="px-4 py-3 text-right font-bold text-ink">
-                                        Total Tagihan:
+                                        Total Tagihan (Grand Total):
                                     </td>
-                                    <td class="px-3 py-3 text-right font-extrabold text-lg text-ink">
+                                    <td class="px-4 py-3 text-right font-extrabold text-lg text-ink">
                                         {{ $rupiah($order->grand_total) }}
                                     </td>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
-                </section>
 
-                {{-- Catatan Penjaminan Mutu & Ketentuan Serah Terima --}}
-                <section class="rounded-2xl border border-line-soft bg-surface p-5 shadow-xs">
-                    <div class="flex items-start gap-3">
-                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-ink">
-                            <x-gpa.icon name="shield" class="h-5 w-5 text-ink" />
-                        </span>
-                        <div class="flex flex-col gap-1 text-xs">
-                            <h3 class="font-sans text-sm font-bold text-ink">Prosedur Serah Terima &amp; Penyesuaian Bobot Timbangan</h3>
-                            <p class="text-ink-body leading-relaxed">
-                                Seluruh sayuran dipanen segar dan dikirim menggunakan armada berpendingin (cold chain 4–8°C). Verifikasi serah terima di dock penerima melibatkan dua dokumentasi resmi: (1) stempel basah pada lembar Surat Jalan fisik, dan (2) foto dokumentasi muatan saat pembongkaran. Batas toleransi susut berat alami adalah &plusmn;0,5% dari bobot tera timbangan kebun.
-                            </p>
+                    <div class="md:hidden flex flex-col gap-2 p-2">
+                        @foreach ($order->orderItems as $item)
+                            @php
+                                $ordered = (float) $item->ordered_qty;
+                                $price = (float) $item->unit_price;
+                                $subtotal = (float) ($item->subtotal ?: ($ordered * $price));
+                                $returKg = (float) ($item->returned_weight ?? 0);
+                            @endphp
+                            <article class="flex flex-col gap-2 rounded-lg border border-line-hair bg-surface p-3 shadow-sm">
+                                <div>
+                                    <p class="text-sm font-bold text-ink">{{ $item->product->name ?? 'Komoditas' }}</p>
+                                    <p class="text-xs text-ink-quiet">SKU: {{ $item->product->sku ?? '-' }} &bull; Grade: {{ $item->product->grade ?? 'A' }}</p>
+                                </div>
+                                <div class="grid grid-cols-2 gap-x-3 gap-y-2 border-t border-line-faint pt-2 text-[10px]">
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-ink-quiet">Kuantitas PO</span>
+                                        <span class="font-medium text-ink">{{ number_format($ordered, 1, ',', '.') }} {{ $item->product->unit ?? 'kg' }}</span>
+                                    </div>
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-ink-quiet">Harga Satuan</span>
+                                        <span class="text-ink">{{ $rupiah($price) }}</span>
+                                    </div>
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-ink-quiet">Subtotal</span>
+                                        <span class="font-bold text-ink">{{ $rupiah($subtotal) }}</span>
+                                    </div>
+                                    <div class="flex flex-col gap-0.5">
+                                        <span class="text-ink-quiet">Retur / Selisih</span>
+                                        @if ($returKg > 0)
+                                            <span class="font-bold text-danger">{{ number_format($returKg, 1, ',', '.') }} kg</span>
+                                            <span class="text-ink-quiet">{{ $item->return_reason ?: 'Catatan retur' }}</span>
+                                        @else
+                                            <span class="text-ink-quiet">Sesuai (0 kg)</span>
+                                        @endif
+                                    </div>
+                                </div>
+                            </article>
+                        @endforeach
+
+                        <div class="flex items-center justify-between gap-3 rounded-lg border border-line-hair bg-surface-shell p-3">
+                            <span class="text-xs font-bold text-ink">Total Tagihan</span>
+                            <span class="text-right text-sm font-extrabold text-ink">{{ $rupiah($order->grand_total) }}</span>
                         </div>
                     </div>
                 </section>
@@ -839,7 +683,7 @@
                     <dl class="flex flex-col gap-2 text-xs">
                         <div class="flex justify-between">
                             <dt class="text-ink-body">No. Surat Jalan:</dt>
-                            <dd class="font-bold text-ink font-mono">{{ $order->surat_jalan_number ?: 'Belum Terbit' }}</dd>
+                            <dd class="font-bold text-ink">{{ $order->surat_jalan_number ?: 'Belum Terbit' }}</dd>
                         </div>
                         <div class="flex justify-between">
                             <dt class="text-ink-body">Supir Armada:</dt>
@@ -855,20 +699,71 @@
                         </div>
                         <div class="flex flex-col gap-1 border-t border-line-hair/60 pt-2">
                             <dt class="text-ink-body">Alamat / Dock Bongkar Muat:</dt>
-                            <dd class="font-medium text-ink leading-relaxed">{{ $order->delivery_address }}</dd>
+                            <dd class="font-medium text-ink">{{ $order->delivery_address }}</dd>
                         </div>
                     </dl>
-
-                    @if ($order->surat_jalan_number)
-                        <div class="border-t border-line-hair pt-2">
-                            <a href="{{ route('prints.surat-jalan', ['order_id' => $order->id]) }}" target="_blank"
-                                class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-line-soft bg-surface px-3 py-2 text-xs font-semibold text-ink shadow-xs transition-colors hover:bg-surface-muted">
-                                <x-gpa.icon name="printer" class="h-3.5 w-3.5 text-ink-body" />
-                                <span>Cetak Surat Jalan Resmi</span>
-                            </a>
-                        </div>
-                    @endif
                 </section>
+
+                {{-- Bukti Serah Terima / PoD (Jika sudah tersedia) --}}
+                @if ($order->pod_photo_url || $order->received_by_name || in_array($order->status, ['SELESAI', 'SELESAI_CATATAN']))
+                    <section id="pod-section" class="gpa-card flex flex-col gap-3 p-5 scroll-mt-20">
+                        <div class="flex items-center justify-between border-b border-line-hair pb-2">
+                            <h2 class="flex items-center gap-2 font-sans text-sm font-bold text-ink">
+                                <x-gpa.icon name="check-circle" class="h-4 w-4 text-success-deep" />
+                                Bukti Serah Terima (Proof of Delivery / PoD)
+                            </h2>
+                            <span class="rounded bg-accent/40 px-2 py-0.5 text-[9px] font-bold text-success-deep uppercase">
+                                Sah &bull; Valid
+                            </span>
+                        </div>
+
+                        <dl class="flex flex-col gap-2 text-xs">
+                            <div class="flex justify-between">
+                                <dt class="text-ink-body">Penerima Dock / PIC:</dt>
+                                <dd class="font-bold text-ink">{{ $order->received_by_name ?: 'PIC Receiving Dock' }}</dd>
+                            </div>
+                            @if ($order->arrival_time)
+                                <div class="flex justify-between">
+                                    <dt class="text-ink-body">Waktu Serah Terima:</dt>
+                                    <dd class="font-semibold text-ink">{{ $order->arrival_time->format('d M Y, H:i') }} WIB</dd>
+                                </div>
+                            @endif
+                            <div class="flex justify-between">
+                                <dt class="text-ink-body">No. Surat Jalan:</dt>
+                                <dd class="font-mono font-bold text-ink">{{ $order->surat_jalan_number ?: '-' }}</dd>
+                            </div>
+                        </dl>
+
+                        @if ($order->pod_photo_asset_url)
+                            <div class="mt-2 flex flex-col gap-1.5">
+                                <span class="text-[10px] font-semibold text-ink-quiet uppercase">Foto Fisik Dokumen / Timbangan:</span>
+                                <div class="group relative block overflow-hidden rounded-xl border border-line-soft bg-surface-shell cursor-pointer"
+                                    @click="podModalOpen = true">
+                                    <img src="{{ $order->pod_photo_asset_url }}" alt="Bukti Serah Terima"
+                                        class="h-44 w-full object-cover transition-transform duration-200 group-hover:scale-105"
+                                        onerror="this.onerror=null;this.style.opacity='0.4';" />
+                                    <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                                        <span class="inline-flex items-center gap-1.5 rounded-lg bg-surface px-3 py-1.5 text-xs font-bold text-ink shadow-lg">
+                                            <x-gpa.icon name="eye" class="h-3.5 w-3.5 text-ink" />
+                                            Buka Foto Penuh
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between text-[11px] text-ink-body">
+                                    <span>Stempel basah &amp; paraf penerima</span>
+                                    <a href="{{ $order->pod_photo_asset_url }}" target="_blank"
+                                        class="font-semibold text-success-deep hover:underline">
+                                        Buka di Tab Baru &rarr;
+                                    </a>
+                                </div>
+                            </div>
+                        @else
+                            <div class="rounded-lg bg-surface-shell p-2.5 text-center text-xs text-ink-quiet">
+                                Surat jalan fisik telah ditandatangani &amp; dicap basah oleh pihak penerima.
+                            </div>
+                        @endif
+                    </section>
+                @endif
 
                 {{-- Status Pembayaran --}}
                 <section class="gpa-card flex flex-col gap-3 p-5">
@@ -886,11 +781,11 @@
                             <div class="flex justify-between font-bold">
                                 <span>{{ $payment->payment_reference }}</span>
                                 <span class="{{ $isPayRejected ? 'text-danger font-extrabold' : ($isPaySuccess ? 'text-success-deep' : 'text-warning-deep') }}">
-                                    {{ $payment->status === 'DITOLAK' ? 'Ditolak Verifikator' : ($payment->status_label ?? str_replace('_', ' ', $payment->status)) }}
+                                    {{ $payment->status === 'DITOLAK' ? 'Ditolak Verifikator' : $payment->status }}
                                 </span>
                             </div>
                             <div class="flex justify-between text-ink-body">
-                                <span>Metode: {{ $payment->method_label ?? str_replace('_', ' ', $payment->payment_method) }}</span>
+                                <span>Metode: {{ $payment->payment_method }}</span>
                                 <span class="font-semibold text-ink">{{ $rupiah($payment->amount) }}</span>
                             </div>
                             @if ($isPayRejected && $payment->verification_note)
@@ -937,17 +832,16 @@
             </div>
         </div>
 
-        {{-- Modal Pratinjau Foto PoD Multi-Foto Klien --}}
-        @if ($hasAnyPhoto)
+        {{-- Modal Pratinjau Foto PoD --}}
+        @if ($order->pod_photo_asset_url)
             <div x-cloak x-show="podModalOpen"
                 @keydown.escape.window="podModalOpen = false"
-                class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
                 role="dialog" aria-modal="true">
                 <div class="fixed inset-0 bg-ink/75 backdrop-blur-xs transition-opacity"
                     @click="podModalOpen = false"></div>
 
-                <div class="relative flex w-full flex-col overflow-hidden rounded-2xl bg-surface shadow-pop ring-1 ring-ink/10 transition-all"
-                    :class="activePhotoIdx !== null && podViewMode === 'both' && {{ $hasTwoPhotos ? 'true' : 'false' }} ? 'max-w-5xl' : 'max-w-3xl'"
+                <div class="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-surface shadow-pop ring-1 ring-ink/10"
                     x-show="podModalOpen"
                     x-transition:enter="ease-out duration-200"
                     x-transition:enter-start="opacity-0 scale-95"
@@ -956,135 +850,43 @@
                     x-transition:leave-start="opacity-100 scale-100"
                     x-transition:leave-end="opacity-0 scale-95">
 
-                    {{-- Modal Header --}}
-                    <div class="flex flex-col gap-2 border-b border-line-hair bg-surface-shell px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-center justify-between border-b border-line-hair bg-surface-shell px-5 py-3.5">
                         <div class="flex items-center gap-2.5">
                             <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-ink">
-                                <x-gpa.icon name="shield-check" class="h-4 w-4" />
+                                <x-gpa.icon name="check-circle" class="h-4 w-4" />
                             </span>
                             <div class="flex flex-col">
                                 <h3 class="font-sans text-sm font-bold text-ink">
-                                    Dokumentasi Bukti Serah Terima Fisik (PoD)
+                                    Bukti Serah Terima Fisik (Proof of Delivery / PoD)
                                 </h3>
                                 <p class="text-[11px] text-ink-body">
                                     Surat Jalan: <strong class="text-ink font-mono">{{ $order->surat_jalan_number ?: '-' }}</strong> &bull; Pesanan: <strong class="text-ink font-mono">{{ $order->order_number }}</strong>
                                 </p>
                             </div>
                         </div>
-
-                        {{-- Mode Switcher if 2 photos --}}
-                        <div class="flex items-center gap-2">
-                            @if ($hasTwoPhotos)
-                                <div class="flex items-center rounded-lg border border-line-soft bg-surface p-0.5 text-xs">
-                                    <button type="button" @click="podViewMode = 'both'"
-                                        :class="podViewMode === 'both' ? 'bg-ink text-white font-bold' : 'text-ink-body hover:text-ink'"
-                                        class="rounded-md px-2.5 py-1 text-[11px] transition-colors">
-                                        Berdampingan (2 Foto)
-                                    </button>
-                                    <button type="button" @click="podViewMode = 'single'; activePhotoIdx = 0"
-                                        :class="podViewMode === 'single' && activePhotoIdx === 0 ? 'bg-ink text-white font-bold' : 'text-ink-body hover:text-ink'"
-                                        class="rounded-md px-2.5 py-1 text-[11px] transition-colors">
-                                        1. Surat Jalan
-                                    </button>
-                                    <button type="button" @click="podViewMode = 'single'; activePhotoIdx = 1"
-                                        :class="podViewMode === 'single' && activePhotoIdx === 1 ? 'bg-ink text-white font-bold' : 'text-ink-body hover:text-ink'"
-                                        class="rounded-md px-2.5 py-1 text-[11px] transition-colors">
-                                        2. Fisik Muatan Dock
-                                    </button>
-                                </div>
-                            @endif
-                            <button type="button" @click="podModalOpen = false"
-                                class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-body transition-colors hover:bg-surface-muted hover:text-ink">
-                                <x-gpa.icon name="x" class="h-4 w-4" />
-                            </button>
-                        </div>
+                        <button type="button" @click="podModalOpen = false"
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg text-ink-body transition-colors hover:bg-surface-muted hover:text-ink">
+                            <x-gpa.icon name="x" class="h-4 w-4" />
+                        </button>
                     </div>
 
-                    {{-- Modal Body Image Container --}}
-                    <div class="max-h-[72vh] overflow-auto bg-black/95 p-4">
-                        @if ($hasTwoPhotos)
-                            {{-- Both Photos Side by Side --}}
-                            <div x-show="podViewMode === 'both'" class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                {{-- Photo 1 --}}
-                                <div class="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/5 p-3">
-                                    <div class="flex items-center justify-between text-xs text-white">
-                                        <span class="flex items-center gap-1.5 font-bold">
-                                            <span class="flex h-5 w-5 items-center justify-center rounded bg-accent text-[10px] font-black text-ink">1</span>
-                                            Lembar Surat Jalan (Stempel &amp; Tanda Tangan)
-                                        </span>
-                                        <a href="{{ $manifestPhoto }}" target="_blank" class="text-accent underline text-[11px] hover:text-accent-edge">
-                                            Perbesar
-                                        </a>
-                                    </div>
-                                    <div class="flex h-[48vh] items-center justify-center overflow-hidden rounded-lg bg-black">
-                                        <img src="{{ $manifestPhoto }}" alt="Foto Surat Jalan"
-                                            class="h-full w-full object-contain">
-                                    </div>
-                                </div>
-                                {{-- Photo 2 --}}
-                                <div class="flex flex-col gap-2 rounded-xl border border-white/10 bg-white/5 p-3">
-                                    <div class="flex items-center justify-between text-xs text-white">
-                                        <span class="flex items-center gap-1.5 font-bold">
-                                            <span class="flex h-5 w-5 items-center justify-center rounded bg-accent text-[10px] font-black text-ink">2</span>
-                                            Fisik Muatan di Dock Klien
-                                        </span>
-                                        <a href="{{ $dockPhoto }}" target="_blank" class="text-accent underline text-[11px] hover:text-accent-edge">
-                                            Perbesar
-                                        </a>
-                                    </div>
-                                    <div class="flex h-[48vh] items-center justify-center overflow-hidden rounded-lg bg-black">
-                                        <img src="{{ $dockPhoto }}" alt="Foto Muatan Dock"
-                                            class="h-full w-full object-contain">
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
-
-                        {{-- Single Photo View --}}
-                        <div x-show="!{{ $hasTwoPhotos ? 'true' : 'false' }} || podViewMode === 'single'" class="flex flex-col items-center gap-2">
-                            <div class="flex w-full items-center justify-between text-xs text-white px-2">
-                                <span class="font-bold text-accent" x-text="activePhotoIdx === 0 ? 'Foto 1: Lembar Surat Jalan Berstempel' : 'Foto 2: Fisik Muatan & Bongkar Dock'"></span>
-                                <span class="text-[11px] text-white/70" x-text="(activePhotoIdx + 1) + ' dari {{ count($podPhotos) }} foto'"></span>
-                            </div>
-                            <div class="flex max-h-[64vh] w-full items-center justify-center overflow-auto rounded-lg">
-                                <template x-if="activePhotoIdx === 0">
-                                    <img src="{{ $manifestPhoto }}" alt="Foto Surat Jalan"
-                                        class="max-h-[60vh] w-auto max-w-full rounded-lg object-contain shadow-2xl">
-                                </template>
-                                @if ($dockPhoto)
-                                    <template x-if="activePhotoIdx === 1">
-                                        <img src="{{ $dockPhoto }}" alt="Foto Muatan Dock"
-                                            class="max-h-[60vh] w-auto max-w-full rounded-lg object-contain shadow-2xl">
-                                    </template>
-                                @endif
-                            </div>
-                        </div>
+                    <div class="flex max-h-[70vh] items-center justify-center overflow-auto bg-black p-4">
+                        <img src="{{ $order->pod_photo_asset_url }}" alt="Bukti Serah Terima Fisik"
+                            class="max-h-[65vh] w-auto max-w-full rounded-lg object-contain shadow-2xl">
                     </div>
 
-                    {{-- Modal Footer Metadata & Aksi --}}
-                    <div class="flex flex-col gap-3 border-t border-line-hair bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex flex-col gap-2 border-t border-line-hair bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
                         <div class="flex flex-col text-xs text-ink-body">
                             <span>PIC Penerima Dock: <strong class="text-ink">{{ $order->received_by_name ?: 'Staf Receiving Klien' }}</strong></span>
                             <span>Waktu Serah Terima: <strong class="text-ink">{{ $order->arrival_time ? $order->arrival_time->format('d M Y, H:i') . ' WIB' : 'Telah diverifikasi' }}</strong></span>
                         </div>
 
-                        <div class="flex flex-wrap items-center gap-2">
-                            <template x-if="activePhotoIdx === 0">
-                                <a href="{{ $manifestPhoto }}" target="_blank"
-                                    class="inline-flex items-center gap-1.5 rounded-lg border border-line-soft bg-surface px-3 py-2 text-xs font-bold text-ink shadow-xs transition-colors hover:bg-surface-muted">
-                                    <x-gpa.icon name="eye" class="h-3.5 w-3.5 text-ink-body" />
-                                    <span>Buka Foto Asli</span>
-                                </a>
-                            </template>
-                            @if ($dockPhoto)
-                                <template x-if="activePhotoIdx === 1">
-                                    <a href="{{ $dockPhoto }}" target="_blank"
-                                        class="inline-flex items-center gap-1.5 rounded-lg border border-line-soft bg-surface px-3 py-2 text-xs font-bold text-ink shadow-xs transition-colors hover:bg-surface-muted">
-                                        <x-gpa.icon name="eye" class="h-3.5 w-3.5 text-ink-body" />
-                                        <span>Buka Foto Asli</span>
-                                    </a>
-                                </template>
-                            @endif
+                        <div class="flex items-center gap-2">
+                            <a href="{{ $order->pod_photo_asset_url }}" target="_blank"
+                                class="inline-flex items-center gap-1.5 rounded-lg border border-line-soft bg-surface px-3 py-2 text-xs font-bold text-ink shadow-xs transition-colors hover:bg-surface-muted">
+                                <x-gpa.icon name="eye" class="h-3.5 w-3.5 text-ink-body" />
+                                <span>Buka di Tab Baru</span>
+                            </a>
                             <button type="button" @click="podModalOpen = false"
                                 class="inline-flex items-center rounded-lg bg-ink px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-brand-deep">
                                 Tutup

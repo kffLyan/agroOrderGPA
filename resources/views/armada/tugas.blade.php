@@ -202,7 +202,7 @@
                             <a href="{{ route('armada.bukti-terima', ['order_id' => $order->id]) }}"
                                 class="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-accent font-mono text-xs font-bold uppercase tracking-wider text-ink shadow-sub transition-transform active:scale-[0.98]">
                                 <x-gpa.icon name="qrcode" class="h-4 w-4 shrink-0" />
-                                PROSES SCAN POD (SELESAIKAN)
+                                PROSES SCAN POD
                             </a>
                         @elseif ($state === 'ready')
                             <a href="{{ route('armada.surat-jalan', ['order_id' => $order->id]) }}"
@@ -220,7 +220,7 @@
                         <button type="button" @click="checkRoute({ address: '{{ addslashes($order->delivery_address ?? '') }}', client: '{{ addslashes($order->user?->name ?? '') }}' })"
                             class="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-surface font-mono text-xs font-bold text-ink outline outline-1 -outline-offset-1 outline-line-strong transition-colors hover:bg-surface-disabled">
                             <x-gpa.icon name="map-pin" class="h-3.5 w-3.5 shrink-0 text-ink" />
-                            BUKA NAVIGASI PETA LOKASI
+                            BUKA NAVIGASI
                         </button>
                     </footer>
                 </article>
@@ -243,11 +243,11 @@
 
                     <div class="flex flex-col">
                         <span class="font-mono text-[10px] font-bold uppercase text-ink-quiet">BANTUAN OPERASIONAL DISPATCH</span>
-                        <span class="font-mono text-xs font-bold text-ink">+62 811-1223-3445</span>
+                        <span class="font-mono text-xs font-bold text-ink">(021) 890-1234</span>
                     </div>
                 </div>
 
-                <a href="tel:081112233445"
+                <a href="tel:0218901234"
                     class="flex h-9 items-center gap-1.5 rounded-lg bg-ink px-3.5 font-mono text-xs font-bold text-white shadow-sub transition-transform active:scale-95">
                     <x-gpa.icon name="phone" class="h-3 w-3 shrink-0" />
                     HUBUNGI

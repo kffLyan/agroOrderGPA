@@ -2,60 +2,145 @@
 
 @section('title', 'Pusat Dokumen & Faktur Konsolidasi Klien B2B')
 
+@php
+    $rawInvoices = $rawInvoices ?? ($invoices ?? collect());
+    $user = $user ?? Auth::guard('web')->user();
+
+    // Hitung metrik keuangan
+    $unpaidAmount = (float) $rawInvoices->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])->sum('grand_total');
+    $settledAmount = (float) $rawInvoices->where('status', 'PAID')->sum('grand_total');
+
+    $tabs = [
+        ['label' => 'Semua Tagihan', 'value' => 'all', 'icon' => 'file-text', 'badge' => ''],
+        ['label' => 'Menunggu Pembayaran', 'value' => 'unpaid', 'icon' => 'clock', 'badge' => 'Tempo'],
+        ['label' => 'Lunas', 'value' => 'settled', 'icon' => 'check-circle', 'badge' => ''],
+        ['label' => 'Dokumen Pajak & BA', 'value' => 'tax', 'icon' => 'shield', 'badge' => ''],
+    ];
+
+    $periods = [
+        ['value' => 'all', 'label' => 'Semua Periode Transaksi'],
+        ['value' => 'current', 'label' => 'Bulan Berjalan (' . now()->translatedFormat('F Y') . ')'],
+        ['value' => 'last-month', 'label' => 'Bulan Sebelumnya'],
+    ];
+
+    $invoices = $rawInvoices->map(function ($inv, $idx) {
+        $totalNetto = (float) ($inv->orders ? $inv->orders->sum(function ($o) {
+            return $o->orderItems ? $o->orderItems->sum('ordered_qty') : 0;
+        }) : 0);
+
+        $hasPendingProof = $inv->has_pending_proof;
+        $hasRejectedProof = $inv->has_rejected_proof;
+
+        $statusText = match ($inv->status) {
+            'UNPAID'   => $hasRejectedProof ? 'Bukti Bayar Ditolak' : ($hasPendingProof ? 'Menunggu Verifikasi Pembayaran' : 'Menunggu Pembayaran'),
+            'PARTIAL'  => 'Dibayar Sebagian',
+            'PAID'     => 'Lunas Terverifikasi',
+            'OVERDUE'  => 'Melewati Jatuh Tempo',
+            default    => $inv->status,
+        };
+
+        $statusTone = match ($inv->status) {
+            'UNPAID'   => $hasRejectedProof ? 'danger' : 'warning',
+            'PARTIAL'  => 'warning',
+            'PAID'     => 'accent',
+            'OVERDUE'  => 'warning',
+            default    => 'muted',
+        };
+
+        $isPaid = $inv->status === 'PAID';
+
+        $attachments = $inv->orders ? $inv->orders->map(function ($ord, $oIdx) {
+            $itemNames = $ord->orderItems ? $ord->orderItems->map(fn($i) => $i->product->name ?? 'Komoditas')->join(', ') : '';
+            $kg = (float) ($ord->orderItems ? $ord->orderItems->sum('ordered_qty') : 0);
+
+            return [
+                'no'           => str_pad($oIdx + 1, 2, '0', STR_PAD_LEFT),
+                'sj'           => $ord->surat_jalan_number ?: ('SJ-' . $ord->id),
+                'date'         => $ord->target_delivery_date ? $ord->target_delivery_date->format('d/m/Y') : ($ord->created_at ? $ord->created_at->format('d/m/Y') : '-'),
+                'hub'          => 'Sentra Lembang',
+                'commodity'    => $itemNames ?: 'Sayuran Segar Pasundan',
+                'weight_label' => number_format($kg, 1, ',', '.') . ' kg',
+                'amount_label' => 'Rp ' . number_format($ord->grand_total, 0, ',', '.'),
+                'pod_chip'     => $ord->pod_photo_url ? 'POD Valid' : 'BA Sah',
+                'ttd'          => $ord->received_by_name ?: 'Staff Receiving',
+            ];
+        })->all() : [];
+
+        return [
+            'no'                => str_pad($idx + 1, 2, '0', STR_PAD_LEFT),
+            'po'                => $inv->invoice_number,
+            'period'            => $inv->created_at ? ($inv->created_at->isCurrentMonth() ? 'current' : 'last-month') : 'current',
+            'printed'           => $inv->created_at ? $inv->created_at->format('d M Y') : '-',
+            'period_label'      => ($inv->period_start ? $inv->period_start->format('d M') : '-') . ' - ' . ($inv->period_end ? $inv->period_end->format('d M Y') : '-'),
+            'sj_chip'           => ($inv->orders ? $inv->orders->count() : 0) . ' Surat Jalan',
+            'sj_chip_muted'     => false,
+            'netto_value'       => number_format($totalNetto, 1, ',', '.'),
+            'netto_unit'        => 'kg',
+            'netto_weight'      => 600,
+            'total_label'       => 'Rp ' . number_format($inv->grand_total, 0, ',', '.'),
+            'total_weight'      => 700,
+            'due'               => $inv->due_date ? $inv->due_date->format('d M Y') : '-',
+            'due_muted'         => $isPaid,
+            'due_struck'        => $isPaid,
+            'due_note'          => $isPaid ? 'Sudah Lunas' : ($inv->due_date && $inv->due_date->isPast() ? 'Overdue' : 'Tempo 30 Hari'),
+            'due_note_tone'     => $isPaid ? 'success' : 'default',
+            'status'            => $statusText,
+            'status_tone'       => $statusTone,
+            'status_kind'       => $isPaid ? 'check' : 'dot',
+            'status_raw'        => $inv->status,
+            'row_tone'          => $isPaid ? 'plain' : 'active',
+            'tempo_days'        => 30,
+            'sj_count'          => $inv->orders ? $inv->orders->count() : 0,
+            'netto_net_label'   => number_format($totalNetto, 1, ',', '.') . ' kg Netto Sah',
+            'subtotal_label'    => 'Rp ' . number_format($inv->subtotal_amount ?: $inv->grand_total, 0, ',', '.'),
+            'ppn_label'         => 'PPN DTP Hasil Pertanian (0%)',
+            'ppn_value'         => 'Bebas PPN',
+            'credit_label'      => 'Penyesuaian Mutu / Retur',
+            'credit_value'      => '- Rp 0',
+            'grand_total_label' => 'Rp ' . number_format($inv->grand_total, 0, ',', '.'),
+            'attachments'       => $attachments,
+            'has_rejected_proof'=> $hasRejectedProof,
+            'rejected_note'     => $inv->rejected_proof_payment?->verification_note,
+            'actions'           => [
+                [
+                    'shape'   => 'label',
+                    'label'   => $isPaid ? 'Lihat Bukti' : ($hasRejectedProof ? 'Unggah Ulang Bukti' : ($hasPendingProof ? 'Bukti Terkirim' : 'Bayar Sekarang')),
+                    'variant' => $hasRejectedProof ? 'danger' : 'solid',
+                    'icon'    => $hasRejectedProof ? 'alert-triangle' : ($hasPendingProof ? 'check-circle' : 'upload'),
+                    'href'    => route('klien.bukti-pembayaran', ['tagihan' => $inv->invoice_number]),
+                ],
+            ],
+        ];
+    })->values()->all();
+
+    $archiveCounts = [
+        'all'     => count($invoices),
+        'unpaid'  => $rawInvoices->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])->count(),
+        'settled' => $rawInvoices->where('status', 'PAID')->count(),
+        'tax'     => count($invoices),
+    ];
+
+    $pagination = [
+        'page'        => 1,
+        'per_page'    => max(1, count($invoices)),
+        'total'       => count($invoices),
+        'total_pages' => 1,
+        'last_page'   => 1,
+    ];
+@endphp
+
 @section('content')
-    {{-- Inisialisasi data Alpine.js sederhana untuk filter tab, periode, pencarian, dan pilihan baris --}}
-    <div x-data="{
-        tab: 'all',
-        period: 'all',
-        search: '',
-        selected: '{{ $rawInvoices->first()?->invoice_number ?? '' }}',
-        proofMenuOpen: false,
-        financeModalOpen: false,
-
-        // Fungsi penyaring baris tabel berdasarkan tab status, periode bulan, dan pencarian nomor faktur/SJ
-        matches(no, status, period, keywords) {
-            if (this.tab === 'unpaid' && !['UNPAID', 'PARTIAL', 'OVERDUE'].includes(status)) return false;
-            if (this.tab === 'settled' && status !== 'PAID') return false;
-            if (this.period !== 'all' && period !== this.period) return false;
-            if (this.search.trim() !== '') {
-                const q = this.search.trim().toLowerCase();
-                return no.toLowerCase().includes(q) || keywords.toLowerCase().includes(q);
-            }
-            return true;
-        },
-
-        // Salin nomor rekening resmi BCA GPA ke clipboard
-        async copySettlementAccount() {
-            this.proofMenuOpen = false;
-            try {
-                await navigator.clipboard.writeText('840-552-1920');
-                this.$dispatch('gpa:toast', {
-                    title: 'Rekening Pembayaran GPA',
-                    message: 'BCA: 840-552-1920 • a.n. Green Pasundan Agriculture tersalin ke papan klip.',
-                    tone: 'success'
-                });
-            } catch {
-                this.$dispatch('gpa:toast', {
-                    title: 'Rekening Pembayaran GPA',
-                    message: 'BCA: 840-552-1920 • a.n. Green Pasundan Agriculture — salin manual.',
-                    tone: 'info'
-                });
-            }
-        },
-
-        contactFinance() {
-            this.$dispatch('gpa:toast', {
-                title: 'Kontak Tim Finance',
-                message: 'Layanan Keuangan GPA siap membantu rekonsiliasi tagihan Anda.',
-                tone: 'info'
-            });
-        }
-    }" class="flex flex-col gap-4">
-
+    <div x-data="clientDocuments(@js([
+        'invoices' => $invoices,
+        'tabs' => $tabs,
+        'counts' => $archiveCounts,
+        'periods' => $periods,
+        'pagination' => $pagination,
+    ]))" class="flex flex-col gap-4">
         {{-- ------------------------------------------------------------------ --}}
-        {{-- 1. HEADER HALAMAN & TOMBOL AKSI CEPAT (CSV, CETAK, UNGGAH BUKTI)    --}}
+        {{-- Kop halaman + aksi unduh rekap pajak & rekonsiliasi --}}
         {{-- ------------------------------------------------------------------ --}}
-        <section class="flex flex-col gap-3 border-b border-line-soft pb-4 lg:flex-row lg:items-center lg:justify-between">
+        <section class="gpa-card flex flex-col gap-3 p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6 ring-1 ring-line-hair shadow-sub">
             <div class="flex min-w-0 flex-col gap-2">
                 <div class="flex flex-wrap items-center gap-3">
                     <h1 class="gpa-section-title text-ink">Pusat Dokumen &amp; Faktur Konsolidasi</h1>
@@ -65,28 +150,25 @@
                     </span>
                 </div>
                 <p class="max-w-[56rem] text-sm leading-5 text-ink-body">
-                    Arsip digital dokumen penagihan bulanan, faktur pajak, dan surat jalan penimbangan sah Green Pasundan Agriculture.
+                    Arsip digital dokumen penagihan bulanan, faktur pajak, dan surat jalan penimbangan sah PT Green Pasundan Agriculture.
                 </p>
             </div>
 
             <div class="flex shrink-0 flex-wrap items-center gap-2">
-                {{-- Unduh Rekap CSV --}}
                 <a href="{{ route('klien.dokumen.export') }}"
                     class="inline-flex items-center gap-1.5 rounded-lg bg-surface-pill px-4 py-2 gpa-meta-lg font-medium uppercase tracking-[0.55px] text-ink-body shadow-sub transition-colors hover:bg-surface-disabled hover:text-ink">
                     <x-gpa.icon name="download" class="h-3 w-3 text-ink-body" />
                     <span>Rekap Tagihan (CSV)</span>
                 </a>
-
-                {{-- Cetak Laporan PDF --}}
                 <a href="{{ route('klien.dokumen.print-rekap') }}" target="_blank"
                     class="inline-flex items-center gap-1.5 rounded-lg bg-ink px-4 py-2 gpa-meta-lg font-bold uppercase tracking-[0.55px] text-white transition-colors hover:bg-brand-deep">
                     <x-gpa.icon name="printer" class="h-3 w-3 text-white" />
                     <span>Cetak Laporan</span>
                 </a>
 
-                {{-- Dropdown Tombol "Unggah Bukti" --}}
+                {{-- Dropdown "Unggah Bukti": jalan pintas ke formulir bukti pembayaran --}}
                 <div class="relative" @click.outside="proofMenuOpen = false" @keydown.escape.window="proofMenuOpen = false">
-                    <button type="button" @click="proofMenuOpen = !proofMenuOpen" :aria-expanded="proofMenuOpen.toString()"
+                    <button type="button" @click="toggleProofMenu()" :aria-expanded="proofMenuOpen.toString()"
                         aria-haspopup="true"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-accent px-4 py-2 text-ink shadow-sub transition-colors hover:bg-accent-deep">
                         <x-gpa.icon name="upload" class="h-3 w-3 text-ink" />
@@ -125,10 +207,9 @@
         </section>
 
         {{-- ------------------------------------------------------------------ --}}
-        {{-- 2. EMPAT KARTU METRIK KEUANGAN & PLAFON KREDIT                      --}}
+        {{-- Empat kartu metrik payable, settled, vault, adjustment --}}
         {{-- ------------------------------------------------------------------ --}}
-        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {{-- Kartu 1: Tagihan Tempo Aktif --}}
+        <section class="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
             <article class="gpa-card flex flex-col justify-between gap-3 p-4">
                 <div class="flex items-start justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase text-ink-body">Total Tagihan Tempo Aktif</h2>
@@ -137,20 +218,10 @@
                     </span>
                 </div>
                 <div class="flex flex-col gap-1">
-                    <p class="text-xs font-medium leading-4 text-ink-body">Outstanding Payable</p>
                     <p class="pb-1 text-2xl font-bold leading-8 text-ink">Rp {{ number_format($unpaidAmount, 0, ',', '.') }}</p>
                 </div>
-                <dl class="flex items-start justify-between gap-2 border-t border-line-soft/60 pt-3">
-                    <dt class="text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
-                        Status
-                    </dt>
-                    <dd class="text-right text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-success-ink">
-                        {{ $unpaidAmount > 0 ? 'Menunggu Pelunasan' : 'Nihil / Lancar' }}
-                    </dd>
-                </dl>
             </article>
 
-            {{-- Kartu 2: Tagihan Lunas --}}
             <article class="gpa-card flex flex-col justify-between gap-3 p-4">
                 <div class="flex items-start justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase text-ink-body">Total Tagihan Lunas</h2>
@@ -159,20 +230,10 @@
                     </span>
                 </div>
                 <div class="flex flex-col gap-1">
-                    <p class="text-xs font-medium leading-4 text-ink-body">Settled Invoices</p>
                     <p class="pb-1 text-2xl font-bold leading-8 text-ink">Rp {{ number_format($settledAmount, 0, ',', '.') }}</p>
                 </div>
-                <dl class="flex items-start justify-between gap-2 border-t border-line-soft/60 pt-3">
-                    <dt class="text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
-                        Verifikasi
-                    </dt>
-                    <dd class="text-right text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-success-ink">
-                        100% Tervalidasi
-                    </dd>
-                </dl>
             </article>
 
-            {{-- Kartu 3: Sisa Plafon Kredit --}}
             <article class="gpa-card flex flex-col justify-between gap-3 p-4">
                 <div class="flex items-start justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase text-ink-body">Sisa Plafon Kredit B2B</h2>
@@ -181,20 +242,10 @@
                     </span>
                 </div>
                 <div class="flex flex-col gap-1">
-                    <p class="text-xs font-medium leading-4 text-ink-body">Credit Vault</p>
-                    <p class="pb-1 text-2xl font-bold leading-8 text-ink">Rp {{ number_format($creditLimitRemaining, 0, ',', '.') }}</p>
+                    <p class="pb-1 text-2xl font-bold leading-8 text-ink">Rp {{ number_format(max(0, 50000000 - $unpaidAmount), 0, ',', '.') }}</p>
                 </div>
-                <dl class="flex items-start justify-between gap-2 border-t border-line-soft/60 pt-3">
-                    <dt class="text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
-                        Fasilitas
-                    </dt>
-                    <dd class="text-right text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-success-ink">
-                        {{ ($user && $user->client_type === 'B2B_KONTRAK') ? 'TOP 30 Hari' : 'Reguler' }}
-                    </dd>
-                </dl>
             </article>
 
-            {{-- Kartu 4: Toleransi Deviasi Timbang --}}
             <article class="gpa-card flex flex-col justify-between gap-3 p-4">
                 <div class="flex items-start justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase text-ink-body">Deviasi &amp; Rekonsiliasi Timbang</h2>
@@ -203,125 +254,57 @@
                     </span>
                 </div>
                 <div class="flex flex-col gap-1">
-                    <p class="text-xs font-medium leading-4 text-ink-body">Netto Sah vs PO</p>
                     <p class="pb-1 text-2xl font-bold leading-8 text-ink">0.34%</p>
                 </div>
-                <dl class="flex items-start justify-between gap-2 border-t border-line-soft/60 pt-3">
-                    <dt class="text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
-                        Toleransi Aman
-                    </dt>
-                    <dd class="text-right text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-success-deep">
-                        &lt; 1.0% Sesuai SOP
-                    </dd>
-                </dl>
             </article>
         </section>
 
         {{-- ------------------------------------------------------------------ --}}
-        {{-- 3. TAB FILTER STATUS & PILIHAN PERIODE TRANSAKSI                    --}}
+        {{-- Filter arsip dokumen + periode rekap --}}
         {{-- ------------------------------------------------------------------ --}}
-        <section class="flex flex-col gap-3 border-b border-line-soft pb-1 xl:flex-row xl:items-center xl:justify-between">
-            <div class="gpa-scroll-x overflow-hidden" role="tablist" aria-label="Arsip dokumen & faktur">
-                <div class="flex items-center gap-2">
-                    {{-- Tab 1: Semua Tagihan & Faktur --}}
-                    <button type="button" role="tab" @click="tab = 'all'"
-                        :aria-selected="tab === 'all' ? 'true' : 'false'"
-                        class="inline-flex shrink-0 items-center gap-1.5 border-b-2 px-4 py-3 transition-colors"
-                        :class="tab === 'all'
-                            ? 'border-ink bg-surface-shell/50'
-                            : 'border-transparent hover:border-line-soft hover:bg-surface-muted'">
-                        <x-gpa.icon name="file-text" class="h-3.5 w-3.5 shrink-0"
-                            x-bind:class="tab === 'all' ? 'text-ink' : 'text-ink-quiet'" />
-                        <span class="text-[11px] uppercase leading-[14px] tracking-[0.55px]"
-                            x-bind:class="tab === 'all' ? 'font-bold text-ink' : 'font-medium text-ink-quiet'">
-                            Semua Tagihan &amp; Faktur
-                        </span>
-                    </button>
+        <section class="grid gap-3 border-b border-line-soft pb-3 sm:grid-cols-2 sm:items-end">
+            <label class="flex min-w-0 flex-col gap-1">
+                <span class="gpa-meta-lg text-ink-body">Kategori Faktur:</span>
+                <select x-model="tab" @change="selectTab($event.target.value)"
+                    class="gpa-control h-9 w-full min-w-0 rounded-lg border-line-soft bg-surface text-xs font-medium text-ink">
+                    @foreach ($tabs as $tab)
+                        <option value="{{ $tab['value'] }}">
+                            {{ $tab['label'] }}{{ ! empty($tab['badge']) ? ' (' . $tab['badge'] . ')' : '' }}
+                        </option>
+                    @endforeach
+                </select>
+            </label>
 
-                    {{-- Tab 2: Menunggu Pembayaran --}}
-                    <button type="button" role="tab" @click="tab = 'unpaid'"
-                        :aria-selected="tab === 'unpaid' ? 'true' : 'false'"
-                        class="inline-flex shrink-0 items-center gap-1.5 border-b-2 px-4 py-3 transition-colors"
-                        :class="tab === 'unpaid'
-                            ? 'border-ink bg-surface-shell/50'
-                            : 'border-transparent hover:border-line-soft hover:bg-surface-muted'">
-                        <x-gpa.icon name="clock" class="h-3.5 w-3.5 shrink-0"
-                            x-bind:class="tab === 'unpaid' ? 'text-ink' : 'text-ink-quiet'" />
-                        <span class="text-[11px] uppercase leading-[14px] tracking-[0.55px]"
-                            x-bind:class="tab === 'unpaid' ? 'font-bold text-ink' : 'font-medium text-ink-quiet'">
-                            Menunggu Pembayaran
-                        </span>
-                        <span class="rounded bg-accent px-1.5 py-0.5 text-[9px] font-bold uppercase leading-3 tracking-[1.08px] text-ink">
-                            Tempo
-                        </span>
-                    </button>
-
-                    {{-- Tab 3: Lunas Terverifikasi --}}
-                    <button type="button" role="tab" @click="tab = 'settled'"
-                        :aria-selected="tab === 'settled' ? 'true' : 'false'"
-                        class="inline-flex shrink-0 items-center gap-1.5 border-b-2 px-4 py-3 transition-colors"
-                        :class="tab === 'settled'
-                            ? 'border-ink bg-surface-shell/50'
-                            : 'border-transparent hover:border-line-soft hover:bg-surface-muted'">
-                        <x-gpa.icon name="check-circle" class="h-3.5 w-3.5 shrink-0"
-                            x-bind:class="tab === 'settled' ? 'text-ink' : 'text-ink-quiet'" />
-                        <span class="text-[11px] uppercase leading-[14px] tracking-[0.55px]"
-                            x-bind:class="tab === 'settled' ? 'font-bold text-ink' : 'font-medium text-ink-quiet'">
-                            Lunas Terverifikasi
-                        </span>
-                    </button>
-
-                    {{-- Tab 4: Dokumen Pajak & BA --}}
-                    <button type="button" role="tab" @click="tab = 'tax'"
-                        :aria-selected="tab === 'tax' ? 'true' : 'false'"
-                        class="inline-flex shrink-0 items-center gap-1.5 border-b-2 px-4 py-3 transition-colors"
-                        :class="tab === 'tax'
-                            ? 'border-ink bg-surface-shell/50'
-                            : 'border-transparent hover:border-line-soft hover:bg-surface-muted'">
-                        <x-gpa.icon name="shield" class="h-3.5 w-3.5 shrink-0"
-                            x-bind:class="tab === 'tax' ? 'text-ink' : 'text-ink-quiet'" />
-                        <span class="text-[11px] uppercase leading-[14px] tracking-[0.55px]"
-                            x-bind:class="tab === 'tax' ? 'font-bold text-ink' : 'font-medium text-ink-quiet'">
-                            Dokumen Pajak &amp; BA
-                        </span>
-                    </button>
-                </div>
-            </div>
-
-            {{-- Filter Pilihan Periode Transaksi --}}
-            <label class="flex shrink-0 items-center gap-2 pb-2 xl:pb-0">
+            <label class="flex min-w-0 flex-col gap-1">
                 <span class="gpa-meta-lg text-ink-body">Periode:</span>
-                <span class="relative inline-flex items-center">
+                <span class="relative flex min-w-0 items-center">
                     <x-gpa.icon name="calendar" class="pointer-events-none absolute left-2 h-3.5 w-3.5 text-ink-body" />
                     <select x-model="period"
-                        class="gpa-control h-7 w-[15.5rem] appearance-none rounded border-line-soft bg-surface py-1 pl-8 pr-2 text-xs font-medium text-ink">
-                        <option value="all">Semua Periode Transaksi</option>
-                        <option value="current">Bulan Berjalan ({{ now()->translatedFormat('F Y') }})</option>
-                        <option value="last-month">Bulan Sebelumnya</option>
+                        class="gpa-control h-9 w-full min-w-0 appearance-none rounded-lg border-line-soft bg-surface py-1 pl-8 pr-2 text-xs font-medium text-ink">
+                        @foreach ($periods as $period)
+                            <option value="{{ $period['value'] }}">{{ $period['label'] }}</option>
+                        @endforeach
                     </select>
                 </span>
             </label>
         </section>
 
         {{-- ------------------------------------------------------------------ --}}
-        {{-- 4. TABEL DAFTAR FAKTUR KONSOLIDASI (DATA LANGSUNG DARI DATABASE)   --}}
+        {{-- Tabel faktur konsolidasi --}}
         {{-- ------------------------------------------------------------------ --}}
         <section class="gpa-card overflow-hidden">
             <div class="flex flex-col gap-3 border-b border-line-soft bg-surface-shell/50 p-4 lg:flex-row lg:items-center lg:justify-between">
                 <div class="flex min-w-0 items-start gap-2">
                     <x-gpa.icon name="invoice" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink" />
                     <div class="flex min-w-0 flex-col">
-                        <h2 class="gpa-section-title text-ink">
-                            <span x-show="tab === 'all'">Semua Tagihan &amp; Faktur Konsolidasi</span>
-                            <span x-show="tab === 'unpaid'" x-cloak>Faktur Menunggu Pembayaran (Tempo Aktif)</span>
-                            <span x-show="tab === 'settled'" x-cloak>Faktur Lunas Terverifikasi</span>
-                            <span x-show="tab === 'tax'" x-cloak>Dokumen Pajak &amp; Berita Acara</span>
+                        <h2 class="gpa-section-title text-ink" x-text="archiveLabel()">
+                            {{ $tabs[0]['label'] }}
                         </h2>
                         <p class="gpa-meta-lg text-ink-body">Menampilkan tagihan periodik berlisensi resmi GPA Finance</p>
+                        <p x-cloak x-show="tabNotice()" x-text="tabNotice()" class="pt-1 text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-ink-quiet"></p>
                     </div>
                 </div>
 
-                {{-- Kolom Pencarian Nomor Faktur / Nomor Surat Jalan --}}
                 <div class="flex flex-wrap items-center gap-2">
                     <label class="relative flex w-full items-center sm:w-64">
                         <span class="sr-only">Cari No. Faktur / SJ...</span>
@@ -329,17 +312,15 @@
                         <input type="search" x-model.debounce.200ms="search" placeholder="Cari No. Faktur / SJ..."
                             class="gpa-control h-8 w-full rounded-lg border-line-soft bg-surface pl-8 pr-3 text-xs">
                     </label>
-                    <button type="button" @click="tab = 'all'; period = 'all'; search = ''"
-                        x-cloak x-show="tab !== 'all' || period !== 'all' || search.trim() !== ''"
-                        class="inline-flex h-8 items-center rounded-lg border border-line-soft bg-surface px-2 transition-colors hover:bg-surface-muted"
-                        title="Reset Filter">
+                    <button type="button" @click="resetFilters()" x-cloak x-show="hasFilters()"
+                        class="inline-flex h-8 items-center rounded-lg border border-line-soft bg-surface px-2 transition-colors hover:bg-surface-muted">
                         <x-gpa.icon name="filter" class="h-3 w-3 text-ink-body" />
-                        <span class="sr-only">Reset filter</span>
+                        <span class="sr-only">Reset filter periode dan pencarian</span>
                     </button>
                 </div>
             </div>
 
-            <div class="gpa-scroll-x">
+            <div class="hidden md:block gpa-scroll-x">
                 <table class="w-full border-collapse">
                     <caption class="sr-only">Daftar faktur konsolidasi tempo bulanan beserta netto riil, jatuh tempo, dan status pembayaran</caption>
                     <thead>
@@ -355,142 +336,215 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{-- Looping langsung dari koleksi Invoice --}}
-                        @forelse ($rawInvoices as $index => $inv)
-                            {{-- Klik baris faktur untuk memilih dan melihat rincian surat jalan di bawah --}}
-                            <tr @click="selected = '{{ $inv->invoice_number }}'"
-                                x-show="matches('{{ $inv->invoice_number }}', '{{ $inv->status }}', '{{ $inv->period_category }}', '{{ $inv->search_keywords }}')"
+                        @foreach ($invoices as $invoice)
+                            <tr @click="selectInvoice(@js($invoice['po']))"
+                                x-show="isVisible(@js($invoice))"
                                 class="cursor-pointer border-b border-line-soft/70 transition-shadow"
-                                :class="selected === '{{ $inv->invoice_number }}' ? 'ring-2 ring-inset ring-accent' : ''"
+                                :class="isSelected(@js($invoice['po'])) ? 'ring-2 ring-inset ring-accent' : ''"
                                 @class([
-                                    'border-l-4 border-ink bg-canvas' => $inv->status !== 'PAID',
-                                    'bg-surface' => $inv->status === 'PAID',
+                                    'border-l-4 border-ink bg-canvas' => $invoice['row_tone'] === 'active',
+                                    'bg-surface' => $invoice['row_tone'] !== 'active',
+                                    'opacity-80' => $invoice['row_tone'] === 'muted',
                                 ])>
                                 <td class="px-4 py-4 text-[11px] font-semibold tracking-[0.88px] text-ink-body">
-                                    {{ str_pad($index + 1, 2, '0', STR_PAD_LEFT) }}
+                                    {{ $invoice['no'] }}
                                 </td>
 
                                 <td class="px-4 py-4">
-                                    <p class="text-xs font-bold leading-4 text-ink">{{ $inv->invoice_number }}</p>
-                                    <p class="text-[10px] leading-4 text-ink-body">Cetak: {{ $inv->created_at ? $inv->created_at->format('d M Y') : '-' }}</p>
+                                    <p class="text-xs font-bold leading-4 text-ink">{{ $invoice['po'] }}</p>
+                                    <p class="text-[10px] leading-4 text-ink-body">Cetak: {{ $invoice['printed'] }}</p>
                                 </td>
 
                                 <td class="px-4 py-4">
-                                    <p class="text-xs font-medium leading-4 text-ink">
-                                        {{ ($inv->period_start ? $inv->period_start->format('d M') : '-') . ' - ' . ($inv->period_end ? $inv->period_end->format('d M Y') : '-') }}
-                                    </p>
-                                    <span class="mt-1 inline-block rounded bg-surface-pill px-1.5 py-0.5 text-[10px] font-semibold leading-4 text-ink-body">
-                                        {{ $inv->orders->count() }} Surat Jalan
-                                    </span>
+                                    <p class="text-xs font-medium leading-4 text-ink">{{ $invoice['period_label'] }}</p>
+                                    <span @class([
+                                        'mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] leading-4',
+                                        'bg-surface-pill font-semibold text-ink-body' => ! $invoice['sj_chip_muted'],
+                                        'font-normal text-ink-quiet' => $invoice['sj_chip_muted'],
+                                    ])>{{ $invoice['sj_chip'] }}</span>
                                 </td>
 
                                 <td class="px-4 py-4 text-right text-xs font-semibold leading-4 text-ink">
-                                    {{ number_format($inv->total_netto_weight, 1, ',', '.') }} kg
+                                    {{ $invoice['netto_value'] }} {{ $invoice['netto_unit'] }}
                                 </td>
 
                                 <td class="px-4 py-4 text-right text-xs font-bold leading-4 text-ink">
-                                    {{ $inv->formatted_grand_total }}
+                                    {{ $invoice['total_label'] }}
                                 </td>
 
                                 <td class="px-4 py-4">
                                     <p @class([
                                         'text-xs font-medium leading-4',
-                                        'line-through text-ink-quiet' => $inv->status === 'PAID',
-                                        'text-ink' => $inv->status !== 'PAID',
-                                    ])>
-                                        {{ $inv->due_date ? $inv->due_date->format('d M Y') : '-' }}
-                                    </p>
+                                        'text-ink' => ! $invoice['due_muted'],
+                                        'text-ink-body' => $invoice['due_muted'] && ! $invoice['due_struck'],
+                                        'text-ink-quiet' => $invoice['due_muted'],
+                                        'line-through' => $invoice['due_struck'],
+                                    ])>{{ $invoice['due'] }}</p>
                                     <p @class([
                                         'text-[10px] font-bold leading-4',
-                                        'text-success-deep' => $inv->status === 'PAID',
-                                        'text-ink-quiet' => $inv->status !== 'PAID',
-                                    ])>
-                                        {{ $inv->status === 'PAID' ? 'Sudah Lunas' : ($inv->due_date && $inv->due_date->isPast() ? 'Overdue' : 'Tempo 30 Hari') }}
-                                    </p>
+                                        'text-success-deep' => $invoice['due_note_tone'] === 'success',
+                                        'text-ink-quiet' => $invoice['due_note_tone'] !== 'success',
+                                    ])>{{ $invoice['due_note'] }}</p>
                                 </td>
 
-                                {{-- Status Pembayaran dengan Badge Warna Standar --}}
                                 <td class="px-4 py-4">
-                                    @if ($inv->has_rejected_proof)
-                                        <span class="inline-flex items-center gap-1 rounded bg-danger-soft px-2 py-0.5 text-[10px] font-bold uppercase leading-4 tracking-[0.5px] text-danger ring-1 ring-inset ring-danger/40">
+                                    <span @class([
+                                        'inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-bold uppercase leading-4 tracking-[0.5px] ring-1 ring-inset',
+                                        'bg-danger-soft text-danger ring-danger/40' => $invoice['status_tone'] === 'danger',
+                                        'bg-accent text-success-ink ring-accent' => $invoice['status_tone'] === 'accent',
+                                        'bg-warning-soft text-warning-deep ring-warning/40' => $invoice['status_tone'] === 'warning',
+                                        'bg-surface-pill text-ink-quiet ring-line-board' => $invoice['status_tone'] === 'muted',
+                                    ])>
+                                        @if ($invoice['status_tone'] === 'danger')
                                             <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-danger" aria-hidden="true"></span>
-                                            Bukti Bayar Ditolak
-                                        </span>
-                                    @elseif ($inv->status === 'PAID')
-                                        <span class="inline-flex items-center gap-1 rounded bg-accent px-2 py-0.5 text-[10px] font-bold uppercase leading-4 tracking-[0.5px] text-success-ink ring-1 ring-inset ring-accent">
+                                        @elseif ($invoice['status_kind'] === 'dot')
+                                            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-warning-deep" aria-hidden="true"></span>
+                                        @elseif ($invoice['status_kind'] === 'check')
                                             <x-gpa.icon name="check" class="h-2.5 w-2.5 shrink-0" />
-                                            Lunas Terverifikasi
-                                        </span>
-                                    @elseif ($inv->has_pending_proof)
-                                        <span class="inline-flex items-center gap-1 rounded bg-warning-soft px-2 py-0.5 text-[10px] font-bold uppercase leading-4 tracking-[0.5px] text-warning-deep ring-1 ring-inset ring-warning/40">
-                                            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-warning-deep" aria-hidden="true"></span>
-                                            Menunggu Verifikasi Pembayaran
-                                        </span>
-                                    @elseif ($inv->status === 'OVERDUE')
-                                        <span class="inline-flex items-center gap-1 rounded bg-warning-soft px-2 py-0.5 text-[10px] font-bold uppercase leading-4 tracking-[0.5px] text-warning-deep ring-1 ring-inset ring-warning/40">
-                                            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-warning-deep" aria-hidden="true"></span>
-                                            Melewati Jatuh Tempo
-                                        </span>
-                                    @elseif ($inv->status === 'PARTIAL')
-                                        <span class="inline-flex items-center gap-1 rounded bg-warning-soft px-2 py-0.5 text-[10px] font-bold uppercase leading-4 tracking-[0.5px] text-warning-deep ring-1 ring-inset ring-warning/40">
-                                            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-warning-deep" aria-hidden="true"></span>
-                                            Dibayar Sebagian
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center gap-1 rounded bg-warning-soft px-2 py-0.5 text-[10px] font-bold uppercase leading-4 tracking-[0.5px] text-warning-deep ring-1 ring-inset ring-warning/40">
-                                            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-warning-deep" aria-hidden="true"></span>
-                                            Menunggu Pembayaran
-                                        </span>
-                                    @endif
+                                        @endif
+                                        {{ $invoice['status'] }}
+                                    </span>
                                 </td>
 
-                                {{-- Tombol Aksi --}}
                                 <td class="px-4 py-4">
                                     <div class="flex items-center justify-center gap-1.5">
-                                        <a href="{{ route('klien.bukti-pembayaran', ['tagihan' => $inv->invoice_number]) }}"
-                                            @click.stop
-                                            @class([
-                                                'inline-block rounded px-2.5 py-1 text-[10px] font-bold uppercase leading-4 text-white transition-colors',
-                                                'bg-danger hover:bg-danger/90' => $inv->has_rejected_proof,
-                                                'bg-ink hover:bg-brand-deep' => ! $inv->has_rejected_proof,
-                                            ])>
-                                            @if ($inv->status === 'PAID')
-                                                Lihat Bukti
-                                            @elseif ($inv->has_rejected_proof)
-                                                Unggah Ulang Bukti
-                                            @elseif ($inv->has_pending_proof)
-                                                Bukti Terkirim
-                                            @else
-                                                Bayar Sekarang
-                                            @endif
-                                        </a>
+                                        @foreach ($invoice['actions'] as $action)
+                                            <a href="{{ $action['href'] ?? route('klien.bukti-pembayaran', ['tagihan' => $invoice['po']]) }}"
+                                                @click.stop
+                                                @class([
+                                                    'inline-block rounded px-2.5 py-1 text-[10px] font-bold uppercase leading-4 text-white transition-colors',
+                                                    'bg-danger hover:bg-danger/90' => ($action['variant'] ?? '') === 'danger',
+                                                    'bg-ink hover:bg-brand-deep' => ($action['variant'] ?? '') !== 'danger',
+                                                ])>
+                                                {{ $action['label'] }}
+                                            </a>
+                                        @endforeach
                                     </div>
                                 </td>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="8" class="px-6 py-10 text-center gpa-body text-ink-body">
-                                    Belum ada arsip faktur konsolidasi.
-                                </td>
-                            </tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
             </div>
 
+            <div class="md:hidden flex flex-col gap-2 p-2">
+                @foreach ($invoices as $invoice)
+                    <article @click="selectInvoice(@js($invoice['po']))"
+                        x-show="isVisible(@js($invoice))"
+                        @class([
+                            'cursor-pointer rounded-lg border p-3 shadow-sm transition-colors',
+                            'border-ink bg-canvas ring-2 ring-inset ring-accent' => $invoice['row_tone'] === 'active',
+                            'border-line-hair bg-surface' => $invoice['row_tone'] !== 'active',
+                            'opacity-80' => $invoice['row_tone'] === 'muted',
+                        ])>
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <p class="break-words text-xs font-bold leading-4 text-ink">{{ $invoice['po'] }}</p>
+                                <p class="mt-0.5 gpa-micro text-ink-body">Cetak: {{ $invoice['printed'] }}</p>
+                            </div>
+                            <span @class([
+                                'inline-flex shrink-0 items-center gap-1 rounded px-2 py-1 text-[10px] font-bold uppercase leading-4 tracking-[0.5px] ring-1 ring-inset',
+                                'bg-danger-soft text-danger ring-danger/40' => $invoice['status_tone'] === 'danger',
+                                'bg-accent text-success-ink ring-accent' => $invoice['status_tone'] === 'accent',
+                                'bg-warning-soft text-warning-deep ring-warning/40' => $invoice['status_tone'] === 'warning',
+                                'bg-surface-pill text-ink-quiet ring-line-board' => $invoice['status_tone'] === 'muted',
+                            ])>
+                                {{ $invoice['status'] }}
+                            </span>
+                        </div>
+
+                        <div class="mt-2 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-line-faint pt-2 text-[10px]">
+                            <div class="flex flex-col gap-0.5">
+                                <span class="text-ink-quiet">Periode &amp; Dokumen</span>
+                                <span class="font-medium text-ink">{{ $invoice['period_label'] }}</span>
+                                <span @class([
+                                    'w-fit rounded px-1.5 py-0.5 text-[10px] leading-4',
+                                    'bg-surface-pill font-semibold text-ink-body' => ! $invoice['sj_chip_muted'],
+                                    'font-normal text-ink-quiet' => $invoice['sj_chip_muted'],
+                                ])>{{ $invoice['sj_chip'] }}</span>
+                            </div>
+                            <div class="flex flex-col gap-0.5">
+                                <span class="text-ink-quiet">Jatuh Tempo</span>
+                                <span @class([
+                                    'font-medium leading-4',
+                                    'text-ink' => ! $invoice['due_muted'],
+                                    'text-ink-body' => $invoice['due_muted'] && ! $invoice['due_struck'],
+                                    'text-ink-quiet' => $invoice['due_muted'],
+                                    'line-through' => $invoice['due_struck'],
+                                ])>{{ $invoice['due'] }}</span>
+                                <span @class([
+                                    'text-[10px] font-bold leading-4',
+                                    'text-success-deep' => $invoice['due_note_tone'] === 'success',
+                                    'text-ink-quiet' => $invoice['due_note_tone'] !== 'success',
+                                ])>{{ $invoice['due_note'] }}</span>
+                            </div>
+                            <div class="flex flex-col gap-0.5">
+                                <span class="text-ink-quiet">Bobot Netto</span>
+                                <span class="font-semibold text-ink">{{ $invoice['netto_value'] }} {{ $invoice['netto_unit'] }}</span>
+                            </div>
+                            <div class="flex flex-col gap-0.5">
+                                <span class="text-ink-quiet">Total Nilai</span>
+                                <span class="font-bold text-ink">{{ $invoice['total_label'] }}</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-2 flex flex-wrap justify-end gap-1.5 border-t border-line-faint pt-2">
+                            @foreach ($invoice['actions'] as $action)
+                                <a href="{{ $action['href'] ?? route('klien.bukti-pembayaran', ['tagihan' => $invoice['po']]) }}"
+                                    @click.stop
+                                    @class([
+                                        'inline-block rounded px-2.5 py-1 text-[10px] font-bold uppercase leading-4 text-white transition-colors',
+                                        'bg-danger hover:bg-danger/90' => ($action['variant'] ?? '') === 'danger',
+                                        'bg-ink hover:bg-brand-deep' => ($action['variant'] ?? '') !== 'danger',
+                                    ])>
+                                    {{ $action['label'] }}
+                                </a>
+                            @endforeach
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+
+            <p x-cloak x-show="visibleCount() === 0" class="px-6 py-10 text-center gpa-body text-ink-body">
+                Tidak ada faktur yang cocok dengan filter aktif.
+            </p>
+
             <div class="flex flex-col gap-3 border-t border-line-soft bg-surface-shell px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-                <p class="gpa-micro-bold uppercase leading-3 tracking-[1.08px] text-ink-body">
-                    Menampilkan {{ $rawInvoices->count() }} total faktur konsolidasi ({{ now()->year }})
+                <p class="gpa-micro-bold uppercase leading-3 tracking-[1.08px] text-ink-body" x-text="summaryLabel()">
+                    Menampilkan {{ $pagination['per_page'] }} dari {{ $pagination['total'] }} total faktur konsolidasi (2026)
                 </p>
+
+                <nav class="flex items-center gap-1" aria-label="Navigasi halaman faktur">
+                    <button type="button" @click="page > 1 && goToPage(page - 1)" :disabled="page === 1"
+                        class="rounded bg-surface px-2 py-1 text-xs leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-50">
+                        Sebelumnya
+                    </button>
+
+                    <template x-for="number in pageNumbers()" :key="number">
+                        <button type="button" @click="goToPage(number)"
+                            class="rounded px-2 py-1 text-xs leading-4 transition-colors"
+                            :class="page === number ? 'bg-ink font-bold text-white' : 'bg-surface-pill text-ink-body hover:bg-surface-disabled'"
+                            :aria-current="page === number ? 'page' : null"
+                            x-text="number"></button>
+                    </template>
+
+                    @if ($pagination['last_page'] > 3)
+                        <span class="px-1 text-xs leading-4 text-ink-body" aria-hidden="true">...</span>
+                    @endif
+
+                    <button type="button" @click="goToPage(page + 1)" :disabled="page === lastPage"
+                        class="rounded bg-surface px-2 py-1 text-xs leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-50">
+                        Selanjutnya
+                    </button>
+                </nav>
             </div>
         </section>
 
         {{-- ------------------------------------------------------------------ --}}
-        {{-- 5. PANEL RINCIAN SURAT JALAN & BERITA ACARA FAKTUR TERPILIH        --}}
+        {{-- Panel lampiran faktur resmi (berikutan dengan baris tabel terpilih) --}}
         {{-- ------------------------------------------------------------------ --}}
-        @foreach ($rawInvoices as $inv)
-            {{-- Panel ini hanya tampil jika nomor faktur sama dengan baris yang diklik/dipilih --}}
-            <section x-cloak x-show="selected === '{{ $inv->invoice_number }}'"
+        @foreach ($invoices as $invoice)
+            <section x-cloak x-show="isSelected(@js($invoice['po']))"
                 class="gpa-card overflow-hidden ring-2 ring-inset ring-ink">
                 <div class="flex flex-col gap-2 bg-brand p-4 sm:flex-row sm:items-start sm:justify-between">
                     <div class="flex min-w-0 flex-col gap-1">
@@ -502,22 +556,16 @@
                         </div>
                         <p class="text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-accent/60">
                             No. Faktur:
-                            <span class="text-accent">{{ $inv->invoice_number }}</span>
-                            &bull; Tempo 30 Hari
+                            <span class="text-accent">{{ $invoice['po'] }}</span>
+                            &bull; Tempo {{ $invoice['tempo_days'] }} Hari
                         </p>
                     </div>
                     <div class="flex shrink-0 items-center gap-2">
-                        <a href="{{ route('prints.invoice', ['invoice' => $inv->invoice_number]) }}" target="_blank"
+                        <a href="{{ route('prints.invoice', ['invoice' => $invoice['po']]) }}" target="_blank"
                             title="Cetak Faktur Resmi A4"
                             class="inline-flex items-center gap-1 rounded-lg bg-ink px-2.5 py-1 text-white transition-colors hover:bg-brand-deep text-2xs font-bold uppercase">
                             <x-gpa.icon name="printer" class="h-3 w-3" />
                             Cetak Faktur A4
-                        </a>
-                        <a href="{{ route('prints.thermal-receipt', ['invoice' => $inv->invoice_number]) }}" target="_blank"
-                            title="Cetak Struk Kasir Thermal 80mm"
-                            class="inline-flex items-center gap-1 rounded-lg bg-surface-muted border border-line-soft px-2.5 py-1 text-ink transition-colors hover:bg-surface text-2xs font-bold uppercase">
-                            <x-gpa.icon name="printer" class="h-3 w-3 text-brand" />
-                            Struk Kasir
                         </a>
                         <a href="{{ route('prints.surat-jalan') }}" target="_blank"
                             title="Cetak Surat Jalan Fisik"
@@ -528,8 +576,7 @@
                     </div>
                 </div>
 
-                {{-- Alert jika bukti bayar sebelumnya ditolak oleh sekretaris/verifikator --}}
-                @if ($inv->has_rejected_proof)
+                @if (! empty($invoice['has_rejected_proof']))
                     <div class="border-b border-danger/30 bg-danger-soft/30 p-4">
                         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div class="flex items-start gap-3">
@@ -539,11 +586,11 @@
                                 <div class="flex min-w-0 flex-col">
                                     <p class="text-xs font-bold uppercase tracking-wider text-danger">Bukti Pembayaran Ditolak Verifikator</p>
                                     <p class="mt-0.5 text-xs text-ink-body">
-                                        Catatan Verifikator: <span class="font-semibold text-danger">{{ $inv->rejected_proof_payment?->verification_note ?: 'Bukti pembayaran tidak sesuai atau tidak terbaca. Mohon unggah ulang.' }}</span>
+                                        Catatan Verifikator: <span class="font-semibold text-danger">{{ $invoice['rejected_note'] ?: 'Bukti pembayaran tidak sesuai atau tidak terbaca. Mohon unggah ulang.' }}</span>
                                     </p>
                                 </div>
                             </div>
-                            <a href="{{ route('klien.bukti-pembayaran', ['tagihan' => $inv->invoice_number]) }}"
+                            <a href="{{ route('klien.bukti-pembayaran', ['tagihan' => $invoice['po']]) }}"
                                 class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-danger px-3 py-1.5 text-2xs font-bold uppercase text-white shadow-sub transition hover:bg-danger/90">
                                 <x-gpa.icon name="upload" class="h-3 w-3" />
                                 <span>Unggah Ulang Bukti Bayar</span>
@@ -554,77 +601,70 @@
 
                 <div class="flex flex-col gap-2 border-b border-line-soft bg-surface-pill px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
                     <p class="text-xs font-medium leading-4 text-ink-body">
-                        Rekap {{ $inv->orders->count() }} Surat Jalan Fisik (Terintegrasi Netto Timbangan Digital):
+                        Rekap {{ $invoice['sj_count'] }} Surat Jalan Fisik (Terintegrasi Netto Timbangan Digital):
                     </p>
-                    <p class="text-xs font-bold leading-4 text-ink">{{ number_format($inv->total_netto_weight, 1, ',', '.') }} kg Netto Sah</p>
+                    <p class="text-xs font-bold leading-4 text-ink">{{ $invoice['netto_net_label'] }}</p>
                 </div>
 
-                {{-- Rincian setiap Surat Jalan / Pesanan yang tergabung dalam faktur --}}
                 <div class="flex flex-col gap-2.5 p-4">
-                    @forelse ($inv->orders as $oIdx => $ord)
+                    @foreach ($invoice['attachments'] as $item)
                         <article class="flex items-start justify-between gap-3 rounded-xl border border-line-soft bg-surface-pill p-2.5">
                             <div class="flex min-w-0 items-start gap-2">
                                 <span class="flex h-6 w-7 shrink-0 items-center justify-center rounded bg-accent/50 text-sm font-bold leading-5 text-success-deep">
-                                    {{ str_pad($oIdx + 1, 2, '0', STR_PAD_LEFT) }}
+                                    {{ $item['no'] }}
                                 </span>
                                 <div class="flex min-w-0 flex-col">
                                     <div class="flex flex-wrap items-center gap-1.5">
-                                        <p class="text-xs font-bold leading-4 text-ink">{{ $ord->surat_jalan_number ?: ('SJ-' . $ord->id) }}</p>
+                                        <p class="text-xs font-bold leading-4 text-ink">{{ $item['sj'] }}</p>
                                         <span class="inline-flex items-center gap-1 rounded bg-accent px-1 py-0.5">
                                             <x-gpa.icon name="check" class="h-2 w-2 text-success-ink" />
-                                            <span class="text-[9px] font-bold leading-3 text-success-ink">{{ $ord->pod_photo_url ? 'POD Valid' : 'BA Sah' }}</span>
+                                            <span class="text-[9px] font-bold leading-3 text-success-ink">{{ $item['pod_chip'] }}</span>
                                         </span>
                                     </div>
-                                    <p class="pt-0.5 text-xs font-medium leading-4 text-ink-body">
-                                        {{ $ord->orderItems->map(fn($i) => $i->product->name ?? 'Komoditas')->join(', ') ?: 'Sayuran Segar Pasundan' }}
-                                    </p>
+                                    <p class="pt-0.5 text-xs font-medium leading-4 text-ink-body">{{ $item['commodity'] }}</p>
                                     <p class="text-[11px] leading-5 text-ink-body">
-                                        Sentra Lembang &bull; TTD: {{ $ord->received_by_name ?: 'Staff Receiving' }}
+                                        {{ $item['hub'] }} &bull; TTD: {{ $item['ttd'] }}
                                     </p>
                                 </div>
                             </div>
                             <div class="flex shrink-0 flex-col items-end text-right">
-                                <p class="text-xs font-bold leading-4 text-ink">Rp {{ number_format($ord->grand_total, 0, ',', '.') }}</p>
-                                <p class="text-xs font-semibold leading-4 text-success-deep">{{ number_format($ord->orderItems->sum('ordered_qty'), 1, ',', '.') }} kg</p>
+                                <p class="text-xs font-bold leading-4 text-ink">{{ $item['amount_label'] }}</p>
+                                <p class="text-xs font-semibold leading-4 text-success-deep">{{ $item['weight_label'] }}</p>
                             </div>
                         </article>
-                    @empty
-                        <p class="text-center py-4 text-xs text-ink-body">Tidak ada lampiran surat jalan terkait.</p>
-                    @endforelse
+                    @endforeach
                 </div>
 
-                {{-- Ringkasan Perhitungan Subtotal, PPN, dan Total Tagihan --}}
                 <div class="flex flex-col gap-3 border-t border-line-soft bg-surface-shell p-4">
                     <dl class="flex flex-col gap-1.5 border-b border-line-soft pb-3">
                         <div class="flex items-start justify-between gap-3">
-                            <dt class="text-xs leading-4 text-ink-body">Subtotal {{ $inv->orders->count() }} Surat Jalan:</dt>
-                            <dd class="text-xs font-semibold leading-4 text-ink">{{ $inv->formatted_subtotal }}</dd>
+                            <dt class="text-xs leading-4 text-ink-body">Subtotal {{ $invoice['sj_count'] }} Surat Jalan:</dt>
+                            <dd class="text-xs font-semibold leading-4 text-ink">{{ $invoice['subtotal_label'] }}</dd>
                         </div>
                         <div class="flex items-start justify-between gap-3">
-                            <dt class="text-xs leading-4 text-ink-body">PPN DTP Hasil Pertanian (0%):</dt>
-                            <dd class="text-xs leading-4 text-ink-body">Bebas PPN</dd>
+                            <dt class="text-xs leading-4 text-ink-body">{{ $invoice['ppn_label'] }}:</dt>
+                            <dd class="text-xs leading-4 text-ink-body">{{ $invoice['ppn_value'] }}</dd>
                         </div>
                         <div class="flex items-start justify-between gap-3">
-                            <dt class="text-xs leading-4 text-ink-body">Penyesuaian Mutu / Retur:</dt>
-                            <dd class="text-xs font-semibold leading-4 text-success-deep">- Rp 0</dd>
+                            <dt class="text-xs leading-4 text-ink-body">{{ $invoice['credit_label'] }}:</dt>
+                            <dd class="text-xs font-semibold leading-4 text-success-deep">{{ $invoice['credit_value'] }}</dd>
                         </div>
                         <div class="flex items-start justify-between gap-3 pt-1">
                             <dt class="text-base font-bold leading-6 text-ink">Total Tagihan Tempo (TOP 30D):</dt>
                             <dd class="rounded bg-ink px-2 py-0.5 text-base font-bold leading-6 text-white">
-                                {{ $inv->formatted_grand_total }}
+                                {{ $invoice['grand_total_label'] }}
                             </dd>
                         </div>
                     </dl>
 
-                    {{-- Informasi Rekening Resmi GPA --}}
                     <div class="flex flex-col gap-3 rounded-xl border border-line-soft bg-surface p-2 sm:flex-row sm:items-center sm:justify-between">
                         <div class="flex min-w-0 flex-col">
                             <p class="text-[10px] font-bold uppercase leading-5 text-ink-body">Rekening Penerima Resmi</p>
                             <p class="text-xs font-bold leading-4 text-ink">Bank Central Asia (BCA)</p>
                             <p class="text-xs font-semibold leading-4 tracking-[0.6px] text-ink">840-552-1920</p>
-                            <p class="text-[10px] leading-5 text-ink-body">Green Pasundan Agriculture</p>
+                            <p class="text-[10px] leading-5 text-ink-body">PT Green Pasundan Agriculture</p>
                         </div>
-                        <a href="{{ route('klien.bukti-pembayaran', ['tagihan' => $inv->invoice_number]) }}"
+                        <a href="{{ route('klien.bukti-pembayaran', ['tagihan' => $invoice['po']]) }}"
                             class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-ink transition-colors hover:bg-accent-deep">
                             <x-gpa.icon name="upload" class="h-3 w-3 text-ink" />
                             <span class="text-[11px] font-bold uppercase leading-[14px] tracking-[0.88px] text-ink">
@@ -637,7 +677,7 @@
         @endforeach
 
         {{-- ------------------------------------------------------------------ --}}
-        {{-- 6. JAMINAN HUKUM & REKONSILIASI FAKTUR SAH                         --}}
+        {{-- Jaminan validasi hukum & timbangan riil --}}
         {{-- ------------------------------------------------------------------ --}}
         <section class="gpa-card mt-6 flex flex-col gap-3 p-6 lg:flex-row lg:items-center lg:justify-between">
             <div class="flex items-start gap-4">
@@ -652,103 +692,15 @@
                 </div>
             </div>
             <div class="flex shrink-0 flex-wrap items-center gap-2">
-                <button type="button" @click="financeModalOpen = true"
+                <button type="button" @click="contactFinance()"
                     class="rounded-lg border border-line-soft bg-surface px-3 py-1.5 text-[11px] font-semibold uppercase leading-[14px] tracking-[0.88px] text-ink transition-colors hover:bg-surface-muted">
                     Hubungi Finance GPA
                 </button>
-                <a href="{{ route('klien.bukti-pembayaran') }}"
-                    class="inline-flex items-center gap-1.5 rounded-lg bg-ink px-3 py-1.5 text-[11px] font-bold uppercase leading-[14px] tracking-[0.88px] text-white transition-colors hover:bg-brand-deep">
-                    <x-gpa.icon name="badge-check" class="h-3.5 w-3.5 text-accent" />
-                    <span>Konfirmasi Pelunasan</span>
-                </a>
+                <button type="button" @click="contactFinance()"
+                    class="rounded-lg bg-ink px-3 py-1.5 text-[11px] font-bold uppercase leading-[14px] tracking-[0.88px] text-white transition-colors hover:bg-brand-deep">
+                    Konfirmasi Pelunasan
+                </button>
             </div>
         </section>
-
-        {{-- ------------------------------------------------------------------ --}}
-        {{-- MODAL REKONSILIASI & HELPDESK KEUANGAN GPA                         --}}
-        {{-- ------------------------------------------------------------------ --}}
-        <div x-cloak x-show="financeModalOpen" class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
-            <div class="fixed inset-0 bg-ink/60 backdrop-blur-sm transition-opacity" @click="financeModalOpen = false"></div>
-            <div class="flex min-h-screen items-center justify-center p-4">
-                <div class="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl ring-1 ring-black/5"
-                    @click.outside="financeModalOpen = false">
-                    <div class="flex items-start justify-between border-b border-line-soft pb-4">
-                        <div class="flex items-center gap-3">
-                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand text-accent">
-                                <x-gpa.icon name="building" class="h-5 w-5" />
-                            </span>
-                            <div>
-                                <h3 class="font-sans text-base font-bold text-ink">Rekonsiliasi &amp; Helpdesk Keuangan GPA</h3>
-                                <p class="text-xs text-ink-body">Pusat layanan faktur pajak &amp; konfirmasi transfer tagihan tempo</p>
-                            </div>
-                        </div>
-                        <button type="button" @click="financeModalOpen = false" class="rounded-lg p-1 text-ink-body hover:bg-surface-shell hover:text-ink">
-                            <x-gpa.icon name="x" class="h-5 w-5" />
-                        </button>
-                    </div>
-
-                    <div class="mt-4 flex flex-col gap-4">
-                        <div class="rounded-xl border border-line-soft bg-surface-shell/80 p-4">
-                            <div class="flex items-center justify-between">
-                                <span class="gpa-micro text-ink-body font-semibold">REKENING RESMI SETTLEMENT (BCA)</span>
-                                <span class="rounded bg-accent/30 px-2 py-0.5 text-[10px] font-bold text-success-ink">Akun Utama</span>
-                            </div>
-                            <div class="mt-2 flex items-center justify-between">
-                                <div>
-                                    <p class="font-mono text-lg font-extrabold tracking-wider text-ink">840-552-1920</p>
-                                    <p class="text-xs text-ink-body">a.n. <strong class="text-ink">Green Pasundan Agriculture</strong></p>
-                                </div>
-                                <button type="button" @click="copySettlementAccount()"
-                                    class="inline-flex items-center gap-1.5 rounded-lg border border-line-soft bg-white px-3 py-1.5 text-xs font-bold text-ink shadow-sm transition hover:bg-surface-muted">
-                                    <x-gpa.icon name="clipboard" class="h-3.5 w-3.5 text-brand" />
-                                    <span>Salin</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="rounded-xl border border-line-soft bg-surface-shell/80 p-4">
-                            <div class="flex items-center justify-between">
-                                <span class="gpa-micro text-ink-body font-semibold">REKENING SEKUNDER (MANDIRI)</span>
-                                <span class="rounded bg-surface-pill px-2 py-0.5 text-[10px] font-bold text-ink-body">Opsional</span>
-                            </div>
-                            <div class="mt-2 flex items-center justify-between">
-                                <div>
-                                    <p class="font-mono text-base font-bold text-ink">132-00-9988-1234</p>
-                                    <p class="text-xs text-ink-body">a.n. <strong class="text-ink">Koperasi Produsen Agro Green Pasundan</strong></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col gap-2 rounded-xl bg-accent-soft/40 p-4 text-xs text-ink">
-                            <div class="flex items-center gap-2 font-bold text-success-deep">
-                                <x-gpa.icon name="check-circle" class="h-4 w-4" />
-                                <span>Kanal Langsung Tim Finance</span>
-                            </div>
-                            <p class="text-ink-body">
-                                Untuk penyesuaian nota retur, bukti potong PPh 22/23, atau klarifikasi faktur pajak elektronik, hubungi desk kami:
-                            </p>
-                            <div class="mt-1 flex flex-wrap gap-3 font-medium">
-                                <span>Hotline: <strong>(022) 278-9012</strong></span>
-                                <span>Email: <strong>finance@greenpasundan.co.id</strong></span>
-                                <span>Jam Kerja: <strong>Senin - Sabtu, 07:00 - 18:00 WIB</strong></span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 flex items-center justify-end gap-2 border-t border-line-soft pt-4">
-                        <button type="button" @click="financeModalOpen = false"
-                            class="rounded-lg border border-line-soft px-4 py-2 text-xs font-bold text-ink transition hover:bg-surface-muted">
-                            Tutup
-                        </button>
-                        <a href="https://wa.me/{{ config('app.contact_wa', '6281112233445') }}?text=Halo%20Tim%20Finance%20GPA%2C%20saya%20ingin%20rekonsiliasi%20faktur%20konsolidasi%20tagihan%20tempo%20kemitraan%20kami."
-                            target="_blank" rel="noopener noreferrer"
-                            class="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700">
-                            <x-gpa.icon name="message-circle" class="h-4 w-4" />
-                            <span>WhatsApp Finance Desk</span>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 @endsection

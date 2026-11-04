@@ -105,8 +105,8 @@
                         <select name="client_type"
                             class="rounded bg-surface-shell py-2 px-3 text-[12px] leading-5 text-ink outline outline-1 -outline-offset-1 outline-line-board focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">
                             <option value="">-- Bukan Klien --</option>
-                            <option value="REGULER" {{ old('client_type', $user->client_type) === 'REGULER' ? 'selected' : '' }}>Klien Reguler</option>
-                            <option value="B2B_KONTRAK" {{ old('client_type', $user->client_type) === 'B2B_KONTRAK' ? 'selected' : '' }}>Klien Kontrak B2B</option>
+                            <option value="REGULER" {{ old('client_type', $user->client_type) === 'REGULER' ? 'selected' : '' }}>REGULER</option>
+                            <option value="B2B_KONTRAK" {{ old('client_type', $user->client_type) === 'B2B_KONTRAK' ? 'selected' : '' }}>B2B_KONTRAK</option>
                         </select>
                     </div>
 

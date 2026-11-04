@@ -7,30 +7,16 @@
 @endphp
 
 @section('content')
-    <div class="space-y-6"
+    <div class="space-y-3"
         x-data="secretaryInventory(@js($rows), @js(['atp' => number_format($totalAtp ?? 0, 0, ',', '.') . ' kg', 'criticalThreshold' => 20]))"
         @gpa:search.window="query = $event.detail">
-        <section class="border-b border-line-soft pb-6">
-            <h1 class="font-sans text-3xl font-extrabold leading-10 tracking-[-0.01em] text-ink">
-                Kesiapan Stok Sayur &amp; Alokasi Pemesanan
-            </h1>
-            <p class="mt-3 max-w-4xl text-sm leading-[1.42rem] text-ink-body">
-                Pemantauan persediaan sayur segar dari kebun binaan dan pasokan cadangan mitra untuk memenuhi pesanan klien secara tepat waktu.
-            </p>
+        <section class="rounded-2xl bg-surface shadow-card overflow-hidden ring-1 ring-line-hair">
+            <div class="p-4 sm:p-6">
+                <h1 class="font-sans text-xl sm:text-2xl lg:text-3xl font-bold leading-tight sm:leading-10 tracking-[-0.01em] text-ink">
+                    Kesiapan Stok Sayur &amp; Alokasi Pemesanan
+                </h1>
+            </div>
         </section>
-
-        {{-- Banner Pemberitahuan Mode Pemantauan (Sesuai Desain d:\UKK\notifcations) --}}
-        <x-gpa.notification-banner
-            title="Hak Akses Pemantauan Stok (Read-Only)"
-            description="Halaman ini dikhususkan bagi Sekretaris untuk memantau ketersediaan sayur (ATP), pasokan kebun, cadangan mitra, dan alokasi pesanan secara real-time. Pencatatan hasil panen dan penambahan fisik stok dikelola oleh Koordinator Lapangan."
-            time="SOP Operasional"
-            class="shadow-sm"
-        >
-            <span class="inline-flex items-center gap-1.5 rounded-full bg-brand/10 px-3 py-1 font-mono text-xs font-bold text-brand uppercase tracking-wider">
-                <span class="h-2 w-2 rounded-full bg-brand"></span>
-                Hanya Pantau
-            </span>
-        </x-gpa.notification-banner>
 
         <div class="flex flex-wrap gap-2">
             <button type="button" @click="handleAction({label: 'Segarkan Data Pemantauan', tone: 'primary', message: 'Data hasil panen dan alokasi pesanan terbaru telah disegarkan.'})"
@@ -50,50 +36,8 @@
             </button>
         </div>
 
-        <section class="gpa-panel rounded-xl p-6">
-            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line-soft pb-3">
-                <h2 class="flex items-center gap-2 gpa-meta-lg font-bold tracking-[0.35px] text-ink">
-                    <x-gpa.icon name="shield" class="h-4 w-4 shrink-0 text-success-deep" />
-                    Aturan Ketersediaan Sayur
-                </h2>
-                <span class="shrink-0 rounded bg-accent px-2 py-0.5 gpa-micro-bold uppercase tracking-[1.08px] text-success-ink">
-                    Sistem Otomatis Aktif
-                </span>
-            </div>
-
-            <div class="mt-4 grid gap-4 lg:grid-cols-2">
-                <article class="flex items-start gap-2 rounded-lg bg-surface-shell p-2 outline outline-1 outline-line-board/30">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/40 text-success-deep">
-                        <x-gpa.icon name="shield" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
-                    </span>
-
-                    <div class="min-w-0">
-                        <div class="flex flex-wrap items-center gap-1.5">
-                            <h3 class="gpa-meta-lg font-bold tracking-[0.88px] text-ink">Pencegahan Kehabisan Stok</h3>
-                            <span class="shrink-0 rounded px-1.5 py-0.5 gpa-micro-bold tracking-[1.08px] bg-accent text-success-ink">AKTIF</span>
-                        </div>
-                        <p class="mt-1.5 text-xs leading-4 text-ink-body">Pesanan hanya dapat disetujui jika stok panen di kebun atau pasokan cadangan mitra mencukupi.</p>
-                    </div>
-                </article>
-
-                <article class="flex items-start gap-2 rounded-lg bg-surface-shell p-2 outline outline-1 outline-line-board/30">
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning-soft text-warning-deep">
-                        <x-gpa.icon name="refresh" class="h-3.5 w-3.5 shrink-0 text-warning-deep" />
-                    </span>
-
-                    <div class="min-w-0">
-                        <div class="flex flex-wrap items-center gap-1.5">
-                            <h3 class="gpa-meta-lg font-bold tracking-[0.88px] text-ink">Pasokan Cadangan Otomatis</h3>
-                            <span class="shrink-0 rounded px-1.5 py-0.5 gpa-micro-bold tracking-[1.08px] bg-warning-soft text-warning-ink">SIAGA</span>
-                        </div>
-                        <p class="mt-1.5 text-xs leading-4 text-ink-body">Jika hasil panen kebun utama menipis di bawah 20%, sistem otomatis mengaktifkan kuota dari mitra tani binaan.</p>
-                    </div>
-                </article>
-            </div>
-        </section>
-
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <article class="relative flex min-h-[11rem] flex-col justify-between overflow-hidden rounded-xl bg-surface p-4 shadow-card outline outline-1 outline-accent/30">
+            <article class="relative flex flex-col gap-2 overflow-hidden rounded-xl bg-surface p-4 shadow-card outline outline-1 outline-accent/30">
                 <span class="pointer-events-none absolute -right-4 -top-4 h-12 w-12 rounded-full bg-accent/30" aria-hidden="true"></span>
 
                 <div class="flex items-start gap-2">
@@ -101,70 +45,46 @@
                     <h3 class="gpa-micro uppercase tracking-[0.55px] font-bold text-ink-body">TOTAL PASOKAN SAYUR</h3>
                 </div>
 
-                <p class="mt-3 font-sans text-3xl font-extrabold leading-9 tracking-[-0.01em] text-ink">
+                <p class="font-sans text-3xl font-extrabold leading-9 tracking-[-0.01em] text-ink">
                     {{ number_format($totalStock ?? 0, 0, ',', '.') }}
                     <span class="ml-1 font-mono text-sm font-normal text-ink-body">kg</span>
                 </p>
-
-                <div class="mt-3 flex flex-wrap items-center justify-between gap-1 border-t border-line-soft pt-2">
-                    <p class="gpa-note text-ink-body">
-                        <span class="font-bold text-ink-body">Total Keseluruhan Pasokan</span>
-                    </p>
-                </div>
             </article>
 
-            <article class="relative flex min-h-[11rem] flex-col justify-between overflow-hidden rounded-xl bg-surface p-4 shadow-card">
+            <article class="relative flex flex-col gap-2 overflow-hidden rounded-xl bg-surface p-4 shadow-card">
                 <div class="flex items-start gap-2">
                     <x-gpa.icon name="lock" class="h-4 w-4 shrink-0 text-warning-deep" />
                     <h3 class="gpa-micro uppercase tracking-[0.55px] font-bold text-ink-body">TERKUNCI PESANAN</h3>
                 </div>
 
-                <p class="mt-3 font-sans text-3xl font-extrabold leading-9 tracking-[-0.01em] text-warning-deep">
+                <p class="font-sans text-3xl font-extrabold leading-9 tracking-[-0.01em] text-warning-deep">
                     {{ number_format($totalLocked ?? 0, 0, ',', '.') }}
                     <span class="ml-1 font-mono text-sm font-normal text-ink-body">kg</span>
                 </p>
-
-                <div class="mt-3 flex flex-wrap items-center justify-between gap-1 border-t border-line-soft pt-2">
-                    <p class="gpa-note text-ink-body">
-                        <span class="font-bold text-ink-body">Alokasi Pesanan Klien B2B</span>
-                    </p>
-                </div>
             </article>
 
-            <article class="relative flex min-h-[11rem] flex-col justify-between overflow-hidden rounded-xl bg-surface p-4 shadow-card">
+            <article class="relative flex flex-col gap-2 overflow-hidden rounded-xl bg-surface p-4 shadow-card">
                 <div class="flex items-start gap-2">
                     <x-gpa.icon name="check-circle" class="h-4 w-4 shrink-0 text-success-deep" />
                     <h3 class="gpa-micro uppercase tracking-[0.55px] font-bold text-ink-body">KUOTA BEBAS DIPESAN</h3>
                 </div>
 
-                <p class="mt-3 font-sans text-3xl font-extrabold leading-9 tracking-[-0.01em] text-success-deep">
+                <p class="font-sans text-3xl font-extrabold leading-9 tracking-[-0.01em] text-success-deep">
                     {{ number_format($totalAtp ?? 0, 0, ',', '.') }}
                     <span class="ml-1 font-mono text-sm font-normal text-ink-body">kg</span>
                 </p>
-
-                <div class="mt-3 flex flex-wrap items-center justify-between gap-1 border-t border-line-soft pt-2">
-                    <p class="gpa-note text-ink-body">
-                        <span class="font-bold text-ink-body">Siap Dijual ke Klien</span>
-                    </p>
-                </div>
             </article>
 
-            <article class="relative flex min-h-[11rem] flex-col justify-between overflow-hidden rounded-xl bg-surface p-4 shadow-card">
+            <article class="relative flex flex-col gap-2 overflow-hidden rounded-xl bg-surface p-4 shadow-card">
                 <div class="flex items-start gap-2">
                     <x-gpa.icon name="refresh" class="h-4 w-4 shrink-0 text-ink" />
                     <h3 class="gpa-micro uppercase tracking-[0.55px] font-bold text-ink-body">CADANGAN MITRA</h3>
                 </div>
 
-                <p class="mt-3 font-sans text-3xl font-extrabold leading-9 tracking-[-0.01em] text-ink">
+                <p class="font-sans text-3xl font-extrabold leading-9 tracking-[-0.01em] text-ink">
                     {{ number_format($totalBuffer ?? 0, 0, ',', '.') }}
                     <span class="ml-1 font-mono text-sm font-normal text-ink-body">kg</span>
                 </p>
-
-                <div class="mt-3 flex flex-wrap items-center justify-between gap-1 border-t border-line-soft pt-2">
-                    <p class="gpa-note text-ink-body">
-                        <span class="font-bold text-ink-body">Jejaring Petani Siaga</span>
-                    </p>
-                </div>
             </article>
         </div>
 

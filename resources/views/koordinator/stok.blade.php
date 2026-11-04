@@ -10,11 +10,8 @@
                 <div class="min-w-0 space-y-1">
                     <p class="gpa-micro-bold uppercase tracking-wider text-ink-body">Suplai Stok Panen</p>
                     <h1 class="font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
-                        Penerimaan Pasokan Panen Masuk
+                        Intake Pasokan Panen
                     </h1>
-                    <p class="text-xs text-ink-body max-w-2xl">
-                        Pencatatan pasokan masuk dari petani binaan maupun buffer ke dalam sistem stok gudang.
-                    </p>
                 </div>
 
                 <div class="flex shrink-0 flex-wrap items-center gap-2">
@@ -32,44 +29,34 @@
             </header>
 
             {{-- Ringkasan Metrik Gudang --}}
-            <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
-                    <div class="flex flex-col gap-3">
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <article class="col-span-2 sm:col-span-1 flex h-full flex-col justify-between gap-3 rounded-2xl bg-surface p-4 sm:p-5 shadow-card">
+                    <div class="flex flex-col gap-2 sm:gap-3">
                         <div class="flex items-center justify-between gap-2">
-                            <h3 class="gpa-micro-bold text-ink-body">TOTAL STOK FISIK</h3>
+                            <h3 class="gpa-micro-bold text-ink-body leading-tight">TOTAL STOK FISIK</h3>
                         </div>
-                        <p class="gpa-figure text-[22px] leading-7 text-ink">{{ number_format($totalStock, 1, ',', '.') }} <span class="text-base font-semibold">kg</span></p>
-                        <p class="text-[11px] leading-4 text-ink-body">Total di gudang GPA</p>
+                        <p class="gpa-figure text-[18px] leading-6 sm:text-[22px] sm:leading-7 text-ink">{{ number_format($totalStock, 1, ',', '.') }} <span class="text-sm sm:text-base font-semibold">kg</span></p>
+                        <p class="text-[10px] leading-3 sm:text-[11px] sm:leading-4 text-ink-body">Total di gudang GPA</p>
                     </div>
                 </article>
 
-                <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
-                    <div class="flex flex-col gap-3">
+                <article class="flex h-full flex-col justify-between gap-3 rounded-2xl bg-surface p-4 sm:p-5 shadow-card">
+                    <div class="flex flex-col gap-2 sm:gap-3">
                         <div class="flex items-center justify-between gap-2">
-                            <h3 class="gpa-micro-bold text-ink-body">STOK PETANI BINAAN</h3>
+                            <h3 class="gpa-micro-bold text-ink-body leading-tight">STOK PETANI BINAAN</h3>
                         </div>
-                        <p class="gpa-figure text-[22px] leading-7 text-ink">{{ number_format($totalBinaan, 1, ',', '.') }} <span class="text-base font-semibold">kg</span></p>
-                        <p class="text-[11px] leading-4 text-ink-body">Pasokan kemitraan inti</p>
+                        <p class="gpa-figure text-[18px] leading-6 sm:text-[22px] sm:leading-7 text-ink">{{ number_format($totalBinaan, 1, ',', '.') }} <span class="text-sm sm:text-base font-semibold">kg</span></p>
+                        <p class="text-[10px] leading-3 sm:text-[11px] sm:leading-4 text-ink-body">Pasokan kemitraan inti</p>
                     </div>
                 </article>
 
-                <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
-                    <div class="flex flex-col gap-3">
+                <article class="flex h-full flex-col justify-between gap-3 rounded-2xl bg-surface p-4 sm:p-5 shadow-card">
+                    <div class="flex flex-col gap-2 sm:gap-3">
                         <div class="flex items-center justify-between gap-2">
-                            <h3 class="gpa-micro-bold text-ink-body">STOK BUFFER LUAR</h3>
+                            <h3 class="gpa-micro-bold text-ink-body leading-tight">STOK BUFFER LUAR</h3>
                         </div>
-                        <p class="gpa-figure text-[22px] leading-7 text-ink">{{ number_format($totalBuffer, 1, ',', '.') }} <span class="text-base font-semibold">kg</span></p>
-                        <p class="text-[11px] leading-4 text-ink-body">Penyangga kekurangan</p>
-                    </div>
-                </article>
-
-                <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
-                    <div class="flex flex-col gap-3">
-                        <div class="flex items-center justify-between gap-2">
-                            <h3 class="gpa-micro-bold text-ink-body">ALOKASI TERIKAT PO</h3>
-                        </div>
-                        <p class="gpa-figure text-[22px] leading-7 text-ink">{{ number_format($totalReserved, 1, ',', '.') }} <span class="text-base font-semibold">kg</span></p>
-                        <p class="text-[11px] leading-4 text-ink-body">{{ $activePoCount }} pesanan antrean masuk</p>
+                        <p class="gpa-figure text-[18px] leading-6 sm:text-[22px] sm:leading-7 text-ink">{{ number_format($totalBuffer, 1, ',', '.') }} <span class="text-sm sm:text-base font-semibold">kg</span></p>
+                        <p class="text-[10px] leading-3 sm:text-[11px] sm:leading-4 text-ink-body">Penyangga kekurangan</p>
                     </div>
                 </article>
             </div>
@@ -80,9 +67,9 @@
             <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 px-6 py-4">
                 <div class="min-w-0">
                     <h2 class="gpa-section-title text-ink">Formulir Input Pasokan Panen</h2>
-                    <p class="mt-1 text-xs text-ink-body">Mencatat lot panen baru ke dalam sistem penerimaan stok gudang</p>
+                    <p class="mt-1 text-xs text-ink-body">Mencatat lot panen baru ke dalam sistem intake ledger</p>
                 </div>
-                <span class="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">BUKU STOK PANEN</span>
+                <span class="inline-flex items-center rounded px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">INTAKE LEDGER</span>
             </header>
 
             <form method="POST" action="{{ route('koordinator.stok.store') }}" class="px-6 py-5 space-y-5">
@@ -169,7 +156,7 @@
 
         {{-- SECTION 2: Kesiapan Stok & Alokasi PO --}}
         <section class="flex flex-col gap-3 rounded-2xl bg-surface shadow-card overflow-hidden">
-            <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 px-6 py-4">
+            <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 px-4 py-3 sm:px-6 sm:py-4">
                 <div class="min-w-0">
                     <h2 class="gpa-section-title text-ink">Kesiapan Stok Komoditas &amp; Alokasi PO</h2>
                     <p class="mt-1 text-xs text-ink-body">Perbandingan stok fisik gudang terhadap alokasi pesanan klien</p>
@@ -179,7 +166,8 @@
                 </span>
             </header>
 
-            <div class="gpa-scroll-x overflow-x-auto">
+            {{-- Desktop Table --}}
+            <div class="hidden md:block gpa-scroll-x overflow-x-auto">
                 <table class="w-full border-collapse">
                     <thead>
                         <tr class="border-b border-line-board">
@@ -241,11 +229,70 @@
                     </tbody>
                 </table>
             </div>
+
+            {{-- Mobile Cards --}}
+            <div class="md:hidden flex flex-col gap-2 p-2">
+                @forelse ($commodities as $c)
+                    @php
+                        $pasokanBinaan = $c['tiles'][0]['value'] ?? 0;
+                        $bufferSiaga = $c['tiles'][1]['value'] ?? 0;
+                        $totalStok = $c['total'] ?? 0;
+                        $alokasiPo = $c['tiles'][2]['value'] ?? 0;
+                        $stokBebas = $c['rtp'] ?? 0;
+                    @endphp
+                    <div class="rounded-lg border border-line-hair bg-surface p-3 flex flex-col gap-2.5">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <p class="text-sm font-semibold text-ink truncate">{{ $c['name'] }}</p>
+                                    <span class="inline-block rounded bg-surface-shell px-1.5 py-0.5 font-mono text-[9px] font-semibold leading-[13px] text-ink outline outline-1 -outline-offset-1 outline-line-board shrink-0">{{ $c['grade'] }}</span>
+                                </div>
+                                <div class="flex items-baseline justify-between gap-2">
+                                    <p class="font-mono text-xl font-bold leading-6 {{ $stokBebas < 0 ? 'text-red-700' : 'text-ink' }}">{{ number_format($stokBebas, 0, ',', '.') }} <span class="text-xs font-semibold">kg</span></p>
+                                    @if ($stokBebas < 0)
+                                        <span class="inline-block rounded px-1.5 py-0.5 text-[9px] font-bold leading-[14px] gpa-meta bg-red-50 text-red-700 outline outline-1 -outline-offset-1 outline-red-200">DEFISIT</span>
+                                    @elseif (($c['utilization'] ?? 0) > 80)
+                                        <span class="inline-block rounded px-1.5 py-0.5 text-[9px] font-bold leading-[14px] gpa-meta bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board">KETAT</span>
+                                    @else
+                                        <span class="inline-block rounded px-1.5 py-0.5 text-[9px] font-bold leading-[14px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">AMAN</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
+                            <div class="flex justify-between">
+                                <span class="text-ink-body">Pasokan Binaan</span>
+                                <span class="font-mono text-ink">{{ number_format($pasokanBinaan, 1, ',', '.') }} kg</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-ink-body">Buffer Siaga</span>
+                                <span class="font-mono text-ink">{{ number_format($bufferSiaga, 1, ',', '.') }} kg</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-ink-body">Total Stok Fisik</span>
+                                <span class="font-mono font-semibold text-ink">{{ number_format($totalStok, 1, ',', '.') }} kg</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-ink-body">Alokasi PO</span>
+                                <span class="font-mono text-ink">{{ number_format($alokasiPo, 1, ',', '.') }} kg</span>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="px-4 py-10 text-center">
+                        <div class="mx-auto flex max-w-sm flex-col items-center gap-2">
+                            <x-gpa.icon name="package" class="h-7 w-7 text-ink-body" />
+                            <p class="text-sm font-semibold text-ink">Belum ada komoditas aktif</p>
+                            <p class="text-xs text-ink-body">Tambahkan komoditas pada menu Manajemen Komoditas.</p>
+                        </div>
+                    </div>
+                @endforelse
+            </div>
         </section>
 
         {{-- SECTION 3: Log Riwayat Batch Panen --}}
         <section class="flex flex-col gap-3 rounded-2xl bg-surface shadow-card overflow-hidden">
-            <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 px-6 py-4">
+            <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board/60 px-4 py-3 sm:px-6 sm:py-4">
                 <div class="min-w-0">
                     <h2 class="gpa-section-title text-ink">Log Pasokan Panen Masuk Terbaru</h2>
                     <p class="mt-1 text-xs text-ink-body">Riwayat batch panen terakhir</p>
@@ -255,13 +302,14 @@
                 </span>
             </header>
 
-            <div class="gpa-scroll-x overflow-x-auto">
+            {{-- Desktop Table --}}
+            <div class="hidden md:block gpa-scroll-x overflow-x-auto">
                 <table class="w-full border-collapse">
                     <thead>
                         <tr class="border-b border-line-board">
                             <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Kode Lot</th>
                             <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Waktu Pencatatan</th>
-                            <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Rincian Pasokan Masuk</th>
+                            <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Rincian Intake</th>
                             <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Catatan Mutu</th>
                         </tr>
                     </thead>
@@ -295,7 +343,28 @@
                     </tbody>
                 </table>
             </div>
+
+            {{-- Mobile Cards --}}
+            <div class="md:hidden flex flex-col gap-2 p-2">
+                @forelse ($logItems as $item)
+                    <div class="rounded-lg border border-line-hair bg-surface p-3 flex flex-col gap-1.5">
+                        <div class="flex items-center justify-between">
+                            <span class="font-mono text-[11px] font-semibold text-ink">{{ $item['lot'] }}</span>
+                            <span class="text-[10px] text-ink-body">{{ $item['time'] }}</span>
+                        </div>
+                        <p class="text-sm font-semibold text-ink">{{ $item['entry'] }}</p>
+                        <p class="text-[10px] text-ink-body">{{ $item['note'] ?: '-' }}</p>
+                    </div>
+                @empty
+                    <div class="px-4 py-10 text-center">
+                        <div class="mx-auto flex max-w-sm flex-col items-center gap-2">
+                            <x-gpa.icon name="package" class="h-7 w-7 text-ink-body" />
+                            <p class="text-sm font-semibold text-ink">Belum ada log pasokan panen</p>
+                            <p class="text-xs text-ink-body">Gunakan formulir di atas untuk mencatat batch panen pertama.</p>
+                        </div>
+                    </div>
+                @endforelse
+            </div>
         </section>
     </div>
 @endsection
-

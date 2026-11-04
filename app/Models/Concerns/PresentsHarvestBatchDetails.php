@@ -70,4 +70,20 @@ trait PresentsHarvestBatchDetails
     {
         return $this->product?->name ?? '—';
     }
+
+    public function getTimeAttribute(): string
+    {
+        return $this->time_formatted;
+    }
+
+    public function getLotAttribute(): string
+    {
+        return $this->ticket;
+    }
+
+    public function getEntryAttribute(): string
+    {
+        $commodity = $this->product?->name ?? 'Komoditas';
+        return $commodity . ' (' . number_format((float) $this->initial_quantity, 1, ',', '.') . ' kg)';
+    }
 }

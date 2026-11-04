@@ -32,8 +32,8 @@
 
         $navigation = [
             ['label' => 'Dashboard', 'icon' => 'dashboard', 'href' => route('koordinator.dashboard'), 'active' => request()->routeIs('koordinator.dashboard*')],
-            ['label' => 'Manajemen Komoditas', 'icon' => 'grid', 'href' => route('koordinator.produk.index'), 'active' => request()->routeIs('koordinator.produk*')],
-            ['label' => 'Suplai Stok Panen', 'icon' => 'package', 'href' => route('koordinator.stok'), 'active' => request()->routeIs('koordinator.stok*')],
+            ['label' => 'Manajemen Komoditas', 'icon' => 'grid', 'href' => route('koordinator.produk.index'), 'active' => request()->routeIs('koordinator.produk*', 'koordinator.products*')],
+            ['label' => 'Suplai Stok Panen', 'icon' => 'package', 'href' => route('koordinator.stok'), 'active' => request()->routeIs('koordinator.stok*', 'koordinator.stock*')],
         ];
     @endphp
 

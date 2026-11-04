@@ -7,30 +7,24 @@
 @endphp
 
 @section('content')
-    <div class="space-y-6" x-data="secretaryDispatch(@js($rows))"
+    <div class="space-y-3" x-data="secretaryDispatch(@js($rows))"
         @gpa:search.window="query = $event.detail">
-        <section class="flex flex-wrap items-start justify-between gap-4">
-            <div class="min-w-0">
+        <section class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card ring-1 ring-line-hair">
+            <div class="min-w-0 flex-1">
                 <p class="flex items-center gap-1 gpa-note text-success-deep">
-                    <x-gpa.icon name="file-text" class="h-3 w-3 shrink-0" />
                     Surat Jalan &amp; Pengiriman
                 </p>
 
-                <h1 class="mt-2 font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-brand">
-                    Penerbitan Surat Jalan Resmi &amp;<br />
-                    Penugasan Supir Pengantar
+                <h1 class="mt-1 sm:mt-2 font-sans text-xl sm:text-2xl lg:text-3xl font-bold leading-tight sm:leading-10 tracking-[-0.01em] text-ink">
+                    Penerbitan Surat Jalan Resmi &amp; Penugasan Supir Pengantar
                 </h1>
-
-                <p class="mt-3 max-w-3xl text-sm leading-5 text-ink-body">
-                    Penerbitan surat jalan resmi dan penugasan armada pengantaran untuk pesanan yang telah terverifikasi lunas.
-                </p>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
                 <a href="{{ route('sekretaris.monitoring-pod') }}"
                     class="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-1.5 text-xs font-bold text-ink shadow-xs transition-transform hover:scale-105 ring-1 ring-inset ring-accent-edge">
                     <x-gpa.icon name="check-circle" class="h-3.5 w-3.5 text-success-deep" />
-                    <span>Monitoring Bukti Kirim (PoD) &rarr;</span>
+                    <span>Monitoring PoD Armada &rarr;</span>
                 </a>
                 <span
                     class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-surface-pill py-1.5 pl-3 pr-3 text-[10px] font-bold uppercase text-ink-body ring-1 ring-inset ring-line-board">
@@ -40,9 +34,9 @@
             </div>
         </section>
 
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <article class="flex min-h-[16.4rem] flex-col justify-between gap-10 rounded-2xl bg-surface p-4 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-meta-lg font-semibold uppercase tracking-[0.88px] text-ink-body">
                         Surat Jalan Siap Terbit
                     </h2>
@@ -51,25 +45,15 @@
                     </span>
                 </div>
 
-                <div class="py-3">
+                <div>
                     <p class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                         {{ ($readyOrdersCount ?? 0) }} Dokumen
                     </p>
-                    <p class="mt-1 text-xs leading-4 text-ink-body">
-                        Pesanan siap dikirimkan kepada mitra klien
-                    </p>
-                </div>
-
-                <div class="flex items-center justify-between gap-2 border-t border-line-soft pt-2">
-                    <p class="gpa-micro-bold tracking-[1.08px] text-success-deep">
-                        Pembayaran Lunas
-                    </p>
-                    <span class="h-2 w-2 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
                 </div>
             </article>
 
-            <article class="flex min-h-[16.4rem] flex-col justify-between gap-10 rounded-2xl bg-surface p-4 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-meta-lg font-semibold uppercase tracking-[0.88px] text-ink-body">
                         Dalam Perjalanan Supir
                     </h2>
@@ -78,25 +62,15 @@
                     </span>
                 </div>
 
-                <div class="py-3">
+                <div>
                     <p class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                         {{ ($shippingOrdersCount ?? 0) }} Mobil
                     </p>
-                    <p class="mt-1 text-xs leading-4 text-ink-body">
-                        Sayur dalam perjalanan menuju lokasi pelanggan
-                    </p>
-                </div>
-
-                <div class="flex items-center justify-between gap-2 border-t border-line-soft pt-2">
-                    <p class="gpa-micro-bold tracking-[1.08px] text-ink-quiet">
-                        Sedang Jalan
-                    </p>
-                    <span class="h-2 w-2 shrink-0 rounded-full bg-ink-quiet" aria-hidden="true"></span>
                 </div>
             </article>
 
-            <article class="flex min-h-[16.4rem] flex-col justify-between gap-10 rounded-2xl bg-surface p-4 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-meta-lg font-semibold uppercase tracking-[0.88px] text-ink-body">
                         Menunggu Bukti Terima
                     </h2>
@@ -105,26 +79,16 @@
                     </span>
                 </div>
 
-                <div class="py-3">
+                <div>
                     <p class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                         {{ ($shippingOrdersCount ?? 0) }}
-                        <br />Pengiriman
+                        Pengiriman
                     </p>
-                    <p class="mt-1 text-xs leading-4 font-inter text-ink-body">
-                        Menunggu foto bukti terima dan tanda tangan klien
-                    </p>
-                </div>
-
-                <div class="flex items-center justify-between gap-2 border-t border-line-soft pt-2">
-                    <p class="gpa-micro-bold tracking-[1.08px] text-warning">
-                        Verifikasi Penerimaan
-                    </p>
-                    <span class="h-2 w-2 shrink-0 rounded-full bg-warning" aria-hidden="true"></span>
                 </div>
             </article>
 
-            <article class="flex min-h-[16.4rem] flex-col justify-between gap-10 rounded-2xl bg-surface p-4 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-meta-lg font-semibold uppercase tracking-[0.88px] text-ink-body">
                         Selesai Terkirim
                     </h2>
@@ -133,66 +97,20 @@
                     </span>
                 </div>
 
-                <div class="py-3">
+                <div>
                     <p class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
                         {{ ($doneOrdersCount ?? 0) }} Pesanan
                     </p>
-                    <p class="mt-1 text-xs leading-4 text-ink-body">
-                        Surat jalan selesai dan siap masuk ke tagihan faktur
-                    </p>
-                </div>
-
-                <div class="flex items-center justify-between gap-2 border-t border-line-soft pt-2">
-                    <p class="gpa-micro-bold tracking-[1.08px] text-ink-quiet">
-                        Transaksi Tuntas
-                    </p>
-                    <span class="h-2 w-2 shrink-0 rounded-full bg-ink-quiet" aria-hidden="true"></span>
                 </div>
             </article>
         </div>
-
-        <section class="relative overflow-hidden rounded-2xl bg-surface p-6 shadow-card">
-            <span class="absolute inset-y-0 left-0 w-2 bg-success-deep" aria-hidden="true"></span>
-
-            <div class="flex flex-wrap items-center justify-between gap-6">
-                <div class="flex min-w-0 items-start gap-4 pl-2">
-                    <span
-                        class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent/40 outline outline-1 outline-accent">
-                        <x-gpa.icon name="lock" class="h-5 w-5 shrink-0 text-ink" />
-                    </span>
-
-                    <div class="min-w-0">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <span class="rounded bg-ink px-2 py-0.5 gpa-micro-bold uppercase tracking-[1px] text-accent">
-                                SOP Pengiriman
-                            </span>
-                            <h2 class="font-sans text-lg font-bold leading-6 text-ink">Aturan Wajib Pembuatan Surat Jalan</h2>
-                        </div>
-
-                        <p class="mt-1.5 max-w-3xl text-sm leading-[1.42rem] text-ink-body">
-                            Surat jalan fisik diterbitkan oleh Sekretaris setelah pembayaran dinyatakan lunas dan diverifikasi berdasarkan mutasi rekening bank atau QRIS resmi GPA. Surat jalan menjadi dasar legalitas pengantaran kargo oleh supir armada logistik ke titik bongkar muat klien.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="shrink-0 border-l border-line-soft pl-4 text-right">
-                    <p class="gpa-micro font-semibold uppercase tracking-[1.08px] text-ink-quiet">
-                        Protokol Validasi:
-                    </p>
-                    <p class="gpa-meta-lg font-bold tracking-[0.88px] text-success-deep">PEMBAYARAN LUNAS</p>
-                    <p class="mt-1 gpa-micro font-semibold tracking-[1.08px] text-ink-body">Kalibrasi Aktif 2026</p>
-                </div>
-            </div>
-        </section>
 
         <section class="gpa-panel overflow-hidden rounded-2xl">
             <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft bg-surface-shell/40 p-6">
                 <div class="min-w-0">
                     <h2 class="flex items-center gap-2 font-sans text-lg font-bold leading-6 text-ink">
-                        <x-gpa.icon name="send" class="h-[18px] w-[18px] shrink-0 text-ink" />
                         Antrean Surat Jalan Siap Terbit &amp; Penugasan Supir
                     </h2>
-                    <p class="mt-0.5 text-xs leading-4 text-ink-body">Pilih pesanan untuk otorisasi pelepasan armada atau cetak langsung format resmi Surat Jalan A4.</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-1.5">
@@ -377,7 +295,7 @@
                                                 <a href="{{ route('prints.surat-jalan', ['order_id' => $row['order_id'] ?? null]) }}" target="_blank" @click.stop
                                                     class="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-2 text-white shadow transition-colors hover:bg-brand-hover gpa-meta font-bold tracking-[0.88px]">
                                                     <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0" />
-                                                    Cetak Surat Jalan
+                                                    Print
                                                 </a>
                                             </div>
                                         </template>
@@ -410,13 +328,10 @@
 
                 <div>
                     <h2 class="font-sans text-lg font-bold leading-[1.4rem] text-accent">Pusat Kendali Otorisasi &amp; Pelepasan Armada</h2>
-                    <p class="text-xs leading-4 text-surface-disabled">
-                        Penerbitan surat jalan akan mengesahkan dokumen pengiriman resmi, menugaskan supir armada, mencatat log keberangkatan armada, dan mengirimkan notifikasi siap terima ke pihak klien.
-                    </p>
                     <template x-if="selected">
                         <p class="mt-1 text-2xs text-accent font-medium">
-                            Pesanan Terpilih: <strong class="text-white" x-text="selected.id"></strong> &bull; 
-                            Supir Ditugaskan: <strong class="text-white" x-text="selected.driver || 'Belum Ditugaskan'"></strong> &bull; 
+                            Pesanan Terpilih: <strong class="text-white" x-text="selected.id"></strong> &bull;
+                            Supir Ditugaskan: <strong class="text-white" x-text="selected.driver || 'Belum Ditugaskan'"></strong> &bull;
                             Plat Armada: <strong class="text-white font-mono" x-text="selected.plate || 'B 9014 KPA'"></strong>
                         </p>
                     </template>

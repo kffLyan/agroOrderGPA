@@ -39,4 +39,30 @@ trait HasProductStock
         }
         return $this->harvestBatches()->first()?->supplier_name ?: 'Kelompok Tani Mitra';
     }
+
+    // Alias atribut pasokan untuk kompatibilitas tampilan dashboard koordinator
+    public function getSupplyAttribute(): float
+    {
+        return $this->stock_bud;
+    }
+
+    public function getBufferAttribute(): float
+    {
+        return $this->stock_buffer;
+    }
+
+    public function getTotalStockAttribute(): float
+    {
+        return $this->stock;
+    }
+
+    public function getGroupAttribute(): string
+    {
+        return $this->supplier_name;
+    }
+
+    public function getOrderAttribute(): float
+    {
+        return 0.0;
+    }
 }

@@ -24,7 +24,7 @@
         x-data="direkturReceivables(@js($ledgerRows ?? []), {}, {}, {{ $activeContracts ?? 0 }})">
 
         {{-- ---------- Kop halaman ---------- --}}
-        <header class="flex flex-wrap items-end justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
+        <header class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
             <div class="min-w-0">
                 <h1 class="font-sans text-[28px] font-extrabold leading-9 tracking-[0.6px] text-ink sm:text-[32px] sm:leading-10">
                     Monitoring Piutang, Tagihan Tempo &amp; Manajemen Risiko Kredit Klien B2B
@@ -507,7 +507,7 @@
                     <button type="button" @click="openAudit()"
                         class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent-deep px-4 py-3 text-[16px] font-bold leading-6 text-ink shadow-sub transition-colors hover:bg-accent">
                         <x-gpa.icon name="clipboard" class="h-3.5 w-3.5 shrink-0" />
-                        Audit Antrean Verifikasi
+                        Buka Antrean Verifikasi Kliring
                     </button>
                     <p class="text-center font-mono text-[10px] leading-[15px] tracking-[0.88px] text-ink-body">
                         SLO VERIFIKASI MAKSIMAL: 1x24 JAM DARI TANGGAL MUTASI

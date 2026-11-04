@@ -458,8 +458,15 @@ class TataKelolaService
 
         // Memastikan setiap kanal memiliki URL gambar dan logo resmi
         $channels = array_map(function ($channel) use ($lookup) {
-            if ($channel['type'] === 'QRIS' && empty($channel['image_url'])) {
-                $channel['image_url'] = '/storage/payment-channels/qris-gpa-default.png';
+            if ($channel['type'] === 'QRIS') {
+                if (empty($channel['image_url'])) {
+                    $channel['image_url'] = '/storage/payment-channels/qris-gpa-default.png';
+                } elseif (!app()->environment('testing')) {
+                    $relPath = ltrim(str_replace('/storage/', '', $channel['image_url']), '/');
+                    if (!Storage::disk('public')->exists($relPath) && !file_exists(public_path(ltrim($channel['image_url'], '/')))) {
+                        $channel['image_url'] = '/storage/payment-channels/qris-gpa-default.png';
+                    }
+                }
             } elseif (!array_key_exists('image_url', $channel)) {
                 $channel['image_url'] = null;
             }

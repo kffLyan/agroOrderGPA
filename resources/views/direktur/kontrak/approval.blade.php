@@ -13,28 +13,23 @@
         x-data="direkturApproval(@js($rows))">
 
         {{-- Page header --}}
-        <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
+        <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
             <div class="min-w-0 space-y-1">
-                <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
+                <h1 class="font-sans text-2xl sm:text-3xl font-bold leading-8 sm:leading-10 tracking-[-0.01em] text-ink">
                     Persetujuan Kontrak Khusus, Diskon Volume &amp; Perpanjangan TOP B2B
                 </h1>
             </div>
 
-            <div class="flex shrink-0 flex-wrap items-center gap-3">
+            <div class="flex w-full flex-col sm:w-auto sm:flex-row sm:items-center gap-2.5 sm:gap-3">
                 <p class="flex flex-col rounded-lg bg-surface px-3 py-2 text-right outline outline-1 -outline-offset-1 outline-line-board">
                     <span class="gpa-note text-ink-body">PERIODE LAPORAN</span>
                     <span class="gpa-meta-lg font-bold text-ink">PERIODE: {{ strtoupper(now()->translatedFormat('F Y')) }}</span>
                 </p>
                 <a href="{{ route('direktur.kontrak.index') }}"
-                    class="inline-flex items-center gap-2 rounded-lg bg-surface px-3.5 py-2.5 text-ink shadow-sm outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                    class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-surface px-3.5 py-2.5 text-ink shadow-sm outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="file-text" class="h-3.5 w-3.5 shrink-0 text-ink-body" />
                     <span class="text-xs font-semibold leading-4 text-ink">Semua Arsip Kontrak</span>
                 </a>
-                <button type="button" @click="printAuthorization()"
-                    class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 shadow-sub outline outline-1 -outline-offset-1 outline-success transition-colors hover:bg-brand-hover">
-                    <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0 text-white" />
-                    <span class="text-xs font-semibold leading-4 text-white">Cetak Antrian Otorisasi</span>
-                </button>
             </div>
         </section>
 

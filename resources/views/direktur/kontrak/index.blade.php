@@ -106,130 +106,130 @@
                         @forelse($contracts as $contract)
                             <tr class="hover:bg-gray-50/80 transition">
                                 <td class="p-3 font-mono font-bold text-gray-900">
-                                     <a href="{{ route('direktur.kontrak.show', $contract->id) }}" class="text-blue-700 hover:underline">
-                                         {{ $contract->contract_number }}
-                                     </a>
-                                     <span class="block text-[10px] text-gray-400 font-normal">
-                                         {{ $contract->created_at->format('d/m/Y') }}
-                                     </span>
-                                 </td>
-                                 <td class="p-3">
-                                     <div class="font-bold text-gray-800">
-                                         {{ $contract->user->company_name ?? $contract->user->name }}
-                                     </div>
-                                     <div class="text-[10px] text-gray-500">
-                                         PIC: {{ $contract->user->pic_name ?? $contract->user->name }} ({{ $contract->user->phone }})
-                                     </div>
-                                 </td>
-                                 <td class="p-3">
-                                     <div class="font-semibold text-gray-900">
-                                         {{ $contract->product->name }}
-                                     </div>
-                                     <div class="text-[10px] text-gray-500">
-                                         Harga Katalog: Rp {{ number_format($contract->product->base_price, 0) }}/Kg
-                                     </div>
-                                 </td>
-                                 <td class="p-3 font-bold text-emerald-700 text-sm">
-                                     Rp {{ number_format($contract->fixed_price_per_kg, 0, ',', '.') }}<span class="text-[10px] text-gray-500 font-normal">/Kg</span>
-                                 </td>
-                                 <td class="p-3 font-semibold text-gray-700">
-                                     {{ $contract->top_days }} Hari
-                                 </td>
-                                 <td class="p-3 font-semibold text-gray-700">
-                                     {{ number_format($contract->committed_volume_per_cycle, 1, ',', '.') }} Kg
-                                 </td>
-                                 <td class="p-3">
-                                     @if($contract->status === 'ACTIVE')
-                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                                             <span class="w-1.5 h-1.5 mr-1 bg-emerald-500 rounded-full"></span>
-                                             AKTIF
-                                         </span>
-                                     @elseif($contract->status === 'PENDING_APPROVAL')
-                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                                             <span class="w-1.5 h-1.5 mr-1 bg-amber-500 rounded-full animate-ping"></span>
-                                             MENUNGGU PERSETUJUAN
-                                         </span>
-                                     @elseif($contract->status === 'EXPIRED')
-                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-700 border border-gray-300">
-                                             KEDALUWARSA
-                                         </span>
-                                     @else
-                                         <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-200">
-                                             DIBATALKAN
-                                         </span>
-                                     @endif
-                                 </td>
-                                 <td class="p-3 text-[11px] text-gray-600">
-                                     @if($contract->status === 'ACTIVE' && $contract->approved_at)
-                                         <span class="font-medium text-emerald-800">Disahkan: {{ $contract->approver->name ?? 'Direktur' }}</span>
-                                         <span class="block text-[10px] text-gray-400">{{ $contract->approved_at->format('d/m/Y H:i') }}</span>
-                                     @else
-                                         <span class="text-amber-700 font-semibold italic">Belum disahkan</span>
-                                     @endif
-                                 </td>
-                                 <td class="p-3 text-center space-x-1 whitespace-nowrap">
-                                     <!-- Tombol Setujui Langsung -->
-                                     @if($contract->status === 'PENDING_APPROVAL')
-                                         <form action="{{ route('direktur.kontrak.approve', $contract->id) }}" method="POST" class="inline">
-                                             @csrf
-                                             <button type="submit" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold shadow-sm transition" title="Sahkan Kontrak">
-                                                 Setujui
-                                             </button>
-                                         </form>
-                                     @endif
+                                    <a href="{{ route('direktur.kontrak.show', $contract->id) }}" class="text-blue-700 hover:underline">
+                                        {{ $contract->contract_number }}
+                                    </a>
+                                    <span class="block text-[10px] text-gray-400 font-normal">
+                                        {{ $contract->created_at->format('d/m/Y') }}
+                                    </span>
+                                </td>
+                                <td class="p-3">
+                                    <div class="font-bold text-gray-800">
+                                        {{ $contract->user->company_name ?? $contract->user->name }}
+                                    </div>
+                                    <div class="text-[10px] text-gray-500">
+                                        PIC: {{ $contract->user->pic_name ?? $contract->user->name }} ({{ $contract->user->phone }})
+                                    </div>
+                                </td>
+                                <td class="p-3">
+                                    <div class="font-semibold text-gray-900">
+                                        {{ $contract->product->name }}
+                                    </div>
+                                    <div class="text-[10px] text-gray-500">
+                                        Harga Katalog: Rp {{ number_format($contract->product->base_price, 0) }}/Kg
+                                    </div>
+                                </td>
+                                <td class="p-3 font-bold text-emerald-700 text-sm">
+                                    Rp {{ number_format($contract->fixed_price_per_kg, 0, ',', '.') }}<span class="text-[10px] text-gray-500 font-normal">/Kg</span>
+                                </td>
+                                <td class="p-3 font-semibold text-gray-700">
+                                    {{ $contract->top_days }} Hari
+                                </td>
+                                <td class="p-3 font-semibold text-gray-700">
+                                    {{ number_format($contract->committed_volume_per_cycle, 1, ',', '.') }} Kg
+                                </td>
+                                <td class="p-3">
+                                    @if($contract->status === 'ACTIVE')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                            <span class="w-1.5 h-1.5 mr-1 bg-emerald-500 rounded-full"></span>
+                                            AKTIF
+                                        </span>
+                                    @elseif($contract->status === 'PENDING_APPROVAL')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                            <span class="w-1.5 h-1.5 mr-1 bg-amber-500 rounded-full animate-ping"></span>
+                                            MENUNGGU PERSETUJUAN
+                                        </span>
+                                    @elseif($contract->status === 'EXPIRED')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-700 border border-gray-300">
+                                            KEDALUWARSA
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-800 border border-red-200">
+                                            DIBATALKAN
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="p-3 text-[11px] text-gray-600">
+                                    @if($contract->status === 'ACTIVE' && $contract->approved_at)
+                                        <span class="font-medium text-emerald-800">Disahkan: {{ $contract->approver->name ?? 'Direktur' }}</span>
+                                        <span class="block text-[10px] text-gray-400">{{ $contract->approved_at->format('d/m/Y H:i') }}</span>
+                                    @else
+                                        <span class="text-amber-700 font-semibold italic">Belum disahkan</span>
+                                    @endif
+                                </td>
+                                <td class="p-3 text-center space-x-1 whitespace-nowrap">
+                                    <!-- Tombol Setujui Langsung -->
+                                    @if($contract->status === 'PENDING_APPROVAL')
+                                        <form action="{{ route('direktur.kontrak.approve', $contract->id) }}" method="POST" class="inline">
+                                            @csrf
+                                            <button type="submit" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[10px] font-bold shadow-sm transition" title="Sahkan Kontrak">
+                                                Setujui
+                                            </button>
+                                        </form>
+                                    @endif
 
-                                     <!-- Tombol Detail -->
-                                     <a href="{{ route('direktur.kontrak.show', $contract->id) }}" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded font-semibold text-[10px] transition inline-block">
-                                         Detail
-                                     </a>
+                                    <!-- Tombol Detail -->
+                                    <a href="{{ route('direktur.kontrak.show', $contract->id) }}" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded font-semibold text-[10px] transition inline-block">
+                                        Detail
+                                    </a>
 
-                                     <!-- Tombol Edit -->
-                                     <a href="{{ route('direktur.kontrak.edit', $contract->id) }}" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded font-semibold text-[10px] transition inline-block">
-                                         Edit
-                                     </a>
+                                    <!-- Tombol Edit -->
+                                    <a href="{{ route('direktur.kontrak.edit', $contract->id) }}" class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded font-semibold text-[10px] transition inline-block">
+                                        Edit
+                                    </a>
 
-                                     <!-- Tombol Hentikan (Jika Aktif) -->
-                                     @if($contract->status === 'ACTIVE')
-                                         <form action="{{ route('direktur.kontrak.terminate', $contract->id) }}" method="POST" class="inline"
-                                             data-gpa-confirm="Apakah Anda yakin ingin menonaktifkan kontrak {{ $contract->contract_number }}?"
-                                             data-gpa-title="Hentikan Kontrak"
-                                             data-gpa-tone="warning"
-                                             data-gpa-ok="Hentikan Kontrak">
-                                             @csrf
-                                             <button type="submit" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded font-semibold text-[10px] transition" title="Hentikan Kontrak">
-                                                 Hentikan
-                                             </button>
-                                         </form>
-                                     @endif
+                                    <!-- Tombol Hentikan (Jika Aktif) -->
+                                    @if($contract->status === 'ACTIVE')
+                                        <form action="{{ route('direktur.kontrak.terminate', $contract->id) }}" method="POST" class="inline"
+                                            data-gpa-confirm="Apakah Anda yakin ingin menonaktifkan kontrak {{ $contract->contract_number }}?"
+                                            data-gpa-title="Hentikan Kontrak"
+                                            data-gpa-tone="warning"
+                                            data-gpa-ok="Hentikan Kontrak">
+                                            @csrf
+                                            <button type="submit" class="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded font-semibold text-[10px] transition" title="Hentikan Kontrak">
+                                                Hentikan
+                                            </button>
+                                        </form>
+                                    @endif
 
-                                     <!-- Tombol Hapus -->
-                                     <form action="{{ route('direktur.kontrak.destroy', $contract->id) }}" method="POST" class="inline"
-                                         data-gpa-confirm="Apakah Anda yakin ingin menghapus permanen kontrak {{ $contract->contract_number }}?"
-                                         data-gpa-title="Hapus Kontrak Permanen"
-                                         data-gpa-tone="danger"
-                                         data-gpa-ok="Hapus Permanen">
-                                         @csrf
-                                         @method('DELETE')
-                                         <button type="submit" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 rounded font-semibold text-[10px] transition" title="Hapus Permanen">
-                                             Hapus
-                                         </button>
-                                     </form>
-                                 </td>
-                             </tr>
-                         @empty
-                             <tr>
-                                 <td colspan="9" class="p-8 text-center text-gray-400">
-                                     <div class="max-w-sm mx-auto space-y-2">
-                                         <p class="font-bold text-gray-700">Tidak ada kontrak kemitraan yang ditemukan.</p>
-                                         <p class="text-[11px] text-gray-500">Gunakan tombol di atas untuk menerbitkan kontrak penetapan harga khusus baru bagi klien mitra.</p>
-                                         <div class="pt-2">
-                                             <a href="{{ route('direktur.kontrak.create') }}" class="px-3 py-1.5 bg-[#153a01] hover:bg-[#0f2801] text-white text-xs font-bold rounded shadow transition">
-                                                 + Buat Kontrak Baru
-                                             </a>
-                                         </div>
-                                     </div>
-                                 </td>
-                             </tr>
+                                    <!-- Tombol Hapus -->
+                                    <form action="{{ route('direktur.kontrak.destroy', $contract->id) }}" method="POST" class="inline"
+                                        data-gpa-confirm="Apakah Anda yakin ingin menghapus permanen kontrak {{ $contract->contract_number }}?"
+                                        data-gpa-title="Hapus Kontrak Permanen"
+                                        data-gpa-tone="danger"
+                                        data-gpa-ok="Hapus Permanen">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="px-2 py-1 bg-red-50 hover:bg-red-100 text-red-700 rounded font-semibold text-[10px] transition" title="Hapus Permanen">
+                                            Hapus
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="9" class="p-8 text-center text-gray-400">
+                                    <div class="max-w-sm mx-auto space-y-2">
+                                        <p class="font-bold text-gray-700">Tidak ada kontrak kemitraan yang ditemukan.</p>
+                                        <p class="text-[11px] text-gray-500">Gunakan tombol di atas untuk menerbitkan kontrak penetapan harga khusus baru bagi klien mitra.</p>
+                                        <div class="pt-2">
+                                            <a href="{{ route('direktur.kontrak.create') }}" class="px-3 py-1.5 bg-[#153a01] hover:bg-[#0f2801] text-white text-xs font-bold rounded shadow transition">
+                                                + Buat Kontrak Baru
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>

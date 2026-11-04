@@ -12,7 +12,21 @@
                 </a>
             </div>
             <div>
-                <x-gpa.status-badge :status="$order->status" />
+                @php
+                    $badgeClasses = match($order->status) {
+                        'SELESAI' => 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                        'SELESAI_CATATAN' => 'bg-teal-100 text-teal-800 border-teal-300',
+                        'DALAM_PENGIRIMAN', 'SIAP_KIRIM' => 'bg-blue-100 text-blue-800 border-blue-300',
+                        'LUNAS' => 'bg-emerald-100 text-emerald-800 border-emerald-300',
+                        'MENUNGGU_PEMBAYARAN' => 'bg-indigo-100 text-indigo-800 border-indigo-300',
+                        'MENUNGGU_VERIFIKASI' => 'bg-amber-100 text-amber-800 border-amber-300',
+                        'BATAL' => 'bg-red-100 text-red-800 border-red-300',
+                        default => 'bg-gray-100 text-gray-700 border-gray-300',
+                    };
+                @endphp
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border {{ $badgeClasses }}">
+                    Status: {{ str_replace('_', ' ', $order->status) }}
+                </span>
             </div>
         </div>
 
@@ -27,7 +41,7 @@
                 <div class="text-gray-600">
                     Akun: {{ $order->user->name }}<br>
                     Kontak: {{ $order->user->phone }}<br>
-                    Tipe: <span class="font-semibold text-blue-700">{{ ($order->user->client_type ?? 'REGULER') === 'B2B_KONTRAK' ? 'Mitra Kontrak B2B' : 'Klien Reguler' }}</span>
+                    Tipe: <span class="font-semibold text-blue-700">{{ $order->user->client_type ?? 'REGULER' }}</span>
                 </div>
                 <div class="pt-1 text-[11px] text-gray-500 border-t border-gray-100">
                     <strong>Tujuan:</strong> {{ $order->delivery_address }}
@@ -46,7 +60,7 @@
                     Target Kirim: <strong class="text-emerald-800">{{ $order->target_delivery_date ? $order->target_delivery_date->format('d F Y') : '-' }}</strong>
                 </div>
                 <div class="pt-1 text-[11px] text-gray-500 border-t border-gray-100">
-                    Jalur Order: <span class="font-semibold">{{ $order->order_source_label ?? str_replace('_', ' ', $order->order_source) }}</span>
+                    Jalur Order: <span class="font-semibold">{{ $order->order_source }}</span>
                 </div>
             </div>
 
@@ -74,11 +88,11 @@
                 </div>
                 <div class="text-gray-600">
                     Faktur: <span class="font-mono">{{ $order->invoice->invoice_number ?? 'Belum terbit' }}</span><br>
-                    Status Faktur: <strong class="text-blue-700">{{ $order->invoice ? ($order->invoice->status_label ?? str_replace('_', ' ', $order->invoice->status)) : 'Belum Terbit' }}</strong><br>
+                    Status Faktur: <strong class="text-blue-700">{{ $order->invoice->status ?? 'UNPAID' }}</strong><br>
                     Jatuh Tempo: {{ $order->invoice && $order->invoice->due_date ? date('d/m/Y', strtotime($order->invoice->due_date)) : '-' }}
                 </div>
                 <div class="pt-1 text-[11px] text-gray-500 border-t border-gray-100">
-                    Pembayaran: {{ $order->payments->first() ? ($order->payments->first()->status_label ?? str_replace('_', ' ', $order->payments->first()->status)) : 'Belum tercatat' }}
+                    Pembayaran: {{ $order->payments->first() ? $order->payments->first()->status : 'Belum tercatat' }}
                 </div>
             </div>
         </div>
@@ -158,12 +172,12 @@
                 @if($order->pod_photo_url)
                     <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
                         <div class="font-semibold text-gray-800">Penerima Barang di Lokasi:</div>
-                        <div class="text-sm font-bold text-emerald-800">{{ $order->received_by_name ?? 'Staf Penerima Klien' }}</div>
+                        <div class="text-sm font-bold text-emerald-800">{{ $order->received_by_name ?? 'Staf Receiving Klien' }}</div>
                         <div class="text-[10px] text-gray-500 mt-1">Berkas PoD: {{ $order->pod_photo_url }}</div>
                     </div>
                 @else
                     <div class="p-6 bg-gray-50 rounded-lg text-center text-gray-400">
-                        Foto Surat Jalan bertanda tangan belum diunggah armada logistik.
+                        Foto Surat Jalan bertanda tangan belum diunggah driver.
                     </div>
                 @endif
             </div>
@@ -177,10 +191,10 @@
                     <div class="p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-1">
                         <div class="flex items-center justify-between">
                             <span class="font-mono font-bold text-gray-800">{{ $payment->payment_reference }}</span>
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800">{{ $payment->status_label ?? str_replace('_', ' ', $payment->status) }}</span>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-800">{{ $payment->status }}</span>
                         </div>
                         <div class="text-sm font-bold text-emerald-800">
-                            Rp {{ number_format($payment->amount, 0, ',', '.') }} via {{ $payment->method_label ?? str_replace('_', ' ', $payment->payment_method) }}
+                            Rp {{ number_format($payment->amount, 0, ',', '.') }} via {{ $payment->payment_method }}
                         </div>
                         <div class="text-[10px] text-gray-500">
                             Diverifikasi: {{ $payment->verifier->name ?? 'Sekretaris' }} pada {{ $payment->paid_at ? date('d/m/Y H:i', strtotime($payment->paid_at)) : '-' }}

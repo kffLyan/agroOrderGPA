@@ -4,11 +4,38 @@
 
 @php
     $user = $user ?? auth()->user();
-    $isB2b = $isB2b ?? ($user->client_type === 'B2B_KONTRAK');
-    $commodities = $commodities ?? [];
-    $defaultDeliveryDate = $defaultDeliveryDate ?? now()->addDay()->format('Y-m-d');
-    $defaultAddress = $defaultAddress ?? ($user->address ?: '');
-    $docks = $docks ?? [
+    $isB2b = ($user->client_type === 'B2B_KONTRAK');
+
+    $commodities = ($products ?? collect())->map(function ($product) use ($activeContracts, $stockMap) {
+        $hasContract = $activeContracts->has($product->id);
+        $contract = $activeContracts->get($product->id);
+        $effectivePrice = $hasContract ? (float) $contract->fixed_price_per_kg : (float) $product->base_price;
+        $stock = $stockMap[$product->id] ?? 0;
+        $moq = (float) ($product->minimum_order ?? 10);
+
+        return [
+            'key'        => (string) $product->id,
+            'id'         => $product->id,
+            'sku'        => $product->sku ?? ('SKU-' . $product->id),
+            'name'       => $product->name,
+            'image_url'  => asset($product->image_path),
+            'grade'      => $product->grade ?: 'Grade A',
+            'packaging'  => "Krat Plastik Higienis 10 {$product->unit}",
+            'origin'     => 'Lembang',
+            'cold_chain' => '2-6°C',
+            'price'      => $effectivePrice,
+            'stock'      => $stock,
+            'moq'        => $moq,
+            'step'       => 1,
+            'crate_kg'   => 10,
+            'pack_label' => 'Krat',
+        ];
+    })->values()->all();
+
+    $defaultDeliveryDate = now()->addDay()->format('Y-m-d');
+    $defaultAddress = $user->address ?: '';
+
+    $docks = [
         [
             'key'      => 'dock-utama',
             'name'     => $user->company_name ?: ($user->name ?: 'Alamat Terdaftar'),
@@ -17,6 +44,7 @@
             'access'   => 'Akses Pengiriman Terdaftar',
         ],
     ];
+
     $receivingRoster = $receivingRoster ?? [
         [
             'name'  => $user->pic_name ?: $user->name,
@@ -24,8 +52,10 @@
             'phone' => $user->pic_phone ?: ($user->phone ?: '—'),
         ],
     ];
+
     $demoLines = $demoLines ?? [];
-    $cartDefaults = $cartDefaults ?? [
+
+    $cartDefaults = [
         'date'             => $defaultDeliveryDate,
         'window'           => '04:00 - 06:00 WIB (Subuh)',
         'driver_note'      => 'Harap konfirmasi ke PIC dock penerimaan 30 menit sebelum armada tiba.',
@@ -34,37 +64,22 @@
         'default_address'  => $defaultAddress,
         'payment'          => $isB2b ? 'TEMPO_TOP' : 'TRANSFER_BANK',
         'status'           => 'Draf Siap Diajukan',
-        'submitted_status' => 'Menunggu Verifikasi Sekretaris',
+        'submitted_status' => 'Menunggu Verifikasi Admin',
     ];
 @endphp
 
 @section('content')
     <div x-data="clientCart(@js($commodities), @js($demoLines), @js($cartDefaults))"
         class="flex flex-col gap-4">
-        {{-- ---------------------------------------------------------------- --}}
-        {{-- Breadcrumb + status telemetry --}}
-        {{-- ---------------------------------------------------------------- --}}
-        <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-2">
-                <span
-                    class="rounded bg-accent px-2 py-0.5 gpa-micro-bold text-success-ink">
-                    Tersinkronisasi
-                </span>
-                <span class="gpa-micro text-ink-quiet">Sinkronisasi Otomatis</span>
-            </div>
-        </div>
 
         {{-- ---------------------------------------------------------------- --}}
         {{-- Judul halaman + batas submit --}}
         {{-- ---------------------------------------------------------------- --}}
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div class="gpa-card flex flex-col gap-4 p-5 lg:flex-row lg:items-end lg:justify-between lg:gap-6 lg:p-6 ring-1 ring-line-hair shadow-sub">
             <div class="flex min-w-0 flex-col gap-1">
                 <h1 class="font-sans text-2xl font-bold leading-8 text-ink lg:text-[2rem] lg:leading-10">
                     Keranjang &amp; Pengajuan Purchase Order
                 </h1>
-                <p class="max-w-3xl text-sm leading-5 text-ink-body">
-                    Periksa alokasi komoditas panen, pilih titik bongkar muat dock, dan ajukan pesanan resmi.
-                </p>
             </div>
 
             <div class="flex shrink-0 items-center gap-2">
@@ -128,89 +143,72 @@
 
                     <div class="flex flex-col">
                         <template x-for="line in lines" :key="`cart-${line.key}`">
-                            <div class="flex flex-col gap-6 border-b border-line-hair p-5 lg:flex-row lg:justify-between lg:p-6">
-                                <div class="flex min-w-0 items-start gap-3.5">
-                                    <span
-                                        class="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl border border-line-hair bg-surface-pill">
-                                        <x-gpa.icon name="leaf" class="h-6 w-6 text-ink" />
-                                    </span>
+                            <div class="flex items-start gap-3 border-b border-line-hair p-3 sm:gap-4 sm:p-4 lg:p-5">
+                                <div class="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-line-hair bg-surface-muted">
+                                    <img :src="line.image_url || '{{ asset('gpaleaves.png') }}'" :alt="line.name"
+                                        class="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
+                                        loading="lazy"
+                                        x-on:error="$event.target.src = '{{ asset('gpaleaves.png') }}'">
+                                </div>
 
-                                    <div class="flex min-w-0 flex-col gap-2">
-                                        <div class="flex flex-wrap items-center gap-2">
-                                            <span class="rounded bg-ink px-1.5 py-0.5 gpa-micro-bold text-white">
-                                                SKU: <span x-text="line.sku"></span>
-                                            </span>
-                                            <span
-                                                class="rounded bg-accent px-1.5 py-0.5 gpa-micro-bold text-success-ink">
-                                                <span x-text="line.grade"></span>
-                                            </span>
-                                        </div>
+                                <div class="flex min-w-0 flex-1 flex-col gap-1.5">
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span class="rounded bg-ink px-1.5 py-0.5 gpa-micro-bold text-white">
+                                            SKU: <span x-text="line.sku"></span>
+                                        </span>
+                                        <span class="rounded bg-accent px-1.5 py-0.5 gpa-micro-bold text-success-ink"
+                                            x-text="line.grade"></span>
+                                    </div>
 
-                                        <h3 class="font-sans text-base font-bold leading-6 text-ink" x-text="line.name"></h3>
-                                        <p class="max-w-md gpa-body leading-4 text-ink-body" x-text="line.packaging"></p>
+                                    <h3 class="break-words font-sans text-sm font-bold leading-5 text-ink sm:text-base"
+                                        x-text="line.name"></h3>
+                                    <p class="break-words text-xs leading-4 text-ink-body" x-text="line.packaging"></p>
 
-                                        <div class="flex flex-wrap items-center gap-3 pt-1">
-                                            <p class="gpa-meta-lg font-semibold text-ink">
+                                    <div class="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 pt-0.5">
+                                        <div class="min-w-0">
+                                            <p class="gpa-meta-lg font-semibold leading-5 text-ink">
                                                 <span x-text="money(line.price)"></span>/kg
                                             </p>
-                                            <span class="font-inter text-ink-quiet" aria-hidden="true">&bull;</span>
-                                            <p class="flex items-center gap-1.5"
+                                            <p class="flex min-w-0 items-center gap-1 gpa-micro-bold"
                                                 :class="bufferTone(line) === 'caution' ? 'text-warning-caution' : 'text-success'">
-                                                <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
-                                                <span class="gpa-micro-bold">
-                                                    Stok Buffer: <span x-text="line.stock"></span> kg<br />
-                                                    [<span x-text="bufferState(line)"></span>]
+                                                <span class="h-2 w-2 shrink-0 rounded-full bg-current" aria-hidden="true"></span>
+                                                <span class="break-words">
+                                                    Stok <span x-text="line.stock"></span> kg · <span x-text="bufferState(line)"></span>
                                                 </span>
                                             </p>
                                         </div>
-                                    </div>
-                                </div>
 
-                                <div class="flex shrink-0 flex-col items-stretch gap-2 lg:items-end">
-                                    <div class="flex flex-col items-stretch gap-1 lg:items-end">
-                                        <p class="gpa-micro text-right text-ink-quiet">Estimasi Kuantitas</p>
-
-                                        <div class="flex items-center justify-end gap-2 pt-1">
-                                            <div
-                                                class="flex h-9 items-center overflow-hidden rounded-l-lg border border-line-hair bg-surface focus-within:border-brand">
+                                        <div class="flex shrink-0 items-center gap-0.5">
+                                            <div class="flex h-8 items-center overflow-hidden rounded-lg border border-line-hair bg-surface focus-within:border-brand">
+                                                <button type="button" @click="stepBy(line.key, -1)"
+                                                    aria-label="Kurangi volume"
+                                                    class="flex h-8 w-8 items-center justify-center text-ink transition-colors hover:bg-surface-shell">
+                                                    <span class="text-base font-bold leading-none">-</span>
+                                                </button>
                                                 <label class="sr-only" :for="`qty-${line.key}`">Volume kilogram</label>
                                                 <input :id="`qty-${line.key}`" type="number"
                                                     :value="line.qty"
                                                     @input="setQty(line.key, $event.target.value)"
-                                                    class="w-20 border-0 bg-transparent px-2 text-right text-base font-bold text-ink outline-none gpa-mono-xs">
-                                                <span class="px-1 opacity-0" aria-hidden="true">x</span>
+                                                    class="w-10 border-x border-line-faint bg-transparent px-0.5 text-center text-sm font-bold text-ink outline-none gpa-mono-xs">
+                                                <button type="button" @click="stepBy(line.key, 1)"
+                                                    aria-label="Tambah volume"
+                                                    class="flex h-8 w-8 items-center justify-center text-ink transition-colors hover:bg-surface-shell">
+                                                    <x-gpa.icon name="plus" class="h-3 w-3" />
+                                                </button>
                                             </div>
-                                            <div
-                                                class="flex h-9 items-center rounded-r-lg border-y border-r border-line-hair bg-surface-muted px-2.5 gpa-meta-lg font-bold text-ink-body">
-                                                KG
-                                            </div>
+                                            <span class="px-1 gpa-micro-bold text-ink-body">kg</span>
+                                            <button type="button" @click="removeLine(line.key)"
+                                                aria-label="Hapus komoditas dari keranjang"
+                                                class="flex h-8 w-8 items-center justify-center rounded-lg text-ink-quiet transition-colors hover:bg-danger-soft hover:text-danger">
+                                                <x-gpa.icon name="trash" class="h-3.5 w-3.5" />
+                                            </button>
                                         </div>
                                     </div>
 
-                                    <div class="flex items-center justify-end gap-2 pt-3">
-                                        <button type="button" @click="stepBy(line.key, -1)"
-                                            aria-label="Kurangi volume"
-                                            class="flex h-9 w-9 items-center justify-center rounded-lg border border-line-hair bg-surface text-ink transition-colors hover:border-brand">
-                                            <x-gpa.icon name="x" class="h-3 w-3" />
-                                        </button>
-                                        <button type="button" @click="stepBy(line.key, 1)"
-                                            aria-label="Tambah volume"
-                                            class="flex h-9 w-9 items-center justify-center rounded-lg border border-line-hair bg-surface text-ink transition-colors hover:border-brand">
-                                            <x-gpa.icon name="plus" class="h-3 w-3" />
-                                        </button>
-                                    </div>
-
-                                    <div class="flex flex-col items-end gap-0.5 pt-1">
-                                        <p class="gpa-micro text-right text-ink-quiet">Subtotal Estimasi</p>
-                                        <p class="gpa-meta-lg font-bold text-ink" x-text="money(line.qty * line.price)"></p>
-                                        <p class="gpa-micro text-right text-ink-quiet" x-text="packText(line)"></p>
-                                    </div>
-
-                                    <button type="button" @click="removeLine(line.key)"
-                                        class="inline-flex w-fit items-center gap-1.5 rounded-lg px-2 py-1.5 gpa-micro-bold text-ink-quiet transition-colors hover:bg-danger-soft hover:text-danger lg:self-end">
-                                        <x-gpa.icon name="trash" class="h-3 w-3" />
-                                        Hapus
-                                    </button>
+                                    <p class="gpa-micro text-ink-quiet">
+                                        Subtotal: <span class="font-bold text-ink" x-text="money(line.qty * line.price)"></span>
+                                        <span class="hidden sm:inline" x-text="` · ${packText(line)}`"></span>
+                                    </p>
                                 </div>
                             </div>
                         </template>
@@ -279,7 +277,7 @@
                                 </select>
                                 <x-gpa.icon name="clock" class="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-quiet" />
                             </div>
-                            <p class="gpa-hint font-semibold text-success-ink">Target Bongkar Cepat &lt; 30 Menit di Dock Penerimaan.</p>
+                            <p class="gpa-hint font-semibold text-success-ink">SLA Bongkar Cepat &lt; 30 Menit di Dock Penerimaan.</p>
                         </div>
                     </div>
 
@@ -481,51 +479,24 @@
                             <dd class="shrink-0 text-right gpa-meta-lg font-bold text-ink" x-text="money(subtotal())"></dd>
                         </div>
 
-                        {{-- Biaya Distribusi Logistik Armada Chiller --}}
-                        <div class="flex flex-col gap-1 border-t border-line-hair pt-3">
-                            <div class="flex items-start justify-between gap-3">
-                                <dt class="flex items-center gap-1.5 gpa-body text-ink-body">
-                                    <x-gpa.icon name="truck" class="h-3.5 w-3.5 text-success-deep" />
-                                    Biaya Distribusi Logistik
-                                </dt>
-                                <dd class="shrink-0 text-right">
-                                    <p class="gpa-meta-lg font-bold text-success-deep" x-text="money(shipping())"></p>
-                                    <p class="gpa-micro text-ink-quiet">Ditetapkan Saat Verifikasi</p>
-                                </dd>
-                            </div>
-                            <div class="mt-1 rounded-lg bg-surface-shell/80 p-2 text-xs text-ink-body">
-                                <p class="gpa-micro text-ink-quiet">
-                                    *Biaya pengiriman armada chiller dihitung dan diinput manual oleh Sekretariat saat verifikasi PO sesuai rute dan titik bongkar.
-                                </p>
-                            </div>
-                        </div>
-
-                        {{-- Pajak Pertambahan Nilai (PPN) --}}
-                        <div class="flex items-start justify-between gap-3 border-t border-line-hair pt-3">
-                            <dt class="gpa-body text-ink-body">
-                                <span>Pajak (PPN)</span>
-                                <template x-if="taxRate() > 0">
-                                    <span class="rounded bg-amber-100 px-1 py-0.5 text-[10px] font-bold text-amber-800" x-text="taxRate() + '%'"></span>
-                                </template>
-                                <template x-if="taxRate() === 0">
-                                    <span class="rounded bg-surface-pill px-1 py-0.5 text-[10px] font-bold text-ink-quiet">0% DTP</span>
-                                </template>
+                        <div class="flex items-start justify-between gap-3">
+                            <dt class="flex items-center gap-1.5 gpa-body text-ink-body">
+                                Biaya Distribusi Logistik
+                                <x-gpa.icon name="info" class="h-3 w-3 text-success" />
                             </dt>
                             <dd class="shrink-0 text-right">
-                                <template x-if="taxRate() > 0">
-                                    <div>
-                                        <p class="gpa-meta-lg font-bold text-ink" x-text="money(tax())"></p>
-                                        <p class="gpa-micro text-amber-800">PPN Standar PKP</p>
-                                    </div>
-                                </template>
-                                <template x-if="taxRate() === 0">
-                                    <div>
-                                        <span class="inline-block rounded bg-surface-pill px-1.5 py-0.5 gpa-micro-bold text-ink-quiet">
-                                            Bebas PPN 0%
-                                        </span>
-                                        <p class="gpa-micro text-ink-quiet">Fasilitas Pajak Pertanian</p>
-                                    </div>
-                                </template>
+                                <p class="gpa-meta-lg font-bold text-success" x-text="money(shipping())"></p>
+                                <p class="gpa-micro text-ink-quiet">Gratis ongkir</p>
+                            </dd>
+                        </div>
+
+                        <div class="flex items-start justify-between gap-3">
+                            <dt class="gpa-body text-ink-quiet">PPN Hasil Pertanian (PPN DTP)</dt>
+                            <dd>
+                                <span
+                                    class="inline-block rounded bg-surface-pill px-1.5 py-0.5 gpa-micro-bold text-ink-quiet">
+                                    Bebas PPN 0%
+                                </span>
                             </dd>
                         </div>
                     </dl>
@@ -570,7 +541,7 @@
                                     </div>
                                     <div class="flex items-start gap-2">
                                         <span class="rounded bg-warning/30 px-1 font-mono text-[10px] font-bold text-warning-deep">02</span>
-                                        <p class="text-ink-body"><strong>Verifikasi Sekretaris:</strong> Sekretaris memeriksa kuota panen riil kebun (&lt; 2 jam kerja).</p>
+                                        <p class="text-ink-body"><strong>Verifikasi Sekretaris:</strong> Admin memeriksa kuota panen riil kebun (&lt; 2 jam kerja).</p>
                                     </div>
                                     <div class="flex items-start gap-2">
                                         <span class="rounded bg-brand/20 px-1 font-mono text-[10px] font-bold text-brand">03</span>
@@ -592,9 +563,6 @@
                         <input type="hidden" name="target_delivery_date" :value="deliveryDate" value="{{ $defaultDeliveryDate }}">
                         <input type="hidden" name="delivery_address" :value="getFinalDeliveryAddress()">
                         <input type="hidden" name="payment_method" value="{{ $isB2b ? 'TEMPO_TOP' : 'TRANSFER_BANK' }}">
-                        <input type="hidden" name="shipping_cost" :value="shipping()">
-                        <input type="hidden" name="tax_rate" :value="taxRate()">
-                        <input type="hidden" name="tax_amount" :value="tax()">
 
                         {{-- Hidden inputs untuk items --}}
                         <template x-for="(line, idx) in lines" :key="`input-${line.key}`">
@@ -611,7 +579,7 @@
                                     <span class="inline-flex items-center gap-2">
                                         <x-gpa.icon name="send" class="h-4 w-4 text-white" />
                                         <span class="font-sans text-sm font-bold uppercase tracking-tight text-white">
-                                             Ajukan PO ke Sekretaris
+                                            Ajukan PO ke Admin
                                         </span>
                                     </span>
                                 </template>
@@ -622,7 +590,7 @@
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
                                         <span class="font-sans text-sm font-bold uppercase tracking-tight text-white">
-                                            Mengajukan PO ke Sekretaris...
+                                            Mengajukan PO ke Admin...
                                         </span>
                                     </span>
                                 </template>
@@ -642,17 +610,8 @@
                             <span class="text-ink" x-text="statusLabel">Draf Siap Diajukan</span>
                         </p>
                         <p class="gpa-micro text-right text-ink">
-                            Waktu Respon Sekretaris: <span class="font-bold">&lt; 2 Jam Kerja</span>
+                            SLA Respon Admin: <span class="font-bold">&lt; 2 Jam Kerja</span>
                         </p>
-                    </div>
-                </section>
-
-                <section
-                    class="flex items-start gap-2.5 rounded-xl border border-line-hair bg-surface-muted/70 p-3">
-                    <x-gpa.icon name="badge-check" class="mt-0.5 h-4 w-4 shrink-0 text-success" />
-                    <div class="flex min-w-0 flex-col">
-                        <p class="gpa-meta-lg font-bold text-ink">Jaminan Cold-Chain &amp; Standar Mutu GPA</p>
-                        <p class="mt-1 text-xs leading-4 text-ink-quiet">Komoditas dilindungi pendingin 2-6°C sejak pemanenan. Apabila terjadi deviasi mutu lebih dari 2%, klaim retur dapat diajukan saat serah terima dock.</p>
                     </div>
                 </section>
             </div>

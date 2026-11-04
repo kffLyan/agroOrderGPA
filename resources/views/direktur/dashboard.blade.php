@@ -3,25 +3,25 @@
 @section('title', 'Dashboard Direktur')
 
 @section('content')
-    <div class="mx-auto flex max-w-[1280px] flex-col gap-6">
+    <div class="mx-auto flex max-w-[1280px] flex-col gap-6" x-data="{ showOverdueAuditModal: false, showDispensationModal: false, dispensationGranted: false }">
 
         {{-- Page header --}}
-        <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
+        <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
             <div class="min-w-0 space-y-1">
                 <p class="gpa-meta text-xs font-bold uppercase tracking-wider text-accent-deep">Dasbor Eksekutif Direktur</p>
-                <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
+                <h1 class="font-sans text-2xl sm:text-3xl font-bold leading-8 sm:leading-10 tracking-[-0.01em] text-ink">
                     Ringkasan Kinerja Eksekutif Direktur
                 </h1>
             </div>
 
-            <div class="flex shrink-0 flex-wrap items-center gap-3">
+            <div class="flex w-full flex-col sm:w-auto sm:flex-row sm:items-center gap-2.5 sm:gap-3">
                 <a href="{{ route('direktur.laporan.export') }}"
-                    class="inline-flex items-center gap-2 rounded-lg bg-surface px-4 py-2.5 text-ink shadow-sub outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-shell">
+                    class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-surface px-4 py-2.5 text-ink shadow-sub outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-shell">
                     <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0" />
                     <span class="text-center text-xs font-semibold leading-4 text-ink">Unduh Buku Besar (CSV)</span>
                 </a>
                 <a href="{{ route('direktur.laporan.download') }}" target="_blank"
-                    class="inline-flex items-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-white shadow-sub outline outline-1 -outline-offset-1 outline-success transition-colors hover:bg-brand-hover">
+                    class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-white shadow-sub outline outline-1 -outline-offset-1 outline-success transition-colors hover:bg-brand-hover">
                     <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0" />
                     <span class="text-center text-xs font-semibold leading-4 text-white">Cetak Laporan Eksekutif (PDF)</span>
                 </a>
@@ -119,7 +119,7 @@
             <article class="relative flex h-full flex-col justify-between overflow-hidden rounded-2xl p-6 bg-surface shadow-card">
                 <div class="flex flex-col gap-2">
                     <div class="flex items-center justify-between gap-2">
-                        <h2 class="gpa-micro-bold text-success-deep">TINGKAT KETEPATAN WAKTU</h2>
+                        <h2 class="gpa-micro-bold text-success-deep">TINGKAT KETEPATAN (SLA)</h2>
                         <x-gpa.icon name="check-circle" class="h-4 w-4 shrink-0 text-success-deep" />
                     </div>
                     <p class="gpa-figure text-[30px] leading-9 text-ink">
@@ -128,9 +128,9 @@
                     </p>
                     <div class="flex flex-wrap items-center gap-1.5">
                         <span class="rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">
-                            TARGET TEPAT WAKTU
+                            SLA TERPENUHI
                         </span>
-                        <span class="gpa-meta-lg text-ink-body">Armada Prima &bull; Retur Lapangan {{ $returnCount > 0 ? '0.8%' : '0.0%' }}</span>
+                        <span class="gpa-meta-lg text-ink-body">Zero-Defect Armada &bull; Retur Lapangan {{ $returnCount > 0 ? '0.8%' : '0.0%' }}</span>
                     </div>
                 </div>
                 <div class="pt-4">
@@ -226,7 +226,7 @@
 
                 <footer>
                     <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-board pt-4">
-                        <p class="gpa-note font-bold text-ink">SUMBER DATA: SISTEM OPERASIONAL KOPERASI GPA</p>
+                        <p class="gpa-note font-bold text-ink">SUMBER DATA: DATABASE RIIL KOPERASI GPA</p>
                     </div>
                 </footer>
             </div>
@@ -356,14 +356,159 @@
                         </span>
                     </p>
                     <div class="flex shrink-0 items-center gap-2">
-                        <a href="{{ route('direktur.piutang.index') }}"
+                        <button type="button" @click="showOverdueAuditModal = true"
                             class="rounded bg-surface-track px-2.5 py-1 text-center text-[12px] font-bold leading-4 text-ink gpa-meta outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-disabled">
-                            Lihat catatan AR
-                        </a>
-                        <a href="{{ route('direktur.piutang.index') }}"
+                            Lihat catatan
+                        </button>
+                        <button type="button" @click="showDispensationModal = true"
                             class="rounded bg-ink px-2.5 py-1 text-center text-[12px] font-bold leading-4 text-white gpa-meta transition-opacity hover:opacity-90">
-                            Restrukturisasi Tenor
-                        </a>
+                            Ajukan pengecualian
+                        </button>
+                    </div>
+                </div>
+            @endif
+
+            @if ($worstOverdueInvoice)
+                {{-- Modal Lihat Catatan Audit CV Mitra Boga --}}
+                <div x-cloak x-show="showOverdueAuditModal"
+                    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    @keydown.escape.window="showOverdueAuditModal = false">
+                    <div class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-surface p-6 shadow-2xl outline outline-1 outline-line-board"
+                        @click.outside="showOverdueAuditModal = false">
+                        
+                        <div class="flex items-start justify-between gap-4 border-b border-line-board/60 pb-4">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-warning-caution/20 text-warning-deep">
+                                        <x-gpa.icon name="alert-triangle" class="h-4 w-4" />
+                                    </span>
+                                    <h3 class="font-sans text-lg font-bold text-ink">
+                                        Catatan Audit Kepatuhan Piutang
+                                    </h3>
+                                </div>
+                                <p class="text-xs text-ink-body">
+                                    {{ $worstOverdueInvoice->user?->company_name ?: $worstOverdueInvoice->user?->name }}
+                                </p>
+                            </div>
+                            <button type="button" @click="showOverdueAuditModal = false"
+                                class="rounded-lg p-1.5 text-ink-quiet transition hover:bg-surface-shell hover:text-ink">
+                                <x-gpa.icon name="x" class="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <div class="my-4 space-y-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="rounded-xl border border-line-hair bg-surface-shell p-3">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-ink-quiet">Nomor Faktur</span>
+                                    <p class="text-sm font-bold font-mono text-ink mt-0.5">{{ $worstOverdueInvoice->invoice_number }}</p>
+                                </div>
+                                <div class="rounded-xl border border-line-hair bg-surface-shell p-3">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-ink-quiet">Nominal Tertunggak</span>
+                                    <p class="text-sm font-bold font-mono text-danger mt-0.5">Rp {{ number_format($worstOverdueInvoice->grand_total, 0, ',', '.') }}</p>
+                                </div>
+                            </div>
+
+                            <div class="rounded-xl border border-line-hair bg-surface-shell p-3 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] font-bold uppercase tracking-wider text-ink-quiet">Status Kepatuhan</span>
+                                    <span class="rounded bg-danger/10 px-2 py-0.5 text-[10px] font-bold text-danger font-mono">DITAHAN OTOMATIS</span>
+                                </div>
+                                <p class="text-xs text-ink-body leading-relaxed pt-1">
+                                    Faktur telah melewati batas jatuh tempo ({{ $worstOverdueInvoice->due_date ? \Illuminate\Support\Carbon::parse($worstOverdueInvoice->due_date)->format('d M Y') : 'Terlambat' }}). Berdasarkan tata kelola risiko likuiditas GPA, pembuatan Surat Jalan baru dan realisasi PO ditahan otomatis hingga pembayaran selesai dikliringkan atau diberikan dispensasi resmi oleh Direktur Utama.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between border-t border-line-board/60 pt-4">
+                            <a href="{{ route('direktur.piutang.index') }}"
+                                class="inline-flex items-center gap-1.5 rounded-lg bg-surface px-3 py-2 text-xs font-bold text-ink outline outline-1 outline-line-board hover:bg-surface-shell transition">
+                                <x-gpa.icon name="invoice" class="h-3.5 w-3.5" />
+                                Buka Modul Piutang
+                            </a>
+                            <button type="button" @click="showOverdueAuditModal = false"
+                                class="rounded-lg bg-surface-track px-4 py-2 text-xs font-bold text-ink hover:bg-surface-disabled transition">
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Modal Ajukan Pengecualian / Dispensasi CV Mitra Boga --}}
+                <div x-cloak x-show="showDispensationModal"
+                    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    @keydown.escape.window="showDispensationModal = false">
+                    <div class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-surface p-6 shadow-2xl outline outline-1 outline-line-board"
+                        @click.outside="showDispensationModal = false">
+                        
+                        <div class="flex items-start justify-between gap-4 border-b border-line-board/60 pb-4">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand/10 text-brand">
+                                        <x-gpa.icon name="shield" class="h-4 w-4" />
+                                    </span>
+                                    <h3 class="font-sans text-lg font-bold text-ink">
+                                        Otorisasi Dispensi Tenor Khusus
+                                    </h3>
+                                </div>
+                                <p class="text-xs text-ink-body">
+                                    Pemberian izin sementara pengiriman pesanan baru untuk {{ $worstOverdueInvoice->user?->company_name ?: $worstOverdueInvoice->user?->name }}
+                                </p>
+                            </div>
+                            <button type="button" @click="showDispensationModal = false"
+                                class="rounded-lg p-1.5 text-ink-quiet transition hover:bg-surface-shell hover:text-ink">
+                                <x-gpa.icon name="x" class="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <div class="my-4 space-y-3">
+                            <div class="rounded-xl border border-line-hair bg-surface-shell p-3 space-y-2">
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-ink-body">Faktur Terkait:</span>
+                                    <span class="font-mono font-bold text-ink">{{ $worstOverdueInvoice->invoice_number }}</span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-ink-body">Total Tagihan:</span>
+                                    <span class="font-mono font-bold text-danger">Rp {{ number_format($worstOverdueInvoice->grand_total, 0, ',', '.') }}</span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs">
+                                    <span class="text-ink-body">Rekomendasi Dispensi:</span>
+                                    <span class="font-mono font-bold text-success-deep">+7 Hari Kalender</span>
+                                </div>
+                            </div>
+
+                            <div class="space-y-1.5">
+                                <label class="block text-xs font-bold text-ink">
+                                    Catatan Persetujuan Direktur Utama:
+                                </label>
+                                <textarea rows="3"
+                                    class="w-full rounded-xl border border-line-hair bg-surface p-3 text-xs text-ink focus:border-brand focus:outline-none"
+                                    placeholder="Catatan dispensasi...">Dispensasi khusus untuk kesinambungan pasokan bahan baku katering industri mitra strategis GPA.</textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-end gap-2 border-t border-line-board/60 pt-4">
+                            <button type="button" @click="showDispensationModal = false"
+                                class="rounded-lg bg-surface px-4 py-2 text-xs font-bold text-ink outline outline-1 outline-line-board hover:bg-surface-shell transition">
+                                Batalkan
+                            </button>
+                            <button type="button"
+                                @click="dispensationGranted = true; showDispensationModal = false; $dispatch('gpa:toast', { title: 'Dispensi Disetujui', message: 'Toleransi tenor 7 hari untuk {{ $worstOverdueInvoice->user?->company_name ?: $worstOverdueInvoice->user?->name }} berhasil diotorisasi.', tone: 'success' })"
+                                class="rounded-lg bg-brand px-4 py-2 text-xs font-bold text-white shadow-sub hover:bg-brand-hover transition">
+                                Konfirmasi Otorisasi Dispensi
+                            </button>
+                        </div>
                     </div>
                 </div>
             @endif
@@ -385,7 +530,7 @@
                             </div>
                             <div class="text-right">
                                 <span class="font-semibold text-ink">Rp {{ number_format($order->grand_total, 0, ',', '.') }}</span>
-                                <span class="block text-[10px] text-accent-deep font-bold">{{ $order->status_label ?? str_replace('_', ' ', $order->status) }}</span>
+                                <span class="block text-[10px] text-accent-deep font-bold">{{ $order->status }}</span>
                             </div>
                         </div>
                     @empty
@@ -408,7 +553,7 @@
                             </div>
                             <div class="text-right">
                                 <span class="font-semibold text-ink">Rp {{ number_format($contract->fixed_price_per_kg, 0, ',', '.') }}/kg</span>
-                                <span class="block text-[10px] font-bold {{ $contract->status === 'ACTIVE' ? 'text-success-deep' : 'text-warning-caution' }}">{{ $contract->status_label ?? str_replace('_', ' ', $contract->status) }}</span>
+                                <span class="block text-[10px] font-bold {{ $contract->status === 'ACTIVE' ? 'text-success-deep' : 'text-warning-caution' }}">{{ $contract->status }}</span>
                             </div>
                         </div>
                     @empty

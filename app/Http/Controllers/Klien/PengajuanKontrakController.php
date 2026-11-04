@@ -3,17 +3,17 @@
 namespace App\Http\Controllers\Klien;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Klien\SimpanPengajuanKontrakRequest;
 use App\Models\Contract;
 use App\Models\Product;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 // Controller pengajuan proposal kontrak kemitraan B2B untuk Klien
 class PengajuanKontrakController extends Controller
 {
     // Mengajukan proposal kemitraan kontrak suplai rutin B2B dan tempo pembayaran ke Direktur Utama
-    public function store(Request $request): RedirectResponse
+    public function store(SimpanPengajuanKontrakRequest $request): RedirectResponse
     {
         $user = Auth::guard('web')->user();
 
@@ -28,22 +28,7 @@ class PengajuanKontrakController extends Controller
             ]);
         }
 
-        $validated = $request->validate([
-            'product_id'                 => ['required', 'exists:products,id'],
-            'committed_volume_per_cycle' => ['required', 'numeric', 'min:50', 'max:50000'],
-            'top_days'                   => ['required', 'integer', 'in:14,30,45'],
-            'company_name'               => ['nullable', 'string', 'max:150'],
-            'address'                    => ['nullable', 'string', 'max:255'],
-            'pic_name'                   => ['nullable', 'string', 'max:100'],
-            'pic_phone'                  => ['nullable', 'string', 'max:25'],
-        ], [
-            'product_id.required'                 => 'Pilih komoditas utama yang ingin dikontrakkan.',
-            'product_id.exists'                   => 'Komoditas yang dipilih tidak valid.',
-            'committed_volume_per_cycle.required' => 'Komitmen volume per siklus wajib diisi.',
-            'committed_volume_per_cycle.min'      => 'Minimal komitmen volume adalah 50 kg per siklus pengiriman.',
-            'top_days.required'                   => 'Pilih termin pembayaran (TOP) yang diajukan.',
-            'top_days.in'                         => 'Pilihan TOP harus 14, 30, atau 45 hari.',
-        ]);
+        $validated = $request->validated();
 
         // Memperbarui profil legalitas usaha dan narahubung PIC klien ke database
         $userUpdates = array_filter([

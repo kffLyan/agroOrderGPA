@@ -3,28 +3,25 @@
 @section('title', 'Verifikasi Pesanan')
 
 @section('content')
-    <div class="space-y-6" x-data="secretaryVerification(@js($mappedOrders ?? []), 0)"
+    <div class="space-y-3" x-data="secretaryVerification(@js($mappedOrders ?? []), 0)"
         @gpa:search.window="query = $event.detail">
-        <section class="gpa-panel overflow-hidden">
-            <div class="flex flex-wrap items-start justify-between gap-4 border-b border-line-soft px-6 py-6">
-                <div class="min-w-0">
-                    <h1 class="font-sans text-3xl font-extrabold leading-10 tracking-[-0.01em] text-brand">
+        <section class="rounded-2xl bg-surface shadow-card overflow-hidden ring-1 ring-line-hair">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-line-board/60 p-4 sm:p-6">
+                <div class="min-w-0 flex-1">
+                    <h1 class="font-sans text-xl sm:text-2xl lg:text-3xl font-bold leading-tight sm:leading-10 tracking-[-0.01em] text-ink">
                         Verifikasi Pesanan Masuk &amp; Kesiapan Panen
                     </h1>
-                    <p class="mt-2 max-w-4xl text-sm leading-[1.4rem] text-ink-body">
-                        Pemeriksaan pesanan klien, kepastian stok panen kebun, dan persetujuan resmi sebelum jadwal panen dimulai.
-                    </p>
                 </div>
 
-                <div class="shrink-0 rounded-xl bg-surface px-4 py-2 text-right shadow-sub outline outline-1 outline-line-board">
-                    <p class="gpa-micro text-ink-quiet">Tingkat Kepatuhan Verifikasi</p>
-                    <p class="gpa-meta-lg font-bold tracking-[0.28px] text-success-deep">
+                <div class="shrink-0 rounded-lg bg-surface px-3 py-1.5 text-right shadow-sub outline outline-1 outline-line-board">
+                    <p class="gpa-micro text-ink-body">Tingkat Kepatuhan Verifikasi</p>
+                    <p class="gpa-meta font-bold tracking-[0.2px] text-success-deep">
                         100% Sesuai Aturan
                     </p>
                 </div>
             </div>
 
-            <div class="flex flex-wrap gap-2 px-6 py-4">
+            <div class="flex flex-wrap gap-2 p-4 sm:px-6 sm:py-4">
                 <button type="button" @click="handleStep({number: '01', label: 'Antrean Verifikasi Pesanan Masuk', active: true, message: 'Pesanan baru yang butuh persetujuan dan penguncian stok sayur.'})"
                     class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-left transition-colors bg-brand shadow-sub text-accent">
                     <span class="h-2 w-2 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
@@ -335,89 +332,19 @@
                 </div>
             </div>
 
-            {{-- Panel Input Manual Ongkir / Biaya Logistik Armada Chiller oleh Sekretaris --}}
-            <div class="mt-6 rounded-xl border border-line-soft bg-surface-shell p-5 shadow-sm">
-                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft pb-3">
-                    <div class="flex items-center gap-2.5">
-                        <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/20 text-ink">
-                            <x-gpa.icon name="truck" class="h-4 w-4 text-success-deep" />
-                        </span>
-                        <div>
-                            <h4 class="font-sans text-sm font-bold text-ink">Penetapan Biaya Pengiriman</h4>
-                            <p class="gpa-note text-ink-quiet">Input ongkir manual oleh Sekretaris berdasarkan rute, jarak tempuh, atau kesepakatan PO.</p>
-                        </div>
+            <div
+                class="mt-4 grid gap-4 rounded-xl bg-surface-shell p-4 outline outline-1 outline-line-soft sm:grid-cols-2 lg:grid-cols-4">
+                <template x-for="cell in selected.pricing" :key="cell.label">
+                    <div :class="cell.highlight ? 'rounded-lg bg-surface px-3 py-2 outline outline-1 outline-success-deep/30' : ''">
+                        <p class="gpa-micro text-ink-quiet" x-text="cell.label"></p>
+                        <p class="mt-1 gpa-meta-lg font-bold tracking-[0.28px]"
+                            :class="cell.highlight ? 'text-success-deep' : 'text-ink'">
+                            <span x-text="cell.value"></span>
+                            <span x-show="cell.suffix" class="gpa-note text-ink-body" x-text="cell.suffix"></span>
+                        </p>
+                        <p x-show="cell.note" class="mt-0.5 gpa-note text-ink-body" x-text="cell.note"></p>
                     </div>
-                    <span class="rounded bg-brand/10 px-2.5 py-1 gpa-micro-bold text-brand">Input Manual Sekretaris</span>
-                </div>
-
-                <div class="mt-4 grid gap-4 md:grid-cols-12 md:items-end">
-                    <div class="md:col-span-5">
-                        <label class="gpa-micro font-semibold text-ink-body">Nominal Biaya Pengiriman (Rp)</label>
-                        <div class="relative mt-1.5">
-                            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-bold text-ink-quiet">Rp</span>
-                            <input type="number" x-model.number="manualShipping" min="0" step="5000"
-                                class="h-10 w-full rounded-lg border border-line-strong bg-surface pl-10 pr-3 font-sans text-sm font-bold text-ink focus:border-brand focus:ring-1 focus:ring-brand"
-                                placeholder="0">
-                        </div>
-                    </div>
-
-                    <div class="md:col-span-7">
-                        <p class="gpa-micro text-ink-quiet">Shortcut / Preset Tarif Standar:</p>
-                        <div class="mt-1.5 flex flex-wrap gap-1.5">
-                            <button type="button" @click="setShippingPreset(0)"
-                                :class="getShipping() === 0 ? 'bg-success-deep text-white font-bold shadow-sub' : 'bg-surface text-ink hover:bg-surface-pill border border-line-hair'"
-                                class="rounded-lg px-3 py-1.5 text-xs transition-colors">
-                                Franco / Bebas Ongkir (Rp 0)
-                            </button>
-                            <button type="button" @click="setShippingPreset(50000)"
-                                :class="getShipping() === 50000 ? 'bg-success-deep text-white font-bold shadow-sub' : 'bg-surface text-ink hover:bg-surface-pill border border-line-hair'"
-                                class="rounded-lg px-3 py-1.5 text-xs transition-colors">
-                                Rp 50.000 (Dekat / Lokal)
-                            </button>
-                            <button type="button" @click="setShippingPreset(75000)"
-                                :class="getShipping() === 75000 ? 'bg-success-deep text-white font-bold shadow-sub' : 'bg-surface text-ink hover:bg-surface-pill border border-line-hair'"
-                                class="rounded-lg px-3 py-1.5 text-xs transition-colors">
-                                Rp 75.000 (Standar GPA)
-                            </button>
-                            <button type="button" @click="setShippingPreset(100000)"
-                                :class="getShipping() === 100000 ? 'bg-success-deep text-white font-bold shadow-sub' : 'bg-surface text-ink hover:bg-surface-pill border border-line-hair'"
-                                class="rounded-lg px-3 py-1.5 text-xs transition-colors">
-                                Rp 100.000 (Luar Wilayah)
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Ringkasan Perhitungan Finansial Tagihan (Live Reactive) --}}
-            <div class="mt-4 grid gap-4 rounded-xl bg-surface-shell p-4 outline outline-1 outline-line-soft sm:grid-cols-2 lg:grid-cols-4">
-                <div class="rounded-lg bg-surface px-3 py-2 outline outline-1 outline-line-hair">
-                    <p class="gpa-micro text-ink-quiet">Subtotal Komoditas</p>
-                    <p class="mt-1 gpa-meta-lg font-bold tracking-[0.28px] text-ink" x-text="formatRupiah(getSubtotal())"></p>
-                    <p class="mt-0.5 gpa-note text-ink-body" x-text="selected.initial_qty + ' komoditas'"></p>
-                </div>
-
-                <div class="rounded-lg bg-surface px-3 py-2 outline outline-1 outline-line-hair"
-                    :class="getShipping() > 0 ? 'outline-brand/40 bg-brand/[0.02]' : ''">
-                    <p class="gpa-micro text-ink-quiet">Biaya Pengiriman (Manual Sekre)</p>
-                    <p class="mt-1 gpa-meta-lg font-bold tracking-[0.28px]"
-                        :class="getShipping() > 0 ? 'text-brand' : 'text-success-deep'"
-                        x-text="formatRupiah(getShipping())"></p>
-                    <p class="mt-0.5 gpa-note" :class="getShipping() > 0 ? 'text-ink-body' : 'text-success-deep'"
-                        x-text="getShipping() > 0 ? 'Armada Reefer Chilled' : 'Bebas Ongkir (Franco)'"></p>
-                </div>
-
-                <div class="rounded-lg bg-surface px-3 py-2 outline outline-1 outline-line-hair">
-                    <p class="gpa-micro text-ink-quiet" x-text="'Pajak PPN (' + (selected.tax_label || '0%') + ')'"></p>
-                    <p class="mt-1 gpa-meta-lg font-bold tracking-[0.28px] text-ink" x-text="formatRupiah(getTaxAmount())"></p>
-                    <p class="mt-0.5 gpa-note text-ink-body" x-text="getTaxRate() > 0 ? 'Ketetapan Direktur' : 'Bebas Pajak Pertanian'"></p>
-                </div>
-
-                <div class="rounded-lg bg-surface px-3 py-2 outline outline-2 outline-success-deep shadow-sub">
-                    <p class="gpa-micro text-ink-quiet">Total Tagihan Final (Grand Total)</p>
-                    <p class="mt-1 gpa-meta-lg font-bold tracking-[0.28px] text-success-deep" x-text="formatRupiah(getGrandTotal())"></p>
-                    <p class="mt-0.5 gpa-note text-success-deep font-semibold">Terkunci pada Faktur Tagihan</p>
-                </div>
+                </template>
             </div>
 
             <div class="sticky bottom-4 z-20 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line-soft bg-surface/95 p-4 shadow-xl ring-1 ring-black/5 backdrop-blur-md">

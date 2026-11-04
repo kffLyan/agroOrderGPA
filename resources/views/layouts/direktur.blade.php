@@ -68,7 +68,7 @@
                     <a href="{{ route('direktur.dashboard') }}" class="flex min-w-0 items-center gap-3">
                         <img src="{{ asset('gpaleaves.png') }}" alt="" class="h-7 w-7 shrink-0 object-contain">
                         <span class="flex min-w-0 flex-col">
-                            <span class="truncate font-inter text-lg font-extrabold uppercase leading-6 text-white">
+                            <span class="truncate font-inter text-base sm:text-lg font-extrabold uppercase leading-5 sm:leading-6 text-white">
                                 AgroOrder GPA
                             </span>
                             <span class="truncate text-[10px] font-medium capitalize leading-3 text-white/80 gpa-meta">
@@ -128,18 +128,24 @@
                 class="fixed inset-0 z-30 bg-ink/40 lg:hidden"></div>
 
             <aside
-                class="fixed inset-y-0 left-0 z-40 hidden w-[288px] -translate-x-full flex-col justify-between border-r border-line-hair bg-canvas p-4 transition-transform lg:sticky lg:top-[68px] lg:z-0 lg:flex lg:h-[calc(100vh-68px)] lg:translate-x-0"
-                :class="sidebarOpen ? '!translate-x-0' : ''">
+                :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+                class="fixed inset-y-0 left-0 z-50 flex h-full w-72 flex-col justify-between gap-6 overflow-y-auto border-r border-line-hair bg-canvas p-4 shadow-card transition-transform duration-200 lg:sticky lg:top-[68px] lg:bottom-auto lg:left-auto lg:z-0 lg:h-[calc(100vh-68px)] lg:w-72 lg:shrink-0 lg:translate-x-0 lg:shadow-none">
                 <div class="flex flex-col gap-3">
-                    <div class="flex items-center gap-2.5 rounded-xl border border-line-hair bg-surface-shell p-3">
-                        <x-gpa.brand-mark class="h-6 w-6 shrink-0 text-brand" />
-                        <span class="flex min-w-0 flex-col">
-                            <span class="block truncate font-inter text-sm font-bold leading-5 text-ink">{{ $operatorRole }}</span>
-                            <span class="block truncate text-[9px] font-bold uppercase leading-3 tracking-[0.45px] text-success-deep gpa-micro-bold">
-                                {{ $operatorName }}
+                    <div class="flex items-center justify-between gap-2.5 rounded-xl border border-line-hair bg-surface-shell p-3">
+                        <div class="flex min-w-0 items-center gap-2.5">
+                            <x-gpa.brand-mark class="h-6 w-6 shrink-0 text-brand" />
+                            <span class="flex min-w-0 flex-col">
+                                <span class="block truncate font-inter text-sm font-bold leading-5 text-ink">{{ $operatorRole }}</span>
+                                <span class="block truncate text-[9px] font-bold uppercase leading-3 tracking-[0.45px] text-success-deep gpa-micro-bold">
+                                    {{ $operatorName }}
+                                </span>
+                                <span class="block truncate gpa-note text-success-deep">ID {{ $operatorCode }}</span>
                             </span>
-                            <span class="block truncate gpa-note text-success-deep">ID {{ $operatorCode }}</span>
-                        </span>
+                        </div>
+                        <button type="button" @click="sidebarOpen = false" aria-label="Tutup menu navigasi"
+                            class="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-ink-quiet transition-colors hover:bg-surface hover:text-ink lg:hidden">
+                            <x-gpa.icon name="x" class="h-4 w-4" />
+                        </button>
                     </div>
 
                     <a href="{{ route('direktur.tata-kelola.export-audit') }}"
@@ -201,7 +207,7 @@
                 </div>
             </aside>
 
-            <main id="main-content" class="min-w-0 flex-1 px-4 py-6 lg:px-6 w-full max-w-full">
+            <main id="main-content" class="min-w-0 flex-1 px-4 py-6 lg:px-6 w-full max-w-full overflow-x-hidden">
                 @if (isset($header) && (is_string($header) || $header instanceof \Illuminate\View\ComponentSlot || $header instanceof \Illuminate\Contracts\Support\Htmlable))
                     <div class="mb-6">
                         <h1 class="text-2xl font-bold tracking-tight text-ink">

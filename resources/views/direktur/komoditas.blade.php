@@ -5,7 +5,7 @@
 @section('content')
     @php
         $weeklyRows = $weeklyRows ?? [];
-        $allocationsList = $allocationsList ?? collect();
+        $allocationsList = $allocationsList ?? [];
         $maxWeekly = !empty($weeklyRows) ? max(array_column($weeklyRows, 'total')) : 0;
         $maxWeekly = $maxWeekly > 0 ? $maxWeekly : 1;
         $peakWeek = !empty($weeklyRows) ? ($weeklyRows[array_search(max(array_column($weeklyRows, 'total')), array_column($weeklyRows, 'total'))] ?? null) : null;
@@ -13,28 +13,26 @@
     @endphp
 
     <div class="mx-auto flex max-w-[1280px] flex-col gap-6"
-        x-data="direkturVolume(@js($commodityRows ?? []), @js($weeklyRows), @js($allocationsList))">
+        x-data="directorVolume(@js($commodityRows ?? []), @js($weeklyRows), @js($allocationsList))">
 
         {{-- Page header + range badge + aksi rekonsiliasi --}}
-        <section class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
+        <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
             <div class="min-w-0 space-y-1">
-                <h1 class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
-                    Monitoring Volume Komoditas, Stok Panen<br>&amp; Kapasitas Pasokan
+                <h1 class="font-sans text-2xl sm:text-3xl font-bold leading-8 sm:leading-10 tracking-[-0.01em] text-ink">
+                    Monitoring Volume Komoditas, Stok Panen<br class="hidden sm:inline">&amp; Kapasitas Pasokan
                 </h1>
             </div>
 
-            <div class="flex shrink-0 flex-col sm:flex-row items-stretch gap-3">
+            <div class="flex w-full flex-col sm:w-auto sm:flex-row sm:items-center gap-2.5 sm:gap-3">
                 <span
-                    class="inline-flex h-10 items-center gap-2 rounded-lg bg-surface px-3 outline outline-1 -outline-offset-1 outline-line-board">
+                    class="inline-flex w-full sm:w-auto h-10 items-center justify-center gap-2 rounded-lg bg-surface px-3 outline outline-1 -outline-offset-1 outline-line-board">
                     <span class="gpa-meta text-success-deep">RANGE:</span>
                     <span class="gpa-meta font-bold text-ink">W{{ date('W') - 4 }} - W{{ date('W') }} MTD</span>
                     <span class="h-3 w-3 rounded-sm bg-success-deep" aria-hidden="true"></span>
                 </span>
 
                 <a href="{{ route('direktur.komoditas.export') }}"
-                    download
-                    data-no-progress
-                    class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-surface px-4 text-ink shadow-sub outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-shell">
+                    class="inline-flex w-full sm:w-auto h-10 items-center justify-center gap-2 rounded-lg bg-surface px-4 text-ink shadow-sub outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-shell">
                     <x-gpa.icon name="download" class="h-4 w-4 shrink-0 text-success-deep" />
                     <span class="text-sm font-semibold leading-5 text-ink font-inter">
                         UNDUH NERACA VOLUME (CSV)
@@ -42,7 +40,7 @@
                 </a>
 
                 <button type="button" @click="reconcile()"
-                    class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-ink shadow-sub transition-colors hover:bg-accent-deep">
+                    class="inline-flex w-full sm:w-auto h-10 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-ink shadow-sub transition-colors hover:bg-accent-deep">
                     <x-gpa.icon name="scale" class="h-4 w-4 shrink-0" />
                     <span class="text-sm font-semibold leading-5 text-ink font-inter">
                         REKONSILIASI NERACA
@@ -308,8 +306,8 @@
                 </div>
 
                 <div class="flex flex-col gap-2">
-                    <p class="gpa-micro-bold text-ink">Puncak Demand: {{ $peakWeek ? ($peakWeek['week'] . ' (' . number_format($peakWeek['total'], 0, '.', '') . ' T)') : '—' }}</p>
-                    <p class="gpa-micro-bold text-ink">SUMBER DATA: SISTEM OPERASIONAL KOPERASI GPA</p>
+                    <p class="gpa-micro-bold text-ink">Puncak Demand: {{ $peakWeek ? ($peakWeek['week'] . ' (' . number_format($peakWeek['total'], 0, '.', '') . ' T)') : 'â€”' }}</p>
+                    <p class="gpa-micro-bold text-ink">SUMBER DATA: DATABASE NYATA KOPERASI GPA</p>
                 </div>
             </div>
 
@@ -332,22 +330,22 @@
                             <button type="button" @click="inspectPartner(@js($row))"
                                 class="flex items-center justify-between gap-3 rounded-xl bg-surface-shell p-3 text-left outline outline-1 -outline-offset-1 outline-line-board/60 transition-colors hover:bg-surface-muted">
                                 <span class="flex min-w-0 flex-col gap-0.5">
-                                    <span class="font-sans text-sm font-bold leading-5 text-ink">{{ $row->name ?? $row['name'] }}</span>
+                                    <span class="font-sans text-sm font-bold leading-5 text-ink">{{ $row['name'] }}</span>
                                     <span class="font-mono text-xs leading-4 text-success-deep">
-                                        SENTRA PRODUKSI: {{ $row->sentra ?? $row['sentra'] }}
+                                        SENTRA PRODUKSI: {{ $row['sentra'] }}
                                     </span>
                                 </span>
 
                                 <span class="flex shrink-0 flex-col items-end gap-0.5">
                                     <span class="text-right font-mono text-sm font-bold leading-5 tracking-[0.28px] text-ink">
-                                        {{ number_format($row->commitment ?? $row['commitment'], 2, '.', '') }}
+                                        {{ number_format($row['commitment'], 2, '.', '') }}
                                     </span>
                                     <span
                                         class="text-right font-mono text-xs font-bold leading-4 tracking-[0.28px] text-ink">
                                         Ton/mgg
                                     </span>
                                     <span class="text-right font-inter text-[9px] font-semibold leading-3 tracking-[1.08px] text-success-deep">
-                                        {{ $row->priority ?? $row['priority'] }}
+                                        {{ $row['priority'] }}
                                     </span>
                                 </span>
                             </button>

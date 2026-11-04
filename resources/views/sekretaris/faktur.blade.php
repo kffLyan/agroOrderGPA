@@ -15,42 +15,34 @@
 
     @endphp
 
-    <div class="space-y-6" x-data="secretaryInvoicing(@js($clients), @js($ledgerRows), @js($statusFilters), @js($totalInvoices), @js(route('prints.invoice', ['invoice' => '__invoice__'])))"
+    <div class="space-y-3" x-data="secretaryInvoicing(@js($clients), @js($ledgerRows), @js($statusFilters), @js($totalInvoices), @js(route('prints.invoice', ['invoice' => '__invoice__'])))"
         @gpa:search.window="query = $event.detail">
-        <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
-            <div class="min-w-0">
-                <x-gpa.icon name="invoice" class="h-3 w-3 shrink-0 text-success-deep" />
-
-                <h1 class="mt-2 font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
-                    Manajemen Faktur Tagihan &<br />
-                    Pemantauan Tempo Pembayaran
+        <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
+            <div class="min-w-0 flex-1">
+                <h1 class="mt-1 sm:mt-2 font-sans text-xl sm:text-2xl lg:text-3xl font-bold leading-tight sm:leading-10 tracking-[-0.01em] text-ink">
+                    Manajemen Faktur Tagihan &amp; Pemantauan Tempo Pembayaran
                 </h1>
-
-                <p class="mt-3 max-w-3xl text-sm leading-5 text-ink-body">
-                    Konsolidasi Surat Jalan sayur yang telah selesai dikirim menjadi lembar
-                    <span class="font-semibold text-ink">faktur penagihan resmi sesuai kesepakatan tempo bayar (14 / 30 / 45 Hari).</span>
-                </p>
             </div>
 
-            <div class="flex shrink-0 flex-wrap items-center gap-3">
+            <div class="flex w-full sm:w-auto flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2.5 sm:gap-3">
                 <a href="{{ route('sekretaris.faktur.export') }}"
-                    class="inline-flex items-center gap-2 rounded-xl bg-surface-shell px-4 py-3 outline outline-1 outline-line-board transition-colors hover:bg-surface-track gpa-meta-lg font-bold tracking-[0.88px] text-ink">
+                    class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-surface-shell px-4 py-2.5 sm:py-3 outline outline-1 outline-line-board transition-colors hover:bg-surface-track text-xs sm:text-sm font-bold tracking-[0.88px] text-ink">
                     <x-gpa.icon name="download" class="h-[15px] w-[15px] shrink-0" />
                     Unduh Laporan Faktur (CSV)
                 </a>
 
                 <button type="button" @click="manualInvoice()"
-                    class="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-3 text-white shadow-sub transition-colors hover:bg-brand-deep gpa-meta-lg font-bold tracking-[0.88px]">
+                    class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 sm:py-3 text-white shadow-sub transition-colors hover:bg-brand-deep text-xs sm:text-sm font-bold tracking-[0.88px]">
                     <x-gpa.icon name="plus" class="h-[15px] w-[15px] shrink-0 text-accent" />
                     Terbitkan Faktur Baru
                 </button>
             </div>
         </section>
 
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {{-- Kartu 1: Total Piutang Berjalan --}}
-            <article class="flex min-h-[16.4rem] flex-col justify-between gap-6 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
                         TOTAL PIUTANG BERJALAN
                     </h2>
@@ -74,8 +66,8 @@
             </article>
 
             {{-- Kartu 2: Segera Jatuh Tempo --}}
-            <article class="flex min-h-[16.4rem] flex-col justify-between gap-6 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
                         SEGERA JATUH TEMPO (&lt; 7 HARI)
                     </h2>
@@ -99,8 +91,8 @@
             </article>
 
             {{-- Kartu 3: Faktur Lewat Tempo --}}
-            <article class="flex min-h-[16.4rem] flex-col justify-between gap-6 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
                         FAKTUR LEWAT TEMPO
                     </h2>
@@ -124,8 +116,8 @@
             </article>
 
             {{-- Kartu 4: Faktur Lunas Bulan Ini --}}
-            <article class="flex min-h-[16.4rem] flex-col justify-between gap-6 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
+            <article class="flex flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
                     <h2 class="gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-ink-body">
                         FAKTUR LUNAS BULAN INI
                     </h2>
@@ -195,7 +187,7 @@
                         </p>
                         <p class="gpa-micro-bold tracking-[1.08px] text-success-deep">
                             SISA PLAFON:
-                            <span class="font-mono" x-text="rupiah(creditSisa())">—</span>
+                            <span class="font-mono" x-text="rupiah(creditSisa())">Rp 85.800.000</span>
                         </p>
                     </div>
 
@@ -221,7 +213,7 @@
                     </div>
 
                     <div class="gpa-scroll-x rounded-xl outline outline-1 outline-line-board/60">
-                        <table class="w-full border-collapse text-left">
+                        <table class="w-full min-w-[700px] border-collapse text-left">
                             <thead class="border-b border-line-soft bg-surface-track">
                                 <tr>
                                     <th scope="col" class="w-12 px-4 py-3">
@@ -300,7 +292,7 @@
                                     Kesepakatan Tempo Pembayaran
                                 </p>
                                 <p class="mt-0.5 font-sans text-sm font-bold leading-5 text-ink" x-text="dueLabel()">
-                                    —
+                                    45 Hari Kalender (Jatuh Tempo: 08 Des 2024)
                                 </p>
                             </div>
 
@@ -309,7 +301,7 @@
                                     Total Nilai Faktur Tagihan
                                 </p>
                                 <p class="mt-0.5 font-sans text-lg font-bold leading-6 text-ink" x-text="rupiah(totalValue())">
-                                    Rp 0
+                                    Rp 114.200.000
                                 </p>
                             </div>
                         </div>
@@ -327,14 +319,13 @@
             </div>
         </section>
 
-        <section id="buku-besar-faktur" class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
+        <section class="flex flex-col gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="min-w-0">
                     <h2 class="flex items-center gap-2 font-sans text-lg font-bold leading-6 text-ink">
                         <x-gpa.icon name="chart" class="h-[18px] w-[18px] shrink-0 text-ink" />
                         Daftar Faktur Tagihan &amp; Pemantauan Tempo
                     </h2>
-                    <p class="mt-0.5 text-xs leading-4 text-ink-body">Pemantauan status pembayaran faktur dan sisa hari sebelum jatuh tempo.</p>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-1.5 rounded-xl bg-surface-shell p-1 outline outline-1 outline-line-board/50">
@@ -366,7 +357,7 @@
             </div>
 
             <div class="gpa-scroll-x rounded-xl outline outline-1 outline-line-board/60">
-                <table class="w-full border-collapse text-left">
+                <table class="w-full min-w-[850px] border-collapse text-left">
                     <thead class="border-b border-line-soft bg-surface-track">
                         <tr>
                             <th scope="col" class="px-4 py-3 gpa-meta font-semibold uppercase tracking-[0.55px] text-ink-body">No. Faktur &amp; Tanggal</th>
@@ -454,15 +445,8 @@
                                         <button type="button" @click="printInvoice(@js($row))" title="Cetak faktur resmi"
                                             aria-label="Cetak faktur resmi {{ $row['id'] }}"
                                             class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-surface-track text-ink transition-colors hover:bg-surface-disabled">
-                                            <x-gpa.icon name="file-text" class="h-[15px] w-[15px] shrink-0" />
+                                            <x-gpa.icon name="printer" class="h-[15px] w-[15px] shrink-0" />
                                         </button>
-
-                                        <a href="/cetak/struk/{{ urlencode($row['id']) }}" target="_blank"
-                                            title="Cetak Struk Kasir Thermal"
-                                            aria-label="Cetak Struk Kasir Thermal {{ $row['id'] }}"
-                                            class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-surface-track text-brand transition-colors hover:bg-surface-disabled">
-                                            <x-gpa.icon name="printer" class="h-[15px] w-[15px] shrink-0 text-success-deep" />
-                                        </a>
 
                                         <button type="button" @click="followUp(@js($row))" title="Tindak lanjut penagihan"
                                             aria-label="Tindak lanjut penagihan {{ $row['id'] }}"
@@ -482,7 +466,7 @@
 
             <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
                 <p class="gpa-note text-ink-body"
-                    x-text="'Menampilkan ' + visibleRows().length + ' dari ' + {{ $totalInvoices }} + ' baris daftar piutang berjalan'">
+                    x-text="'Menampilkan ' + visibleRows().length + ' dari ' + {{ $totalInvoices }} + ' baris ledger piutang berjalan'">
                 </p>
                 <p class="gpa-note text-ink-body">
                     Total Piutang Terkonfirmasi:

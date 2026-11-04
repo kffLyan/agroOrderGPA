@@ -37,6 +37,9 @@ class HarvestBatch extends Model
         'source_label',
         'name',
         'commodity',
+        'time',
+        'lot',
+        'entry',
     ];
 
     // Relasi Many-to-One: Batch panen merujuk ke data master sayur (Product)

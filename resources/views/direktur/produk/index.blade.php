@@ -29,10 +29,10 @@
 
     {{-- Kop Halaman & Aksi Utama --}}
     <section class="flex flex-col gap-4">
-        <header class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
+        <header class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
             <div class="min-w-0 space-y-1">
                 <p class="gpa-micro-bold uppercase tracking-wider text-ink-body">Master Data &amp; Tata Kelola Komoditas</p>
-                <h1 class="font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
+                <h1 class="font-sans text-xl sm:text-2xl font-bold leading-7 sm:leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
                     Katalog Komoditas &amp; Penetapan Harga Dasar
                 </h1>
                 <p class="text-xs text-ink-body max-w-2xl">
@@ -40,14 +40,14 @@
                 </p>
             </div>
 
-            <div class="flex shrink-0 flex-wrap items-center gap-2">
+            <div class="flex w-full flex-col sm:w-auto sm:flex-row sm:items-center gap-2">
                 <a href="{{ route('direktur.komoditas.export') }}"
-                    class="inline-flex items-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-surface-shell text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-muted">
+                    class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-surface-shell text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-muted">
                     <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0" />
                     Export Laporan (.CSV)
                 </a>
                 <a href="{{ route('direktur.produk.create') }}"
-                    class="inline-flex items-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-ink text-accent shadow-sub">
+                    class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded px-3 py-2 gpa-meta font-semibold transition-opacity hover:opacity-90 bg-ink text-accent shadow-sub">
                     <x-gpa.icon name="plus" class="h-3.5 w-3.5 shrink-0" />
                     Tambah Komoditas Baru
                 </a>
@@ -187,7 +187,6 @@
                                     <div class="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-line-hair bg-surface-muted shadow-sub">
                                         <img src="{{ asset($prod->image_path) }}" alt="{{ $prod->name }}"
                                             class="h-full w-full object-cover"
-                                            onerror="this.onerror=null;this.src='{{ asset('gpaleaves.png') }}';"
                                             x-on:error="$event.target.src = '{{ asset('gpaleaves.png') }}'">
                                     </div>
                                     <div class="min-w-0">
@@ -255,8 +254,8 @@
                             </td>
 
                             {{-- Aksi --}}
-                            <td class="px-3 py-3.5 text-right whitespace-nowrap">
-                                <div class="inline-flex items-center justify-end gap-1.5 whitespace-nowrap">
+                            <td class="px-3 py-3.5 text-right">
+                                <div class="flex items-center justify-end gap-1.5">
                                     <a href="{{ route('direktur.produk.show', $prod->id) }}"
                                         title="Rincian Komoditas"
                                         class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">

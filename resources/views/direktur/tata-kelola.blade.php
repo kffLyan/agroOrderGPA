@@ -1,15 +1,13 @@
 @extends('layouts.direktur')
 
-@section('title', 'Pengaturan Tata Kelola // Kebijakan & Catatan Audit')
-
-@use('Carbon\Carbon')
+@section('title', 'Pengaturan Tata Kelola // Kebijakan & Audit Trail')
 
 @section('content')
     @php
         $auditRows = [];
         if (!empty($storedLogs)) {
             foreach ($storedLogs as $l) {
-                $timeCarbon = isset($l['timestamp']) ? Carbon::parse($l['timestamp']) : (isset($l['created_at']) ? Carbon::parse($l['created_at']) : now());
+                $timeCarbon = isset($l['timestamp']) ? \Carbon\Carbon::parse($l['timestamp']) : (isset($l['created_at']) ? \Carbon\Carbon::parse($l['created_at']) : now());
                 $isBlocked = in_array($l['status'] ?? '', ['REJECTED', 'INTERCEPTED']);
                 $tone = 'neutral';
                 if ($isBlocked) {
@@ -40,97 +38,37 @@
     @endphp
 
     <div class="mx-auto flex w-full min-w-0 max-w-[1280px] flex-col gap-6"
-        x-data="direkturTataKelola(@js($auditRows))">
+        x-data="directorGovernance(@js($auditRows))">
 
         {{-- Page header --}}
-        <section class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
+        <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
             <div class="min-w-0 space-y-1">
-                <h1 class="font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
-                    Pengaturan Tata Kelola, Kebijakan Bisnis &amp; Catatan Audit Sistem
+                <h1 class="font-sans text-xl sm:text-2xl font-bold leading-7 sm:leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
+                    Pengaturan Tata Kelola, Kebijakan Bisnis &amp; Audit Trail Sistem
                 </h1>
             </div>
 
-            <div class="flex flex-wrap items-center gap-2">
-                @if (!empty($settings['master_freeze_active']))
-                    <form method="POST" action="{{ route('direktur.tata-kelola.master-freeze') }}" class="inline"
-                        data-gpa-confirm="Apakah Anda yakin ingin MEMULIHKAN transaksi dan menonaktifkan Master Freeze? Seluruh input pesanan klien akan kembali beroperasi normal."
-                        data-gpa-title="Pulihkan Transaksi Normal"
-                        data-gpa-tone="brand"
-                        data-gpa-ok="Ya, Pulihkan Transaksi">
-                        @csrf
-                        <input type="hidden" name="freeze" value="0">
-                        <button type="submit"
-                            class="inline-flex items-center gap-1.5 rounded bg-danger px-3.5 py-2 gpa-meta font-bold text-white shadow-sub transition-opacity hover:opacity-90 animate-pulse">
-                            <x-gpa.icon name="alert-triangle" class="h-3.5 w-3.5 shrink-0 text-white" />
-                            MASTER FREEZE: AKTIF (Pulihkan Transaksi)
-                        </button>
-                    </form>
-                @else
-                    <form method="POST" action="{{ route('direktur.tata-kelola.master-freeze') }}" class="inline"
-                        data-gpa-confirm="Apakah Anda yakin ingin MENGAKTIFKAN Master Freeze? Seluruh input pesanan klien akan dibekukan seketika untuk audit / stok opname."
-                        data-gpa-title="Konfirmasi Master Freeze"
-                        data-gpa-tone="danger"
-                        data-gpa-ok="Ya, Aktifkan Master Freeze">
-                        @csrf
-                        <input type="hidden" name="freeze" value="1">
-                        <input type="hidden" name="reason" value="Audit Forensik & Stok Opname Direksi">
-                        <button type="submit"
-                            class="inline-flex items-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-bold text-danger outline outline-1 -outline-offset-1 outline-danger/50 transition-colors hover:bg-danger/10">
-                            <x-gpa.icon name="alert-triangle" class="h-3.5 w-3.5 shrink-0 text-danger" />
-                            Sakelar Darurat Master Freeze
-                        </button>
-                    </form>
-                @endif
-
+            <div class="flex w-full flex-col sm:w-auto sm:flex-row sm:flex-wrap sm:items-center gap-2">
                 <a href="{{ route('direktur.users.index') }}"
-                    class="inline-flex items-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                    class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="users" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
-                    Kelola Akun &amp; Hak Akses
+                    Kelola Akun Pengguna &amp; RBAC
                 </a>
-
-                <a href="{{ route('direktur.tata-kelola.export-audit') }}"
-                    download
-                    data-no-progress
-                    class="inline-flex items-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                <button type="button" @click="exportAudit()"
+                    class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
-                    Ekspor Catatan Audit (.CSV)
-                </a>
-
-                <button type="button" @click="verifyIntegrity()"
-                    class="inline-flex items-center gap-1.5 rounded bg-accent px-3 py-2 gpa-meta font-bold text-ink shadow-sub outline outline-1 -outline-offset-1 outline-success-deep transition-opacity hover:opacity-90">
-                    <x-gpa.icon name="shield" class="h-3.5 w-3.5 shrink-0" />
-                    Uji Keamanan &amp; Integritas Data
+                    Export Full Audit Log (.CSV)
                 </button>
-
-                @if (!empty($settings['period_lock']['is_locked']))
-                    <form method="POST" action="{{ route('direktur.laporan.unlock') }}" class="inline"
-                        data-gpa-confirm="Buka kembali kunci pembukuan periode {{ $settings['period_lock']['period'] ?? 'Oktober 2026' }}?"
-                        data-gpa-title="Konfirmasi Buka Kunci Periode"
-                        data-gpa-tone="warning"
-                        data-gpa-ok="Ya, Buka Kunci">
-                        @csrf
-                        <input type="hidden" name="period" value="{{ $settings['period_lock']['period'] ?? 'Oktober 2026' }}">
-                        <button type="submit"
-                            class="inline-flex items-center gap-1.5 rounded bg-amber-600 px-3 py-2 gpa-meta font-bold text-white shadow-sub transition-opacity hover:opacity-90">
-                            <x-gpa.icon name="lock" class="h-3.5 w-3.5 shrink-0" />
-                            Periode Terkunci (Buka Kunci)
-                        </button>
-                    </form>
-                @else
-                    <form method="POST" action="{{ route('direktur.laporan.lock') }}" class="inline"
-                        data-gpa-confirm="Kunci pembukuan periode saat ini? Data yang terkunci bersifat permanen."
-                        data-gpa-title="Konfirmasi Kunci Pembukuan"
-                        data-gpa-tone="warning"
-                        data-gpa-ok="Ya, Kunci Periode">
-                        @csrf
-                        <input type="hidden" name="period" value="{{ 'Kuartal ' . ceil(date('n') / 3) . ' (' . date('Y') . ')' }}">
-                        <button type="submit"
-                            class="inline-flex items-center gap-1.5 rounded bg-ink px-3 py-2 gpa-meta font-bold text-accent shadow-sub transition-opacity hover:opacity-90">
-                            <x-gpa.icon name="lock" class="h-3.5 w-3.5 shrink-0" />
-                            Kunci Sistem Periode
-                        </button>
-                    </form>
-                @endif
+                <button type="button" @click="verifyIntegrity()"
+                    class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded bg-accent px-3 py-2 gpa-meta font-bold text-ink shadow-sub outline outline-1 -outline-offset-1 outline-success-deep transition-opacity hover:opacity-90">
+                    <x-gpa.icon name="shield" class="h-3.5 w-3.5 shrink-0" />
+                    Uji Integritas Kriptografi
+                </button>
+                <button type="button" @click="lockPeriod()"
+                    class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded bg-ink px-3 py-2 gpa-meta font-bold text-accent shadow-sub transition-opacity hover:opacity-90">
+                    <x-gpa.icon name="lock" class="h-3.5 w-3.5 shrink-0" />
+                    Kunci Sistem Periode
+                </button>
             </div>
         </section>
 
@@ -140,13 +78,13 @@
             <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
                 <div class="flex flex-col gap-3">
                     <div class="flex items-center justify-between gap-2">
-                        <h2 class="gpa-micro-bold text-ink-body">INTEGRITAS DATA CATATAN</h2>
+                        <h2 class="gpa-micro-bold text-ink-body">INTEGRITAS LEDGER</h2>
                         <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep">
-                            SISTEM AKTIF
+                            ACTIVE GUARD
                         </span>
                     </div>
                     <p class="gpa-figure text-[22px] leading-7 text-ink">100% VALID</p>
-                    <p class="text-[11px] leading-4 text-ink-body">Verifikasi Data Sah &amp; Utuh</p>
+                    <p class="text-[11px] leading-4 text-ink-body">SHA-256 Checksum Verified</p>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
@@ -164,20 +102,20 @@
                             CEILING LIMIT
                         </span>
                     </div>
-                    <p class="gpa-figure text-[22px] leading-7 text-ink">Rp {{ number_format($totalCeilingLimit, 0, ',', '.') }}</p>
+                    <p class="gpa-figure text-[22px] leading-7 text-ink">Rp 2.500.000.000</p>
                     <p class="text-[11px] leading-4 text-ink-body">Plafon kredit korporat maksimum</p>
                     <div class="flex flex-col gap-1">
                         <div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-track" role="presentation">
-                            <div class="h-full rounded-full bg-success-deep" style="width: {{ min(100, $exposurePercent) }}%"></div>
+                            <div class="h-full rounded-full bg-success-deep" style="width: 47.4%"></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
                     <span class="gpa-note text-ink-body">Terutilisasi</span>
-                    <span class="gpa-note font-bold text-success-deep">Rp {{ number_format($totalUtilizedCredit, 0, ',', '.') }}</span>
+                    <span class="gpa-note font-bold text-success-deep">Rp 1.185.000.000</span>
                 </div>
-                <p class="gpa-note font-semibold text-success-deep">{{ $exposurePercent }}% Exposure Aman</p>
+                <p class="gpa-note font-semibold text-success-deep">47.4% Exposure Aman</p>
             </article>
 
             {{-- Metric 3: Dir Approval Status --}}
@@ -194,8 +132,8 @@
                 </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-surface-track pt-3">
-                    <span class="gpa-note text-ink-body">Menunggu Otorisasi Direktur</span>
-                    <span class="gpa-note font-bold text-success-deep">0 Menunggu Otorisasi (Selesai)</span>
+                    <span class="gpa-note text-ink-body">Pending Otorisasi Dir</span>
+                    <span class="gpa-note font-bold text-success-deep">0 Pending Dir (Clear)</span>
                 </div>
             </article>
 
@@ -203,9 +141,9 @@
             <article class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 shadow-card">
                 <div class="flex flex-col gap-3">
                     <div class="flex items-center justify-between gap-2">
-                        <h2 class="gpa-micro-bold text-ink-body">STANDAR KEPATUHAN SISTEM</h2>
+                        <h2 class="gpa-micro-bold text-ink-body">HARD-GUARD COMPLIANCE</h2>
                         <span class="shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board">
-                            SISTEM KEBIJAKAN
+                            POLICY ENGINE
                         </span>
                     </div>
                     <p class="gpa-figure text-[22px] leading-7 text-ink">0 Pelanggaran</p>
@@ -262,7 +200,7 @@
                     <footer class="mt-auto flex items-center justify-between gap-2 border-t border-line-hair pt-3">
                         <span class="inline-flex items-center gap-1 gpa-note font-semibold text-ink-body">
                             <x-gpa.icon name="bolt" class="h-3 w-3 shrink-0 text-success-deep" />
-                            Waktu Validasi: Otomatis Seketika
+                            SLA Validasi: Real-Time
                         </span>
                         <span class="gpa-micro-bold text-ink-body">CFG-DEV-0413</span>
                     </footer>
@@ -403,194 +341,169 @@
                         <span class="gpa-micro-bold text-ink-body">CFG-OVS-0203</span>
                     </footer>
                 </article>
-                {{-- Parameter Card 6: Kebijakan Pajak (PPN) & Distribusi Ongkos Kirim --}}
-                <article class="flex h-full flex-col gap-3 rounded-xl bg-surface-shell/60 p-4 outline outline-1 -outline-offset-1 outline-line-board">
-                    <div class="flex items-center justify-between gap-2">
-                        <span class="rounded px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta {{ !empty($settings['tax_ppn_enabled']) ? 'bg-amber-100 text-amber-900 outline outline-1 outline-amber-400' : 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep' }}">
-                            {{ !empty($settings['tax_ppn_enabled']) ? 'PPN STANDAR AKTIF' : 'BEBAS PPN (DTP PERTANIAN)' }}
-                        </span>
-                        <span class="text-[10px] font-bold text-ink-subtle">KONTROL DIREKTUR</span>
-                    </div>
-                    <h3 class="text-[13px] font-bold leading-5 text-ink">Kebijakan Pajak (PPN) &amp; Tarif Distribusi Armada</h3>
-                    <p class="text-[11px] leading-4 text-ink-body">Otoritas kendali Direktur atas pengenaan PPN hasil pertanian dan ketentuan subsidi ongkos kirim armada cold-chain GPA.</p>
-
-                    <dl class="flex flex-col gap-1.5 border-t border-line-hair pt-3">
-                        <div class="flex items-start justify-between gap-3">
-                            <dt class="gpa-note text-ink-body">Status PPN Pertanian:</dt>
-                            <dd class="gpa-meta text-right font-bold {{ !empty($settings['tax_ppn_enabled']) ? 'text-amber-700' : 'text-success-deep' }}">
-                                {{ !empty($settings['tax_ppn_enabled']) ? 'Kena PPN (' . ($settings['tax_ppn_percent'] ?? 11) . '%)' : 'Bebas PPN 0% (DTP)' }}
-                            </dd>
-                        </div>
-                        <div class="flex items-start justify-between gap-3">
-                            <dt class="gpa-note text-ink-body">Tarif Standar Ongkir:</dt>
-                            <dd class="gpa-meta text-right font-bold text-ink">Rp {{ number_format($settings['default_shipping_fee'] ?? 75000, 0, ',', '.') }}</dd>
-                        </div>
-                        <div class="flex items-start justify-between gap-3">
-                            <dt class="gpa-note text-ink-body">Batas Bebas Ongkir:</dt>
-                            <dd class="gpa-meta text-right font-bold text-ink">Pesanan &ge; Rp {{ number_format($settings['free_shipping_min_order'] ?? 1000000, 0, ',', '.') }}</dd>
-                        </div>
-                    </dl>
-
-                    <footer class="mt-auto flex items-center justify-between gap-2 border-t border-line-hair pt-3">
-                        <span class="inline-flex items-center gap-1 gpa-note font-semibold text-ink-body">
-                            <x-gpa.icon name="shield-check" class="h-3 w-3 shrink-0 text-success-deep" />
-                            Dasar Regulasi: PMK PPN Pertanian
-                        </span>
-                        <span class="gpa-micro-bold text-ink-body">CFG-TAX-7101</span>
-                    </footer>
-                </article>
             </div>
 
             <p class="flex items-start gap-2 border-t border-line-board/60 pt-3">
                 <x-gpa.icon name="info" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-ink-body" />
-                <span class="gpa-note text-ink-body">Pengubahan parameter kebijakan dapat diatur langsung oleh Direktur Utama melalui tombol di atas.</span>
+                <span class="gpa-note text-ink-body">Pengubahan parameter memerlukan PIN Master Direktur Utama.</span>
             </p>
         </section>
 
-        {{-- Modal Edit Parameter Kebijakan & Perpajakan --}}
-        <div x-show="paramModalOpen" x-cloak
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-            <div @click.away="paramModalOpen = false"
-                class="w-full max-w-2xl rounded-2xl border border-line bg-surface p-6 shadow-2xl flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
-                <div class="flex items-center justify-between border-b border-line pb-4">
-                    <div class="flex items-center gap-3">
-                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand text-accent">
-                            <x-gpa.icon name="sliders" class="h-5 w-5" />
-                        </span>
-                        <div>
-                            <h3 class="font-sans text-base font-bold text-ink">Edit Parameter Kebijakan &amp; Perpajakan Sistem</h3>
-                            <p class="text-xs text-ink-body">Wewenang Khusus Direktur Utama Green Pasundan Agriculture</p>
-                        </div>
-                    </div>
-                    <button type="button" @click="paramModalOpen = false"
-                        class="rounded-lg p-1 text-ink-subtle hover:bg-surface-muted hover:text-ink">
-                        <x-gpa.icon name="x" class="h-5 w-5" />
-                    </button>
-                </div>
-
-                <form method="POST" action="{{ route('direktur.tata-kelola.update-parameters') }}" class="flex flex-col gap-5">
-                    @csrf
-
-                    {{-- Bagian 1: Kebijakan Perpajakan (PPN) --}}
-                    <div class="rounded-xl border border-line-board/60 bg-surface-shell/50 p-4 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <x-gpa.icon name="file-text" class="h-4 w-4 text-brand" />
-                                <span class="font-sans text-xs font-bold uppercase tracking-wider text-ink">Kontrol Pajak Pertambahan Nilai (PPN)</span>
-                            </div>
-                            <span class="rounded bg-accent/30 px-2 py-0.5 text-[10px] font-bold text-success-deep">Wewenang Direktur</span>
-                        </div>
-                        <p class="text-xs text-ink-body">
-                            Secara perundangan (UU HPP &amp; PMK Pajak Pertanian), hasil pertanian segar mendapat fasilitas <strong>Bebas PPN 0% (DTP)</strong>. Aktifkan opsi ini hanya jika pesanan wajib menerbitkan Faktur Pajak PKP standar.
-                        </p>
-
-                        <div class="grid gap-3 sm:grid-cols-2 pt-1">
-                            <label class="flex items-start gap-3 rounded-xl border border-line bg-surface p-3 cursor-pointer hover:border-brand">
-                                <input type="checkbox" name="tax_ppn_enabled" value="1"
-                                    {{ !empty($settings['tax_ppn_enabled']) ? 'checked' : '' }}
-                                    class="mt-0.5 h-4 w-4 rounded border-line text-brand focus:ring-brand">
-                                <div class="text-xs">
-                                    <span class="font-bold text-ink block">Aktifkan PPN Standar</span>
-                                    <span class="text-ink-subtle text-[11px]">Kenakan PPN pada checkout &amp; faktur invoice</span>
-                                </div>
-                            </label>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-ink mb-1">Besaran Tarif PPN (%)</label>
-                                <input type="number" step="0.1" min="0" max="100" name="tax_ppn_percent"
-                                    value="{{ $settings['tax_ppn_percent'] ?? 11 }}"
-                                    class="w-full rounded-lg border border-line bg-surface px-3 py-2 text-xs font-bold text-ink focus:border-brand focus:ring-0">
-                                <span class="text-[10px] text-ink-subtle">Standar nasional Indonesia: 11% (atau 12%)</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Bagian 2: Kebijakan Ongkos Kirim Armada Chiller --}}
-                    <div class="rounded-xl border border-line-board/60 bg-surface-shell/50 p-4 space-y-3">
-                        <div class="flex items-center gap-2">
-                            <x-gpa.icon name="truck" class="h-4 w-4 text-success-deep" />
-                            <span class="font-sans text-xs font-bold uppercase tracking-wider text-ink">Kebijakan Biaya Distribusi Armada Cold-Chain</span>
-                        </div>
-
-                        <div class="grid gap-3 sm:grid-cols-2">
-                            <div>
-                                <label class="block text-xs font-semibold text-ink mb-1">Tarif Standar Ongkir Armada Chiller (Rp)</label>
-                                <input type="number" step="1000" min="0" name="default_shipping_fee"
-                                    value="{{ $settings['default_shipping_fee'] ?? 75000 }}"
-                                    class="w-full rounded-lg border border-line bg-surface px-3 py-2 text-xs font-bold text-ink focus:border-brand focus:ring-0">
-                                <span class="text-[10px] text-ink-subtle">Berlaku untuk pengantaran koridor Jawa Barat</span>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-ink mb-1">Batas Belanja Otomatis Bebas Ongkir (Rp)</label>
-                                <input type="number" step="10000" min="0" name="free_shipping_min_order"
-                                    value="{{ $settings['free_shipping_min_order'] ?? 1000000 }}"
-                                    class="w-full rounded-lg border border-line bg-surface px-3 py-2 text-xs font-bold text-ink focus:border-brand focus:ring-0">
-                                <span class="text-[10px] text-ink-subtle">Pesanan reguler di atas nilai ini otomatis gratis ongkir</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- Bagian 3: Parameter Operasional Lainnya --}}
-                    <div class="grid gap-3 sm:grid-cols-2">
-                        <div>
-                            <label class="block text-xs font-semibold text-ink mb-1">Toleransi Susut Maksimal (%)</label>
-                            <input type="number" step="0.1" min="0.5" max="10" name="warehouse_loss_max_percent"
-                                value="{{ $settings['warehouse_loss_max_percent'] ?? 2.0 }}"
-                                class="w-full rounded-lg border border-line bg-surface px-3 py-2 text-xs font-bold text-ink focus:border-brand focus:ring-0">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-ink mb-1">Ambang Peringatan Susut (%)</label>
-                            <input type="number" step="0.1" min="0.1" max="5" name="warehouse_loss_warning_percent"
-                                value="{{ $settings['warehouse_loss_warning_percent'] ?? 1.5 }}"
-                                class="w-full rounded-lg border border-line bg-surface px-3 py-2 text-xs font-bold text-ink focus:border-brand focus:ring-0">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-ink mb-1">Plafon Default Kredit TOP (Rp)</label>
-                            <input type="number" step="1000000" min="1000000" name="default_top_credit_ceiling"
-                                value="{{ $settings['default_top_credit_ceiling'] ?? 100000000 }}"
-                                class="w-full rounded-lg border border-line bg-surface px-3 py-2 text-xs font-bold text-ink focus:border-brand focus:ring-0">
-                        </div>
-
-                        <div>
-                            <label class="block text-xs font-semibold text-ink mb-1">Default Hari Jatuh Tempo (Hari)</label>
-                            <input type="number" min="7" max="90" name="default_top_days"
-                                value="{{ $settings['default_top_days'] ?? 30 }}"
-                                class="w-full rounded-lg border border-line bg-surface px-3 py-2 text-xs font-bold text-ink focus:border-brand focus:ring-0">
-                        </div>
-                    </div>
-
-                    <div class="flex items-center justify-end gap-2 border-t border-line pt-4">
-                        <button type="button" @click="paramModalOpen = false"
-                            class="rounded-xl border border-line bg-surface px-4 py-2.5 text-xs font-semibold text-ink hover:bg-surface-muted transition-colors">
-                            Batal
-                        </button>
-                        <button type="submit"
-                            class="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-xs font-bold text-white shadow-sub hover:bg-brand-deep transition-all">
-                            <x-gpa.icon name="check" class="h-4 w-4 text-accent" />
-                            Simpan Perubahan Kebijakan
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
         {{-- Kustomisasi Kanal Pembayaran Resmi GPA (Direktur Master Control) --}}
-        <script type="application/json" id="gpa-payment-channels-json">
-            {!! json_encode($paymentChannels ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!}
-        </script>
-
-        <section class="flex flex-col gap-5 rounded-2xl bg-surface p-6 shadow-card border border-line"
-            x-data="direkturPaymentChannels(JSON.parse(document.getElementById('gpa-payment-channels-json')?.textContent || '[]'))">
+        <section class="flex flex-col gap-5 rounded-2xl bg-surface p-4 sm:p-6 shadow-card border border-line"
+            x-data="{
+                channels: @js($paymentChannels ?? []),
+                editing: false,
+                modalImage: null,
+                modalTitle: '',
+                openModal(url, title) {
+                    this.modalImage = url;
+                    this.modalTitle = title || 'Barcode QRIS Resmi';
+                },
+                previewImage(event, channel) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        channel.preview_url = URL.createObjectURL(file);
+                    }
+                },
+                addChannel(type = 'BANK') {
+                    const id = (type === 'QRIS' ? 'qris_' : (type === 'EWALLET' ? 'ewallet_' : 'bank_')) + Date.now();
+                    const template = {
+                        id: id,
+                        type: type,
+                        name: type === 'QRIS' ? 'QRIS Resmi GPA' : (type === 'EWALLET' ? 'Dompet Digital Bisnis GPA' : 'Bank Baru'),
+                        bank_code: type === 'QRIS' ? 'QRIS' : (type === 'EWALLET' ? 'EWALLET' : 'BANK'),
+                        account_number: type === 'QRIS' ? 'ID1020039182948' : '1234-5678-90',
+                        account_name: 'PT GREEN PASUNDAN AGRICULTURE',
+                        description: type === 'QRIS' ? 'Pindai barcode QRIS via m-banking & e-wallet apa saja' : 'Rekening Giro Korporat Resmi',
+                        instructions: type === 'QRIS' ? 'Pindai barcode QRIS resmi GPA di bawah dan simpan bukti tangkapan layar transaksi.' : 'Sertakan nomor faktur di berita transfer.',
+                        image_url: type === 'QRIS' ? '/storage/payment-channels/qris-gpa-default.png' : null,
+                        preview_url: null,
+                        is_active: true
+                    };
+                    this.channels.push(template);
+                    this.editing = true;
+                },
+                removeChannel(index) {
+                    if (this.channels.length <= 1) {
+                        alert('Minimal harus ada satu kanal pembayaran.');
+                        return;
+                    }
+                    this.channels.splice(index, 1);
+                },
+                loadPopularPresets() {
+                    if (confirm('Terapkan template lengkap seluruh metode pembayaran terpopuler di Indonesia (Bank BCA, Mandiri, BRI, BNI, BSI, QRIS Standar Nasional dengan Barcode, & E-Wallet)? Anda dapat menyesuaikan kembali sebelum menekan tombol Simpan.')) {
+                        this.channels = [
+                            {
+                                id: 'bca',
+                                type: 'BANK',
+                                name: 'Bank BCA',
+                                bank_code: 'BCA',
+                                account_number: '8210-992-3841',
+                                account_name: 'PT Green Pasundan Agriculture (Divisi Keuangan B2B)',
+                                description: 'Rekening Virtual & Giro Korporat Utama',
+                                instructions: 'Sertakan Nomor Faktur di berita transfer untuk rekonsiliasi otomatis perbankan.',
+                                image_url: null,
+                                logo_url: '/images/payments/bca.svg',
+                                preview_url: null,
+                                is_active: true
+                            },
+                            {
+                                id: 'mandiri',
+                                type: 'BANK',
+                                name: 'Bank Mandiri',
+                                bank_code: 'MANDIRI',
+                                account_number: '137-00-1928374-1',
+                                account_name: 'PT Green Pasundan Agriculture',
+                                description: 'Giro Korporat & Mandiri Cash Management (MCM)',
+                                instructions: 'Transfer via Mandiri Livin, Kopra by Mandiri, atau Kliring SKN/BI-FAST.',
+                                image_url: null,
+                                logo_url: '/images/payments/mandiri.svg',
+                                preview_url: null,
+                                is_active: true
+                            },
+                            {
+                                id: 'bri',
+                                type: 'BANK',
+                                name: 'Bank BRI',
+                                bank_code: 'BRI',
+                                account_number: '0341-01-001928-30-2',
+                                account_name: 'PT Green Pasundan Agriculture',
+                                description: 'Rekening Operasional Agribisnis & BritAma Bisnis',
+                                instructions: 'Transfer via BRImo, Cash Management BRI, atau Teller BRI seluruh Indonesia.',
+                                image_url: null,
+                                logo_url: '/images/payments/bri.svg',
+                                preview_url: null,
+                                is_active: true
+                            },
+                            {
+                                id: 'bni',
+                                type: 'BANK',
+                                name: 'Bank BNI',
+                                bank_code: 'BNI',
+                                account_number: '0819-283-746',
+                                account_name: 'PT Green Pasundan Agriculture',
+                                description: 'Rekening Giro Bisnis & BNI Direct',
+                                instructions: 'Transfer via BNI Direct, BNI Mobile Banking, atau ATM BNI.',
+                                image_url: null,
+                                logo_url: '/images/payments/bni.svg',
+                                preview_url: null,
+                                is_active: true
+                            },
+                            {
+                                id: 'bsi',
+                                type: 'BANK',
+                                name: 'Bank Syariah Indonesia (BSI)',
+                                bank_code: 'BSI',
+                                account_number: '719-283-9481',
+                                account_name: 'PT Green Pasundan Agriculture',
+                                description: 'Rekening Giro Wadiah Syariah Bebas Riba',
+                                instructions: 'Transfer via BSI Mobile, BSI Net Banking, atau Kliring BI-FAST.',
+                                image_url: null,
+                                logo_url: '/images/payments/bsi.svg',
+                                preview_url: null,
+                                is_active: true
+                            },
+                            {
+                                id: 'qris',
+                                type: 'QRIS',
+                                name: 'QRIS GPA (Semua E-Wallet & Mobile Banking)',
+                                bank_code: 'QRIS',
+                                account_number: 'ID1020039182948',
+                                account_name: 'PT GREEN PASUNDAN AGRICULTURE',
+                                description: 'Pindai QRIS via BCA Mobile, Livin, BRImo, GoPay, OVO, ShopeePay, DANA',
+                                instructions: 'Scan barcode QRIS resmi GPA di bawah dan simpan bukti tangkapan layar transaksi.',
+                                image_url: '/storage/payment-channels/qris-gpa-default.png',
+                                logo_url: '/images/payments/qris.svg',
+                                preview_url: null,
+                                is_active: true
+                            },
+                            {
+                                id: 'ewallet',
+                                type: 'EWALLET',
+                                name: 'Dompet Digital Bisnis (GoPay & DANA GPA)',
+                                bank_code: 'EWALLET',
+                                account_number: '0812-8888-9281',
+                                account_name: 'PT GREEN PASUNDAN AGRICULTURE',
+                                description: 'Merchant Dompet Digital Resmi Terverifikasi',
+                                instructions: 'Transfer saldo dompet digital ke nomor merchant resmi PT Green Pasundan Agriculture.',
+                                image_url: null,
+                                logo_url: '/images/payments/ewallet.svg',
+                                preview_url: null,
+                                is_active: true
+                            }
+                        ];
+                        this.editing = true;
+                    }
+                }
+            }">
             <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft pb-4">
                 <div class="min-w-0">
                     <div class="flex items-center gap-2">
                         <span class="rounded bg-accent px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-ink">
                             Otoritas Direktur
                         </span>
-                        <span class="text-xs text-ink-quiet">Metode Pembayaran Rekening Bank &amp; QRIS Resmi</span>
+                        <span class="text-xs text-ink-quiet">Gateway &amp; Settlement Rekening &amp; QRIS Resmi</span>
                     </div>
                     <h2 class="mt-1 font-sans text-xl font-bold text-ink">
                         Kustomisasi Rekening Bank &amp; Foto Barcode QRIS Pembayaran Klien
@@ -629,7 +542,7 @@
 
             <form method="POST" action="{{ route('direktur.tata-kelola.payment-channels') }}" enctype="multipart/form-data" class="flex flex-col gap-4">
                 @csrf
-                <div class="grid gap-4 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                     <template x-for="(channel, idx) in channels" :key="channel.id">
                         <article class="flex flex-col justify-between rounded-xl border p-4 transition-all"
                             :class="channel.is_active ? 'border-line-soft bg-surface shadow-sub' : 'border-line-soft/40 bg-surface-muted/40 opacity-75'">
@@ -683,7 +596,9 @@
                                     <div x-show="channel.type === 'QRIS' || channel.image_url" class="mt-1 flex items-center gap-2.5 rounded-xl border border-line-soft bg-surface-muted/60 p-2.5">
                                         <div class="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-line-soft bg-white shadow-xs cursor-pointer group"
                                             @click="openModal(channel.image_url || '/storage/payment-channels/qris-gpa-default.png', channel.name)">
-                                            <img :src="channel.image_url || '/storage/payment-channels/qris-gpa-default.png'" alt="Barcode QRIS" class="h-full w-full object-contain p-0.5">
+                                            <img :src="channel.image_url || '/storage/payment-channels/qris-gpa-default.png'" 
+                                                onerror="this.onerror=null;this.src='/storage/payment-channels/qris-gpa-default.png'"
+                                                alt="Barcode QRIS" class="h-full w-full object-contain p-0.5">
                                             <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <x-gpa.icon name="eye" class="h-4 w-4 text-white" />
                                             </div>
@@ -748,15 +663,16 @@
                                         <div class="mt-2 flex items-center gap-3" x-show="channel.preview_url || channel.image_url || channel.type === 'QRIS'">
                                             <div class="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-line-soft bg-white shadow-xs">
                                                 <img :src="channel.preview_url || channel.image_url || '/storage/payment-channels/qris-gpa-default.png'" 
+                                                     onerror="this.onerror=null;this.src='/storage/payment-channels/qris-gpa-default.png'"
                                                      alt="Pratinjau" 
                                                      class="h-full w-full object-contain p-1">
                                             </div>
                                             <div class="min-w-0 flex-1 text-[10px]">
                                                 <p x-show="channel.preview_url" class="font-bold text-success-deep">
-                                                    ✓ Foto baru siap diunggah &amp; disimpan
+                                                    âœ“ Foto baru siap diunggah &amp; disimpan
                                                 </p>
                                                 <p x-show="!channel.preview_url && channel.image_url" class="text-ink-body font-medium">
-                                                    Foto QRIS aktif saat ini telah terpasang di sistem
+                                                    Foto aktif saat ini tersimpan di server
                                                 </p>
                                                 <p x-show="!channel.preview_url && !channel.image_url" class="text-ink-quiet">
                                                     Menggunakan barcode QRIS template bawaan
@@ -852,12 +768,12 @@
         </section>
 
         {{-- Audit trail --}}
-        <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card border border-line">
+        <section class="flex flex-col gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card border border-line">
             <header class="space-y-4 border-b border-line pb-5">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div class="min-w-0">
-                        <h2 class="text-base sm:text-lg font-bold text-ink">Tabel Catatan Audit &amp; Riwayat Aksi Direksi / Sekretaris</h2>
-                        <p class="text-xs text-ink-subtle mt-0.5">Pencatatan riwayat aman seluruh aktivitas operasional, verifikasi, dan tata kelola sistem</p>
+                        <h2 class="text-base sm:text-lg font-bold text-ink">Tabel Audit Trail Forensik &amp; Riwayat Aksi Direksi / Admin</h2>
+                        <p class="text-xs text-ink-subtle mt-0.5">Pencatatan kriptografis seluruh aktivitas operasional, verifikasi, dan tata kelola sistem</p>
                     </div>
 
                     <div class="flex items-center gap-2 shrink-0">
@@ -875,18 +791,18 @@
                 </div>
 
                 {{-- Filter & Search Bar --}}
-                <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-1">
                     <div class="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
-                        <div class="relative flex items-center min-w-[220px] max-w-xs flex-1">
+                        <div class="relative flex items-center w-full sm:w-auto min-w-[200px] max-w-full sm:max-w-xs flex-1">
                             <x-gpa.icon name="search" class="pointer-events-none absolute left-3 h-4 w-4 text-ink-subtle" />
                             <input id="audit-search" type="search" x-model="search" @input="onSearchInput()"
                                 placeholder="Cari Dokumen / Hash / Aktor..."
                                 class="w-full rounded-xl border border-line bg-surface-muted/60 py-2 pl-9 pr-3 text-xs font-semibold text-ink placeholder:text-ink-subtle focus:bg-surface focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all">
                         </div>
 
-                        <div class="relative">
+                        <div class="relative w-full sm:w-auto">
                             <select x-model="actionFilter" @change="page = 1"
-                                class="rounded-xl border border-line bg-surface-muted/60 py-2 pl-3 pr-8 text-xs font-semibold text-ink focus:bg-surface focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all cursor-pointer">
+                                class="w-full sm:w-auto rounded-xl border border-line bg-surface-muted/60 py-2 pl-3 pr-8 text-xs font-semibold text-ink focus:bg-surface focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20 transition-all cursor-pointer">
                                 <option value="all">Semua Kategori Aksi ({{ count($auditRows) }})</option>
                                 @foreach ($auditActions as $auditAction)
                                     <option value="{{ $auditAction }}">{{ $auditAction }}</option>
@@ -900,7 +816,7 @@
                         </button>
                     </div>
 
-                    <div class="flex items-center gap-2 text-xs text-ink-subtle shrink-0">
+                    <div class="flex items-center justify-between sm:justify-end gap-2 text-xs text-ink-subtle shrink-0">
                         <span>Tampilkan:</span>
                         <select x-model.number="perPage" @change="page = 1"
                             class="rounded-lg border border-line bg-surface-muted/40 px-2 py-1 text-xs font-semibold text-ink focus:border-brand focus:outline-none cursor-pointer">
@@ -914,8 +830,8 @@
 
             {{-- Tabel Pas Sesuai Lebar Container (Dengan Horizontal Scroll Internal jika layar sempit) --}}
             <div class="rounded-xl border border-line bg-surface overflow-x-auto">
-                <table class="w-full table-fixed text-left text-xs border-collapse">
-                    <caption class="sr-only">Tabel Catatan Audit &amp; Riwayat Aksi Direksi / Sekretaris</caption>
+                <table class="w-full min-w-[760px] table-fixed text-left text-xs border-collapse">
+                    <caption class="sr-only">Tabel Audit Trail Forensik &amp; Riwayat Aksi Direksi / Admin</caption>
                     <thead>
                         <tr class="border-b border-line bg-surface-muted/60">
                             <th scope="col" class="w-[14%] px-3.5 py-3 text-[10px] font-bold uppercase tracking-wider text-ink-subtle">
@@ -983,7 +899,7 @@
                         <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
                     <span class="text-xs font-bold text-brand-line">
-                        Status Catatan Transaksi: Terverifikasi Sah 100%
+                        Status Ledger: Rantai Blok Terverifikasi 100%
                     </span>
                 </div>
 

@@ -8,14 +8,15 @@
 @endphp
 
 @section('content')
-    <div class="space-y-6">
-        <section class="gpa-panel overflow-hidden">
-            <div class="border-b border-line-soft px-6 py-6">
-                <h1 class="max-w-4xl font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-ink">
+    <div class="space-y-3">
+        <section class="rounded-2xl bg-surface shadow-card overflow-hidden ring-1 ring-line-hair">
+            <div class="border-b border-line-board/60 p-4 sm:p-6">
+                <h1 class="max-w-4xl font-sans text-xl sm:text-2xl lg:text-3xl font-bold leading-tight sm:leading-10 tracking-[-0.01em] text-ink">
                     Dashboard Konsol Operasional &amp; Tata Kelola Administrasi
+                </h1>
             </div>
 
-            <div class="flex flex-wrap gap-2 px-6 py-5">
+            <div class="flex flex-wrap gap-1.5 px-3 py-2 sm:px-4">
                 <a href="{{ route('sekretaris.verifikasi') }}"
                     class="inline-flex h-9 items-center gap-1.5 rounded-full bg-surface px-3.5 shadow-sub outline outline-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="badge-check" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
@@ -36,132 +37,96 @@
             </div>
         </section>
 
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
             {{-- Kartu 1: Total Pesanan Masuk --}}
-            <article class="flex flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
-                    <p class="gpa-meta-lg uppercase leading-[0.875rem] tracking-[0.55px] text-ink-body">
+            <article class="flex min-h-[7rem] flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
+                    <p class="gpa-meta uppercase leading-tight tracking-[0.4px] text-ink-body">
                         Total Pesanan Masuk
                     </p>
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/50 p-1.5 text-success-deep">
-                        <x-gpa.icon name="gauge" class="h-[15px] w-[15px]" />
+                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-accent/50 text-success-deep">
+                        <x-gpa.icon name="gauge" class="h-[13px] w-[13px]" />
                     </span>
                 </div>
 
                 <div>
-                    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                        <span class="font-sans text-[2rem] font-bold leading-10 tracking-[-0.01em] text-ink">
+                    <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                        <span class="font-sans text-[1.5rem] font-bold leading-7 tracking-[-0.01em] text-ink">
                             {{ $allOrdersCount ?? 0 }}
                         </span>
-                        <span class="text-sm font-medium text-ink-body">
+                        <span class="text-[11px] font-medium text-ink-body">
                             Pesanan Terjadwal
                         </span>
                     </div>
-                    <p class="mt-2 text-xs leading-4">
-                        <span class="font-bold text-ink">Hari ini: </span>
-                        <span class="text-ink-body">{{ $totalTodayCount ?? 0 }} PO baru masuk via web portal</span>
-                    </p>
-                </div>
-
-                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-faint pt-3">
-                    <p class="gpa-note text-ink-body">Target Layanan</p>
-                    <span class="gpa-meta-lg font-bold tracking-[0.28px] text-success-deep">Target &lt; 2 Jam</span>
                 </div>
             </article>
 
             {{-- Kartu 2: Menunggu Verifikasi PO --}}
-            <article class="flex flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
-                    <p class="gpa-meta-lg uppercase leading-[0.875rem] tracking-[0.55px] text-ink-body">
-                        Menunggu Verifikasi PO
+            <article class="flex min-h-[7rem] flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
+                    <p class="gpa-meta uppercase leading-tight tracking-[0.4px] text-ink-body">
+                        Menunggu Verifikasi
                     </p>
-                    <span class="shrink-0 rounded border border-warning/40 bg-warning-wash px-1.5 py-0.5 gpa-micro font-bold text-warning-deep">
+                    <span class="shrink-0 rounded border border-warning/40 bg-warning-wash px-1 py-0.5 gpa-micro font-bold text-warning-deep">
                         PRIORITAS
                     </span>
                 </div>
 
                 <div>
-                    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                        <span class="font-sans text-[2rem] font-bold leading-10 tracking-[-0.01em] text-warning-deep">
+                    <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                        <span class="font-sans text-[1.5rem] font-bold leading-7 tracking-[-0.01em] text-warning-deep">
                             {{ $pendingOrdersCount ?? 0 }}
                         </span>
-                        <span class="text-sm font-medium text-ink-body">
+                        <span class="text-[11px] font-medium text-ink-body">
                             PO Butuh Tindakan
                         </span>
                     </div>
-                    <p class="mt-2 text-xs leading-4">
-                        <span class="font-bold text-ink">Cut-off subuh: </span>
-                        <span class="text-ink-body">Kunci stok sebelum alokasi sortir kebun</span>
-                    </p>
-                </div>
-
-                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-faint pt-3">
-                    <p class="gpa-note text-ink-body">Antrean Terlama</p>
-                    <span class="gpa-meta-lg font-bold tracking-[0.28px] text-warning-deep">{{ ($pendingOrdersCount ?? 0) > 0 ? 'Prioritas Antrean' : 'Antrean Bersih' }}</span>
                 </div>
             </article>
 
             {{-- Kartu 3: Penimbangan & Siap Kirim --}}
-            <article class="flex flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
-                    <p class="gpa-meta-lg uppercase leading-[0.875rem] tracking-[0.55px] text-ink-body">
+            <article class="flex min-h-[7rem] flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
+                    <p class="gpa-meta uppercase leading-tight tracking-[0.4px] text-ink-body">
                         Penimbangan &amp; Siap Kirim
                     </p>
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/50 p-1.5 text-success-deep">
+                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-accent/50 text-success-deep">
                         <x-gpa.icon name="truck" class="h-[15px] w-[15px]" />
                     </span>
                 </div>
 
                 <div>
-                    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                        <span class="font-sans text-[2rem] font-bold leading-10 tracking-[-0.01em] text-ink">
+                    <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                        <span class="font-sans text-[1.5rem] font-bold leading-7 tracking-[-0.01em] text-ink">
                             {{ ($readyOrdersCount ?? 0) + ($shippingOrdersCount ?? 0) }}
                         </span>
-                        <span class="text-sm font-medium text-ink-body">
+                        <span class="text-[11px] font-medium text-ink-body">
                             Armada Terjadwal
                         </span>
                     </div>
-                    <p class="mt-2 text-xs leading-4">
-                        <span class="font-bold text-success-deep">Netto Tera: </span>
-                        <span class="text-ink-body">Deviasi &lt; 0.5% batas aman metrologi sah</span>
-                    </p>
-                </div>
-
-                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-faint pt-3">
-                    <p class="gpa-note text-ink-body">Status Armada</p>
-                    <span class="gpa-meta-lg font-bold tracking-[0.28px] text-ink">{{ $shippingOrdersCount ?? 0 }} Dalam Perjalanan</span>
                 </div>
             </article>
 
             {{-- Kartu 4: Verifikasi Pembayaran --}}
-            <article class="flex flex-col justify-between gap-5 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex items-start justify-between gap-3">
-                    <p class="gpa-meta-lg uppercase leading-[0.875rem] tracking-[0.55px] text-ink-body">
+            <article class="flex min-h-[7rem] flex-col gap-2 rounded-2xl bg-surface p-4 shadow-card">
+                <div class="flex min-h-8 items-center justify-between gap-2">
+                    <p class="gpa-meta uppercase leading-tight tracking-[0.4px] text-ink-body">
                         Verifikasi Pembayaran
                     </p>
-                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-pill p-1.5 text-ink">
+                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-surface-pill text-ink">
                         <x-gpa.icon name="banknote" class="h-[15px] w-[15px]" />
                     </span>
                 </div>
 
                 <div>
-                    <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                        <span class="font-sans text-[2rem] font-bold leading-10 tracking-[-0.01em] text-ink">
+                    <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5">
+                        <span class="font-sans text-[1.5rem] font-bold leading-7 tracking-[-0.01em] text-ink">
                             {{ $pendingPaymentsCount ?? 0 }}
                         </span>
-                        <span class="text-sm font-medium text-ink-body">
+                        <span class="text-[11px] font-medium text-ink-body">
                             Struk / Mutasi Bank
                         </span>
                     </div>
-                    <p class="mt-2 text-xs leading-4">
-                        <span class="font-bold text-ink">Klien Reguler: </span>
-                        <span class="text-ink-body">Pencocokan saldo rekening koran BCA &amp; Mandiri</span>
-                    </p>
-                </div>
-
-                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-faint pt-3">
-                    <p class="gpa-note text-ink-body">Penyelesaian</p>
-                    <span class="gpa-meta-lg font-bold tracking-[0.28px] text-success-deep">100% Hari Ini</span>
                 </div>
             </article>
         </div>
@@ -172,11 +137,11 @@
                     <div class="flex flex-wrap items-start justify-between gap-3 border-b border-line-soft px-6 py-5">
                         <div class="min-w-0">
                             <h2 class="flex items-center gap-2 font-sans text-lg font-bold text-ink">
-                                Antrean Pesanan Menunggu Verifikasi Administrasi (PO Baru)
+                                Antrean Pesanan Menunggu Verifikasi Administrasi
                             </h2>
                         </div>
                         <span class="shrink-0 rounded bg-surface-pill px-2 py-1 gpa-micro text-ink-body">
-                            Prioritas Pengiriman Hari Ini
+                            Prioritas SLA Hari Ini
                         </span>
                     </div>
 
@@ -286,16 +251,12 @@
                     <div class="flex flex-wrap items-start justify-between gap-3">
                         <div class="min-w-0">
                             <h2 class="font-sans text-lg font-bold text-ink">Pipeline Operasional Siklus Pesanan Hari Ini</h2>
-                            <p class="mt-1 text-xs text-ink-body">Siklus hidup pesanan dari pemesanan klien hingga penagihan piutang dan penerbitan faktur sah.</p>
                         </div>
-                        <span class="shrink-0 rounded bg-surface-pill px-2 py-1 gpa-micro-bold text-ink">
-                            Realtime Tracking
-                        </span>
                     </div>
 
                     <ol class="grid grid-cols-2 gap-3 pt-4 sm:grid-cols-3 xl:grid-cols-5">
                         <li @class([
-                            'rounded-xl border bg-surface-shell p-3',
+                            'rounded-xl border bg-surface-shell p-2.5',
                             'border-warning/60 bg-warning-soft/20' => ($pendingOrdersCount ?? 0) > 0,
                             'border-line-soft' => ($pendingOrdersCount ?? 0) <= 0,
                         ])>
@@ -305,13 +266,13 @@
                                 </span>
                                 <x-gpa.icon name="shield" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
-                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $pendingOrdersCount ?? 0 }} PO</p>
+                            <p class="mt-2 font-sans text-lg font-bold leading-6 text-ink">{{ $pendingOrdersCount ?? 0 }} PO</p>
                             <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Verifikasi PO</p>
                             <p class="mt-0.5 gpa-meta text-warning-deep font-semibold">Sekretariat GPA</p>
                         </li>
 
                         <li @class([
-                            'rounded-xl border bg-surface-shell p-3',
+                            'rounded-xl border bg-surface-shell p-2.5',
                             'border-success-deep/40' => ($verifiedOrdersCount ?? 0) > 0,
                             'border-line-soft' => ($verifiedOrdersCount ?? 0) <= 0,
                         ])>
@@ -321,13 +282,13 @@
                                 </span>
                                 <x-gpa.icon name="leaf" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
-                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $verifiedOrdersCount ?? 0 }} PO</p>
+                            <p class="mt-2 font-sans text-lg font-bold leading-6 text-ink">{{ $verifiedOrdersCount ?? 0 }} PO</p>
                             <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Alokasi Panen</p>
                             <p class="mt-0.5 gpa-meta text-ink-body">Sentra Kebun</p>
                         </li>
 
                         <li @class([
-                            'rounded-xl border bg-surface-shell p-3',
+                            'rounded-xl border bg-surface-shell p-2.5',
                             'border-success-deep/40' => ($readyOrdersCount ?? 0) > 0,
                             'border-line-soft' => ($readyOrdersCount ?? 0) <= 0,
                         ])>
@@ -337,13 +298,13 @@
                                 </span>
                                 <x-gpa.icon name="scale" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
-                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $readyOrdersCount ?? 0 }} PO</p>
+                            <p class="mt-2 font-sans text-lg font-bold leading-6 text-ink">{{ $readyOrdersCount ?? 0 }} PO</p>
                             <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Sortir &amp; Timbang</p>
                             <p class="mt-0.5 gpa-meta text-ink-body">Tera Netto Sah</p>
                         </li>
 
                         <li @class([
-                            'rounded-xl border bg-surface-shell p-3',
+                            'rounded-xl border bg-surface-shell p-2.5',
                             'border-success-deep/40 bg-accent/10' => ($shippingOrdersCount ?? 0) > 0,
                             'border-line-soft' => ($shippingOrdersCount ?? 0) <= 0,
                         ])>
@@ -357,13 +318,13 @@
                                 </span>
                                 <x-gpa.icon name="truck" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
-                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $shippingOrdersCount ?? 0 }} Truk</p>
+                            <p class="mt-2 font-sans text-lg font-bold leading-6 text-ink">{{ $shippingOrdersCount ?? 0 }} Truk</p>
                             <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Armada Chiller</p>
                             <p class="mt-0.5 gpa-meta text-success-deep font-semibold">Suhu 2 - 6&deg;C</p>
                         </li>
 
                         <li @class([
-                            'rounded-xl border bg-surface-shell p-3',
+                            'rounded-xl border bg-surface-shell p-2.5',
                             'border-success-deep/40' => ($completedOrdersCount ?? 0) > 0,
                             'border-line-soft' => ($completedOrdersCount ?? 0) <= 0,
                         ])>
@@ -373,7 +334,7 @@
                                 </span>
                                 <x-gpa.icon name="check" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
-                            <p class="mt-3 font-sans text-lg font-bold leading-6 text-ink">{{ $completedOrdersCount ?? 0 }} PO</p>
+                            <p class="mt-2 font-sans text-lg font-bold leading-6 text-ink">{{ $completedOrdersCount ?? 0 }} PO</p>
                             <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Selesai Dock</p>
                             <p class="mt-0.5 gpa-meta text-ink-body">BAST Digital Sah</p>
                         </li>
@@ -382,7 +343,7 @@
                     <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line-faint pt-3">
                         <p class="flex items-center gap-1.5">
                             <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
-                            <span class="gpa-note text-ink-body">Ketepatan Pengiriman Subuh GPA:</span>
+                            <span class="gpa-note text-ink-body">Kepatuhan SLA Subuh GPA:</span>
                             <span class="gpa-note text-ink">99.4% On-Time</span>
                         </p>
                         <p class="gpa-note text-ink">Window Bongkar: 04.00 - 06.00 WIB</p>
@@ -429,7 +390,6 @@
                     </ul>
 
                     <div class="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
-                        <p class="gpa-note text-ink-body">Pembaruan telemetri otomatis pasca timbangan tera.</p>
                         <a href="{{ route('sekretaris.stok') }}"
                             class="gpa-meta-lg font-semibold tracking-[0.88px] text-success-deep hover:text-success">
                             Lihat Detail Stok Gudang &rarr;
@@ -453,7 +413,7 @@
                                         Mendekati Batas Cut-Off Subuh (16:00 WIB)
                                     </p>
                                 </div>
-                                <span class="shrink-0 gpa-note font-bold text-warning-deep">Perhatian Jadwal</span>
+                                <span class="shrink-0 gpa-note font-bold text-warning-deep">SLA Alert</span>
                             </div>
                             <p class="mt-1 pl-6 text-xs leading-[1.375rem] text-ink-body">
                                 Terdapat {{ $pendingOrdersCount ?? 3 }} pesanan masuk yang belum diverifikasi. Harap segera kunci stok sebelum jadwal sortasi malam.
@@ -473,7 +433,7 @@
                                         Pencocokan Bukti Transfer Manual
                                     </p>
                                 </div>
-                                <span class="shrink-0 gpa-note font-bold text-success-deep">{{ $pendingPaymentsCount ?? 2 }} Menunggu Verifikasi</span>
+                                <span class="shrink-0 gpa-note font-bold text-success-deep">{{ $pendingPaymentsCount ?? 2 }} Pending</span>
                             </div>
                             <p class="mt-1 pl-6 text-xs leading-[1.375rem] text-ink-body">
                                 Unggahan bukti transfer klien reguler memerlukan konfirmasi pencocokan dengan mutasi rekening giro BCA GPA.

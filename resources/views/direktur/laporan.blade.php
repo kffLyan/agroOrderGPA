@@ -178,6 +178,42 @@
             </div>
         </section>
 
+        {{-- ---------- Filter beku ---------- --}}
+        <section class="rounded-xl border border-line-hair bg-surface p-3 sm:p-4 shadow-sub overflow-hidden">
+            <div class="flex items-center gap-2 sm:gap-3 overflow-x-auto no-scrollbar whitespace-nowrap">
+                <div class="flex shrink-0 items-center gap-1.5 text-ink-subtle">
+                    <x-gpa.icon name="filter" class="h-4 w-4" />
+                    <span class="text-[10px] font-bold uppercase tracking-[1.08px] text-ink-subtle gpa-micro-bold">
+                        FILTER FROZEN — AUDIT ARCHIVE
+                    </span>
+                </div>
+
+                <div class="inline-flex shrink-0 items-center gap-2 rounded-lg border border-line-faint bg-surface-base px-2.5 py-1.5 sm:px-3 sm:py-2">
+                    <span class="text-[10px] font-bold uppercase tracking-[0.88px] text-ink-subtle gpa-micro-bold">PERIODE:</span>
+                    <span class="text-[12px] font-semibold text-ink">Kuartal IV (Okt - Des 2026)</span>
+                    <span class="rounded-full px-2 py-0.5 text-[9px] font-bold tracking-[0.88px] bg-warning-cream text-warning-deep outline outline-1 -outline-offset-1 outline-warning-border">
+                        LOCKED
+                    </span>
+                </div>
+
+                <div class="inline-flex shrink-0 items-center gap-2 rounded-lg border border-line-faint bg-surface-base px-2.5 py-1.5 sm:px-3 sm:py-2">
+                    <span class="text-[10px] font-bold uppercase tracking-[0.88px] text-ink-subtle gpa-micro-bold">SEGMENTASI:</span>
+                    <span class="text-[12px] font-semibold text-ink">Semua Klien B2B</span>
+                    <span class="rounded-full px-2 py-0.5 text-[9px] font-bold tracking-[0.88px] bg-surface-track text-ink-body outline outline-1 -outline-offset-1 outline-line">
+                        FROZEN
+                    </span>
+                </div>
+
+                <div class="inline-flex shrink-0 items-center gap-2 rounded-lg border border-line-faint bg-surface-base px-2.5 py-1.5 sm:px-3 sm:py-2">
+                    <span class="text-[10px] font-bold uppercase tracking-[0.88px] text-ink-subtle gpa-micro-bold">KOMODITAS:</span>
+                    <span class="text-[12px] font-semibold text-ink">5 Komoditas Inti</span>
+                    <span class="rounded-full px-2 py-0.5 text-[9px] font-bold tracking-[0.88px] bg-surface-track text-ink-body outline outline-1 -outline-offset-1 outline-line">
+                        FROZEN
+                    </span>
+                </div>
+            </div>
+        </section>
+
         {{-- ---------- Empat kartu KPI ---------- --}}
         <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="KPI eksekutif">
             {{-- Card 1: Omzet Disahkan --}}

@@ -1,6 +1,6 @@
 @extends('layouts.direktur')
 
-@section('title', 'Detail Akun Pengguna // Direktur')
+@section('title', 'Rincian Akun: {{ $user->name }} // Direktur')
 
 @section('content')
     <div class="mx-auto flex max-w-4xl flex-col gap-6">

@@ -131,7 +131,7 @@
             </div>
         </header>
 
-        <div class="mx-auto flex w-full max-w-shell items-start">
+        <div class="mx-auto flex w-full max-w-shell items-start flex-1 min-w-0">
             <div x-cloak x-show="sidebarOpen" @click="sidebarOpen = false" aria-hidden="true"
                 class="fixed inset-0 z-30 bg-ink/40 lg:hidden"></div>
 
@@ -206,7 +206,7 @@
                 </div>
             </aside>
 
-            <main id="main-content" class="min-w-0 flex-1 px-4 py-6 lg:px-8">
+            <main id="main-content" class="min-w-0 flex-1 px-4 py-6 lg:px-8 w-full max-w-full overflow-x-hidden">
                 @yield('content')
             </main>
         </div>

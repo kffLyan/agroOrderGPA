@@ -1,10 +1,12 @@
 @extends('layouts.klien')
 
-@section('title', 'Daftar Pesanan Saya // Portal Mitra Klien')
+@section('title', 'Daftar Pesanan Saya (Orders Management)')
 
 @php
     $rawOrders = $rawOrders ?? ($orders ?? collect());
-    $counts = $counts ?? [
+
+    // Hitung count status tabs
+    $counts = [
         'all'        => $rawOrders->count(),
         'verifikasi' => $rawOrders->where('status', 'MENUNGGU_VERIFIKASI')->count(),
         'bayar'      => $rawOrders->whereIn('status', ['MENUNGGU_PEMBAYARAN', 'LUNAS'])->count(),
@@ -13,7 +15,8 @@
         'selesai'    => $rawOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count(),
         'batal'      => $rawOrders->where('status', 'BATAL')->count(),
     ];
-    $statusTabs = $statusTabs ?? [
+
+    $statusTabs = [
         ['label' => 'Semua Pesanan', 'value' => 'all', 'count' => $counts['all']],
         ['label' => 'Menunggu Verifikasi', 'value' => 'verifikasi', 'count' => $counts['verifikasi']],
         ['label' => 'Faktur & Pembayaran', 'value' => 'bayar', 'count' => $counts['bayar']],
@@ -22,18 +25,140 @@
         ['label' => 'Selesai & Sah Diterima', 'value' => 'selesai', 'count' => $counts['selesai']],
         ['label' => 'Dibatalkan', 'value' => 'batal', 'count' => $counts['batal']],
     ];
-    $orders = $orders ?? collect();
-    $pagination = $pagination ?? [
+
+    $orders = $rawOrders->map(function ($order) {
+        $totalOrderedQty = (float) ($order->orderItems ? $order->orderItems->sum('ordered_qty') : 0);
+        $totalActualWeight = $totalOrderedQty;
+        $hasWeighed = true;
+        $deviationKg = 0;
+        $deviationPercent = 0;
+
+        $hasPendingProof = ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_pending_proof);
+        $hasRejectedProof = ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_rejected_proof);
+
+        $stage = match ($order->status) {
+            'MENUNGGU_VERIFIKASI'                      => 'verifikasi',
+            'MENUNGGU_PEMBAYARAN', 'LUNAS'             => 'bayar',
+            'SIAP_KIRIM'                               => 'kemas',
+            'DALAM_PENGIRIMAN'                         => 'kirim',
+            'SELESAI', 'SELESAI_CATATAN'               => 'selesai',
+            'BATAL'                                    => 'batal',
+            default                                    => 'verifikasi',
+        };
+
+        $statusTone = match ($order->status) {
+            'MENUNGGU_VERIFIKASI'        => 'warning',
+            'MENUNGGU_PEMBAYARAN'        => $hasRejectedProof ? 'danger' : ($hasPendingProof ? 'warning' : 'brand'),
+            'LUNAS'                      => 'accent',
+            'SIAP_KIRIM'                 => 'accent',
+            'DALAM_PENGIRIMAN'           => 'brand',
+            'SELESAI', 'SELESAI_CATATAN' => 'pill',
+            'BATAL'                      => 'track',
+            default                      => 'track',
+        };
+
+        $statusText = match ($order->status) {
+            'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi',
+            'MENUNGGU_PEMBAYARAN' => $hasRejectedProof ? 'Bukti Bayar Ditolak' : ($hasPendingProof ? 'Menunggu Verifikasi Pembayaran' : 'Menunggu Pembayaran'),
+            'LUNAS'               => 'Lunas Terverifikasi',
+            'SIAP_KIRIM'          => 'Surat Jalan Terbit',
+            'DALAM_PENGIRIMAN'    => 'Armada Menuju Dock',
+            'SELESAI'             => 'Selesai Diterima Dock',
+            'SELESAI_CATATAN'     => 'Selesai (Ada Catatan Retur)',
+            'BATAL'               => 'Pesanan Dibatalkan',
+            default               => $order->status,
+        };
+
+        $commoditiesStr = $order->orderItems ? $order->orderItems->map(function ($item) {
+            return ($item->product->name ?? 'Komoditas') . ' (' . number_format($item->ordered_qty, 0, ',', '.') . ' kg)';
+        })->join(', ') : '';
+
+        return [
+            'id'                  => $order->id,
+            'po'                  => $order->order_number,
+            'date'                => $order->created_at ? $order->created_at->format('d M Y') : '-',
+            'time'                => $order->created_at ? $order->created_at->format('H:i') . ' WIB' : '-',
+            'hub'                 => 'lembang',
+            'hub_chip'            => 'Sentra Lembang',
+            'stage'               => $stage,
+            'commodities'         => $commoditiesStr ?: 'Komoditas Pertanian Segar',
+            'estimated_weight'    => $totalOrderedQty,
+            'estimated_label'     => number_format($totalOrderedQty, 0, ',', '.'),
+            'grade_tone'          => 'success',
+            'grade_note'          => 'Grade A & Super (Sortasi Bersih)',
+            'weight'              => $hasWeighed ? $totalActualWeight : null,
+            'weight_label_value'  => $hasWeighed ? number_format($totalActualWeight, 1, ',', '.') : null,
+            'weight_label'        => 'KG NETTO',
+            'weight_tone'         => $deviationPercent > 1 ? 'warning' : 'default',
+            'weight_pending'      => 'Antrean Timbang Digital',
+            'weight_chip'         => in_array($order->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI']) ? 'Netto Sah' : null,
+            'scale_note'          => $hasWeighed ? 'Sertifikat Timbangan Pasundan' : 'Menunggu sortir packing house',
+            'scale_target'        => 'Toleransi Susut < 0.5%',
+            'scale_tone'          => 'default',
+            'deviation_percent'   => $deviationPercent,
+            'deviation_label'     => $hasWeighed ? ($deviationKg >= 0 ? "+{$deviationKg} kg (+{$deviationPercent}%)" : "{$deviationKg} kg (-{$deviationPercent}%)") : '0%',
+            'shipment_breakdown'  => $hasWeighed ? [
+                ['label' => 'Pesan:', 'value' => number_format($totalOrderedQty, 0) . ' kg', 'tone' => 'default'],
+                ['label' => 'Kirim:', 'value' => number_format($totalActualWeight, 1) . ' kg', 'tone' => 'default'],
+            ] : [],
+            'sj'                  => $order->surat_jalan_number,
+            'sj_pending'          => 'SJ Belum Terbit',
+            'vehicle'             => $order->vehicle_plate_number ?: ($order->driver ? 'Truk Chiller GPA' : null),
+            'driver_note'         => $order->driver ? "Supir: {$order->driver->name}" : 'Armada belum ditugaskan',
+            'shipment_tone'       => $order->status === 'DALAM_PENGIRIMAN' ? 'success' : 'default',
+            'shipment_note'       => $order->status === 'DALAM_PENGIRIMAN' ? 'ETA < 45 Menit Dock' : '',
+            'status'              => $statusText,
+            'status_tone'         => $statusTone,
+            'status_meta'         => 'Order ' . ($order->order_source === 'WEB_PORTAL' ? 'Web Portal' : 'Routine'),
+            'status_note'         => $order->status === 'BATAL'
+                ? ('Alasan: ' . ($order->rejection_reason ?: 'Ditolak Verifikasi Sekretariat'))
+                : ($hasRejectedProof
+                    ? ('Ditolak: ' . ($order->rejected_proof_payment?->verification_note ?: 'Bukti transfer tidak valid/ditolak. Silakan unggah ulang.'))
+                    : ($hasPendingProof
+                        ? 'Bukti bayar terkirim ke Sekretaris • Menunggu verifikasi'
+                        : ($order->status === 'MENUNGGU_VERIFIKASI'
+                            ? 'SLA Verifikasi < 2 Jam'
+                            : ($order->status === 'MENUNGGU_PEMBAYARAN'
+                                ? 'Menunggu unggah bukti transfer'
+                                : 'Proses Operasional Berjalan')))),
+            'total'               => (float) $order->grand_total,
+            'total_note'          => 'Total Nilai Tagihan',
+            'total_chip'          => $order->invoice_id ? 'Faktur Terbit' : 'Belum Ditagihkan',
+            'total_chip_tone'     => $order->invoice_id ? 'success' : 'default',
+            'payment'             => 'tempo',
+        ];
+    })->values()->all();
+
+    $pagination = [
         'page'        => 1,
         'per_page'    => max(1, count($orders)),
         'total'       => count($orders),
         'total_pages' => 1,
         'last_page'   => 1,
     ];
-    $totalKgOrder = $totalKgOrder ?? (float) $rawOrders->sum(fn($o) => $o->orderItems ? $o->orderItems->sum('ordered_qty') : 0);
-    $totalKgActual = $totalKgActual ?? $totalKgOrder;
+
+    $totalKgOrder = (float) $rawOrders->sum(fn($o) => $o->orderItems ? $o->orderItems->sum('ordered_qty') : 0);
+    $totalKgActual = $totalKgOrder;
 
     $rupiah = fn ($value) => 'Rp '.number_format($value, 0, ',', '.');
+
+    $statusStyles = [
+        'accent' => 'bg-accent text-ink ring-accent-edge',
+        'brand' => 'bg-accent text-success-ink',
+        'warning' => 'bg-warning-soft text-warning-deep ring-warning/40',
+        'danger' => 'bg-danger-soft text-danger ring-danger/40',
+        'pill' => 'bg-surface-pill text-ink-body ring-line-board',
+        'track' => 'bg-surface-pill text-ink-body ring-line-board/60',
+    ];
+
+    $statusDotStyles = [
+        'accent' => 'bg-ink',
+        'brand' => 'bg-accent',
+        'warning' => 'bg-warning-deep',
+        'danger' => 'bg-danger',
+        'pill' => 'bg-success-deep',
+        'track' => 'bg-ink-quiet',
+    ];
 
     $gradeStyles = [
         'success' => 'text-success-deep',
@@ -51,10 +176,14 @@
         {{-- ------------------------------------------------------------------ --}}
         {{-- Kop halaman + aksi export / buat pesanan --}}
         {{-- ------------------------------------------------------------------ --}}
-        <section class="flex flex-col gap-3 border-b border-line-soft/40 pb-2 lg:flex-row lg:items-center lg:justify-between">
+        <section class="gpa-card flex flex-col gap-3 p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6 ring-1 ring-line-hair shadow-sub">
             <div class="flex min-w-0 flex-col gap-1">
                 <div class="flex flex-wrap items-center gap-2">
                     <h1 class="gpa-section-title text-ink">Daftar Pesanan &amp; Pelacakan Armada</h1>
+                    <span
+                        class="rounded-full bg-accent px-2.5 py-0.5 gpa-micro-bold text-success-ink">
+                        Real-time Tracking
+                    </span>
                 </div>
                 <p class="max-w-[56rem] gpa-body text-ink-body">Pantau status pesanan, penimbangan netto fisik gudang, dan pergerakan armada chiller secara transparan.</p>
             </div>
@@ -76,6 +205,63 @@
                     <span class="gpa-meta-lg font-bold text-white">Buat Pesanan Baru</span>
                 </a>
             </div>
+        </section>
+
+        {{-- ------------------------------------------------------------------ --}}
+        {{-- Lima kartu ringkasan operasional --}}
+        {{-- ------------------------------------------------------------------ --}}
+        <section class="grid grid-cols-2 gap-3 sm:gap-4">
+            <article class="gpa-card flex min-h-[7.875rem] flex-col justify-between gap-3 p-3 sm:p-4">
+                <div class="flex items-start justify-between gap-2">
+                    <h2 class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink-body">
+                        Total Transaksi PO
+                    </h2>
+                    <x-gpa.icon name="package" class="h-4 w-4 shrink-0 text-success-deep" />
+                </div>
+                <div class="pt-1">
+                    <p class="gpa-figure text-ink">{{ count($orders) }}</p>
+                    <p class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-success-deep">Pesanan Tercatat</p>
+                </div>
+            </article>
+
+            <article class="gpa-card flex min-h-[7.875rem] flex-col justify-between gap-3 p-3 sm:p-4">
+                <div class="flex items-start justify-between gap-2">
+                    <h2 class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink-body">
+                        Volume Permintaan Dipesan
+                    </h2>
+                    <x-gpa.icon name="leaf" class="h-4 w-4 shrink-0 text-success-deep" />
+                </div>
+                <div class="pt-1">
+                    <p class="gpa-figure text-ink">{{ number_format($totalKgOrder, 0, ',', '.') }}</p>
+                    <p class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-success-deep">Kilogram PO</p>
+                </div>
+            </article>
+
+            <article class="gpa-card flex min-h-[7.875rem] flex-col justify-between gap-3 p-3 sm:p-4">
+                <div class="flex items-start justify-between gap-2">
+                    <h2 class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink-body">
+                        Realisasi Netto Sah Timbang
+                    </h2>
+                    <x-gpa.icon name="scale" class="h-4 w-4 shrink-0 text-success-deep" />
+                </div>
+                <div class="pt-1">
+                    <p class="gpa-figure text-success-deep">{{ number_format($totalKgActual, 0, ',', '.') }}</p>
+                    <p class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-success-deep">Kilogram Sah</p>
+                </div>
+            </article>
+
+            <article class="gpa-card flex min-h-[7.875rem] flex-col justify-between gap-3 p-3 sm:p-4">
+                <div class="flex items-start justify-between gap-2">
+                    <h2 class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink-body">
+                        Toleransi Deviasi Timbang
+                    </h2>
+                    <x-gpa.icon name="gauge" class="h-4 w-4 shrink-0 text-success-deep" />
+                </div>
+                <div class="pt-1">
+                    <p class="gpa-figure text-success-deep">0.34%</p>
+                    <p class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-success-deep">Batas Aman &lt; 1.0%</p>
+                </div>
+            </article>
         </section>
 
         {{-- ------------------------------------------------------------------ --}}
@@ -112,47 +298,67 @@
         {{-- ------------------------------------------------------------------ --}}
         {{-- Filter rentang tanggal, gudang, pembayaran, dan pencarian --}}
         {{-- ------------------------------------------------------------------ --}}
-        <section class="gpa-card flex flex-col gap-3 p-3 sm:p-4 lg:flex-row lg:items-center lg:justify-between">
-            <div class="flex flex-wrap items-center gap-2">
-                {{-- Rentang Waktu (Pill Lonjong) --}}
-                <label class="relative inline-flex h-10 items-center rounded-full border border-line-soft bg-surface px-3.5 shadow-xs transition-colors hover:border-line-board focus-within:border-brand">
-                    <x-gpa.icon name="calendar" class="h-4 w-4 shrink-0 text-ink-body" />
-                    <span class="ml-1.5 mr-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink-body">Waktu:</span>
+        <section class="gpa-card flex min-w-0 flex-col gap-3 p-3 sm:flex-row sm:items-center">
+            <div class="order-2 grid min-w-0 flex-1 grid-cols-2 gap-2 sm:order-none sm:flex sm:flex-wrap sm:items-center">
+                {{-- Rentang Waktu --}}
+                <label class="col-span-2 flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-line-soft/70 bg-canvas px-2.5 py-1.5 sm:col-span-1 sm:h-10 sm:flex-row sm:items-center sm:py-1">
+                    <span class="gpa-micro text-ink-body">Rentang Waktu</span>
                     <select x-model="range"
-                        class="cursor-pointer border-0 bg-transparent py-0 pl-1 pr-7 text-xs font-semibold text-ink focus:ring-0">
+                        class="w-full min-w-0 cursor-pointer truncate border-0 bg-transparent p-0 pr-5 text-xs font-semibold leading-4 text-ink focus:ring-0 sm:w-auto sm:max-w-32">
                         <option value="all">Semua Waktu</option>
                         <option value="30d">30 Hari Terakhir</option>
                         <option value="mtd">Bulan Berjalan</option>
                     </select>
                 </label>
 
-                {{-- Metode Bayar (Pill Lonjong) --}}
-                <label class="relative inline-flex h-10 items-center rounded-full border border-line-soft bg-surface px-3.5 shadow-xs transition-colors hover:border-line-board focus-within:border-brand">
-                    <x-gpa.icon name="credit-card" class="h-4 w-4 shrink-0 text-ink-body" />
-                    <span class="ml-1.5 mr-1 font-mono text-[10px] font-bold uppercase tracking-wider text-ink-body">Bayar:</span>
-                    <select x-model="payment"
-                        class="cursor-pointer border-0 bg-transparent py-0 pl-1 pr-7 text-xs font-semibold text-ink focus:ring-0">
-                        <option value="all">Semua Metode</option>
-                        <option value="tempo">Term of Payment (Tempo)</option>
-                        <option value="transfer">Transfer Bank</option>
-                        <option value="qris">QRIS Dinamis</option>
+                {{-- Sentra Panen --}}
+                <label class="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-line-soft/70 bg-canvas px-2.5 py-1.5 sm:h-10 sm:flex-row sm:items-center sm:py-1">
+                    <span class="gpa-micro text-ink-body">Sentra Panen</span>
+                    <select x-model="hub"
+                        class="w-full min-w-0 cursor-pointer truncate border-0 bg-transparent p-0 pr-5 text-xs font-semibold leading-4 text-ink focus:ring-0 sm:w-auto sm:max-w-32">
+                        <option value="all">Semua Sentra GPA</option>
+                        <option value="lembang">Sentra Lembang</option>
+                        <option value="ciwidey">Sentra Ciwidey</option>
                     </select>
                 </label>
 
+                {{-- Metode Bayar --}}
+                <label class="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-line-soft/70 bg-canvas px-2.5 py-1.5 sm:h-10 sm:flex-row sm:items-center sm:py-1">
+                    <span class="gpa-micro text-ink-body">Metode Bayar</span>
+                    <select x-model="payment"
+                        class="w-full min-w-0 cursor-pointer truncate border-0 bg-transparent p-0 pr-5 text-xs font-semibold leading-4 text-ink focus:ring-0 sm:w-auto sm:max-w-40">
+                        <option value="all">Semua Metode</option>
+                        <option value="tempo">Term of Payment (Tempo)</option>
+                        <option value="transfer">Transfer Bank BCA/Mandiri</option>
+                        <option value="qris">QRIS Dinamis GPA</option>
+                    </select>
+                </label>
+
+                <button type="button" @click="deviationOnly = ! deviationOnly" role="switch"
+                    :aria-checked="deviationOnly ? 'true' : 'false'" aria-label="Hanya Deviasi Timbang > 1%"
+                    class="col-span-2 flex min-w-0 items-center gap-2 rounded-lg border border-line-soft/70 bg-canvas px-2.5 py-2 transition-colors hover:border-brand sm:h-10 sm:shrink-0 sm:py-1"
+                    :class="deviationOnly ? 'border-brand bg-surface-muted' : ''">
+                    <span
+                        class="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded bg-ink text-white">
+                        <x-gpa.icon name="gauge" class="h-3 w-3" />
+                    </span>
+                    <span class="min-w-0 text-left font-mono text-[11px] font-medium leading-[14px] text-ink">
+                        Hanya Deviasi Timbang &gt; 1%
+                    </span>
+                </button>
+
                 <button type="button" x-cloak x-show="hasFilters()" @click="resetFilters()"
-                    class="inline-flex h-10 items-center gap-1.5 rounded-full border border-line-soft bg-surface px-3.5 text-xs font-semibold text-ink-body shadow-xs transition-colors hover:border-brand hover:text-ink">
-                    <x-gpa.icon name="refresh" class="h-3.5 w-3.5" />
-                    <span>Reset Filter</span>
+                    class="col-span-2 justify-self-end rounded-lg border border-line-soft bg-surface px-3 py-2 text-[11px] font-semibold leading-[14px] text-ink-body transition-colors hover:bg-surface-muted hover:text-ink sm:h-10 sm:shrink-0 sm:border-0 sm:bg-transparent sm:px-2 sm:py-1 sm:underline sm:underline-offset-4">
+                    Reset filter
                 </button>
             </div>
 
-            {{-- Kolom Pencarian (Pill Lonjong) --}}
-            <label class="relative flex w-full items-center lg:w-80">
+            <label class="order-1 relative flex w-full min-w-0 items-center sm:order-none sm:w-56 sm:shrink-0">
                 <span class="sr-only">Cari no PO, nama komoditas, supir, plat nomor...</span>
-                <x-gpa.icon name="search" class="pointer-events-none absolute left-3.5 h-4 w-4 text-ink-body" />
+                <x-gpa.icon name="search" class="pointer-events-none absolute left-3.5 h-3.5 w-3.5 text-ink-body" />
                 <input type="search" x-model.debounce.200ms="search"
-                    placeholder="Cari no PO, nama komoditas, supir, plat..."
-                    class="h-10 w-full rounded-full border border-line-soft bg-surface pl-10 pr-4 text-xs font-medium text-ink placeholder:text-ink-subtle shadow-xs transition-colors focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand">
+                    placeholder="Cari no PO, nama komoditas, supir, plat nomor..."
+                    class="gpa-control h-10 w-full min-w-0 rounded-lg border-line-soft bg-surface pl-10 text-xs">
             </label>
         </section>
 
@@ -160,7 +366,7 @@
         {{-- Tabel pesanan --}}
         {{-- ------------------------------------------------------------------ --}}
         <section class="gpa-card overflow-hidden">
-            <div class="gpa-scroll-x">
+            <div class="hidden md:block gpa-scroll-x">
                 <table class="w-full border-collapse">
                     <caption class="sr-only">Daftar pesanan klien beserta hasil timbangan netto, surat jalan, status, dan tagihan final</caption>
                     <thead>
@@ -181,115 +387,144 @@
                                 <td class="w-[9.28rem] px-4 py-4">
                                     <div class="flex items-center gap-1.5">
                                         <x-gpa.icon name="receipt"
-                                            class="h-3.5 w-3.5 shrink-0 {{ in_array($order->stage, ['verifikasi', 'timbang'], true) ? 'text-warning-deep' : 'text-success-deep' }}" />
-                                        <span class="text-xs font-bold leading-4 text-ink">{{ $order->order_number }}</span>
+                                            class="h-3.5 w-3.5 shrink-0 {{ in_array($order['stage'], ['verifikasi', 'timbang'], true) ? 'text-warning-deep' : 'text-success-deep' }}" />
+                                        <span class="text-xs font-bold leading-4 text-ink">{{ $order['po'] }}</span>
                                     </div>
-                                    <p class="pb-1 gpa-micro text-ink-body">{{ $order->date_formatted }}, {{ $order->time_formatted }}</p>
+                                    <p class="pb-1 gpa-micro text-ink-body">{{ $order['date'] }}, {{ $order['time'] }}</p>
                                     <span class="mt-0.5 inline-block rounded bg-surface-pill px-1.5 py-0.5 text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-ink">
-                                        {{ $order->hub_chip }}
+                                        {{ $order['hub_chip'] }}
                                     </span>
                                 </td>
 
                                 <td class="w-[12.25rem] px-4 py-4">
-                                    <p class="text-xs font-semibold leading-4 text-ink">{{ $order->commodities_summary }}</p>
+                                    <p class="text-xs font-semibold leading-4 text-ink">{{ $order['commodities'] }}</p>
                                     <div class="mt-1 flex items-center gap-2">
                                         <span class="text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-ink-body">
                                             Total Estimasi:
                                         </span>
                                         <span class="rounded bg-surface-pill px-1.5 py-0.5 text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink">
-                                            {{ number_format((float) $order->total_ordered_qty, 0, ',', '.') }} KG
+                                            {{ $order['estimated_label'] }} KG
                                         </span>
                                     </div>
-                                    <p class="mt-1 text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-success-deep">
-                                        Grade A &amp; Super (Sortasi Bersih)
-                                    </p>
+                                    <p @class([
+                                        'mt-1 text-[9px] font-semibold uppercase leading-3 tracking-[0.12em]',
+                                        $gradeStyles[$order['grade_tone']],
+                                    ])>{{ $order['grade_note'] }}</p>
                                 </td>
 
                                 <td class="w-[12.8rem] px-4 py-4">
-                                    @if ($order->weight !== null)
+                                    @if ($order['weight'] !== null)
+                                        @if (! empty($order['shipment_breakdown']))
+                                            <p class="flex flex-wrap items-baseline text-xs leading-4 text-ink">
+                                                @foreach ($order['shipment_breakdown'] as $part)
+                                                    <span @class([
+                                                        'font-semibold' => $part['label'] === 'Kirim:',
+                                                        'font-normal' => $part['label'] !== 'Kirim:',
+                                                        'text-danger' => $part['tone'] === 'danger',
+                                                    ])>{{ $part['label'] }} {{ $part['value'] }}</span>
+                                                @endforeach
+                                            </p>
+                                        @endif
                                         <div class="mt-1 flex items-baseline gap-1.5">
-                                            <span class="gpa-figure text-ink">{{ $order->weight_label_value }}</span>
-                                            <span class="gpa-meta-lg font-bold text-ink-body">KG NETTO</span>
+                                            <span @class([
+                                                'gpa-figure',
+                                                'text-warning-deep' => ($order['weight_tone'] ?? 'default') === 'warning',
+                                                'text-ink' => ($order['weight_tone'] ?? 'default') !== 'warning',
+                                            ])>{{ $order['weight_label_value'] }}</span>
+                                            <span class="gpa-meta-lg font-bold text-ink-body">{{ $order['weight_label'] }}</span>
                                         </div>
                                         <div class="mt-1 flex items-start gap-1">
-                                            <x-gpa.icon name="scale" class="mt-px h-3 w-3 shrink-0 text-success-deep" />
-                                            <span class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-success-deep">
-                                                0%
-                                            </span>
+                                            <x-gpa.icon name="scale"
+                                                class="mt-px h-3 w-3 shrink-0 {{ ($order['deviation_percent'] ?? 0) > 1 ? 'text-warning-deep' : 'text-success-deep' }}" />
+                                            <span @class([
+                                                'text-[9px] font-bold uppercase leading-3 tracking-[0.12em]',
+                                                'text-warning-deep' => ($order['deviation_percent'] ?? 0) > 1,
+                                                'text-success-deep' => ($order['deviation_percent'] ?? 0) <= 1,
+                                            ])>{{ $order['deviation_label'] }}</span>
                                         </div>
-                                        <p class="mt-1 text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-ink-body">
-                                            {{ $order->scale_note }}
-                                        </p>
-                                    @elseif (! empty($order->weight_chip))
+                                        <p @class([
+                                            'mt-1 text-[9px] font-semibold uppercase leading-3 tracking-[0.12em]',
+                                            'text-warning-deep' => ($order['scale_tone'] ?? 'default') === 'warning',
+                                            'text-ink-body' => ($order['scale_tone'] ?? 'default') !== 'warning',
+                                        ])>{{ $order['scale_note'] }}</p>
+                                    @elseif (! empty($order['weight_chip']))
                                         <span class="inline-flex items-center gap-1.5 rounded bg-surface-pill px-2 py-1 text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink ring-1 ring-inset ring-line-board/60">
                                             <span class="h-2.5 w-2.5 rounded-full bg-success-deep" aria-hidden="true"></span>
-                                            {{ $order->weight_chip }}
+                                            {{ $order['weight_chip'] }}
                                         </span>
                                         <p class="mt-1.5 text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-ink-body">
-                                            {{ $order->scale_note }}
+                                            {{ $order['scale_note'] }}
                                         </p>
                                         <p class="text-[9px] font-medium uppercase leading-3 tracking-[0.12em] text-success-deep">
                                             Toleransi Susut &lt; 0.5%
                                         </p>
                                     @else
-                                        <p class="text-xs italic leading-4 text-ink-body">Antrean Timbang Digital</p>
-                                        <p class="mt-1 text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-ink-body">
-                                            {{ $order->scale_note }}
-                                        </p>
+                                        <p class="text-xs italic leading-4 text-ink-body">{{ $order['weight_pending'] }}</p>
+                                        <p @class([
+                                            'mt-1 text-[9px] font-semibold uppercase leading-3 tracking-[0.12em]',
+                                            $gradeStyles[$order['scale_tone'] ?? 'default'],
+                                        ])>{{ $order['scale_note'] }}</p>
                                     @endif
                                 </td>
 
                                 <td class="w-[10.95rem] px-4 py-4">
-                                    @if (! empty($order->surat_jalan_number))
-                                        <p class="text-xs font-bold leading-4 text-ink">{{ $order->surat_jalan_number }}</p>
-                                        @if (! empty($order->vehicle))
-                                            <p class="pt-0.5 font-inter text-xs font-medium leading-4 text-ink">{{ $order->vehicle }}</p>
-                                        @endif
+                                    @if (! empty($order['sj']))
+                                        <p class="text-xs font-bold leading-4 text-ink">{{ $order['sj'] }}</p>
+                                        <p class="pt-0.5 font-inter text-xs font-medium leading-4 text-ink">{{ $order['vehicle'] }}</p>
                                     @else
                                         <p class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink-body">
-                                            SJ Belum Terbit
+                                            {{ $order['sj_pending'] }}
                                         </p>
-                                        @if (! empty($order->vehicle))
-                                            <p class="pt-0.5 font-inter text-xs font-medium leading-4 text-ink">{{ $order->vehicle }}</p>
+                                        @if (! empty($order['vehicle']))
+                                            <p class="pt-0.5 font-inter text-xs font-medium leading-4 text-ink">{{ $order['vehicle'] }}</p>
                                         @endif
                                     @endif
                                     <p class="text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-ink-body">
-                                        {{ $order->driver_note }}
+                                        {{ $order['driver_note'] }}
                                     </p>
-                                    @if (! empty($order->shipment_note))
-                                        <p class="pt-1 text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-success-deep">
-                                            {{ $order->shipment_note }}
-                                        </p>
-                                    @endif
+                                    <p @class([
+                                        'pt-1 text-[9px] font-semibold uppercase leading-3 tracking-[0.12em]',
+                                        'text-warning-deep' => ($order['shipment_tone'] ?? 'default') === 'warning',
+                                        'text-success-deep' => ($order['shipment_tone'] ?? 'default') === 'success',
+                                    ])>{{ $order['shipment_note'] ?? '' }}</p>
                                 </td>
 
                                 <td class="w-[10.09rem] px-4 py-4">
-                                    <x-gpa.status-badge :status="$order->status" :label="$order->status_label" :tone="$order->status_tone" />
+                                    <span @class([
+                                        'inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-[9px] font-bold uppercase leading-3 tracking-[0.45px] ring-1 ring-inset',
+                                        $statusStyles[$order['status_tone']],
+                                    ])>
+                                        <span @class([
+                                            'h-1.5 w-1.5 shrink-0 rounded-full',
+                                            $statusDotStyles[$order['status_tone']],
+                                        ]) aria-hidden="true"></span>
+                                        {{ $order['status'] }}
+                                    </span>
                                     <p class="pt-1.5 text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink">
-                                        Order {{ $order->order_source === 'WEB_PORTAL' ? 'Web Portal' : 'Routine' }}
+                                        {{ $order['status_meta'] }}
                                     </p>
                                     <p class="text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-ink-body">
-                                        {{ $order->status_note }}
+                                        {{ $order['status_note'] }}
                                     </p>
                                 </td>
 
                                 <td class="w-[9.71rem] px-4 py-4">
-                                    <p class="text-sm font-bold leading-5 text-ink">{{ $rupiah($order->grand_total) }}</p>
+                                    <p class="text-sm font-bold leading-5 text-ink">{{ $rupiah($order['total']) }}</p>
                                     <p class="pb-0.5 text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-ink-body">
-                                        Total Nilai Tagihan
+                                        {{ $order['total_note'] }}
                                     </p>
-                                    @if (! empty($order->total_chip))
+                                    @if (! empty($order['total_chip']))
                                         <p @class([
                                             'text-[9px] font-bold uppercase leading-3 tracking-[0.12em]',
-                                            'text-success-deep' => $order->total_chip_tone === 'success',
-                                            'text-ink-body' => $order->total_chip_tone !== 'success',
-                                        ])>{{ $order->total_chip }}</p>
+                                            'text-success-deep' => $order['total_chip_tone'] === 'success',
+                                            'text-ink-body' => $order['total_chip_tone'] !== 'success',
+                                        ])>{{ $order['total_chip'] }}</p>
                                     @endif
                                 </td>
 
                                 <td class="w-[8.67rem] px-4 py-4">
                                     <div class="flex flex-col items-stretch gap-1.5">
-                                        <a href="{{ route('klien.pesanan.show', $order->id) }}"
+                                        <a href="{{ route('klien.pesanan.show', $order['id']) }}"
                                             class="inline-flex items-center justify-center gap-1 rounded bg-ink px-2.5 py-1.5 text-[9px] font-semibold uppercase leading-3 tracking-[0.45px] text-white transition-colors hover:bg-brand-deep">
                                             <x-gpa.icon name="package" class="h-3 w-3 shrink-0 text-white" />
                                             Lacak Detail
@@ -300,6 +535,95 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+
+            <div class="md:hidden flex flex-col gap-2 p-2">
+                @foreach ($orders as $order)
+                    <article x-show="isVisible(@js($order))"
+                        class="flex flex-col gap-2.5 rounded-lg border border-line-hair bg-surface p-3 shadow-sm">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="min-w-0">
+                                <p class="break-words text-xs font-bold leading-4 text-ink">{{ $order['po'] }}</p>
+                                <p class="mt-0.5 gpa-micro text-ink-body">{{ $order['date'] }}, {{ $order['time'] }}</p>
+                            </div>
+                            <span @class([
+                                'inline-flex shrink-0 items-center gap-1.5 rounded px-2 py-1 text-[9px] font-bold uppercase leading-3 tracking-[0.45px] ring-1 ring-inset',
+                                $statusStyles[$order['status_tone']],
+                            ])>
+                                <span @class([
+                                    'h-1.5 w-1.5 shrink-0 rounded-full',
+                                    $statusDotStyles[$order['status_tone']],
+                                ]) aria-hidden="true"></span>
+                                {{ $order['status'] }}
+                            </span>
+                        </div>
+
+                        <div class="min-w-0">
+                            <p class="text-xs font-semibold leading-4 text-ink">{{ $order['commodities'] }}</p>
+                            <div class="mt-1 flex flex-wrap items-center gap-1.5">
+                                <span class="rounded bg-surface-pill px-1.5 py-0.5 text-[9px] font-bold uppercase text-ink">
+                                    Estimasi {{ $order['estimated_label'] }} kg
+                                </span>
+                                <span class="rounded bg-surface-pill px-1.5 py-0.5 text-[9px] font-semibold text-ink-body">
+                                    {{ $order['hub_chip'] }}
+                                </span>
+                            </div>
+                            <p @class([
+                                'mt-1 text-[9px] font-semibold uppercase leading-3 tracking-[0.12em]',
+                                $gradeStyles[$order['grade_tone']],
+                            ])>{{ $order['grade_note'] }}</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-x-3 gap-y-2 border-t border-line-faint pt-2 text-[10px]">
+                            <div class="flex flex-col gap-0.5">
+                                <span class="text-ink-quiet">Netto Sah &amp; Deviasi</span>
+                                @if ($order['weight'] !== null)
+                                    <span class="font-semibold text-ink">{{ $order['weight_label_value'] }} {{ $order['weight_label'] }}</span>
+                                    <span @class([
+                                        'font-semibold',
+                                        'text-warning-deep' => ($order['deviation_percent'] ?? 0) > 1,
+                                        'text-success-deep' => ($order['deviation_percent'] ?? 0) <= 1,
+                                    ])>{{ $order['deviation_label'] }}</span>
+                                    <span class="text-ink-body">{{ $order['scale_note'] }}</span>
+                                @else
+                                    <span class="text-ink-body">{{ $order['weight_pending'] }}</span>
+                                @endif
+                            </div>
+                            <div class="flex flex-col gap-0.5">
+                                <span class="text-ink-quiet">Surat Jalan &amp; Supir</span>
+                                <span class="font-medium text-ink">{{ $order['sj'] ?: $order['sj_pending'] }}</span>
+                                @if (! empty($order['vehicle']))
+                                    <span class="text-ink-body">{{ $order['vehicle'] }}</span>
+                                @endif
+                                <span class="text-ink-body">{{ $order['driver_note'] }}</span>
+                                @if (! empty($order['shipment_note']))
+                                    <span @class([
+                                        'font-semibold',
+                                        'text-warning-deep' => ($order['shipment_tone'] ?? 'default') === 'warning',
+                                        'text-success-deep' => ($order['shipment_tone'] ?? 'default') === 'success',
+                                    ])>{{ $order['shipment_note'] }}</span>
+                                @endif
+                            </div>
+                            <div class="col-span-2 flex flex-col gap-0.5">
+                                <span class="text-ink-quiet">Catatan Status</span>
+                                <span class="font-semibold text-ink">{{ $order['status_meta'] }}</span>
+                                <span class="text-ink-body">{{ $order['status_note'] }}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-end justify-between gap-2 border-t border-line-faint pt-2">
+                            <div>
+                                <p class="text-sm font-bold leading-5 text-ink">{{ $rupiah($order['total']) }}</p>
+                                <p class="gpa-micro text-ink-body">{{ $order['total_note'] }} · {{ $order['total_chip'] }}</p>
+                            </div>
+                            <a href="{{ route('klien.pesanan.show', $order['id']) }}"
+                                class="inline-flex shrink-0 items-center justify-center gap-1 rounded bg-ink px-2.5 py-1.5 text-[9px] font-semibold uppercase leading-3 tracking-[0.45px] text-white transition-colors hover:bg-brand-deep">
+                                <x-gpa.icon name="package" class="h-3 w-3 shrink-0 text-white" />
+                                Lacak Detail
+                            </a>
+                        </div>
+                    </article>
+                @endforeach
             </div>
 
             <p x-cloak x-show="visibleCount() === 0"
@@ -341,101 +665,6 @@
                     </button>
                 </nav>
             </div>
-        </section>
-
-        {{-- Banner integritas Penimbangan Netto & Pengiriman --}}
-        <section class="gpa-card flex flex-col gap-3 bg-brand p-4 ring-1 ring-inset ring-accent/30 lg:flex-row lg:items-center lg:justify-between">
-            <div class="flex items-start gap-2">
-                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-accent">
-                    <x-gpa.icon name="scale" class="h-4 w-4 text-ink" />
-                </span>
-                <div class="flex min-w-0 flex-col">
-                    <p class="gpa-meta-lg font-bold uppercase tracking-[0.7px] text-accent">Integritas Penimbangan Netto &amp; Standar Cold-Chain GPA</p>
-                    <p class="max-w-[56rem] text-[9px] font-semibold uppercase leading-[14.63px] tracking-[0.12em] text-surface-disabled">
-                        Setiap komoditas dipanen sore hari, disortasi higienis, dan ditimbang secara digital di packing house terkalibrasi sebelum diterbitkan Surat Jalan resmi.
-                    </p>
-                </div>
-            </div>
-            <span
-                class="inline-flex shrink-0 items-center gap-1 rounded bg-accent px-3 py-1.5 text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink">
-                <x-gpa.icon name="shield" class="h-3 w-3" />
-                SOP Terjamin Sah
-            </span>
-        </section>
-
-        {{-- ------------------------------------------------------------------ --}}
-        {{-- Lima kartu ringkasan operasional --}}
-        {{-- ------------------------------------------------------------------ --}}
-        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <article class="gpa-card flex min-h-[7.875rem] flex-col justify-between gap-3 p-4">
-                <div class="flex items-start justify-between gap-2">
-                    <h2 class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink-body">
-                        Total Transaksi PO
-                    </h2>
-                    <x-gpa.icon name="package" class="h-4 w-4 shrink-0 text-success-deep" />
-                </div>
-                <div class="pt-1">
-                    <p class="gpa-figure text-ink">{{ count($orders) }}</p>
-                    <p class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-success-deep">Pesanan Tercatat</p>
-                    <p class="text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-ink-body">Semua Siklus</p>
-                </div>
-            </article>
-
-            <article class="gpa-card flex min-h-[7.875rem] flex-col justify-between gap-3 p-4">
-                <div class="flex items-start justify-between gap-2">
-                    <h2 class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink-body">
-                        Volume Permintaan Dipesan
-                    </h2>
-                    <x-gpa.icon name="leaf" class="h-4 w-4 shrink-0 text-success-deep" />
-                </div>
-                <div class="pt-1">
-                    <p class="gpa-figure text-ink">{{ number_format($totalKgOrder, 0, ',', '.') }}</p>
-                    <p class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-success-deep">Kilogram PO</p>
-                    <p class="text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-ink-body">Estimasi Komitmen</p>
-                </div>
-            </article>
-
-            <article class="gpa-card flex min-h-[7.875rem] flex-col justify-between gap-3 p-4">
-                <div class="flex items-start justify-between gap-2">
-                    <h2 class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink-body">
-                        Realisasi Netto Sah Timbang
-                    </h2>
-                    <x-gpa.icon name="scale" class="h-4 w-4 shrink-0 text-success-deep" />
-                </div>
-                <div class="pt-1">
-                    <p class="gpa-figure text-success-deep">{{ number_format($totalKgActual, 0, ',', '.') }}</p>
-                    <p class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-success-deep">Kilogram Sah</p>
-                    <p class="text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-ink-body">Surat Jalan Tervalidasi</p>
-                </div>
-            </article>
-
-            <article class="gpa-card flex min-h-[7.875rem] flex-col justify-between gap-3 p-4">
-                <div class="flex items-start justify-between gap-2">
-                    <h2 class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink-body">
-                        Toleransi Deviasi Timbang
-                    </h2>
-                    <x-gpa.icon name="gauge" class="h-4 w-4 shrink-0 text-success-deep" />
-                </div>
-                <div class="pt-1">
-                    <p class="gpa-figure text-success-deep">0.34%</p>
-                    <p class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-success-deep">Batas Aman &lt; 1.0%</p>
-                    <p class="text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-ink-body">Standar Mutu Lulus</p>
-                </div>
-            </article>
-
-            <article class="gpa-card flex min-h-[7.875rem] flex-col justify-between gap-3 p-4">
-                <div class="flex items-start justify-between gap-2">
-                    <h2 class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-ink-body">
-                        Ketepatan Waktu Pengiriman
-                    </h2>
-                    <x-gpa.icon name="shield" class="h-4 w-4 shrink-0 text-success-deep" />
-                </div>
-                <div class="pt-1">
-                    <p class="gpa-figure text-success-deep">100%</p>
-                    <p class="text-[9px] font-bold uppercase leading-3 tracking-[0.12em] text-success-deep">Tepat Waktu Subuh</p>
-                    <p class="text-[9px] font-semibold uppercase leading-3 tracking-[0.12em] text-ink-body">Armada Berpendingin</p>
-                </div>
-            </article>
         </section>
     </div>
 

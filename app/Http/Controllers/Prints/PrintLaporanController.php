@@ -41,7 +41,7 @@ class PrintLaporanController extends Controller
         $startDate = $request->query('start_date');
         $endDate   = $request->query('end_date');
         $clientId  = $request->query('client_id') ? (int) $request->query('client_id') : null;
-        $format    = strtolower($request->query('format', 'excel'));
+        $format    = strtolower($request->query('format', 'csv'));
 
         $now = now();
         $start = null;

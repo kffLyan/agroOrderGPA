@@ -9,7 +9,7 @@
                 <div class="min-w-0 space-y-1">
                     <p class="gpa-micro-bold uppercase tracking-wider text-ink-body">Direktori Pengguna</p>
                     <h1 class="font-sans text-2xl font-bold leading-8 tracking-[-0.01em] text-ink xl:text-[28px]">
-                        Detail Akun Pengguna
+                        Rincian Akun: {{ $user->name }}
                     </h1>
                     <p class="text-xs text-ink-body max-w-2xl">
                         Rincian profil, peran, dan informasi kredensial pengguna.

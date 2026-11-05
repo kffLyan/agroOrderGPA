@@ -12,15 +12,8 @@
         $clientPhone = $clientUser?->phone ?: '—';
         $clientAddress = $clientUser?->address ?: '—';
 
-        $creditLimit = 0.0;
-        $usedCredit = 0.0;
-        if ($clientUser) {
-            $activeContracts = \App\Models\Contract::where('user_id', $clientUser->id)->where('status', 'ACTIVE')->get();
-            foreach ($activeContracts as $c) {
-                $creditLimit += (float) (($c->committed_volume_per_cycle ?: 0) * ($c->fixed_price_per_kg ?: 0));
-            }
-            $usedCredit = (float) \App\Models\Invoice::where('user_id', $clientUser->id)->whereIn('status', ['UNPAID', 'OVERDUE'])->sum('grand_total');
-        }
+        $creditLimit = $creditLimit ?? 0.0;
+        $usedCredit = $usedCredit ?? 0.0;
 
         $source = [
             'reference'       => 'MANUAL-' . date('Ymd') . '-' . str_pad($clientUser?->id ?? 1, 3, '0', STR_PAD_LEFT),

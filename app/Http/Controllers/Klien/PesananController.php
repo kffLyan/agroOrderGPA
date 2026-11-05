@@ -7,6 +7,7 @@ use App\Http\Requests\SimpanPesananRequest;
 use App\Http\Resources\Klien\DetailPesananResource;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\User;
 use App\Services\OrderService;
 use App\Services\StockService;
 use Exception;
@@ -192,6 +193,8 @@ class PesananController extends Controller
 
         $docNumber = 'DOC/GPA-REKAP/' . now()->format('Ym') . '/' . str_pad((string) $user->id, 4, '0', STR_PAD_LEFT);
         $printDate = now()->translatedFormat('d F Y, H:i') . ' WIB';
+        $koordinatorName = User::where('role', 'KOORDINATOR')->first()?->name ?? 'Koordinator Lapangan GPA';
+        $sekretarisName  = User::where('role', 'SEKRETARIS')->first()?->name ?? 'Sekretaris GPA';
 
         return view('prints.client-orders-rekap', compact(
             'user',
@@ -202,7 +205,9 @@ class PesananController extends Controller
             'countOrders',
             'docNumber',
             'printDate',
-            'statusFilter'
+            'statusFilter',
+            'koordinatorName',
+            'sekretarisName'
         ));
     }
 

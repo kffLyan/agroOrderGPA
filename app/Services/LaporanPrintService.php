@@ -102,6 +102,8 @@ class LaporanPrintService
             'commoditySummary' => $commoditySummary,
             'periodName'       => $periodName,
             'periodLock'       => $periodLock,
+            'direkturName'     => User::where('role', 'DIREKTUR')->first()?->name ?? 'Direktur GPA',
+            'sekretarisName'   => User::where('role', 'SEKRETARIS')->first()?->name ?? 'Sekretaris GPA',
         ];
     }
 }

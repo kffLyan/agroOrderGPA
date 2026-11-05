@@ -402,15 +402,188 @@
                 </div>
 
                 <div class="flex shrink-0 flex-col items-start gap-2 lg:items-end">
-                    <button type="button" @click="$dispatch('gpa:toast', { title: 'Permintaan dikomunikasikan', message: 'Tim Key Account GPA akan menghubungi Anda dalam 1x24 jam.', tone: 'success' })"
+                    <button type="button" @click="openAdHocModal()"
                         class="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-ink shadow-pop transition-colors hover:bg-accent-deep">
-                        <x-gpa.icon name="plus" class="h-4 w-4" />
-                        <span class="gpa-meta-lg font-bold">Ajukan Pasokan Khusus</span>
+                        <x-gpa.icon name="badge-check" class="h-4 w-4 text-brand-deep" />
+                        <span class="gpa-meta-lg font-bold">Pelajari Program Klien Kontrak</span>
                     </button>
                     <p class="gpa-micro text-white/60">Minimum batch 5 Ton · Penawaran 1x24 Jam</p>
                 </div>
             </div>
         </section>
+
+        {{-- ---------------------------------------------------------------- --}}
+        {{-- Modal Promosi Kemitraan Klien Kontrak B2B GPA --}}
+        {{-- ---------------------------------------------------------------- --}}
+        <div x-cloak x-show="adHocOpen"
+            class="fixed inset-0 z-50 flex min-h-full items-center justify-center overflow-y-auto bg-black/60 p-3 sm:p-6 backdrop-blur-sm"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0"
+            x-on:keydown.escape.window="closeAdHocModal()">
+
+            <div @click.away="closeAdHocModal()"
+                class="relative my-auto flex max-h-[92vh] w-full max-w-2xl flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl outline outline-1 outline-line-board/50 overflow-hidden"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter-end="opacity-100 scale-100">
+
+                {{-- Header Modal Promosi --}}
+                <header class="flex shrink-0 items-start justify-between border-b border-line-hair pb-4">
+                    <div class="flex flex-col gap-1.5">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center gap-1.5 rounded-full bg-accent/20 px-2.5 py-0.5 text-[11px] font-bold text-brand-deep border border-accent/40">
+                                <x-gpa.icon name="badge-check" class="h-3.5 w-3.5 text-accent-deep" />
+                                PROMO KEMITRAAN EKSKLUSIF B2B
+                            </span>
+                            <span class="rounded bg-brand/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-brand">
+                                RESMI GPA
+                            </span>
+                        </div>
+                        <h3 class="text-lg sm:text-xl font-extrabold text-ink leading-tight">
+                            Tingkatkan Bisnis Anda Menjadi Klien Kontrak B2B GPA
+                        </h3>
+                        <p class="text-xs text-ink-body leading-relaxed max-w-xl">
+                            Nikmati kepastian pasokan hasil panen segar, perlindungan harga terkunci, serta fleksibilitas arus kas dengan plafon kredit tempo (Term of Payment).
+                        </p>
+                    </div>
+                    <button type="button" @click="closeAdHocModal()"
+                        class="rounded-lg p-1.5 text-ink-quiet hover:bg-surface-disabled hover:text-ink transition-colors">
+                        <x-gpa.icon name="x" class="h-5 w-5" />
+                    </button>
+                </header>
+
+                {{-- Konten Promosi & Benefit (Scrollable) --}}
+                <div class="mt-4 flex flex-1 flex-col gap-4 overflow-y-auto pr-1 gpa-scrollbar">
+                    
+                    {{-- 4 Pilar Keuntungan Utama --}}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="rounded-xl border border-line-hair bg-surface-shell/40 p-3.5 flex flex-col gap-1.5 hover:border-accent transition-colors">
+                            <div class="flex items-center gap-2">
+                                <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/30 text-brand-deep font-bold text-xs">
+                                    <x-gpa.icon name="lock" class="h-4 w-4 text-brand-deep" />
+                                </div>
+                                <h4 class="font-sans text-xs font-bold text-ink">Harga Terkunci (Fixed Price)</h4>
+                            </div>
+                            <p class="text-[11px] leading-4 text-ink-body">
+                                Bebas cemas dari inflasi dan lonjakan harga pasar saat cuaca buruk. Harga komoditas diikat kontrak tetap selama 3–12 bulan.
+                            </p>
+                        </div>
+
+                        <div class="rounded-xl border border-line-hair bg-surface-shell/40 p-3.5 flex flex-col gap-1.5 hover:border-accent transition-colors">
+                            <div class="flex items-center gap-2">
+                                <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/30 text-brand-deep font-bold text-xs">
+                                    <x-gpa.icon name="wallet" class="h-4 w-4 text-brand-deep" />
+                                </div>
+                                <h4 class="font-sans text-xs font-bold text-ink">Plafon Kredit TOP 14–30 Hari</h4>
+                            </div>
+                            <p class="text-[11px] leading-4 text-ink-body">
+                                Fasilitas belanja tempo tanpa DP di setiap order. Jaga likuiditas operasional hotel, resto, katering, atau industri Anda.
+                            </p>
+                        </div>
+
+                        <div class="rounded-xl border border-line-hair bg-surface-shell/40 p-3.5 flex flex-col gap-1.5 hover:border-accent transition-colors">
+                            <div class="flex items-center gap-2">
+                                <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/30 text-brand-deep font-bold text-xs">
+                                    <x-gpa.icon name="leaf" class="h-4 w-4 text-brand-deep" />
+                                </div>
+                                <h4 class="font-sans text-xs font-bold text-ink">Prioritas Alokasi Grade Super</h4>
+                            </div>
+                            <p class="text-[11px] leading-4 text-ink-body">
+                                Kuota komoditas diprioritaskan langsung dari greenhouse binaan GPA sebelum dilepas ke pasar reguler umum.
+                            </p>
+                        </div>
+
+                        <div class="rounded-xl border border-line-hair bg-surface-shell/40 p-3.5 flex flex-col gap-1.5 hover:border-accent transition-colors">
+                            <div class="flex items-center gap-2">
+                                <div class="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/30 text-brand-deep font-bold text-xs">
+                                    <x-gpa.icon name="truck" class="h-4 w-4 text-brand-deep" />
+                                </div>
+                                <h4 class="font-sans text-xs font-bold text-ink">Armada Chiller Berpendingin</h4>
+                            </div>
+                            <p class="text-[11px] leading-4 text-ink-body">
+                                Pengiriman cold-chain 2–6°C terjadwal langsung ke gudang atau sentra produksi Anda dengan pantauan real-time.
+                            </p>
+                        </div>
+                    </div>
+
+                    {{-- Tabel Perbandingan Sederhana --}}
+                    <div class="rounded-xl border border-line-hair bg-white p-3.5">
+                        <h4 class="font-mono text-xs font-bold uppercase tracking-wider text-ink mb-2">
+                            Perbandingan Fasilitas Pembelian
+                        </h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-[11px]">
+                                <thead>
+                                    <tr class="border-b border-line-hair text-ink-quiet">
+                                        <th class="pb-1.5 font-medium">Fitur Layanan</th>
+                                        <th class="pb-1.5 font-medium">Klien Reguler</th>
+                                        <th class="pb-1.5 font-bold text-success-deep">Mitra Klien Kontrak (PKS)</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-line-hair/60 text-ink-body">
+                                    <tr>
+                                        <td class="py-1.5 font-medium text-ink">Penetapan Harga</td>
+                                        <td class="py-1.5 text-ink-quiet">Fluktuatif Harian</td>
+                                        <td class="py-1.5 font-bold text-success-deep">Terkunci &amp; Stabil</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5 font-medium text-ink">Metode Pembayaran</td>
+                                        <td class="py-1.5 text-ink-quiet">Tunai / Transfer di Depan</td>
+                                        <td class="py-1.5 font-bold text-success-deep">Tempo TOP 14 - 30 Hari</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5 font-medium text-ink">Jaminan Pasokan</td>
+                                        <td class="py-1.5 text-ink-quiet">Tergantung Stok Sisa</td>
+                                        <td class="py-1.5 font-bold text-success-deep">Cadangan Kuota Terjamin</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-1.5 font-medium text-ink">Layanan Khusus</td>
+                                        <td class="py-1.5 text-ink-quiet">Customer Service Reguler</td>
+                                        <td class="py-1.5 font-bold text-success-deep">Dedicated Key Account Executive</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {{-- Kotak Kontak & Tindak Lanjut --}}
+                    <div class="rounded-xl border border-accent/40 bg-accent/10 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="flex flex-col gap-0.5">
+                            <span class="font-bold text-xs text-brand-deep">Siap Tingkatkan Status Kemitraan Anda?</span>
+                            <p class="text-[11px] text-ink-body">
+                                Konsultasikan volume kebutuhan komoditas dan tenor pembayaran bersama Account Executive kami.
+                            </p>
+                        </div>
+                        <a href="https://wa.me/6281234567890?text=Halo%20Tim%20Key%20Account%20GPA%2C%20saya%20tertarik%20dengan%20Program%20Kemitraan%20Klien%20Kontrak%20B2B%20dan%20ingin%20berkonsultasi%20mengenai%20harga%20terkunci%20serta%20plafon%20kredit."
+                            target="_blank"
+                            class="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg bg-emerald-700 px-3.5 py-2 text-xs font-bold text-white shadow hover:bg-emerald-800 transition-colors">
+                            <x-gpa.icon name="phone" class="h-3.5 w-3.5" />
+                            Chat WhatsApp AE
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Footer Modal Action Buttons --}}
+                <footer class="mt-4 flex flex-col-reverse sm:flex-row items-center justify-between gap-2.5 border-t border-line-hair pt-3.5">
+                    <button type="button" @click="closeAdHocModal()"
+                        class="w-full sm:w-auto rounded-lg border border-line-board bg-surface px-4 py-2 text-xs font-semibold text-ink-body hover:bg-surface-shell transition-colors">
+                        Tutup &amp; Lanjut Belanja
+                    </button>
+
+                    <div class="flex w-full sm:w-auto items-center gap-2">
+                        <a href="{{ route('klien.dashboard') }}"
+                            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2 text-xs font-bold text-white shadow-pop hover:bg-brand-deep transition-colors">
+                            <x-gpa.icon name="file-text" class="h-3.5 w-3.5 text-accent" />
+                            Ajukan PKS di Dasbor Klien
+                        </a>
+                    </div>
+                </footer>
+            </div>
+        </div>
 
 
 

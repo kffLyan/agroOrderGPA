@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Sekretaris;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Sekretaris\LaporanOperasionalResource;
 use App\Models\Order;
+use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -123,7 +124,8 @@ class LaporanController extends Controller
         $totalNet         = (float) array_sum(array_column($journalRows, 'net'));
         $totalValue       = (float) array_sum(array_column($journalRows, 'value'));
         $overallDeviation = $totalEstimate > 0 ? round((($totalNet - $totalEstimate) / $totalEstimate) * 100, 2) : 0;
-        $operatorName     = Auth::user()?->name ?: 'Sekretaris Operasional';
+        $operatorName     = Auth::user()?->name ?: 'Sekretaris GPA';
+        $direkturName     = User::where('role', 'DIREKTUR')->first()?->name ?? 'Direktur GPA';
 
         return view('prints.secretary-report', [
             'journalRows'      => $journalRows,
@@ -132,6 +134,7 @@ class LaporanController extends Controller
             'totalValue'       => $totalValue,
             'overallDeviation' => $overallDeviation,
             'operatorName'     => $operatorName,
+            'direkturName'     => $direkturName,
         ]);
     }
 }

@@ -227,8 +227,8 @@
         </section>
 
         @php
-            $sekretarisName = \App\Models\User::where('role', 'SEKRETARIS')->first()?->name ?? 'Nurhayati, S.Ak';
-            $direkturName = \App\Models\User::where('role', 'DIREKTUR')->first()?->name ?? 'Ahmad Sanusi, S.P.';
+            $sekretarisName = $sekretarisName ?? 'Sekretaris GPA';
+            $direkturName = $direkturName ?? 'Direktur GPA';
         @endphp
 
         {{-- Tabel Data Faktur Konsolidasi Rinci (Excel Sheet View) --}}

@@ -50,34 +50,7 @@
         }
     }
 
-    $reorderData = [];
-    if (isset($products) && $products->isNotEmpty()) {
-        foreach ($products as $p) {
-            $unitPrice = (float) $p->base_price;
-            if ($isContractClient) {
-                $userContract = \App\Models\Contract::where('user_id', $user->id)
-                    ->where('product_id', $p->id)
-                    ->where('status', 'ACTIVE')
-                    ->first();
-                if ($userContract && $userContract->fixed_price_per_kg) {
-                    $unitPrice = (float) $userContract->fixed_price_per_kg;
-                }
-            }
-            $reorderData[] = [
-                'key' => (string) $p->id,
-                'id' => $p->id,
-                'sku' => $p->sku ?? ('SKU-' . $p->id),
-                'name' => $p->name,
-                'grade' => 'Grade ' . ($p->grade ?: 'Super A'),
-                'price' => $unitPrice,
-                'remaining' => 2500,
-                'step' => 50,
-                'initial_qty' => 100,
-                'image_path' => $p->image_path,
-                'image_url' => asset($p->image_path),
-            ];
-        }
-    }
+    $reorderData = $reorderData ?? [];
 @endphp
 
 @section('content')

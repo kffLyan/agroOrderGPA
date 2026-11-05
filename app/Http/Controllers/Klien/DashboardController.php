@@ -214,6 +214,8 @@ class DashboardController extends Controller
                 'remaining' => 2500,
                 'step' => 50,
                 'initial_qty' => 100,
+                'image_path' => $product->image_path,
+                'image_url' => asset($product->image_path),
             ];
         }
 

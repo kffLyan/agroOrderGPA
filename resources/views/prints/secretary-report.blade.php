@@ -217,7 +217,7 @@
         </div>
 
         @php
-            $direkturName = \App\Models\User::where('role', 'DIREKTUR')->first()?->name ?? 'Ahmad Sanusi, S.P.';
+            $direkturName = $direkturName ?? 'Direktur GPA';
         @endphp
 
         {{-- Tabel Jurnal Transaksi (Excel Sheet View) --}}

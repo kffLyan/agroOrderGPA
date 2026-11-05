@@ -112,8 +112,8 @@
 <body class="antialiased">
 
     @php
-        $direkturName = \App\Models\User::where('role', 'DIREKTUR')->first()?->name ?? 'Ahmad Sanusi, S.P.';
-        $sekretarisName = \App\Models\User::where('role', 'SEKRETARIS')->first()?->name ?? 'Nurhayati, S.Ak';
+        $direkturName = $direkturName ?? 'Direktur GPA';
+        $sekretarisName = $sekretarisName ?? 'Sekretaris GPA';
     @endphp
 
     {{-- Topbar Kontrol Cetak (Hanya tampil di layar) --}}

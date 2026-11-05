@@ -139,7 +139,7 @@ class PrintLaporanController extends Controller
         // A. JIKA PENGGUNA MEMILIH FORMAT EXCEL SPREADSHEET (Default & Rekomendasi Utama)
         // Dirender langsung melalui Blade template resmi: resources/views/prints/report-excel.blade.php
         if ($format === 'excel' || $format === 'xls') {
-            $namaDirektur = Auth::user()?->name ?: 'Ahmad Sanusi, S.P.';
+            $namaDirektur = Auth::user()?->name ?: 'Direktur GPA';
             $payload = array_merge($dataCetak, [
                 'dataKlien'    => $dataKlien,
                 'namaDirektur' => $namaDirektur,

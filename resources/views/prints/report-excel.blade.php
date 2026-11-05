@@ -10,7 +10,7 @@
 
  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
   <Title>Laporan Resmi Penjualan Eksekutif Koperasi GPA</Title>
-  <Author>{{ $namaDirektur ?? 'Ahmad Sanusi, S.P.' }}</Author>
+  <Author>{{ $namaDirektur ?? 'Direktur GPA' }}</Author>
   <Company>Koperasi Produsen Agro Green Pasundan (GPA)</Company>
   <Created>{{ date('Y-m-d\TH:i:s\Z') }}</Created>
  </DocumentProperties>

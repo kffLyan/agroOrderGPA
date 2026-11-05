@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Klien;
 use App\Http\Controllers\Controller;
 use App\Models\Contract;
 use App\Models\Invoice;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -71,6 +72,8 @@ class DokumenController extends Controller
 
         $docNumber = 'DOC/GPA-INV-REKAP/' . now()->format('Ym') . '/' . str_pad((string) $userId, 4, '0', STR_PAD_LEFT);
         $printDate = now()->translatedFormat('d F Y, H:i') . ' WIB';
+        $sekretarisName = User::where('role', 'SEKRETARIS')->first()?->name ?? 'Sekretaris GPA';
+        $direkturName   = User::where('role', 'DIREKTUR')->first()?->name ?? 'Direktur GPA';
 
         return view('prints.client-documents-rekap', compact(
             'user',
@@ -80,7 +83,9 @@ class DokumenController extends Controller
             'unpaidTotal',
             'paidTotal',
             'docNumber',
-            'printDate'
+            'printDate',
+            'sekretarisName',
+            'direkturName'
         ));
     }
 

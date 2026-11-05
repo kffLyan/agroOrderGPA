@@ -227,8 +227,8 @@
         </section>
 
         @php
-            $koordinatorName = \App\Models\User::where('role', 'KOORDINATOR')->first()?->name ?? 'Agung Wicaksono';
-            $sekretarisName = \App\Models\User::where('role', 'SEKRETARIS')->first()?->name ?? 'Nurhayati, S.Ak';
+            $koordinatorName = $koordinatorName ?? 'Koordinator Lapangan GPA';
+            $sekretarisName = $sekretarisName ?? 'Sekretaris GPA';
         @endphp
 
         {{-- Tabel Data Transaksi Rekapitulasi Rinci (Excel Sheet View) --}}

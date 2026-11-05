@@ -150,9 +150,14 @@ class PesananManualController extends Controller
             'hash_note' => 'Menunggu Dokumen',
         ];
 
+        $creditLimit = (float) ($firstClient['credit_limit'] ?? 0.0);
+        $usedCredit  = (float) ($firstClient['credit_used'] ?? 0.0);
+
         return view('sekretaris.pesanan-manual', [
             'clientUser'      => $clientUser,
             'clients'         => $clients,
+            'creditLimit'     => $creditLimit,
+            'usedCredit'      => $usedCredit,
             'commodities'     => [],
             'catalog'         => $catalog,
             'paymentChannels' => $paymentChannels,

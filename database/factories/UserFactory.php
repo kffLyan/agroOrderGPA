@@ -7,21 +7,13 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-/**
- * @extends Factory<User>
- */
+// Factory pembuatan instance model User untuk pengujian otomatis
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
+    // Nilai cache hash password default untuk mempercepat eksekusi factory pengujian
     protected static ?string $password;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    // Mendefinisikan atribut default model User dengan data palsu yang realistis
     public function definition(): array
     {
         return [
@@ -33,9 +25,7 @@ class UserFactory extends Factory
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
+    // Menandai model pengguna dengan status alamat email belum diverifikasi
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [

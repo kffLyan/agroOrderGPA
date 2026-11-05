@@ -18,6 +18,7 @@ class SimpanBuktiPembayaranRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'payment_id'     => ['nullable', 'integer'],
             'invoice_po'     => ['required', 'string'],
             'amount'         => ['required', 'numeric', 'min:1'],
             'sender_bank'    => ['required', 'string', 'max:100'],

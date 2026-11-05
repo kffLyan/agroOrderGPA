@@ -25,7 +25,7 @@
     <x-gpa.loading-screen />
     @php
         $operator = $operator ?? [
-            'role'     => 'Direktur Utama',
+            'role'     => 'Direktur',
             'name'     => auth()->user()?->name ?: 'Direksi GPA',
             'code'     => 'DIR-' . str_pad(auth()->id() ?: 1, 3, '0', STR_PAD_LEFT),
             'initials' => strtoupper(substr(auth()->user()?->name ?: 'DU', 0, 2)),

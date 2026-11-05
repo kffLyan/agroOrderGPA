@@ -27,7 +27,7 @@ class RegisteredUserController extends Controller
         $businessName = trim((string) $request->input('business_name', $request->input('company_name')));
         $request->merge(['company_name' => $businessName !== '' ? $businessName : null]);
 
-        $emailRule = app()->environment('testing') ? 'email:rfc' : 'email:rfc,dns';
+        $emailRule = 'email:rfc';
 
         $request->validate([
             'name'         => ['required', 'string', 'max:120'],

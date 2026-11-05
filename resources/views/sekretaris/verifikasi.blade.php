@@ -334,17 +334,75 @@
 
             <div
                 class="mt-4 grid gap-4 rounded-xl bg-surface-shell p-4 outline outline-1 outline-line-soft sm:grid-cols-2 lg:grid-cols-4">
-                <template x-for="cell in selected.pricing" :key="cell.label">
-                    <div :class="cell.highlight ? 'rounded-lg bg-surface px-3 py-2 outline outline-1 outline-success-deep/30' : ''">
-                        <p class="gpa-micro text-ink-quiet" x-text="cell.label"></p>
-                        <p class="mt-1 gpa-meta-lg font-bold tracking-[0.28px]"
-                            :class="cell.highlight ? 'text-success-deep' : 'text-ink'">
-                            <span x-text="cell.value"></span>
-                            <span x-show="cell.suffix" class="gpa-note text-ink-body" x-text="cell.suffix"></span>
-                        </p>
-                        <p x-show="cell.note" class="mt-0.5 gpa-note text-ink-body" x-text="cell.note"></p>
+                <div>
+                    <p class="gpa-micro text-ink-quiet">Subtotal Komoditas</p>
+                    <p class="mt-1 gpa-meta-lg font-bold tracking-[0.28px] text-ink" x-text="formatRupiah(getSubtotal())"></p>
+                </div>
+                <div>
+                    <p class="gpa-micro text-ink-quiet">Biaya Logistik Armada Chiller</p>
+                    <p class="mt-1 gpa-meta-lg font-bold tracking-[0.28px] text-ink" x-text="formatRupiah(getShipping())"></p>
+                    <p class="mt-0.5 gpa-note text-ink-body" x-show="getShipping() === 0">(Bebas Ongkir Franco)</p>
+                </div>
+                <div>
+                    <p class="gpa-micro text-ink-quiet" x-text="'Pajak Pertambahan Nilai (' + (selected.tax_label || '0% DTP') + ')'"></p>
+                    <p class="mt-1 gpa-meta-lg font-bold tracking-[0.28px] text-ink" x-text="formatRupiah(getTaxAmount())"></p>
+                    <p class="mt-0.5 gpa-note text-ink-body" x-text="getTaxAmount() > 0 ? '(PPN Standar PKP 11%)' : '(Bebas Pajak Produk Pertanian)'"></p>
+                </div>
+                <div class="rounded-lg bg-surface px-3 py-2 outline outline-1 outline-success-deep/30">
+                    <p class="gpa-micro text-ink-quiet">Total Tagihan Invoice</p>
+                    <p class="mt-1 gpa-meta-lg font-bold tracking-[0.28px] text-success-deep" x-text="formatRupiah(getGrandTotal())"></p>
+                </div>
+            </div>
+
+            {{-- Form Penyesuaian Biaya Ongkir oleh Sekretaris --}}
+            <div class="mt-4 rounded-xl border border-line-soft bg-surface-shell p-4 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-b border-line-soft pb-2">
+                    <div>
+                        <h4 class="font-sans text-xs font-bold text-ink flex items-center gap-1.5">
+                            <x-gpa.icon name="truck" class="h-3.5 w-3.5 text-success-deep" />
+                            Penetapan Biaya Ongkir Logistik Armada (Otoritas Sekretaris)
+                        </h4>
+                        <p class="text-[11px] text-ink-body">Sekretaris dapat menentukan tarif ongkir riil armada berpendingin sebelum invoice diterbitkan.</p>
                     </div>
-                </template>
+                    <div class="text-right">
+                        <span class="text-[10px] text-ink-body uppercase font-bold tracking-wider">Ongkir Ditetapkan:</span>
+                        <p class="font-mono text-sm font-bold text-success-deep" x-text="formatRupiah(manualShipping)"></p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="w-full sm:w-48">
+                        <label class="block text-[10px] font-bold text-ink-body mb-1">Nominal Ongkir (Rp):</label>
+                        <input type="number" x-model.number="manualShipping" min="0" step="5000"
+                            placeholder="0"
+                            class="w-full rounded border-line-board bg-surface px-3 py-1.5 text-xs font-mono font-bold text-ink focus:border-brand">
+                    </div>
+                    <div>
+                        <span class="block text-[10px] font-bold text-ink-body mb-1">Pilihan Cepat Tarif Ongkir:</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button type="button" @click="setShippingPreset(0)"
+                                :class="manualShipping === 0 ? 'bg-brand text-accent font-bold ring-1 ring-accent' : 'bg-surface text-ink border border-line-board hover:bg-surface-muted'"
+                                class="rounded px-2.5 py-1 text-2xs font-semibold transition">
+                                Rp 0 (Bebas Ongkir Franco)
+                            </button>
+                            <button type="button" @click="setShippingPreset(50000)"
+                                :class="manualShipping === 50000 ? 'bg-brand text-accent font-bold ring-1 ring-accent' : 'bg-surface text-ink border border-line-board hover:bg-surface-muted'"
+                                class="rounded px-2.5 py-1 text-2xs font-semibold transition">
+                                Rp 50.000 (Lokal Kota)
+                            </button>
+                            <button type="button" @click="setShippingPreset(75000)"
+                                :class="manualShipping === 75000 ? 'bg-brand text-accent font-bold ring-1 ring-accent' : 'bg-surface text-ink border border-line-board hover:bg-surface-muted'"
+                                class="rounded px-2.5 py-1 text-2xs font-semibold transition">
+                                Rp 75.000 (Standar Bandung Raya)
+                            </button>
+                            <button type="button" @click="setShippingPreset(150000)"
+                                :class="manualShipping === 150000 ? 'bg-brand text-accent font-bold ring-1 ring-accent' : 'bg-surface text-ink border border-line-board hover:bg-surface-muted'"
+                                class="rounded px-2.5 py-1 text-2xs font-semibold transition">
+                                Rp 150.000 (Antar Kota / Jabar)
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="sticky bottom-4 z-20 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line-soft bg-surface/95 p-4 shadow-xl ring-1 ring-black/5 backdrop-blur-md">

@@ -711,7 +711,83 @@ class KlienModuleTest extends TestCase
         ]);
         $this->assertStringContainsString('sudah lunas dan terverifikasi sah', $response->json('message'));
     }
+
+    public function test_reuploading_payment_proof_preserves_payment_id_and_updates_data(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $invoice = \App\Models\Invoice::create([
+            'invoice_number' => 'INV-GPA-EDIT-001',
+            'user_id' => $klien->id,
+            'subtotal_amount' => 500000.00,
+            'grand_total' => 500000.00,
+            'status' => 'UNPAID',
+            'period_start' => now()->startOfMonth(),
+            'period_end' => now()->endOfMonth(),
+            'due_date' => now()->addDays(30),
+        ]);
+
+        // 1. Unggah pertama kali
+        $firstUpload = $this->actingAs($klien)->postJson(route('klien.bukti-pembayaran.store'), [
+            'invoice_po' => $invoice->invoice_number,
+            'amount' => 500000,
+            'sender_bank' => 'BCA',
+            'sender_account' => '111-222-333',
+            'reference' => 'REF-ORIGINAL-01',
+            'note' => 'Catatan pertama',
+        ]);
+
+        $firstUpload->assertStatus(200);
+        $paymentId = $firstUpload->json('payment_id');
+        $this->assertNotNull($paymentId);
+
+        // 2. Edit / unggah ulang bukti pembayaran untuk invoice yang sama
+        $secondUpload = $this->actingAs($klien)->postJson(route('klien.bukti-pembayaran.store'), [
+            'invoice_po' => $invoice->invoice_number,
+            'payment_id' => $paymentId,
+            'amount' => 500000,
+            'sender_bank' => 'Bank Mandiri',
+            'sender_account' => '999-888-777',
+            'reference' => 'REF-UPDATED-02',
+            'note' => 'Catatan revisi klien',
+        ]);
+
+        $secondUpload->assertStatus(200);
+        $updatedPaymentId = $secondUpload->json('payment_id');
+
+        // Pastikan ID pembayaran tetap persis sama (tidak membuat record baru)
+        $this->assertEquals($paymentId, $updatedPaymentId);
+
+        // Pastikan data di database terbarukan
+        $this->assertDatabaseHas('payments', [
+            'id' => $paymentId,
+            'invoice_id' => $invoice->id,
+            'payment_reference' => 'REF-UPDATED-02',
+            'payment_method' => 'TRANSFER_BANK',
+            'status' => 'MENUNGGU_VERIFIKASI',
+            'verification_note' => 'Catatan revisi klien',
+        ]);
+
+        // Pastikan jumlah total pembayaran untuk invoice ini hanya 1
+        $this->assertEquals(1, \App\Models\Payment::where('invoice_id', $invoice->id)->count());
+    }
+
+    public function test_storage_route_serves_uploaded_payment_proof(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        $fakeFile = \Illuminate\Http\UploadedFile::fake()->image('test_transfer.jpg');
+        $path = $fakeFile->store('payments', 'public');
+
+        $response = $this->get('/storage/' . $path);
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'image/jpeg');
+    }
 }
+
 
 
 

@@ -91,8 +91,7 @@ class BuktiPembayaranController extends Controller
             ? $dbPayments->first(function ($payment) use ($selectedPo) {
                 $invoiceNumber = $payment->invoice?->invoice_number ?: ($payment->order?->order_number ?: '');
                 return $invoiceNumber === $selectedPo 
-                    && $payment->status === 'MENUNGGU_VERIFIKASI' 
-                    && ! empty($payment->proof_url);
+                    && in_array($payment->status, ['MENUNGGU_VERIFIKASI', 'PENDING']);
             })
             : null;    
 
@@ -174,27 +173,33 @@ class BuktiPembayaranController extends Controller
             return redirect()->route('klien.dokumen')->with('info', 'Faktur ' . $invoice->invoice_number . ' sudah lunas dan terverifikasi sah.');
         }
 
-        // Mencegah pengiriman ganda (double submission) berkas bukti pembayaran dalam rentang 60 detik
-        $existingPendingPayment = Payment::where('invoice_id', $invoice->id)
-            ->where('status', 'MENUNGGU_VERIFIKASI')
-            ->where('created_at', '>=', now()->subSeconds(60))
-            ->first();
+        // Cari pembayaran sebelumnya yang masih dalam antrean verifikasi atau pernah ditolak untuk diperbarui (ID tetap sama)
+        $existingPayment = null;
+        if (!empty($validated['payment_id'] ?? null)) {
+            $existingPayment = Payment::where('id', $validated['payment_id'])
+                ->where('invoice_id', $invoice->id)
+                ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'PENDING', 'DITOLAK', 'REJECTED'])
+                ->first();
+        }
 
-        if ($existingPendingPayment) {
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'success'    => true,
-                    'message'    => 'Bukti pembayaran Anda sudah diterima dan sedang dalam antrean verifikasi.',
-                    'payment_id' => $existingPendingPayment->id,
-                ]);
-            }
-
-            return redirect()->route('klien.dokumen')->with('info', 'Bukti pembayaran faktur ' . $validated['invoice_po'] . ' sudah diajukan sebelumnya dan sedang dalam antrean verifikasi.');
+        if (!$existingPayment) {
+            $existingPayment = Payment::where('invoice_id', $invoice->id)
+                ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'PENDING', 'DITOLAK', 'REJECTED'])
+                ->latest('id')
+                ->first();
         }
 
         $proofPath = null;
         if ($request->hasFile('proof_file')) {
-            $proofPath = $request->file('proof_file')->store('payments', 'public');
+            $proofFile = $request->file('proof_file');
+            $proofPath = $proofFile->store('payments', 'public');
+
+            // Salin langsung ke public/storage/payments agar tahan terhadap isu symlink di shared hosting
+            $destinationDir = public_path('storage/payments');
+            if (!is_dir($destinationDir)) {
+                @mkdir($destinationDir, 0775, true);
+            }
+            @copy(storage_path('app/public/' . $proofPath), $destinationDir . DIRECTORY_SEPARATOR . basename($proofPath));
         }
 
         $paidAt = Carbon::now();
@@ -213,29 +218,60 @@ class BuktiPembayaranController extends Controller
                 $paymentMethod = str_contains(strtoupper($validated['sender_bank']), 'QRIS') ? 'QRIS' : 'TRANSFER_BANK';
             }
 
-            $payment = Payment::create([
-                'invoice_id'        => $invoice?->id,
-                'order_id'          => $invoice?->orders()->first()?->id,
-                'payment_reference' => (!empty($validated['reference'] ?? null)) ? $validated['reference'] : ('PAY-' . strtoupper(Str::random(8))),
-                'payment_method'    => $paymentMethod,
-                'amount'            => $validated['amount'],
-                'proof_url'         => $proofPath,
-                'status'            => 'MENUNGGU_VERIFIKASI',
-                'paid_at'           => $paidAt,
-                'verification_note' => (!empty($validated['note'] ?? null)) ? $validated['note'] : ('Unggahan bukti bayar oleh ' . $user->name),
-            ]);
+            $isUpdate = (bool) $existingPayment;
+
+            if ($existingPayment) {
+                // Perbarui rekonsiliasi yang sudah ada agar ID pembayaran (PAY-XXXX) konsisten dan tidak berganti
+                $updateData = [
+                    'payment_method'    => $paymentMethod,
+                    'amount'            => $validated['amount'],
+                    'status'            => 'MENUNGGU_VERIFIKASI',
+                    'paid_at'           => $paidAt,
+                    'verification_note' => (!empty($validated['note'] ?? null)) ? $validated['note'] : ('Pembaruan bukti bayar oleh ' . $user->name),
+                ];
+
+                if ($proofPath) {
+                    $updateData['proof_url'] = $proofPath;
+                }
+
+                if (!empty($validated['reference'] ?? null)) {
+                    $updateData['payment_reference'] = $validated['reference'];
+                }
+
+                $existingPayment->update($updateData);
+                $payment = $existingPayment;
+            } else {
+                $payment = Payment::create([
+                    'invoice_id'        => $invoice?->id,
+                    'order_id'          => $invoice?->orders()->first()?->id,
+                    'payment_reference' => (!empty($validated['reference'] ?? null)) ? $validated['reference'] : ('PAY-' . strtoupper(Str::random(8))),
+                    'payment_method'    => $paymentMethod,
+                    'amount'            => $validated['amount'],
+                    'proof_url'         => $proofPath,
+                    'status'            => 'MENUNGGU_VERIFIKASI',
+                    'paid_at'           => $paidAt,
+                    'verification_note' => (!empty($validated['note'] ?? null)) ? $validated['note'] : ('Unggahan bukti bayar oleh ' . $user->name),
+                ]);
+            }
 
             DB::commit();
 
             if ($request->wantsJson()) {
                 return response()->json([
                     'success'    => true,
-                    'message'    => 'Bukti pembayaran berhasil diunggah dan sedang dalam antrean verifikasi Sekretariat GPA.',
+                    'message'    => $isUpdate
+                        ? 'Bukti pembayaran berhasil diperbarui dan tetap dalam antrean verifikasi Sekretariat GPA.'
+                        : 'Bukti pembayaran berhasil diunggah dan sedang dalam antrean verifikasi Sekretariat GPA.',
                     'payment_id' => $payment->id,
                 ]);
             }
 
-            return redirect()->route('klien.dokumen')->with('success', 'Bukti pembayaran faktur ' . $validated['invoice_po'] . ' berhasil diunggah. Menunggu konfirmasi verifikasi Staf Sekretariat.');
+            $flashKey = $isUpdate ? 'info' : 'success';
+            $flashMsg = $isUpdate
+                ? ('Bukti pembayaran faktur ' . $validated['invoice_po'] . ' sudah diajukan sebelumnya dan berhasil diperbarui.')
+                : ('Bukti pembayaran faktur ' . $validated['invoice_po'] . ' berhasil diunggah. Menunggu konfirmasi verifikasi Staf Sekretariat.');
+
+            return redirect()->route('klien.dokumen')->with($flashKey, $flashMsg);
         } catch (\Exception $exception) {
             DB::rollBack();
 

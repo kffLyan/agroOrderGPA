@@ -311,13 +311,11 @@ Route::middleware('auth')->group(function () {
         ->name('prints.report.export');
 });
 
-// Fallback rute untuk file bukti serah terima PoD agar tidak terblokir 403
-Route::get('/storage/uploads/pod/{filename}', function ($filename) {
-    $path = public_path('uploads/pod/' . $filename);
-    if (file_exists($path)) {
-        return response()->file($path);
-    }
-    abort(404);
-});
+// Fallback rute untuk menyajikan berkas storage publik jika symlink public/storage tidak aktif di web server
+Route::get('/storage/{path}', function (string $path) {
+    abort_unless(Storage::disk('public')->exists($path), 404);
+
+    return response()->file(Storage::disk('public')->path($path));
+})->where('path', '.*');
 
 require __DIR__.'/auth.php';

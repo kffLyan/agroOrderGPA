@@ -40,13 +40,13 @@ class ClientOtpController extends Controller
     // Mengirimkan 6-digit kode OTP verifikasi kepemilikan email pendaftaran klien.
     public function sendEmailOtp(Request $request): JsonResponse
     {
-        $emailRule = app()->environment('testing') ? 'email:rfc' : 'email:rfc,dns';
+        $emailRule = 'email:rfc';
 
         $request->validate([
             'email' => ['required', 'string', 'lowercase', $emailRule, 'max:120', 'unique:users,email'],
         ], [
             'email.required' => 'Alamat email wajib diisi.',
-            'email.email'    => 'Format email tidak valid atau domain email tidak aktif.',
+            'email.email'    => 'Format email tidak valid.',
             'email.unique'   => 'Alamat email ini sudah terdaftar di sistem GPA. Silakan login.',
         ]);
 
@@ -65,8 +65,9 @@ class ClientOtpController extends Controller
         } catch (\Throwable $exception) {
             report($exception);
             if (! app()->environment(['local', 'testing'])) {
+                $detail = config('app.debug') ? ' (' . $exception->getMessage() . ')' : '';
                 throw ValidationException::withMessages([
-                    'email' => 'Gagal mengirim email verifikasi. Pastikan koneksi atau alamat email benar.',
+                    'email' => 'Gagal mengirim email verifikasi: server email belum terhubung' . $detail . '. Periksa konfigurasi MAIL di .env.',
                 ]);
             }
         }

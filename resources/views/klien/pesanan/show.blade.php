@@ -8,6 +8,10 @@
 
     $hasPendingProof = ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_pending_proof);
 
+    $isPaymentVerified = in_array($order->status, ['LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'])
+        || ($order->invoice && $order->invoice->status === 'PAID')
+        || $order->payments->whereIn('status', ['LUNAS', 'VERIFIED', 'SUCCESS'])->isNotEmpty();
+
     $statusStyles = [
         'MENUNGGU_VERIFIKASI' => 'bg-warning-soft text-warning-deep ring-warning/40',
         'MENUNGGU_PEMBAYARAN' => $hasPendingProof ? 'bg-warning-soft text-warning-deep ring-warning/40' : 'bg-brand/10 text-brand ring-brand/30',
@@ -92,6 +96,14 @@
                                 Bayar Sekarang
                             </a>
                         @endif
+                    @endif
+
+                    @if ($isPaymentVerified)
+                        <a href="{{ route('prints.thermal-receipt', ['invoice' => $order->invoice?->invoice_number ?: $order->id]) }}" target="_blank"
+                            class="inline-flex items-center gap-1.5 rounded-xl border border-line-soft bg-surface px-3 py-2 text-xs font-bold text-ink shadow-xs transition-all hover:bg-surface-muted hover:border-line-board">
+                            <x-gpa.icon name="receipt" class="h-3.5 w-3.5 text-success-deep" />
+                            Cetak Struk Pembayaran
+                        </a>
                     @endif
 
                     @if ($order->invoice)
@@ -237,6 +249,13 @@
                             <x-gpa.icon name="shield" class="h-4 w-4 text-ink" />
                             Lihat Bukti PoD
                         </button>
+                    @endif
+                    @if ($isPaymentVerified)
+                        <a href="{{ route('prints.thermal-receipt', ['invoice' => $order->invoice?->invoice_number ?: $order->id]) }}" target="_blank"
+                            class="inline-flex items-center gap-1.5 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 font-sans text-xs font-bold text-white backdrop-blur-xs transition-colors hover:bg-white/20">
+                            <x-gpa.icon name="receipt" class="h-4 w-4 text-accent" />
+                            Cetak Struk
+                        </a>
                     @endif
                     <a href="{{ route('prints.surat-jalan', ['order_id' => $order->id]) }}" target="_blank"
                         class="inline-flex items-center gap-1.5 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 font-sans text-xs font-bold text-white backdrop-blur-xs transition-colors hover:bg-white/20">
@@ -468,7 +487,7 @@
                         {{ in_array($order->status, ['LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'])
                             ? 'Pembayaran telah disetujui lunas oleh kasir/sekretariat GPA.'
                             : ($hasPendingProof 
-                                ? 'Bukti transfer telah dikirim ke Sekretariat. Menunggu pencocokan mutasi kas bank.'
+                                ? 'Bukti transfer telah dikirim ke Sekretaris. Menunggu pencocokan mutasi kas bank.'
                                 : ($order->invoice ? "Faktur #{$order->invoice->invoice_number} terbit. Total tagihan dikunci upfront." : 'Menunggu penerbitan invoice resmi oleh Sekretaris.')) }}
                     </p>
                 </li>
@@ -799,10 +818,40 @@
                                     Lihat Bukti Transfer
                                 </a>
                             @endif
+                            @if ($isPaySuccess)
+                                <div class="mt-2 flex items-center justify-between border-t border-line-soft/60 pt-2">
+                                    <span class="text-[11px] font-semibold text-success-deep flex items-center gap-1">
+                                        <x-gpa.icon name="check-circle" class="h-3.5 w-3.5" />
+                                        Terverifikasi Sekretaris
+                                    </span>
+                                    <a href="{{ route('prints.thermal-receipt', ['invoice' => $order->invoice?->invoice_number ?: $order->id]) }}" target="_blank"
+                                        class="inline-flex items-center gap-1 rounded bg-surface px-2 py-1 text-[11px] font-bold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                                        <x-gpa.icon name="receipt" class="h-3 w-3 text-ink-body" />
+                                        Cetak Struk
+                                    </a>
+                                </div>
+                            @endif
                         </div>
                     @empty
                         <p class="text-xs text-ink-body italic">Belum ada catatan transaksi pembayaran untuk pesanan ini.</p>
                     @endforelse
+
+                    @if ($isPaymentVerified)
+                        <div class="rounded-xl border border-success-deep/30 bg-success-deep/5 p-3 flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <x-gpa.icon name="check-circle" class="h-4 w-4 text-success-deep shrink-0" />
+                                <div>
+                                    <p class="text-xs font-bold text-ink">Pembayaran Terverifikasi</p>
+                                    <p class="text-[10px] text-ink-body">Struk resmi pembayaran telah diterbitkan oleh Sekretaris.</p>
+                                </div>
+                            </div>
+                            <a href="{{ route('prints.thermal-receipt', ['invoice' => $order->invoice?->invoice_number ?: $order->id]) }}" target="_blank"
+                                class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-accent px-3 py-1.5 text-xs font-bold text-ink shadow-xs transition-colors hover:bg-accent-deep">
+                                <x-gpa.icon name="receipt" class="h-3.5 w-3.5" />
+                                Cetak Struk
+                            </a>
+                        </div>
+                    @endif
 
                     @if ($order->status === 'MENUNGGU_PEMBAYARAN')
                         <div class="rounded-xl border {{ $order->has_rejected_proof ? 'border-danger/40 bg-danger-soft/20' : 'border-accent/60 bg-accent/20' }} p-3 flex flex-col gap-2">

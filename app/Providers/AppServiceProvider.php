@@ -13,7 +13,8 @@ class AppServiceProvider extends ServiceProvider
     // Mendaftarkan service binding ke dalam service container aplikasi.
     public function register(): void
     {
-        //
+        // Pastikan disk privat 'local' tidak membajak prefix URL '/storage' dari disk 'public'
+        config(['filesystems.disks.local.serve' => false]);
     }
 
     // Menginisialisasi konfigurasi zona waktu, lokal Carbon, dan view composer halaman error.

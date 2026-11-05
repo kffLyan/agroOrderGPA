@@ -6,52 +6,52 @@ import './components/shared/gpa-dialog';
 import './components/shared/gpa-progress';
 import './components/shared/gpa-lazy';
 import gpaToast from './components/shared/gpa-toast';
-import registrationForm from './components/shared/registration-form';
+import registrationForm from './components/shared/formulir-registrasi';
 
 // 1. Klien
-import klienDashboard from './components/klien/dashboard';
-import klienCatalog from './components/klien/catalog';
-import klienCart from './components/klien/cart';
-import klienOrders from './components/klien/orders';
-import klienDocuments from './components/klien/documents';
-import klienPaymentProof from './components/klien/payment-proof';
+import klienDashboard from './components/klien/dasbor';
+import klienCatalog from './components/klien/katalog';
+import klienCart from './components/klien/keranjang';
+import klienOrders from './components/klien/pesanan';
+import klienDocuments from './components/klien/dokumen';
+import klienPaymentProof from './components/klien/bukti-pembayaran';
 
 // 2. Sekretaris
-import sekretarisDashboard from './components/sekretaris/dashboard';
-import sekretarisVerification from './components/sekretaris/verification';
-import sekretarisManualOrder from './components/sekretaris/manual-order';
-import sekretarisInventory from './components/sekretaris/inventory';
-import sekretarisDispatch from './components/sekretaris/dispatch';
-import sekretarisInvoicing from './components/sekretaris/invoice';
-import sekretarisPayments from './components/sekretaris/payment';
-import sekretarisReports from './components/sekretaris/report';
+import sekretarisDashboard from './components/sekretaris/dasbor';
+import sekretarisVerification from './components/sekretaris/verifikasi';
+import sekretarisManualOrder from './components/sekretaris/pesanan-manual';
+import sekretarisInventory from './components/sekretaris/inventaris';
+import sekretarisDispatch from './components/sekretaris/pengiriman';
+import sekretarisInvoicing from './components/sekretaris/faktur';
+import sekretarisPayments from './components/sekretaris/pembayaran';
+import sekretarisReports from './components/sekretaris/laporan';
 
 // 3. Koordinator
-import koordinatorDashboard from './components/koordinator/dashboard';
-import koordinatorConsole from './components/koordinator/console';
-import koordinatorWeighing from './components/koordinator/weighing';
-import koordinatorStock from './components/koordinator/stock';
-import koordinatorDispatch from './components/koordinator/dispatch';
-import koordinatorHarvestPlan from './components/koordinator/harvest-plan';
-import koordinatorMonitoring from './components/koordinator/monitoring';
-import koordinatorReturns from './components/koordinator/returns';
+import koordinatorDashboard from './components/koordinator/dasbor';
+import koordinatorConsole from './components/koordinator/konsol';
+import koordinatorWeighing from './components/koordinator/penimbangan';
+import koordinatorStock from './components/koordinator/stok';
+import koordinatorDispatch from './components/koordinator/pengiriman';
+import koordinatorHarvestPlan from './components/koordinator/rencana-panen';
+import koordinatorMonitoring from './components/koordinator/pemantauan';
+import koordinatorReturns from './components/koordinator/retur';
 
 // 4. Armada
-import armadaTasks from './components/armada/tasks';
-import armadaDispatch from './components/armada/dispatch';
-import armadaPod from './components/armada/pod';
+import armadaTasks from './components/armada/tugas';
+import armadaDispatch from './components/armada/pengiriman';
+import armadaPod from './components/armada/bukti-terima';
 import armadaStatus from './components/armada/status';
 
 // 5. Direktur
-import direkturDashboard from './components/direktur/dashboard';
-import direkturSales from './components/direktur/sales';
+import direkturDashboard from './components/direktur/dasbor';
+import direkturSales from './components/direktur/penjualan';
 import direkturVolume from './components/direktur/volume';
-import direkturReceivables from './components/direktur/receivables';
-import direkturApproval from './components/direktur/approval';
-import direkturReport from './components/direktur/report';
+import direkturReceivables from './components/direktur/piutang';
+import direkturApproval from './components/direktur/persetujuan';
+import direkturReport from './components/direktur/laporan';
 import direkturTataKelola from './components/direktur/tata-kelola';
-import direkturPaymentChannels from './components/direktur/payment-channels';
-import direkturAccess from './components/direktur/access';
+import direkturPaymentChannels from './components/direktur/kanal-pembayaran';
+import direkturAccess from './components/direktur/hak-akses';
 
 window.Alpine = Alpine;
 window.direkturPaymentChannels = direkturPaymentChannels;

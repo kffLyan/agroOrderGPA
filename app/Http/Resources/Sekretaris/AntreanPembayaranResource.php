@@ -55,7 +55,7 @@ class AntreanPembayaranResource extends JsonResource
             'evidence_url'    => $fullProofUrl,
             'proof_url'       => $fullProofUrl,
             'is_image'        => $isImage,
-            'evidence_note'   => 'Status Bukti: Terlampir',
+            'evidence_note'   => $rawProofUrl ? 'Status Bukti: Terlampir' : 'Status Bukti: Menunggu Unggahan / Verifikasi Kasir',
             'slip_sender'     => strtoupper($clientName),
             'slip_account'    => 'Rekening Pengirim Klien',
             'slip_nominal'    => 'RP ' . number_format($paymentAmount, 0, ',', '.') . ',-',

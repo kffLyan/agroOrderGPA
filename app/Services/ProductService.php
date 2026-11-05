@@ -72,6 +72,14 @@ class ProductService
         if ($image) {
             $filename = 'prod_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
             $path = $image->storeAs('products', $filename, 'public');
+
+            // Salin langsung ke public/storage/products agar aman di shared hosting bila symlink bermasalah
+            $destinationDir = public_path('storage/products');
+            if (!is_dir($destinationDir)) {
+                @mkdir($destinationDir, 0775, true);
+            }
+            @copy(storage_path('app/public/' . $path), $destinationDir . DIRECTORY_SEPARATOR . $filename);
+
             $imageUrl = 'storage/' . $path;
         } elseif (!empty($data['preset_image'])) {
             $imageUrl = $data['preset_image'];
@@ -129,6 +137,14 @@ class ProductService
         if ($image) {
             $filename = 'prod_' . time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
             $path = $image->storeAs('products', $filename, 'public');
+
+            // Salin langsung ke public/storage/products agar aman di shared hosting bila symlink bermasalah
+            $destinationDir = public_path('storage/products');
+            if (!is_dir($destinationDir)) {
+                @mkdir($destinationDir, 0775, true);
+            }
+            @copy(storage_path('app/public/' . $path), $destinationDir . DIRECTORY_SEPARATOR . $filename);
+
             $imageUrl = 'storage/' . $path;
         } elseif (!empty($data['preset_image'])) {
             $imageUrl = $data['preset_image'];

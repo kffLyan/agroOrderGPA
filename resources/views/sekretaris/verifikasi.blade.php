@@ -23,22 +23,22 @@
 
             <div class="flex flex-wrap gap-2 p-4 sm:px-6 sm:py-4">
                 <button type="button" @click="handleStep({number: '01', label: 'Antrean Verifikasi Pesanan Masuk', active: true, message: 'Pesanan baru yang butuh persetujuan dan penguncian stok sayur.'})"
-                    class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-left transition-colors bg-brand shadow-sub text-accent">
+                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-left font-sans text-xs font-bold transition-colors bg-brand shadow-sub text-accent">
                     <span class="h-2 w-2 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
-                    <span class="gpa-meta-lg font-semibold tracking-[0.88px]">01 Antrean Verifikasi Pesanan Masuk</span>
-                    <span x-text="'(' + pendingCount() + ' Menunggu)'"></span>
+                    <span>01 Antrean Verifikasi Pesanan Masuk</span>
+                    <span class="font-medium text-accent/90" x-text="'(' + pendingCount() + ' Menunggu)'"></span>
                 </button>
 
                 <button type="button" @click="handleStep({number: '02', label: 'Pencetakan Faktur & Tagihan', active: false, message: 'Penerbitan faktur tagihan untuk pesanan yang sudah selesai dikirim.'})"
-                    class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-left transition-colors bg-surface text-ink-body outline outline-1 outline-line-board hover:bg-surface-muted">
+                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-left font-sans text-xs font-semibold transition-colors bg-surface text-ink-body outline outline-1 outline-line-board hover:bg-surface-muted hover:text-ink">
                     <span class="h-2 w-2 shrink-0 rounded-full bg-line-board" aria-hidden="true"></span>
-                    <span class="gpa-meta-lg font-semibold tracking-[0.88px]">02 Pencetakan Faktur &amp; Tagihan</span>
+                    <span>02 Pencetakan Faktur &amp; Tagihan</span>
                 </button>
 
                 <button type="button" @click="handleStep({number: '03', label: 'Pemeriksaan Bukti Transfer', active: false, message: 'Pengecekan bukti pembayaran dari klien reguler.'})"
-                    class="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-left transition-colors bg-surface text-ink-body outline outline-1 outline-line-board hover:bg-surface-muted">
+                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-left font-sans text-xs font-semibold transition-colors bg-surface text-ink-body outline outline-1 outline-line-board hover:bg-surface-muted hover:text-ink">
                     <span class="h-2 w-2 shrink-0 rounded-full bg-line-board" aria-hidden="true"></span>
-                    <span class="gpa-meta-lg font-semibold tracking-[0.88px]">03 Pemeriksaan Bukti Transfer</span>
+                    <span>03 Pemeriksaan Bukti Transfer</span>
                 </button>
             </div>
         </section>
@@ -408,7 +408,7 @@
             <div class="sticky bottom-4 z-20 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line-soft bg-surface/95 p-4 shadow-xl ring-1 ring-black/5 backdrop-blur-md">
                 <div class="flex flex-wrap items-center gap-2">
                     <button type="button" @click="reject()"
-                        class="inline-flex h-10 items-center gap-1.5 rounded-lg px-4 text-danger outline outline-1 outline-danger transition-colors hover:bg-danger-soft gpa-meta-lg font-bold tracking-[0.88px]">
+                        class="inline-flex h-10 items-center gap-1.5 rounded-lg px-4 text-danger outline outline-1 outline-danger transition-colors hover:bg-danger-soft font-sans text-xs font-bold">
                         <x-gpa.icon name="x" class="h-3 w-3 shrink-0" />
                         Tolak Pesanan
                     </button>

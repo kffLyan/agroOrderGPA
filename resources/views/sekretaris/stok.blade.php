@@ -380,7 +380,7 @@
 
                 <div class="border-t border-line-soft px-4 py-4">
                     <a href="{{ route('sekretaris.surat-jalan') }}"
-                        class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-ink px-4 text-accent shadow-sub outline outline-1 outline-accent/40 transition-colors hover:bg-brand-hover gpa-meta-lg font-bold tracking-[0.88px]">
+                        class="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-ink px-4 text-accent shadow-sub outline outline-1 outline-accent/40 transition-colors hover:bg-brand-hover font-sans text-xs font-bold">
                         Ke Menu Surat Jalan
                         <x-gpa.icon name="arrow-right" class="h-3.5 w-3.5 shrink-0" />
                     </a>

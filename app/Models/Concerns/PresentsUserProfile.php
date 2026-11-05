@@ -18,6 +18,19 @@ trait PresentsUserProfile
         return $this->role_enum?->roleKey() ?? 'klien';
     }
 
+    // Mengembalikan nama resmi peran secara konsisten (Sekretaris, Direktur, Armada, Koordinator, Klien).
+    public function getRoleLabelAttribute(): string
+    {
+        return match (strtoupper((string) $this->role)) {
+            'SEKRETARIS'  => 'Sekretaris',
+            'DIREKTUR'    => 'Direktur',
+            'ARMADA'      => 'Armada',
+            'KOORDINATOR' => 'Koordinator',
+            'KLIEN'       => 'Klien',
+            default       => ucfirst(strtolower($this->role)),
+        };
+    }
+
     // Mengembalikan singkatan kode lencana 3 huruf peran pengguna (DIR, SEK, KRD, ARM, KLN).
     public function getBadgeAttribute(): string
     {

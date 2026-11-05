@@ -296,6 +296,14 @@ class PesananManualController extends Controller
                 $proofPath = $request->file('payment_proof')->store('payments', 'public');
             }
 
+            if ($proofPath) {
+                $destinationDir = public_path('storage/payments');
+                if (!is_dir($destinationDir)) {
+                    @mkdir($destinationDir, 0775, true);
+                }
+                @copy(storage_path('app/public/' . $proofPath), $destinationDir . DIRECTORY_SEPARATOR . basename($proofPath));
+            }
+
             $senderBank = $validated['sender_bank'] ?? null;
             $senderAccount = $validated['sender_account'] ?? null;
             $customNote = $validated['payment_custom_note'] ?? null;

@@ -67,6 +67,8 @@ class BuktiPembayaranInvoiceResource extends JsonResource
             'is_pending'          => $isPending,
             'is_rejected'         => $isRejected,
             'status'              => $invoice->status,
+            'payment_id'          => $latestPayment?->id,
+            'payment_code'        => $latestPayment?->code,
             'payment_ref'         => $latestPayment ? ($latestPayment->payment_reference ?: 'PAY-' . str_pad((string) $latestPayment->id, 5, '0', STR_PAD_LEFT)) : '-',
             'payment_method'      => $latestPayment ? ($latestPayment->method_label ?? str_replace('_', ' ', $latestPayment->payment_method)) : 'Transfer Bank',
             'payment_method_label'=> $latestPayment ? ($latestPayment->method_label ?? str_replace('_', ' ', $latestPayment->payment_method)) : 'Transfer Bank',

@@ -8,7 +8,7 @@
 .env.production
 
 # Build Artifacts & Caches
-/public/build
+# /public/build (tracked for production hosting deployment without Node.js)
 /public/hot
 /storage/*.key
 .phpunit.result.cache
@@ -21,6 +21,7 @@ yarn-error.log*
 /storage/framework/sessions/*
 /storage/framework/views/*
 /storage/framework/testing/*
+/storage/framework/*.php
 /storage/logs/*
 
 # IDE Specifics

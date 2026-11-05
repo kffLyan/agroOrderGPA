@@ -341,6 +341,42 @@
                         <span class="gpa-micro-bold text-ink-body">CFG-OVS-0203</span>
                     </footer>
                 </article>
+
+                {{-- Parameter Card 6: PPN 11% --}}
+                <article class="flex h-full flex-col gap-3 rounded-xl bg-surface-shell/60 p-4 outline outline-1 -outline-offset-1 outline-line-board">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="rounded px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta {{ !empty($settings['tax_ppn_enabled']) ? 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-success-deep' : 'bg-surface-muted text-ink-body border border-line' }}">
+                            {{ !empty($settings['tax_ppn_enabled']) ? 'PPN AKTIF (11%)' : 'BEBAS PPN (0% DTP)' }}
+                        </span>
+                    </div>
+                    <h3 class="text-[13px] font-bold leading-5 text-ink">Tarif Pajak Pertambahan Nilai (PPN)</h3>
+                    <p class="text-[11px] leading-4 text-ink-body">Kebijakan pengenaan PPN atas komoditas hortikultura segar berdasarkan regulasi perpajakan pertanian.</p>
+
+                    <dl class="flex flex-col gap-1.5 border-t border-line-hair pt-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <dt class="gpa-note text-ink-body">Status Pajak:</dt>
+                            <dd class="gpa-meta text-right font-bold {{ !empty($settings['tax_ppn_enabled']) ? 'text-success-deep' : 'text-ink-body' }}">
+                                {{ !empty($settings['tax_ppn_enabled']) ? 'Dikenakan PPN' : 'Fasilitas Bebas Pajak' }}
+                            </dd>
+                        </div>
+                        <div class="flex items-start justify-between gap-3">
+                            <dt class="gpa-note text-ink-body">Tarif Berlaku:</dt>
+                            <dd class="gpa-meta text-right font-bold text-ink">{{ !empty($settings['tax_ppn_enabled']) ? ($settings['tax_ppn_percent'] ?? 11) . '%' : '0% (DTP)' }}</dd>
+                        </div>
+                        <div class="flex items-start justify-between gap-3">
+                            <dt class="gpa-note text-ink-body">Dasar Kebijakan:</dt>
+                            <dd class="gpa-meta text-right font-bold text-brand-deep">{{ !empty($settings['tax_ppn_enabled']) ? 'PPN Standar PKP 11%' : 'PPN 0% Produk Pertanian' }}</dd>
+                        </div>
+                    </dl>
+
+                    <footer class="mt-auto flex items-center justify-between gap-2 border-t border-line-hair pt-3">
+                        <span class="inline-flex items-center gap-1 gpa-note font-semibold text-ink-body">
+                            <x-gpa.icon name="shield" class="h-3 w-3 shrink-0 text-success-deep" />
+                            Hak Otoritas: Direktur Utama
+                        </span>
+                        <span class="gpa-micro-bold text-ink-body">CFG-TAX-1100</span>
+                    </footer>
+                </article>
             </div>
 
             <p class="flex items-start gap-2 border-t border-line-board/60 pt-3">
@@ -940,6 +976,94 @@
                 </div>
             </footer>
         </section>
+
+        {{-- Modal Pengaturan Parameter Kebijakan & PPN 11% (Direktur) --}}
+        <div x-show="paramModalOpen" x-cloak
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm"
+            x-transition:enter="transition ease-out duration-200"
+            x-transition:enter-start="opacity-0"
+            x-transition:enter-end="opacity-100"
+            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave-start="opacity-100"
+            x-transition:leave-end="opacity-0">
+            
+            <div class="w-full max-w-lg rounded-2xl bg-surface p-6 shadow-2xl border border-line space-y-5"
+                @click.away="paramModalOpen = false">
+                <div class="flex items-center justify-between border-b border-line pb-3">
+                    <div class="flex items-center gap-2">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-ink text-accent">
+                            <x-gpa.icon name="settings" class="h-4 w-4" />
+                        </span>
+                        <div>
+                            <h3 class="font-bold text-sm text-ink">Edit Parameter Kebijakan &amp; Pajak PPN</h3>
+                            <p class="text-[11px] text-ink-body">Otoritas Direktur Utama dalam penetapan kebijakan fiskal &amp; operasional GPA.</p>
+                        </div>
+                    </div>
+                    <button type="button" @click="paramModalOpen = false" class="text-ink-body hover:text-ink">
+                        <x-gpa.icon name="x" class="h-4 w-4" />
+                    </button>
+                </div>
+
+                <form action="{{ route('direktur.tata-kelola.update-parameters') }}" method="POST" class="space-y-4 text-xs">
+                    @csrf
+                    
+                    {{-- Toggle PPN 11% --}}
+                    <div class="rounded-xl border border-line bg-surface-shell p-4 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <label for="tax_ppn_enabled" class="font-bold text-ink text-xs cursor-pointer">Pajak Pertambahan Nilai (PPN 11%)</label>
+                                <p class="text-[11px] text-ink-body">Aktifkan jika invoice penjualan komoditas dikenakan PPN 11%.</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="hidden" name="tax_ppn_enabled" value="0">
+                                <input type="checkbox" id="tax_ppn_enabled" name="tax_ppn_enabled" value="1"
+                                    {{ !empty($settings['tax_ppn_enabled']) ? 'checked' : '' }}
+                                    class="sr-only peer">
+                                <div class="w-11 h-6 bg-line-board peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-line-board after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-success-deep"></div>
+                            </label>
+                        </div>
+                        <input type="hidden" name="tax_ppn_percent" value="11.0">
+                    </div>
+
+                    {{-- Standar Ongkir Default --}}
+                    <div>
+                        <label for="default_shipping_fee" class="block font-bold text-ink mb-1">Standar Biaya Ongkir Flat Logistik (Rp)</label>
+                        <input type="number" id="default_shipping_fee" name="default_shipping_fee" min="0" step="5000"
+                            value="{{ $settings['default_shipping_fee'] ?? 75000 }}"
+                            class="w-full rounded border-line-board bg-surface px-3 py-2 text-xs font-mono font-bold text-ink focus:border-brand">
+                        <p class="mt-1 text-[11px] text-ink-body">Tarif dasar pengiriman yang dapat disesuaikan riil oleh Sekretaris saat verifikasi pesanan.</p>
+                    </div>
+
+                    {{-- Toleransi Susut Gudang --}}
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="warehouse_loss_max_percent" class="block font-bold text-ink mb-1">Maks Susut Hard Limit (%)</label>
+                            <input type="number" id="warehouse_loss_max_percent" name="warehouse_loss_max_percent" min="0.5" max="10" step="0.1"
+                                value="{{ $settings['warehouse_loss_max_percent'] ?? 2.0 }}"
+                                class="w-full rounded border-line-board bg-surface px-3 py-2 text-xs font-mono font-bold text-ink focus:border-brand">
+                        </div>
+                        <div>
+                            <label for="min_margin_percent" class="block font-bold text-ink mb-1">Margin B2B Minimum (%)</label>
+                            <input type="number" id="min_margin_percent" name="min_margin_percent" min="5" max="50" step="0.5"
+                                value="{{ $settings['min_margin_percent'] ?? 15.0 }}"
+                                class="w-full rounded border-line-board bg-surface px-3 py-2 text-xs font-mono font-bold text-ink focus:border-brand">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-end gap-2 border-t border-line pt-3">
+                        <button type="button" @click="paramModalOpen = false"
+                            class="rounded-lg border border-line bg-surface px-4 py-2 font-semibold text-ink hover:bg-surface-muted transition">
+                            Batal
+                        </button>
+                        <button type="submit"
+                            class="rounded-lg bg-ink px-5 py-2 font-bold text-accent shadow-sub hover:bg-brand-deep transition flex items-center gap-1.5">
+                            <x-gpa.icon name="check" class="h-3.5 w-3.5" />
+                            Simpan Perubahan Kebijakan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
     </div>
 @endsection

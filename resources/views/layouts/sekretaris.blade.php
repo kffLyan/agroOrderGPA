@@ -25,8 +25,8 @@
     <x-gpa.loading-screen />
     @php
         $user = auth()->user();
-        $operatorRole = 'Sekretaris Operasional';
-        $operatorName = $user ? $user->name : 'Sekretariat GPA';
+        $operatorRole = 'Sekretaris';
+        $operatorName = $user ? $user->name : 'Sekretaris Operasional GPA';
         $operatorCode = $user ? 'SK-' . str_pad($user->id, 4, '0', STR_PAD_LEFT) : 'SK-001';
         $operatorInitials = $user ? strtoupper(substr($user->name, 0, 2)) : 'SK';
 

@@ -25,8 +25,8 @@
     <x-gpa.loading-screen />
     @php
         $user = auth()->user();
-        $operatorRole = $operator['role'] ?? 'Koordinator Lapangan';
-        $operatorName = $user ? $user->name : ($operator['name'] ?? 'Koordinator Lapangan');
+        $operatorRole = $operator['role'] ?? 'Koordinator';
+        $operatorName = $user ? $user->name : ($operator['name'] ?? 'Koordinator');
         $operatorCode = $user ? str_pad($user->id, 3, '0', STR_PAD_LEFT) : ($operator['code'] ?? '—');
         $operatorInitials = $user ? strtoupper(substr($user->name, 0, 2)) : ($operator['initials'] ?? 'KL');
 

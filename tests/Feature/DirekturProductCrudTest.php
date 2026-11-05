@@ -7,6 +7,8 @@ use App\Models\HarvestBatch;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class DirekturProductCrudTest extends TestCase
@@ -182,6 +184,34 @@ class DirekturProductCrudTest extends TestCase
             'name'       => 'Selada Romaine Super Rev',
             'base_price' => 16000.00,
         ]);
+    }
+
+    public function test_direktur_can_update_product_with_uploaded_image(): void
+    {
+        Storage::fake('public');
+
+        $file = UploadedFile::fake()->image('produk_baru.jpg', 400, 400);
+
+        $payload = [
+            'sku'           => 'GPA-VGT-TEST01-IMG',
+            'name'          => 'Selada Foto Kustom',
+            'unit'          => 'kg',
+            'grade'         => 'Grade Super',
+            'base_price'    => 19000.00,
+            'minimum_order' => 10.00,
+            'image_file'    => $file,
+            'description'   => 'Update foto kustom produk.',
+            'is_active'     => '1',
+        ];
+
+        $response = $this->actingAs($this->director)->put(route('direktur.produk.update', $this->product->id), $payload);
+
+        $response->assertRedirect(route('direktur.produk.index'));
+        $response->assertSessionHas('success');
+
+        $this->product->refresh();
+        $this->assertStringStartsWith('storage/products/prod_', $this->product->image_url);
+        $this->assertStringStartsWith('storage/products/prod_', $this->product->image_path);
     }
 
     public function test_direktur_can_toggle_product_status(): void

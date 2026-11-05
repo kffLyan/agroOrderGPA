@@ -36,9 +36,7 @@ class PembayaranController extends Controller
             : 'Rekening Resmi Koperasi GPA';
 
         // Menghitung metrik total pembayaran pending, pembayaran diverifikasi, dan pembayaran ditolak
-        $pendingQuery = Payment::whereIn('status', ['MENUNGGU_VERIFIKASI', 'PENDING'])
-            ->whereNotNull('proof_url')
-            ->where('proof_url', '!=', '');
+        $pendingQuery = Payment::whereIn('status', ['MENUNGGU_VERIFIKASI', 'PENDING']);
 
         $pendingCount  = (clone $pendingQuery)->count();
         $pendingTotal  = (float) (clone $pendingQuery)->sum('amount');

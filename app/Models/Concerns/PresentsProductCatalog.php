@@ -55,6 +55,12 @@ trait PresentsProductCatalog
     {
         if (!empty($this->image_url)) {
             $cleanPath = ltrim($this->image_url, '/');
+
+            // Prioritaskan path gambar kustom yang disimpan di folder storage/ atau products/
+            if (str_starts_with($cleanPath, 'storage/') || str_starts_with($cleanPath, 'products/')) {
+                return $cleanPath;
+            }
+
             if (file_exists(public_path($cleanPath))) {
                 return $cleanPath;
             }

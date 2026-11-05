@@ -31,12 +31,12 @@
 <body class="min-h-screen bg-canvas font-sans text-ink antialiased">
     <x-gpa.loading-screen />
     @php
-        $operatorRole = $operator['role'] ?? 'Supir Pengiriman';
-        $operatorName = $operator['name'] ?? (auth()->user()?->name ?? 'Supir Armada');
+        $operatorRole = $operator['role'] ?? 'Armada';
+        $operatorName = $operator['name'] ?? (auth()->user()?->name ?? 'Armada GPA');
         $operatorInitials = $operator['initials'] ?? (auth()->user() ? strtoupper(substr(auth()->user()->name, 0, 2)) : 'SA');
         $armadaPlate = $activePlate ?? ($plate ?? ($header['plate'] ?? '-'));
         $brand = $header['brand'] ?? 'AGROORDER GPA';
-        $armadaRole = $header['role'] ?? 'Armada Logistik';
+        $armadaRole = $header['role'] ?? 'Armada';
         $headerTone = $header['tone'] ?? 'light';
         $activeKey = $activeNav ?? match (true) {
             request()->routeIs('profile.*') => 'profile',

@@ -84,12 +84,12 @@
                 <a href="{{ route('klien.dokumen') }}"
                     class="inline-flex items-center gap-2 rounded-lg bg-surface-pill px-3.5 py-2 transition-colors hover:bg-surface-disabled">
                     <x-gpa.icon name="download" class="h-3 w-3 text-ink" />
-                    <span class="gpa-meta-lg text-ink">Unduh Transaksi Bulanan</span>
+                    <span class="font-sans text-xs font-semibold text-ink">Unduh Transaksi Bulanan</span>
                 </a>
                 <a href="{{ route('klien.katalog') }}"
                     class="inline-flex items-center gap-2 rounded-lg bg-ink px-4 py-2 shadow-sub transition-colors hover:bg-brand-deep">
                     <x-gpa.icon name="plus" class="h-3.5 w-3.5 text-white" />
-                    <span class="gpa-meta-lg font-bold text-white">Buat Pesanan Baru</span>
+                    <span class="font-sans text-xs font-bold text-white">Buat Pesanan Baru</span>
                 </a>
             </div>
         </section>
@@ -316,12 +316,12 @@
                     <a href="{{ route('klien.dokumen') }}"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-surface-pill px-3 py-1.5 transition-colors hover:bg-surface-disabled hover:text-ink">
                         <x-gpa.icon name="invoice" class="h-2.5 w-2.5" />
-                        <span class="gpa-meta-lg">Unduh Faktur PDF</span>
+                        <span class="font-sans text-xs font-semibold">Unduh Faktur PDF</span>
                     </a>
                     <a href="{{ route('klien.bukti-pembayaran') }}"
                         class="inline-flex items-center gap-1.5 rounded-lg bg-ink px-3.5 py-1.5 shadow-sub transition-colors hover:bg-brand-deep">
                         <x-gpa.icon name="upload" class="h-3 w-3.5 text-white" />
-                        <span class="gpa-meta-lg font-bold text-white">Unggah Bukti Transfer</span>
+                        <span class="font-sans text-xs font-bold text-white">Unggah Bukti Transfer</span>
                     </a>
                 </div>
             </section>

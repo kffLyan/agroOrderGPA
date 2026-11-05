@@ -34,10 +34,7 @@ class DashboardController extends Controller
         $completedOrders      = $allOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN']);
 
         // 2. Menghitung pembayaran yang sudah mengunggah bukti transfer dan menunggu verifikasi sekretaris
-        $pendingPaymentsCount = Payment::whereIn('status', ['MENUNGGU_VERIFIKASI', 'PENDING'])
-            ->whereNotNull('proof_url')
-            ->where('proof_url', '!=', '')
-            ->count();
+        $pendingPaymentsCount = Payment::whereIn('status', ['MENUNGGU_VERIFIKASI', 'PENDING'])->count();
 
         $totalTodayCount = $allOrders->where('created_at', '>=', $today)->count();
 

@@ -72,7 +72,7 @@
 @endphp
 
 @section('content')
-    <div x-data="clientCatalog(@js($commodities))" class="flex flex-col gap-5">
+    <div x-data="clientCatalog(@js($commodities))" class="flex flex-col gap-5 pb-28">
         {{-- ---------------------------------------------------------------- --}}
         {{-- Kop halaman + aksi ekspor / matrix --}}
         {{-- ---------------------------------------------------------------- --}}
@@ -591,62 +591,64 @@
         {{-- Draft PO Mobile Floating Bar + Bottom Sheet / Desktop Sticky --}}
         {{-- ---------------------------------------------------------------- --}}
         <div x-show="draftCount() > 0" x-cloak x-data="{ mobileCartOpen: false }">
-            {{-- Desktop sticky dock --}}
-            <section id="quick-reorder"
-                x-transition:enter="transition ease-out duration-300 transform"
-                x-transition:enter-start="opacity-0 translate-y-6 scale-98"
-                x-transition:enter-end="opacity-100 translate-y-0 scale-100"
-                x-transition:leave="transition ease-in duration-200 transform"
-                x-transition:leave-start="opacity-100 translate-y-0 scale-100"
-                x-transition:leave-end="opacity-0 translate-y-6 scale-98"
-                class="hidden lg:flex flex-col gap-3 rounded-2xl border border-line-hair/80 bg-white/95 px-4 py-3 sm:px-5 sm:py-3.5 shadow-[0_16px_40px_-12px_rgba(20,58,0,0.22)] backdrop-blur-lg scroll-mt-24 lg:flex-row lg:items-center lg:justify-between transition-all duration-300">
+            {{-- Desktop sticky floating dock at bottom of viewport (dibatasi di dalam area konten utama agar tidak menabrak sidebar) --}}
+            <div class="hidden lg:block fixed inset-x-0 bottom-6 z-40 mx-auto max-w-shell px-4 sm:px-6 lg:pl-[19.5rem] lg:pr-6 pointer-events-none">
+                <section id="quick-reorder"
+                    x-transition:enter="transition ease-out duration-300 transform"
+                    x-transition:enter-start="opacity-0 translate-y-6 scale-98"
+                    x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                    x-transition:leave="transition ease-in duration-200 transform"
+                    x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-6 scale-98"
+                    class="pointer-events-auto flex flex-col gap-3 rounded-2xl border border-line-hair/80 bg-white/95 px-4 py-3 sm:px-5 sm:py-3.5 shadow-[0_20px_45px_-10px_rgba(20,58,0,0.25)] ring-1 ring-black/5 backdrop-blur-lg scroll-mt-24 lg:flex-row lg:items-center lg:justify-between transition-all duration-300">
 
-                <div class="flex shrink-0 items-center gap-3.5">
-                    <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand text-accent shadow-sm">
-                        <x-gpa.icon name="cart" class="h-5 w-5" />
-                    </div>
-                    <div class="flex flex-col min-w-fit">
-                        <div class="flex items-center gap-2">
-                            <span class="inline-flex items-center gap-1.5 rounded-full bg-accent/30 px-2.5 py-0.5 text-[10px] font-bold text-brand uppercase tracking-wider">
-                                <span class="h-1.5 w-1.5 rounded-full bg-brand animate-pulse"></span>
-                                Draft PO Aktif · <span x-text="draftCount()"></span> Komoditas
-                            </span>
+                    <div class="flex shrink-0 items-center gap-3.5">
+                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand text-accent shadow-sm">
+                            <x-gpa.icon name="cart" class="h-5 w-5" />
                         </div>
-                        <div class="flex items-baseline gap-2 mt-0.5 whitespace-nowrap">
-                            <span class="font-sans text-xl font-extrabold text-ink leading-tight tabular-nums">
-                                <span x-text="draftWeight()"></span> kg
-                            </span>
-                            <span class="text-ink-quiet/50 text-xs font-semibold">·</span>
-                            <span class="font-sans text-sm font-bold text-success-deep leading-tight tabular-nums">
-                                Total <span x-text="money(draftTotal())"></span>
-                            </span>
+                        <div class="flex flex-col min-w-fit">
+                            <div class="flex items-center gap-2">
+                                <span class="inline-flex items-center gap-1.5 rounded-full bg-accent/30 px-2.5 py-0.5 text-[10px] font-bold text-brand uppercase tracking-wider">
+                                    <span class="h-1.5 w-1.5 rounded-full bg-brand animate-pulse"></span>
+                                    Draft PO Aktif · <span x-text="draftCount()"></span> Komoditas
+                                </span>
+                            </div>
+                            <div class="flex items-baseline gap-2 mt-0.5 whitespace-nowrap">
+                                <span class="font-sans text-xl font-extrabold text-ink leading-tight tabular-nums">
+                                    <span x-text="draftWeight()"></span> kg
+                                </span>
+                                <span class="text-ink-quiet/50 text-xs font-semibold">·</span>
+                                <span class="font-sans text-sm font-bold text-success-deep leading-tight tabular-nums">
+                                    Total <span x-text="money(draftTotal())"></span>
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div class="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                    <template x-for="line in draft" :key="`draft-${line.key}`">
-                        <span
-                            class="inline-flex shrink-0 items-center gap-2 rounded-full border border-line-hair bg-canvas px-3 py-1.5 text-xs text-ink shadow-xs transition-colors hover:border-line-strong hover:bg-white">
-                            <span class="max-w-[140px] truncate font-medium text-ink sm:max-w-[180px]" x-text="line.name"></span>
-                            <span class="rounded-full bg-accent/40 px-2 py-0.5 font-mono text-[10px] font-bold text-brand tabular-nums" x-text="`${line.qty} kg`"></span>
-                            <button type="button" @click="removeFromDraft(line.key)" aria-label="Hapus dari draft"
-                                class="-mr-1 flex h-4 w-4 items-center justify-center rounded-full text-ink-quiet transition-colors hover:bg-danger/10 hover:text-danger">
-                                <x-gpa.icon name="x" class="h-3 w-3" />
-                            </button>
-                        </span>
-                    </template>
-                </div>
+                    <div class="flex min-w-0 flex-1 items-center gap-2 overflow-x-auto py-1 px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                        <template x-for="line in draft" :key="`draft-${line.key}`">
+                            <span
+                                class="inline-flex shrink-0 items-center gap-2 rounded-full border border-line-hair bg-canvas px-3 py-1.5 text-xs text-ink shadow-xs transition-colors hover:border-line-strong hover:bg-white">
+                                <span class="max-w-[140px] truncate font-medium text-ink sm:max-w-[180px]" x-text="line.name"></span>
+                                <span class="rounded-full bg-accent/40 px-2 py-0.5 font-mono text-[10px] font-bold text-brand tabular-nums" x-text="`${line.qty} kg`"></span>
+                                <button type="button" @click="removeFromDraft(line.key)" aria-label="Hapus dari draft"
+                                    class="-mr-1 flex h-4 w-4 items-center justify-center rounded-full text-ink-quiet transition-colors hover:bg-danger/10 hover:text-danger">
+                                    <x-gpa.icon name="x" class="h-3 w-3" />
+                                </button>
+                            </span>
+                        </template>
+                    </div>
 
-                <div class="flex shrink-0 items-center justify-end">
-                    <a href="{{ route('klien.keranjang') }}"
-                        class="group inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl bg-brand px-5 py-3 text-xs font-bold text-white shadow-md transition-all hover:bg-brand-hover hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0">
-                        <x-gpa.icon name="cart" class="h-4 w-4 text-accent transition-transform group-hover:scale-110" />
-                        <span class="font-sans font-bold text-white">Lanjut ke Keranjang PO</span>
-                        <x-gpa.icon name="arrow-right" class="h-3.5 w-3.5 text-white/70 transition-transform group-hover:translate-x-0.5" />
-                    </a>
-                </div>
-            </section>
+                    <div class="flex shrink-0 items-center justify-end">
+                        <a href="{{ route('klien.keranjang') }}"
+                            class="group inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl bg-brand px-5 py-3 text-xs font-bold text-white shadow-md transition-all hover:bg-brand-hover hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0">
+                            <x-gpa.icon name="cart" class="h-4 w-4 text-accent transition-transform group-hover:scale-110" />
+                            <span class="font-sans font-bold text-white">Lanjut ke Keranjang PO</span>
+                            <x-gpa.icon name="arrow-right" class="h-3.5 w-3.5 text-white/70 transition-transform group-hover:translate-x-0.5" />
+                        </a>
+                    </div>
+                </section>
+            </div>
 
             {{-- Mobile floating bar + bottom sheet --}}
             <div class="lg:hidden pb-24">

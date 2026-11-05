@@ -713,7 +713,7 @@
                                     class="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-3 text-ink shadow-sub transition-colors hover:bg-accent-deep disabled:cursor-not-allowed disabled:opacity-60">
                                     <x-gpa.icon name="send" class="h-4 w-4 text-ink" />
                                     <span class="text-sm font-bold uppercase leading-[17px] tracking-[0.7px] text-ink"
-                                        x-text="sending ? 'Mengirim ke Sekretariat...' : 'Kirim Bukti Pembayaran ke Secretariat GPA'"></span>
+                                        x-text="sending ? 'Mengirim ke Sekretariat...' : 'Kirim Bukti Pembayaran ke Sekretariat GPA'"></span>
                                 </button>
                                 <p class="text-[10px] leading-4 text-ink-body"
                                     x-show="submitted" x-cloak>

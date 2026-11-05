@@ -364,6 +364,9 @@ export default function clientPaymentProof(defaults = {}) {
 
                 const formData = new FormData();
                 formData.append('invoice_po', this.current?.po ?? '');
+                if (this.current?.payment_id) {
+                    formData.append('payment_id', this.current.payment_id);
+                }
                 formData.append('amount', this.amountValue);
                 formData.append('payment_method', this.selectedChannel?.type === 'QRIS' ? 'QRIS' : 'TRANSFER_BANK');
                 formData.append('sender_bank', this.form.senderBank || this.selectedChannel?.name || 'BCA');
@@ -410,7 +413,7 @@ export default function clientPaymentProof(defaults = {}) {
                 });
 
                 window.setTimeout(() => {
-                    window.location.href = '/klien/documents';
+                    window.location.href = '/klien/dokumen';
                 }, 1200);
             } catch (err) {
                 this.sending = false;

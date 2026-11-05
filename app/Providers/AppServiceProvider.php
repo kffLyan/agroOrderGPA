@@ -5,6 +5,7 @@ namespace App\Providers;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -13,12 +14,17 @@ class AppServiceProvider extends ServiceProvider
     // Mendaftarkan service binding ke dalam service container aplikasi.
     public function register(): void
     {
-        //
+        // Pastikan disk privat 'local' tidak membajak prefix URL '/storage' dari disk 'public'
+        config(['filesystems.disks.local.serve' => false]);
     }
 
     // Menginisialisasi konfigurasi zona waktu, lokal Carbon, dan view composer halaman error.
     public function boot(): void
     {
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
+
         date_default_timezone_set(config('app.timezone', 'Asia/Jakarta'));
         Carbon::setLocale(config('app.locale', 'id'));
 

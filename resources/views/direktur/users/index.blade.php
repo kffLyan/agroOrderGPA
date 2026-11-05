@@ -46,7 +46,7 @@
                 'badge'         => $badge,
                 'name'          => $u->name,
                 'code'          => strtoupper($badge) . '-' . str_pad($u->id, 3, '0', STR_PAD_LEFT),
-                'role'          => $u->role,
+                'role'          => $u->role === 'SEKRETARIS' ? 'Sekretaris' : ($u->role === 'DIREKTUR' ? 'Direktur' : ($u->role === 'KOORDINATOR' ? 'Koordinator' : ($u->role === 'ARMADA' ? 'Armada' : 'Klien'))),
                 'division'      => $division,
                 'nik'           => '3201-' . str_pad($u->id, 4, '0', STR_PAD_LEFT) . '-0001',
                 'hub'           => $hub,
@@ -213,19 +213,19 @@
                                 MODUL &amp; FITUR OPERASIONAL
                             </th>
                             <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
-                                KLIEN / BUYER
+                                KLIEN
                             </th>
                             <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
-                                SEKRE / ADMIN
+                                SEKRETARIS
                             </th>
                             <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
-                                KOORDINATOR LAPANGAN
+                                KOORDINATOR
                             </th>
                             <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
-                                ARMADA / SUPIR
+                                ARMADA
                             </th>
                             <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">
-                                DIREKTUR / OWNER
+                                DIREKTUR
                             </th>
                         </tr>
                     </thead>
@@ -392,7 +392,7 @@
                     <button type="button" @click="setRole('all')"
                         :class="roleClass('all')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
-                        Semua Role ({{ $totalUsers }})
+                        Semua Peran ({{ $totalUsers }})
                     </button>
                     <button type="button" @click="setRole('director')"
                         :class="roleClass('director')"
@@ -402,7 +402,7 @@
                     <button type="button" @click="setRole('admin')"
                         :class="roleClass('admin')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
-                        Sekre/Admin
+                        Sekretaris
                     </button>
                     <button type="button" @click="setRole('coordinator')"
                         :class="roleClass('coordinator')"
@@ -412,7 +412,7 @@
                     <button type="button" @click="setRole('driver')"
                         :class="roleClass('driver')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
-                        Supir
+                        Armada
                     </button>
                     <button type="button" @click="setRole('client')"
                         :class="roleClass('client')"

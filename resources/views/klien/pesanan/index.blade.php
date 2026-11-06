@@ -131,10 +131,10 @@
 
     $pagination = [
         'page'        => 1,
-        'per_page'    => max(1, count($orders)),
+        'per_page'    => 10,
         'total'       => count($orders),
-        'total_pages' => 1,
-        'last_page'   => 1,
+        'total_pages' => max(1, (int) ceil(count($orders) / 10)),
+        'last_page'   => max(1, (int) ceil(count($orders) / 10)),
     ];
 
     $totalKgOrder = (float) $rawOrders->sum(fn($o) => $o->orderItems ? $o->orderItems->sum('ordered_qty') : 0);
@@ -303,7 +303,7 @@
                 {{-- Rentang Waktu --}}
                 <label class="col-span-2 flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-line-soft/70 bg-canvas px-2.5 py-1.5 sm:col-span-1 sm:h-10 sm:flex-row sm:items-center sm:py-1">
                     <span class="gpa-micro text-ink-body">Rentang Waktu</span>
-                    <select x-model="range"
+                    <select x-model="range" @change="page = 1"
                         class="w-full min-w-0 cursor-pointer truncate border-0 bg-transparent p-0 pr-5 text-xs font-semibold leading-4 text-ink focus:ring-0 sm:w-auto sm:max-w-32">
                         <option value="all">Semua Waktu</option>
                         <option value="30d">30 Hari Terakhir</option>
@@ -314,7 +314,7 @@
                 {{-- Sentra Panen --}}
                 <label class="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-line-soft/70 bg-canvas px-2.5 py-1.5 sm:h-10 sm:flex-row sm:items-center sm:py-1">
                     <span class="gpa-micro text-ink-body">Sentra Panen</span>
-                    <select x-model="hub"
+                    <select x-model="hub" @change="page = 1"
                         class="w-full min-w-0 cursor-pointer truncate border-0 bg-transparent p-0 pr-5 text-xs font-semibold leading-4 text-ink focus:ring-0 sm:w-auto sm:max-w-32">
                         <option value="all">Semua Sentra GPA</option>
                         <option value="lembang">Sentra Lembang</option>
@@ -325,7 +325,7 @@
                 {{-- Metode Bayar --}}
                 <label class="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-line-soft/70 bg-canvas px-2.5 py-1.5 sm:h-10 sm:flex-row sm:items-center sm:py-1">
                     <span class="gpa-micro text-ink-body">Metode Bayar</span>
-                    <select x-model="payment"
+                    <select x-model="payment" @change="page = 1"
                         class="w-full min-w-0 cursor-pointer truncate border-0 bg-transparent p-0 pr-5 text-xs font-semibold leading-4 text-ink focus:ring-0 sm:w-auto sm:max-w-40">
                         <option value="all">Semua Metode</option>
                         <option value="tempo">Term of Payment (Tempo)</option>
@@ -334,7 +334,7 @@
                     </select>
                 </label>
 
-                <button type="button" @click="deviationOnly = ! deviationOnly" role="switch"
+                <button type="button" @click="deviationOnly = ! deviationOnly; page = 1" role="switch"
                     :aria-checked="deviationOnly ? 'true' : 'false'" aria-label="Hanya Deviasi Timbang > 1%"
                     class="col-span-2 flex min-w-0 items-center gap-2 rounded-lg border border-line-soft/70 bg-canvas px-2.5 py-2 transition-colors hover:border-brand sm:h-10 sm:shrink-0 sm:py-1"
                     :class="deviationOnly ? 'border-brand bg-surface-muted' : ''">
@@ -356,7 +356,7 @@
             <label class="order-1 relative flex w-full min-w-0 items-center sm:order-none sm:w-56 sm:shrink-0">
                 <span class="sr-only">Cari no PO, nama komoditas, supir, plat nomor...</span>
                 <x-gpa.icon name="search" class="pointer-events-none absolute left-3.5 h-3.5 w-3.5 text-ink-body" />
-                <input type="search" x-model.debounce.200ms="search"
+                <input type="search" x-model.debounce.200ms="search" @input="page = 1"
                     placeholder="Cari no PO, nama komoditas, supir, plat nomor..."
                     class="gpa-control h-10 w-full min-w-0 rounded-lg border-line-soft bg-surface pl-10 text-xs">
             </label>
@@ -639,28 +639,24 @@
                     <span>WIB (Waktu Indonesia Barat)</span>
                 </div>
 
-                <nav class="flex items-center gap-1" aria-label="Navigasi halaman pesanan">
-                    <button type="button" @click="page > 1 && goToPage(page - 1)"
+                <nav class="flex items-center gap-1" aria-label="Navigasi halaman pesanan" x-show="lastPage > 1">
+                    <button type="button" @click="goToPage(page - 1)"
                         :disabled="page === 1"
-                        class="rounded bg-canvas px-2.5 py-1 gpa-meta-lg font-semibold text-ink outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40">
+                        class="rounded bg-canvas px-2.5 py-1 gpa-meta-lg font-semibold text-ink outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed">
                         Sebelumnya
                     </button>
 
                     <template x-for="number in pageNumbers()" :key="number">
                         <button type="button" @click="goToPage(number)"
                             :class="page === number ? 'bg-ink text-white' : 'bg-surface-pill text-ink-body hover:bg-surface-disabled'"
-                            class="rounded px-2.5 py-1 gpa-meta-lg font-semibold transition-colors"
+                            class="rounded px-2.5 py-1 gpa-meta-lg font-semibold transition-colors cursor-pointer"
                             :aria-current="page === number ? 'page' : null"
                             x-text="number"></button>
                     </template>
 
-                    @if ($pagination['last_page'] > 3)
-                        <span class="px-1 gpa-meta-lg text-ink-body" aria-hidden="true">...</span>
-                    @endif
-
                     <button type="button" @click="goToPage(page + 1)"
                         :disabled="page === lastPage"
-                        class="rounded bg-canvas px-2.5 py-1 gpa-meta-lg font-semibold text-ink outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40">
+                        class="rounded bg-canvas px-2.5 py-1 gpa-meta-lg font-semibold text-ink outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed">
                         Selanjutnya
                     </button>
                 </nav>

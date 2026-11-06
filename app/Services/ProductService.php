@@ -41,7 +41,7 @@ class ProductService
             $query->where('is_active', $request->status === '1' || $request->status === 'active');
         }
 
-        $products       = $query->get();
+        $products       = $query->paginate(10)->withQueryString();
         $totalProducts  = Product::count();
         $activeProducts = Product::where('is_active', true)->count();
         $avgPrice       = (float) (Product::where('is_active', true)->avg('base_price') ?: 0);

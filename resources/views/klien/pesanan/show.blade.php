@@ -107,9 +107,9 @@
                     @endif
 
                     @if ($order->invoice)
-                        <a href="{{ route('klien.dokumen') }}"
-                            class="inline-flex items-center gap-1.5 rounded-lg border border-line-soft bg-surface px-3 py-2 text-xs font-semibold text-ink transition-colors hover:bg-surface-muted">
-                            <x-gpa.icon name="invoice" class="h-3.5 w-3.5 text-ink" />
+                        <a href="{{ route('prints.invoice', ['invoice' => $order->invoice->invoice_number]) }}" target="_blank"
+                            class="inline-flex items-center gap-1.5 rounded-xl border border-line-soft bg-surface px-3 py-2 text-xs font-bold text-ink shadow-xs transition-all hover:bg-surface-muted hover:border-line-board">
+                            <x-gpa.icon name="invoice" class="h-3.5 w-3.5 text-brand" />
                             Lihat Faktur ({{ $order->invoice->invoice_number }})
                         </a>
                     @endif
@@ -181,9 +181,11 @@
                                 Menunggu Pembayaran
                             </span>
                             @if ($order->invoice)
-                                <span class="text-xs text-line-soft">
+                                <a href="{{ route('prints.invoice', ['invoice' => $order->invoice->invoice_number]) }}" target="_blank"
+                                    class="text-xs text-line-soft hover:text-accent hover:underline inline-flex items-center gap-1 transition-colors">
+                                    <x-gpa.icon name="invoice" class="h-3 w-3" />
                                     Faktur #{{ $order->invoice->invoice_number }}
-                                </span>
+                                </a>
                             @endif
                         </div>
                         <h2 class="font-sans text-base font-bold text-white sm:text-lg">
@@ -218,9 +220,11 @@
                                 Transaksi Tuntas &bull; Barang Diterima
                             </span>
                             @if ($order->invoice)
-                                <span class="rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold text-white">
+                                <a href="{{ route('prints.invoice', ['invoice' => $order->invoice->invoice_number]) }}" target="_blank"
+                                    class="rounded-full bg-white/20 hover:bg-white/30 px-2.5 py-0.5 text-[10px] font-bold text-white transition-colors inline-flex items-center gap-1">
+                                    <x-gpa.icon name="invoice" class="h-3 w-3 text-accent" />
                                     Faktur Lunas: #{{ $order->invoice->invoice_number }}
-                                </span>
+                                </a>
                             @endif
                         </div>
                         <h2 class="font-sans text-base font-bold text-white sm:text-lg">
@@ -870,11 +874,18 @@
                         </div>
                     @endif
 
-                    <div class="border-t border-line-hair pt-2">
+                    <div class="border-t border-line-hair pt-2 space-y-1.5">
+                        @if ($order->invoice)
+                            <a href="{{ route('prints.invoice', ['invoice' => $order->invoice->invoice_number]) }}" target="_blank"
+                                class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-brand text-white px-3 py-2 text-xs font-bold transition-colors hover:bg-brand-deep shadow-xs">
+                                <x-gpa.icon name="invoice" class="h-3.5 w-3.5 text-accent" />
+                                Buka Faktur Resmi #{{ $order->invoice->invoice_number }}
+                            </a>
+                        @endif
                         <a href="{{ route('klien.dokumen') }}"
                             class="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-surface-pill px-3 py-2 text-xs font-bold text-ink transition-colors hover:bg-surface-disabled">
                             <x-gpa.icon name="file-text" class="h-3.5 w-3.5" />
-                            Buka Pusat Dokumen &amp; Faktur
+                            Arsip Semua Dokumen &amp; Faktur
                         </a>
                     </div>
                 </section>

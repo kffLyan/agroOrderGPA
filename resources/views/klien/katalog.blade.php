@@ -15,7 +15,7 @@
         $hasContract = $activeContracts->has($product->id);
         $contractItem = $activeContracts->get($product->id);
         $effectivePrice = $hasContract ? (float) $contractItem->fixed_price_per_kg : (float) $product->base_price;
-        $moq = (float) ($product->minimum_order ?? 10);
+        $moq = (float) ($product->minimum_order ?: 1);
 
         return [
             'key'                => (string) $product->id,
@@ -39,6 +39,7 @@
             'availability'       => $availableStock > 0 ? 'Stok Tersedia' : 'Habis Terpesan',
             'availability_tone'  => $availableStock > 0 ? 'safe' : 'caution',
             'moq'                => $moq,
+            'initial_qty'        => $moq,
             'step'               => 1,
             'crate_kg'           => 10,
             'pack_label'         => 'Keranjang',
@@ -327,7 +328,9 @@
                                         <span class="text-sm font-bold leading-none">-</span>
                                     </button>
                                     <input type="number" :value="quantity(card.key)"
-                                        @input="setQuantity(card.key, $event.target.value)"
+                                        :min="card.moq"
+                                        @input="quantities[card.key] = $event.target.value"
+                                        @change="setQuantity(card.key, $event.target.value)"
                                         :aria-label="`Volume ${card.name} dalam kilogram`"
                                         class="w-10 sm:w-16 border-x border-line-faint px-1 py-1 sm:py-2 text-center gpa-mono-xs outline-none focus:bg-surface-shell">
                                     <button type="button" @click="stepBy(card.key, 1)" aria-label="Tambah volume"

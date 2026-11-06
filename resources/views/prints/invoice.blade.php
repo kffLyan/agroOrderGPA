@@ -24,12 +24,17 @@
             }
 
             .a4-canvas {
-                margin: 0 auto !important;
+                margin: 0 !important;
                 box-shadow: none !important;
                 border: none !important;
+                border-radius: 0 !important;
                 width: 100% !important;
                 max-width: 100% !important;
                 padding: 0 !important;
+            }
+
+            .table-scroll-container {
+                overflow: visible !important;
             }
 
             .page-break {
@@ -39,15 +44,29 @@
 
         @media screen {
             body {
-                background: #eef2ea;
+                background-color: #f1f5ee;
+                min-height: 100vh;
             }
 
             .a4-canvas {
-                width: 210mm;
-                min-height: 297mm;
-                margin: 20px auto;
+                width: 100%;
+                max-width: 210mm;
+                min-height: auto;
+                margin: 12px auto;
                 background: #ffffff;
-                box-shadow: 0 12px 36px -12px rgba(20, 58, 0, 0.25);
+                border-radius: 12px;
+                box-shadow: 0 8px 30px -8px rgba(20, 58, 0, 0.15), 0 2px 8px -2px rgba(0, 0, 0, 0.05);
+                padding: 16px 20px;
+            }
+
+            @media (min-width: 768px) {
+                .a4-canvas {
+                    min-height: 297mm;
+                    margin: 24px auto 48px auto;
+                    border-radius: 4px;
+                    padding: 28px 36px;
+                    box-shadow: 0 16px 48px -12px rgba(20, 58, 0, 0.22);
+                }
             }
         }
 
@@ -56,7 +75,6 @@
             font-size: 8.5pt;
             line-height: 1.35;
             color: #191c18;
-            padding: 24px 32px;
             box-sizing: border-box;
         }
 
@@ -76,45 +94,54 @@
     </style>
 </head>
 
-<body>
+<body class="text-ink antialiased">
     <!-- Floating Toolbar (No Print) -->
     <div class="no-print sticky top-0 z-30 border-b border-line bg-surface/95 shadow-sm backdrop-blur">
-        <div class="mx-auto flex max-w-[210mm] items-center justify-between gap-3 px-4 py-2.5">
-            <div class="flex items-center gap-2">
+        <div class="mx-auto flex max-w-[210mm] flex-col gap-2.5 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+            <!-- Sisi Kiri: Tombol Kembali & Info Dokumen -->
+            <div class="flex items-center justify-between gap-2 sm:justify-start">
                 <a href="{{ url()->previous() }}"
-                    class="inline-flex items-center gap-1.5 rounded border border-line-strong bg-white px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-sunken">
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-line-strong bg-white px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-sunken">
                     <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5" />
-                    Kembali
+                    <span>Kembali</span>
                 </a>
-                <span class="rounded bg-brand/10 px-2.5 py-1 text-xs font-bold text-brand">
-                    FAKTUR / INVOICE PENAGIHAN
-                </span>
+                <div class="flex items-center gap-1.5">
+                    <span class="rounded bg-brand/10 px-2 py-0.5 text-[11px] font-bold text-brand">
+                        FAKTUR / INVOICE PENAGIHAN
+                    </span>
+                    <span class="font-mono text-xs font-extrabold text-ink sm:hidden">
+                        {{ $invoice['id'] ?? '-' }}
+                    </span>
+                </div>
             </div>
 
-            <div class="flex items-center gap-2">
+            <!-- Sisi Kanan: Aksi & Tombol Cetak (Responsif Mobile) -->
+            <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <!-- Toggle Tampilan Format: Kontrak vs Reguler -->
-                <div class="inline-flex rounded-lg border border-line bg-white p-0.5 text-xs shadow-sm">
+                <div class="inline-flex rounded-lg border border-line bg-white p-0.5 text-[11px] sm:text-xs shadow-xs">
                     <a href="{{ request()->fullUrlWithQuery(['format' => 'kontrak']) }}"
-                        class="rounded-md px-2.5 py-1 font-semibold transition-colors {{ !empty($is_contract) ? 'bg-brand text-white shadow-sm' : 'text-ink-body hover:text-ink' }}">
-                        Format Kontrak (B2B Split Kuota)
+                        class="rounded px-2 py-1 font-semibold transition-colors {{ !empty($is_contract) ? 'bg-brand text-white shadow-xs' : 'text-ink-body hover:text-ink' }}">
+                        Format Kontrak
                     </a>
                     <a href="{{ request()->fullUrlWithQuery(['format' => 'reguler']) }}"
-                        class="rounded-md px-2.5 py-1 font-semibold transition-colors {{ empty($is_contract) ? 'bg-brand text-white shadow-sm' : 'text-ink-body hover:text-ink' }}">
-                        Format Reguler (Standar Tunggal)
+                        class="rounded px-2 py-1 font-semibold transition-colors {{ empty($is_contract) ? 'bg-brand text-white shadow-xs' : 'text-ink-body hover:text-ink' }}">
+                        Format Reguler
                     </a>
                 </div>
 
                 <!-- Format Struk Kasir Thermal (Khusus Reguler / Walk-In) -->
                 <a href="{{ route('prints.thermal-receipt', ['invoice' => $invoice['id']]) }}"
-                    class="inline-flex items-center gap-1.5 rounded-lg border border-accent bg-accent/20 px-3 py-1.5 text-xs font-bold text-success-deep shadow-xs transition-colors hover:bg-accent/30">
+                    class="inline-flex items-center gap-1 rounded-lg border border-accent bg-accent/20 px-2.5 py-1.5 text-[11px] sm:text-xs font-bold text-success-deep shadow-xs transition-colors hover:bg-accent/30">
                     <x-gpa.icon name="printer" class="h-3.5 w-3.5 text-success-deep" />
-                    Struk Kasir (Thermal 80mm)
+                    <span class="hidden sm:inline">Struk Kasir (80mm)</span>
+                    <span class="sm:hidden">Struk</span>
                 </a>
 
+                <!-- Tombol Cetak / PDF -->
                 <button type="button" onclick="window.print()"
-                    class="inline-flex items-center gap-1.5 rounded bg-brand px-4 py-1.5 text-xs font-bold text-white shadow transition-all hover:bg-brand-strong">
+                    class="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-1.5 text-xs font-bold text-white shadow transition-all hover:bg-brand-strong active:scale-95">
                     <x-gpa.icon name="printer" class="h-3.5 w-3.5" />
-                    Cetak Dokumen (Ctrl+P)
+                    <span>Cetak / PDF</span>
                 </button>
             </div>
         </div>
@@ -122,42 +149,31 @@
 
     <main class="a4-canvas">
         <!-- KOP SURAT ASLI GREEN PASUNDAN AGRICULTURE DARI CONTOH RESMI -->
-        <header class="flex items-start justify-between border-b-2 border-brand pb-3">
+        <header class="flex flex-col sm:flex-row items-start justify-between border-b-2 border-brand pb-3 gap-3">
             <div class="flex items-start gap-3">
-                <img src="{{ asset('gpaleaves.png') }}" alt="Logo GPA" class="h-14 w-14 shrink-0 object-contain">
+                <img src="{{ asset('gpaleaves.png') }}" alt="Logo GPA" class="h-12 w-12 sm:h-14 sm:w-14 shrink-0 object-contain">
                 <div>
-                    <h1 class="text-base font-black tracking-wider text-brand">
+                    <h1 class="text-sm sm:text-base font-black tracking-wider text-brand">
                         GREEN PASUNDAN AGRICULTURE
                     </h1>
-                    <p class="text-[7.5pt] font-semibold text-ink leading-tight">
+                    <p class="text-[7pt] sm:text-[7.5pt] font-semibold text-ink leading-tight">
                         {{ $brand ?? 'KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)' }} &middot; {{ $company['legal_number'] ?? 'Badan Hukum : Nomor AHU-0004853.AH.01.29.TH 2024' }}
                     </p>
-                    <p class="text-[7.5pt] leading-tight text-ink-body">
+                    <p class="text-[7pt] sm:text-[7.5pt] leading-tight text-ink-body mt-0.5">
                         {{ $company['address'] ?? 'Kp. Lebakwangi RT. 001 RW. 009 Desa Panundaan Kecamatan Ciwidey Kabupaten Bandung (40973)' }}
                     </p>
-                    <p class="text-[7.5pt] leading-tight text-ink-body font-medium">
+                    <p class="text-[7pt] sm:text-[7.5pt] leading-tight text-ink-body font-medium">
                         Tlp/ Whatsapp : {{ $company['phone'] ?? '081321422231' }}
                     </p>
                 </div>
             </div>
 
-            <!-- Lambang Koperasi Indonesia -->
-            <div class="hidden sm:flex flex-col items-center justify-center px-2">
-                <svg class="h-12 w-12 text-yellow-600" viewBox="0 0 100 100" fill="currentColor">
-                    <circle cx="50" cy="50" r="45" fill="#fef08a" stroke="#ca8a04" stroke-width="3"/>
-                    <circle cx="50" cy="50" r="34" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
-                    <path d="M50 20 L58 38 L78 38 L62 50 L68 70 L50 58 L32 70 L38 50 L22 38 L42 38 Z" fill="#ca8a04"/>
-                    <circle cx="50" cy="50" r="8" fill="#dc2626"/>
-                </svg>
-                <span class="mt-0.5 text-[6.5pt] font-extrabold uppercase tracking-widest text-ink">KOPERASI INDONESIA</span>
-            </div>
-
             <!-- Metadata Faktur / Invoice di Sisi Kanan -->
-            <div class="text-right">
-                <h2 class="text-2xl font-black uppercase tracking-wider text-brand">
+            <div class="w-full sm:w-auto text-left sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-line-hair">
+                <h2 class="text-xl sm:text-2xl font-black uppercase tracking-wider text-brand">
                     INVOICE
                 </h2>
-                <table class="mt-1 text-[8pt] text-left">
+                <table class="mt-1 text-[7.5pt] sm:text-[8pt] text-left sm:ml-auto">
                     <tr>
                         <td class="pr-2 font-semibold text-ink-muted">Nomor PO</td>
                         <td class="font-mono font-bold text-ink">: {{ $invoice['po_number'] ?? '-' }}</td>
@@ -178,14 +194,14 @@
             </div>
         </header>
 
-        <!-- Kotak Informasi Penerima (To & Office) Sesuai Desain Asli -->
-        <div class="mt-3 flex border border-ink text-[8.5pt]">
-            <div class="w-1/2 border-r border-ink bg-white px-3 py-1 font-semibold text-ink">
-                <span>To : </span>
+        <!-- Kotak Informasi Penerima (To & Office) -->
+        <div class="mt-3 flex flex-col sm:flex-row border border-ink text-[8pt] sm:text-[8.5pt]">
+            <div class="w-full sm:w-1/2 border-b sm:border-b-0 sm:border-r border-ink bg-white px-3 py-1 font-semibold text-ink">
+                <span class="text-ink-muted">To : </span>
                 <span class="font-bold">{{ $client['to'] ?? ($client['name'] ?? 'Mitra Klien') }}</span>
             </div>
-            <div class="w-1/2 bg-white px-3 py-1 font-semibold text-ink">
-                <span>Office : </span>
+            <div class="w-full sm:w-1/2 bg-white px-3 py-1 font-semibold text-ink">
+                <span class="text-ink-muted">Office : </span>
                 <span class="font-bold">{{ $client['office'] ?? ($client['name'] ?? 'Perusahaan Klien') }}</span>
             </div>
         </div>
@@ -197,8 +213,8 @@
 
             {{-- TABEL 1: SAYUR GUDANG / PASOKAN NON-KONTRAK --}}
             @if (!empty($hasWarehouseItems) && !empty($warehouse['items']))
-                <div class="mt-3">
-                    <table class="table-bordered text-[7.8pt]">
+                <div class="mt-3 table-scroll-container overflow-x-auto">
+                    <table class="table-bordered text-[7.8pt] min-w-[550px] sm:min-w-full">
                         <thead>
                             <tr class="bg-[#1e3a8a] text-white font-bold">
                                 <th class="py-1 px-2 text-center" style="width: 14%;">Tanggal</th>
@@ -246,8 +262,8 @@
 
             {{-- TABEL 2: SAYUR KONTRAK (ALOKASI KUOTA & REGULER PERSIS SEPERTI DI PDF) --}}
             @if (!empty($hasContractItems) && !empty($contract['pages']))
-                <div class="mt-4">
-                    <table class="table-bordered text-[7.5pt]">
+                <div class="mt-4 table-scroll-container overflow-x-auto">
+                    <table class="table-bordered text-[7.5pt] min-w-[650px] sm:min-w-full">
                         <thead>
                             <tr class="bg-[#be185d] text-white font-bold">
                                 <th rowspan="2" class="py-1 px-2 text-center" style="width: 10%;">Tanggal</th>
@@ -322,8 +338,8 @@
             {{-- ========================================================================= --}}
             {{-- FORMAT KLIEN REGULER: SATU TABEL STANDAR YANG BERSIH TANPA SPLIT KUOTA    --}}
             {{-- ========================================================================= --}}
-            <div class="mt-3">
-                <table class="table-bordered text-[8pt]">
+            <div class="mt-3 table-scroll-container overflow-x-auto">
+                <table class="table-bordered text-[8pt] min-w-[500px] sm:min-w-full">
                     <thead>
                         <tr class="bg-[#1e3a8a] text-white font-bold">
                             <th class="py-1.5 px-2 text-center" style="width: 5%;">No</th>
@@ -366,35 +382,35 @@
         @endif
 
         {{-- BARIS TOTAL TAGIHAN GABUNGAN --}}
-        <div class="mt-3">
-            <table class="table-bordered text-[8.5pt]">
+        <div class="mt-3 table-scroll-container overflow-x-auto">
+            <table class="table-bordered text-[8pt] sm:text-[8.5pt] min-w-[500px] sm:min-w-full">
                 <tfoot>
                     @if (($shipping_cost ?? 0) > 0 || ($tax_amount ?? 0) > 0)
                         <tr class="bg-gray-50 text-ink">
-                            <td class="py-1 px-3 text-right font-medium" style="width: 75%;">
+                            <td class="py-1 px-3 text-right font-medium" style="width: 70%;">
                                 Subtotal Komoditas
                             </td>
-                            <td class="py-1 px-3 text-right font-mono font-semibold" style="width: 25%;">
+                            <td class="py-1 px-3 text-right font-mono font-semibold" style="width: 30%;">
                                 Rp {{ number_format($subtotal ?? ($grand_total - ($shipping_cost ?? 0) - ($tax_amount ?? 0)), 0, ',', '.') }}
                             </td>
                         </tr>
                     @endif
                     @if (($shipping_cost ?? 0) > 0)
                         <tr class="bg-gray-50 text-ink">
-                            <td class="py-1 px-3 text-right font-medium" style="width: 75%;">
+                            <td class="py-1 px-3 text-right font-medium" style="width: 70%;">
                                 Biaya Distribusi &amp; Logistik Armada Chiller
                             </td>
-                            <td class="py-1 px-3 text-right font-mono font-semibold" style="width: 25%;">
+                            <td class="py-1 px-3 text-right font-mono font-semibold" style="width: 30%;">
                                 Rp {{ number_format($shipping_cost, 0, ',', '.') }}
                             </td>
                         </tr>
                     @endif
                     @if (isset($tax_label))
                         <tr class="bg-gray-50 text-ink">
-                            <td class="py-1 px-3 text-right font-medium" style="width: 75%;">
+                            <td class="py-1 px-3 text-right font-medium" style="width: 70%;">
                                 {{ $tax_label }}
                             </td>
-                            <td class="py-1 px-3 text-right font-mono font-semibold" style="width: 25%;">
+                            <td class="py-1 px-3 text-right font-mono font-semibold" style="width: 30%;">
                                 @if (($tax_amount ?? 0) > 0)
                                     Rp {{ number_format($tax_amount, 0, ',', '.') }}
                                 @else
@@ -404,10 +420,10 @@
                         </tr>
                     @endif
                     <tr class="bg-[#1e3a8a] text-white font-black">
-                        <td class="py-2 px-3 text-right uppercase tracking-widest font-black" style="width: 75%;">
+                        <td class="py-2 px-3 text-right uppercase tracking-widest font-black" style="width: 70%;">
                             TOTAL TAGIHAN
                         </td>
-                        <td class="py-2 px-3 text-right font-mono font-black text-[10.5pt] bg-[#172554]" style="width: 25%;">
+                        <td class="py-2 px-3 text-right font-mono font-black text-[10pt] sm:text-[10.5pt] bg-[#172554]" style="width: 30%;">
                             Rp {{ number_format($grand_total, 0, ',', '.') }}
                         </td>
                     </tr>
@@ -416,26 +432,29 @@
         </div>
 
         <!-- FOOTER PEMBAYARAN & TANDA TANGAN ASLI SESUAI DOKUMEN GPA -->
-        <footer class="mt-6 flex items-start justify-between border-t border-ink pt-3 text-[8pt]">
+        <footer class="mt-6 flex flex-col sm:flex-row items-start justify-between border-t border-ink pt-3 gap-5 text-[8pt]">
             <!-- Instruksi Pembayaran Bank BCA Resmi -->
-            <div class="w-7/12 leading-relaxed">
-                <p class="font-semibold text-ink">Setelah tagihan diterima, silahkan transfer ke:</p>
-                <div class="my-1 rounded border border-gray-300 bg-gray-50 p-2 font-mono">
-                    <p class="font-bold text-ink">Rekening BCA {{ $company['bank_account'] ?? '6768489174' }}</p>
-                    <p class="font-semibold text-brand">A.N {{ $company['bank_holder'] ?? 'Green Pasundan Agriculture' }}</p>
+            <div class="w-full sm:w-7/12 leading-relaxed">
+                <p class="font-semibold text-ink">Setelah tagihan diterima, silakan transfer ke rekening resmi:</p>
+                <div class="my-1.5 rounded-lg border border-gray-300 bg-gray-50 p-2.5 font-mono shadow-2xs">
+                    <div class="flex items-center gap-2">
+                        <span class="inline-block px-1.5 py-0.5 rounded bg-blue-700 text-white text-[9px] font-sans font-bold">BCA</span>
+                        <p class="font-bold text-ink text-xs sm:text-[13px]">{{ $company['bank_account'] ?? '6768489174' }}</p>
+                    </div>
+                    <p class="text-xs font-semibold text-brand mt-1">A.N {{ $company['bank_holder'] ?? 'Green Pasundan Agriculture' }}</p>
                 </div>
-                <p class="text-ink-body">Silakan kirimkan informasi jika pembayaran telah dilakukan</p>
-                <p class="font-semibold text-brand">Terima kasih atas kerjasamanya</p>
+                <p class="text-ink-body">Silakan kirimkan konfirmasi/bukti transfer jika pembayaran telah dilakukan.</p>
+                <p class="font-bold text-brand mt-1">Terima kasih atas kerjasamanya.</p>
             </div>
 
             <!-- Tanda Tangan & Cap Stempel Bulat Koperasi GPA Asli -->
-            <div class="relative w-4/12 text-center">
-                <p class="font-semibold text-ink">Hormat Kami</p>
+            <div class="w-full sm:w-4/12 text-center pt-2 sm:pt-0">
+                <p class="font-semibold text-ink">Hormat Kami,</p>
                 <p class="text-[7.5pt] font-medium text-ink-body">Koperasi Produsen Green Pasundan Agriculture</p>
 
                 <!-- Stamp Bulat Koperasi GPA Asli -->
                 <div class="relative my-1 flex items-center justify-center">
-                    <svg class="h-24 w-24 text-blue-700/85 stamp-rotate" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg class="h-20 w-20 sm:h-24 sm:w-24 text-blue-700/85 stamp-rotate" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <circle cx="100" cy="100" r="95" stroke="currentColor" stroke-width="3" stroke-dasharray="6 3"/>
                         <circle cx="100" cy="100" r="88" stroke="currentColor" stroke-width="2"/>
                         <circle cx="100" cy="100" r="58" stroke="currentColor" stroke-width="1.5"/>
@@ -457,7 +476,7 @@
                     </svg>
                 </div>
 
-                <p class="font-extrabold uppercase tracking-wider text-ink underline text-[9pt]">
+                <p class="font-extrabold uppercase tracking-wider text-ink underline text-[8.5pt] sm:text-[9pt]">
                     {{ $company['signer_name'] ?? 'AGUS DIKI PERMANA' }}
                 </p>
                 <p class="text-[7pt] text-ink-muted">Ketua Pengurus Koperasi GPA</p>

@@ -204,6 +204,7 @@ class DashboardController extends Controller
                     $unitPrice = (float) $userContract->fixed_price_per_kg;
                 }
             }
+            $moq = (float) ($product->minimum_order ?: 1);
             $reorderData[] = [
                 'key' => (string) $product->id,
                 'id' => $product->id,
@@ -212,8 +213,9 @@ class DashboardController extends Controller
                 'grade' => 'Grade ' . ($product->grade ?: 'Super A'),
                 'price' => $unitPrice,
                 'remaining' => 2500,
-                'step' => 50,
-                'initial_qty' => 100,
+                'step' => 1,
+                'initial_qty' => $moq,
+                'minimum_order' => $moq,
                 'image_path' => $product->image_path,
                 'image_url' => asset($product->image_path),
             ];

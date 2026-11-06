@@ -15,7 +15,7 @@ export default function clientCatalog(items = []) {
         query: '',
         availableOnly: false,
         quantities: Object.fromEntries(
-            items.map((item) => [item.key, item.initial_qty]),
+            items.map((item) => [item.key, Number(item.initial_qty ?? item.moq ?? 1)]),
         ),
         draft: [],
         adHocOpen: false,
@@ -161,7 +161,9 @@ export default function clientCatalog(items = []) {
         },
 
         quantity(key) {
-            return this.quantities[key] ?? 0;
+            const item = this.find(key);
+            const defaultQty = Number(item?.initial_qty ?? item?.moq ?? 1);
+            return this.quantities[key] ?? defaultQty;
         },
 
         setQuantity(key, value) {
@@ -172,7 +174,8 @@ export default function clientCatalog(items = []) {
             }
 
             const raw = Number(value);
-            this.quantities[key] = isNaN(raw) ? 0 : Math.max(0, raw);
+            const minQty = Number(item.moq ?? item.initial_qty ?? 1);
+            this.quantities[key] = isNaN(raw) ? minQty : Math.max(minQty, raw);
         },
 
         stepBy(key, direction) {
@@ -183,8 +186,9 @@ export default function clientCatalog(items = []) {
             }
 
             const step = item.step || 1;
-            const current = this.quantity(key);
-            const next = Math.max(0, current + step * direction);
+            const minQty = Number(item.moq ?? item.initial_qty ?? 1);
+            const current = Number(this.quantity(key));
+            const next = Math.max(minQty, current + step * direction);
 
             if (direction > 0 && (item.stock ?? 0) <= 0) {
                 this.$dispatch('gpa:toast', {
@@ -210,15 +214,22 @@ export default function clientCatalog(items = []) {
         estimatedTotal(key) {
             const item = this.find(key);
 
-            return item ? item.price * this.quantity(key) : 0;
+            return item ? item.price * (Number(this.quantity(key)) || 0) : 0;
         },
 
         addToDraft(key) {
             const item = this.find(key);
-            const qty = this.quantity(key);
 
             if (!item) {
                 return;
+            }
+
+            const minQty = Number(item.moq ?? item.initial_qty ?? 1);
+            let qty = Number(this.quantity(key));
+
+            if (isNaN(qty) || qty < minQty) {
+                qty = minQty;
+                this.quantities[key] = minQty;
             }
 
             // 1. Cek jika stok kosong / habis terpesan

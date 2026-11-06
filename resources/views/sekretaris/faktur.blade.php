@@ -16,7 +16,7 @@
     @endphp
 
     <div class="space-y-3" x-data="secretaryInvoicing(@js($clients), @js($ledgerRows), @js($statusFilters), @js($totalInvoices), @js(route('prints.invoice', ['invoice' => '__invoice__'])))"
-        @gpa:search.window="query = $event.detail">
+        @gpa:search.window="query = $event.detail; page = 1">
         <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
             <div class="min-w-0 flex-1">
                 <h1 class="mt-1 sm:mt-2 font-sans text-xl sm:text-2xl lg:text-3xl font-bold leading-tight sm:leading-10 tracking-[-0.01em] text-ink">
@@ -374,7 +374,7 @@
 
                     <tbody class="divide-y divide-line-soft">
                         @foreach ($ledgerRows as $row)
-                            <tr x-show="matchesFilter(@js($row))" @class($row['row_class'])
+                            <tr x-show="isVisible(@js($row))" @class($row['row_class'])
                                 class="transition-colors hover:bg-surface-shell/50">
                                 <td class="px-4 py-4">
                                     <p class="gpa-meta-lg font-bold tracking-[0.88px] text-ink">{{ $row['id'] }}</p>
@@ -464,14 +464,30 @@
                 </table>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
-                <p class="gpa-note text-ink-body"
-                    x-text="'Menampilkan ' + visibleRows().length + ' dari ' + {{ $totalInvoices }} + ' baris ledger piutang berjalan'">
+            <div class="flex flex-col gap-3 border-t border-line-soft bg-surface-shell px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p class="gpa-note text-ink-body" x-text="summaryLabel()">
+                    Menampilkan 1-10 dari {{ $totalInvoices }} baris ledger piutang berjalan
                 </p>
-                <p class="gpa-note text-ink-body">
-                    Total Piutang Terkonfirmasi:
-                    <span class="font-bold text-success-deep">42 Faktur Aktif</span>
-                </p>
+
+                <nav class="flex items-center gap-1" aria-label="Navigasi halaman faktur" x-show="lastPage > 1">
+                    <button type="button" @click="goToPage(page - 1)" :disabled="page === 1"
+                        class="rounded bg-surface px-2.5 py-1 text-xs font-semibold leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed">
+                        Sebelumnya
+                    </button>
+
+                    <template x-for="number in pageNumbers()" :key="number">
+                        <button type="button" @click="goToPage(number)"
+                            class="rounded px-2.5 py-1 text-xs font-semibold leading-4 transition-colors cursor-pointer"
+                            :class="page === number ? 'bg-brand font-bold text-white' : 'bg-surface-pill text-ink-body hover:bg-surface-disabled'"
+                            :aria-current="page === number ? 'page' : null"
+                            x-text="number"></button>
+                    </template>
+
+                    <button type="button" @click="goToPage(page + 1)" :disabled="page === lastPage"
+                        class="rounded bg-surface px-2.5 py-1 text-xs font-semibold leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed">
+                        Selanjutnya
+                    </button>
+                </nav>
             </div>
         </section>
     </div>

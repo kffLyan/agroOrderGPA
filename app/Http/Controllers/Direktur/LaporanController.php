@@ -12,7 +12,6 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\TataKelolaService;
-use App\Services\LaporanPrintService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -405,14 +404,14 @@ class LaporanController extends Controller
     }
 
     // Tampilan siap cetak dokumen pengesahan resmi PDF (Dikelola oleh Controller Dokumen Prints)
-    public function download(Request $request, PrintLaporanController $printController, LaporanPrintService $service): View
+    public function download(Request $request, PrintLaporanController $printController): View
     {
-        return $printController($request, $service);
+        return $printController($request);
     }
 
     // Unduh berkas laporan eksekutif resmi Excel / CSV (Dikelola oleh Controller Dokumen Prints)
-    public function exportCsv(Request $request, PrintLaporanController $printController, LaporanPrintService $printService): Response|StreamedResponse
+    public function exportCsv(Request $request, PrintLaporanController $printController): Response|StreamedResponse
     {
-        return $printController->export($request, $printService);
+        return $printController->export($request);
     }
 }

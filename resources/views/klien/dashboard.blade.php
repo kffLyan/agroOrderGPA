@@ -709,7 +709,7 @@
                                             class="px-2 py-0.5 font-mono text-sm leading-5 text-ink transition-colors hover:bg-surface-muted">
                                             &minus;
                                         </button>
-                                        <input type="number" inputmode="numeric" min="0" max="{{ $item['remaining'] }}"
+                                        <input type="number" inputmode="numeric" min="{{ $item['initial_qty'] }}" max="{{ $item['remaining'] }}"
                                             step="{{ $item['step'] }}" value="{{ $item['initial_qty'] }}"
                                             x-model.number="quantities['{{ $item['key'] }}']"
                                             @change="setQuantity(@js($item), $event.target.value)"

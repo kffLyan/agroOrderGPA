@@ -16,9 +16,8 @@ export default function clientOrders(defaults = {}) {
         orders: defaults.orders ?? [],
         tabs: defaults.tabs ?? [],
         page: 1,
-        lastPage: defaults.pagination?.last_page ?? 1,
         total: defaults.pagination?.total ?? 0,
-        perPage: defaults.pagination?.per_page ?? 5,
+        perPage: defaults.pagination?.per_page ?? 10,
         status: 'all',
         range: defaults.filters?.range?.value ?? 'all',
         hub: 'all',
@@ -27,9 +26,8 @@ export default function clientOrders(defaults = {}) {
         search: '',
 
         init() {
-            this.lastPage = defaults.pagination?.last_page ?? 1;
             this.total = defaults.pagination?.total ?? 0;
-            this.perPage = defaults.pagination?.per_page ?? 5;
+            this.perPage = defaults.pagination?.per_page ?? 10;
             this.range = defaults.filters?.range?.value ?? 'all';
         },
 
@@ -114,7 +112,7 @@ export default function clientOrders(defaults = {}) {
                 .some((value) => String(value).toLowerCase().includes(keyword));
         },
 
-        isVisible(order) {
+        matchesFilter(order) {
             return this.matchesTab(order)
                 && this.matchesHub(order)
                 && this.matchesPayment(order)
@@ -123,12 +121,32 @@ export default function clientOrders(defaults = {}) {
                 && this.matchesSearch(order);
         },
 
+        filteredOrders() {
+            return this.orders.filter((order) => this.matchesFilter(order));
+        },
+
+        get lastPage() {
+            return Math.max(1, Math.ceil(this.filteredOrders().length / this.perPage));
+        },
+
+        pagedOrders() {
+            const start = (this.page - 1) * this.perPage;
+            return this.filteredOrders().slice(start, start + this.perPage);
+        },
+
+        isVisible(order) {
+            if (! this.matchesFilter(order)) {
+                return false;
+            }
+            return this.pagedOrders().some((item) => (item.id === order.id) || (item.po === order.po));
+        },
+
         visibleOrders() {
-            return this.orders.filter((order) => this.isVisible(order));
+            return this.pagedOrders();
         },
 
         visibleCount() {
-            return this.visibleOrders().length;
+            return this.filteredOrders().length;
         },
 
         hasFilters() {
@@ -159,28 +177,41 @@ export default function clientOrders(defaults = {}) {
             return this.tabs.find((tab) => tab.value === value)?.count ?? 0;
         },
 
-        /**
-         * Pratinjau hanya memuat halaman 1 (lima baris). Halaman berikutnya
-         * disimulasikan seperti tombol aksi lain di dashboard.
-         */
         goToPage(page) {
-            this.page = Math.min(Math.max(1, page), this.lastPage);
-
-            this.$dispatch('gpa:toast', {
-                title: `Halaman ${this.page} dari ${this.lastPage}`,
-                message: 'Data halaman berikutnya dimuat dari API Orders GPA saat modul terhubung.',
-                tone: 'info',
-            });
+            const target = Math.min(Math.max(1, page), this.lastPage);
+            if (this.page !== target) {
+                this.page = target;
+            }
         },
 
         pageNumbers() {
-            const numbers = [1, 2, 3];
-
-            return [...new Set([...numbers, this.lastPage])].sort((a, b) => a - b);
+            const pages = [];
+            const total = this.lastPage;
+            if (total <= 5) {
+                for (let i = 1; i <= total; i++) pages.push(i);
+            } else {
+                let start = Math.max(1, this.page - 2);
+                let end = Math.min(total, this.page + 2);
+                if (this.page <= 3) {
+                    start = 1;
+                    end = 5;
+                } else if (this.page >= total - 2) {
+                    start = total - 4;
+                    end = total;
+                }
+                for (let i = start; i <= end; i++) pages.push(i);
+            }
+            return pages;
         },
 
         summaryLabel() {
-            return `Menampilkan ${this.visibleCount()} dari ${this.total} pesanan aktif`;
+            const total = this.filteredOrders().length;
+            if (total === 0) {
+                return '0 pesanan aktif';
+            }
+            const start = (this.page - 1) * this.perPage + 1;
+            const end = Math.min(this.page * this.perPage, total);
+            return `Menampilkan ${start}–${end} dari ${total} pesanan aktif`;
         },
 
         actionTone(variant) {

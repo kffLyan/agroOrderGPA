@@ -79,7 +79,7 @@ class KatalogController extends Controller
             $hasContract = $activeContracts->has($product->id);
             $contractItem = $activeContracts->get($product->id);
             $effectivePrice = $hasContract ? (float) $contractItem->fixed_price_per_kg : (float) $product->base_price;
-            $minimumOrder = (float) ($product->minimum_order ?? 10);
+            $minimumOrder = (float) ($product->minimum_order ?: 1);
 
             return [
                 'key'                => (string) $product->id,
@@ -104,6 +104,7 @@ class KatalogController extends Controller
                 'availability'       => $availableStock > 0 ? 'Stok Tersedia' : 'Habis Terpesan',
                 'availability_tone'  => $availableStock > 0 ? 'safe' : 'caution',
                 'moq'                => $minimumOrder,
+                'initial_qty'        => $minimumOrder,
                 'step'               => 1,
                 'crate_kg'           => 10,
                 'pack_label'         => 'Keranjang',

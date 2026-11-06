@@ -1,15 +1,17 @@
 const normalize = (value) => String(value ?? '').toLowerCase();
 
-export default function secretaryPayments(queue = [], filters = [], operatorCode = 'OP-4091', auditTotal = 42) {
+export default function secretaryPayments(queue = [], filters = [], operatorCode = 'OP-4091', auditTotal = 42, auditRows = []) {
     const rows = Array.isArray(queue) ? queue : [];
     const filterList = Array.isArray(filters) ? filters : [];
+    const auditList = Array.isArray(auditRows) ? auditRows : [];
 
     return {
         queue: rows,
         filters: filterList,
+        auditRows: auditList,
         query: '',
         operatorCode: String(operatorCode || 'OP-4091').toUpperCase(),
-        auditTotal: Number(auditTotal) || 0,
+        auditTotal: auditList.length || Number(auditTotal) || 0,
         channel: 'all',
         paymentId: rows[0]?.id ?? null,
         settled: [],
@@ -17,6 +19,36 @@ export default function secretaryPayments(queue = [], filters = [], operatorCode
         checks: [true, true, true],
         note: rows[0]?.note ?? '',
         auditPage: 1,
+        auditPerPage: 10,
+
+        get auditLastPage() {
+            return Math.max(1, Math.ceil(this.auditRows.length / this.auditPerPage));
+        },
+
+        pagedAuditRows() {
+            const start = (this.auditPage - 1) * this.auditPerPage;
+            return this.auditRows.slice(start, start + this.auditPerPage);
+        },
+
+        isAuditVisible(row) {
+            return this.pagedAuditRows().some((item) => item.id === row.id);
+        },
+
+        auditPageNumbers() {
+            const pages = [];
+            for (let i = 1; i <= this.auditLastPage; i++) {
+                pages.push(i);
+            }
+            return pages;
+        },
+
+        auditSummaryLabel() {
+            const total = this.auditRows.length;
+            if (total === 0) return '0 transaksi rekonsiliasi';
+            const start = (this.auditPage - 1) * this.auditPerPage + 1;
+            const end = Math.min(this.auditPage * this.auditPerPage, total);
+            return `Menampilkan ${start}–${end} dari ${total} transaksi rekonsiliasi hari ini`;
+        },
 
         proofModalOpen: false,
         proofModalUrl: null,
@@ -307,9 +339,7 @@ export default function secretaryPayments(queue = [], filters = [], operatorCode
         },
 
         goToPage(page) {
-            this.auditPage = Number(page) || 1;
-
-            this.run('Halaman Audit Diubah', `Halaman ${this.auditPage} dari ${this.number(this.auditTotal)} transaksi rekonsiliasi kas dimuat.`);
+            this.auditPage = Math.min(Math.max(1, Number(page) || 1), this.auditLastPage);
         },
     };
 }

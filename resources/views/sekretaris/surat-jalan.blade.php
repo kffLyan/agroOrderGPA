@@ -163,7 +163,7 @@
 
                     <tbody class="divide-y divide-line-soft">
                         @foreach ($rows as $row)
-                            <tr x-show="matchesFilter(@js($row))" @click="select(@js($row['id']))"
+                            <tr x-show="isVisible(@js($row))" @click="select(@js($row['id']))"
                                 :class="rowClass(@js($row))" class="cursor-pointer transition-colors">
                                 <td class="px-4 py-4">
                                     <p class="gpa-meta-lg font-bold tracking-[0.88px] text-ink">{{ $row['id'] }}</p>
@@ -307,14 +307,30 @@
                 </table>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft bg-surface-shell px-4 py-3">
-                <p class="gpa-note text-ink-body"
-                    x-text="'Menampilkan ' + visibleCount() + ' dari ' + {{ count($rows) }} + ' dokumen dalam antrean dispatch'">
+            <div class="flex flex-col gap-3 border-t border-line-soft bg-surface-shell px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p class="gpa-note text-ink-body" x-text="summaryLabel()">
+                    Menampilkan 1-10 dari {{ count($rows) }} dokumen dalam antrean dispatch
                 </p>
-                <p class="gpa-note text-ink-body">
-                    Total Terbit Sesi Ini:
-                    <span class="font-bold text-success-deep" x-text="issuedCount() + ' Dokumen'"></span>
-                </p>
+
+                <nav class="flex items-center gap-1" aria-label="Navigasi halaman pengiriman" x-show="lastPage > 1">
+                    <button type="button" @click="goToPage(page - 1)" :disabled="page === 1"
+                        class="rounded bg-surface px-2.5 py-1 text-xs font-semibold leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed">
+                        Sebelumnya
+                    </button>
+
+                    <template x-for="number in pageNumbers()" :key="number">
+                        <button type="button" @click="goToPage(number)"
+                            class="rounded px-2.5 py-1 text-xs font-semibold leading-4 transition-colors cursor-pointer"
+                            :class="page === number ? 'bg-brand font-bold text-white' : 'bg-surface-pill text-ink-body hover:bg-surface-disabled'"
+                            :aria-current="page === number ? 'page' : null"
+                            x-text="number"></button>
+                    </template>
+
+                    <button type="button" @click="goToPage(page + 1)" :disabled="page === lastPage"
+                        class="rounded bg-surface px-2.5 py-1 text-xs font-semibold leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed">
+                        Selanjutnya
+                    </button>
+                </nav>
             </div>
         </section>
 

@@ -22,6 +22,8 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
         termsFilter: 'all',
         statusMode: 'all',
         generated: [],
+        page: 1,
+        perPage: 10,
 
         run(title, message, tone = 'info') {
             if (typeof this.$dispatch === 'function') {
@@ -212,6 +214,7 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
 
         setTerms(filter) {
             this.termsFilter = filter;
+            this.page = 1;
         },
 
         matchesFilter(row) {
@@ -238,8 +241,67 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
                 .some((value) => value !== '' && value.includes(needle));
         },
 
-        visibleRows() {
+        filteredRows() {
             return this.ledger.filter((row) => this.matchesFilter(row));
+        },
+
+        get lastPage() {
+            return Math.max(1, Math.ceil(this.filteredRows().length / this.perPage));
+        },
+
+        pagedRows() {
+            const start = (this.page - 1) * this.perPage;
+            return this.filteredRows().slice(start, start + this.perPage);
+        },
+
+        isVisible(row) {
+            if (! this.matchesFilter(row)) {
+                return false;
+            }
+            return this.pagedRows().some((item) => item.id === row.id);
+        },
+
+        visibleRows() {
+            return this.pagedRows();
+        },
+
+        visibleCount() {
+            return this.filteredRows().length;
+        },
+
+        goToPage(page) {
+            const target = Math.min(Math.max(1, page), this.lastPage);
+            if (this.page !== target) {
+                this.page = target;
+            }
+        },
+
+        pageNumbers() {
+            const pages = [];
+            const total = this.lastPage;
+            if (total <= 5) {
+                for (let i = 1; i <= total; i++) pages.push(i);
+            } else {
+                let start = Math.max(1, this.page - 2);
+                let end = Math.min(total, this.page + 2);
+                if (this.page <= 3) {
+                    start = 1;
+                    end = 5;
+                } else if (this.page >= total - 2) {
+                    start = total - 4;
+                    end = total;
+                }
+                for (let i = start; i <= end; i++) pages.push(i);
+            }
+            return pages;
+        },
+
+        summaryLabel() {
+            const total = this.filteredRows().length;
+            if (total === 0) return '0 faktur ditemukan';
+            const start = (this.page - 1) * this.perPage + 1;
+            const end = Math.min(this.page * this.perPage, total);
+            return `Menampilkan ${start}–${end} dari ${total} baris ledger piutang berjalan`;
         },
 
         exportLedger() {

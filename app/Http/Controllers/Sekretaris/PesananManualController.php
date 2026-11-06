@@ -21,6 +21,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 // Controller input pesanan manual (WhatsApp / Telepon) untuk Sekretaris
 class PesananManualController extends Controller
@@ -161,6 +163,7 @@ class PesananManualController extends Controller
             'commodities'     => [],
             'catalog'         => $catalog,
             'paymentChannels' => $paymentChannels,
+            'taxSettings'     => $tataKelolaService->getTaxSettings(),
             'source'          => $sourceData,
             'sourceData'      => $sourceData,
             'clientData'      => $clientData,
@@ -175,11 +178,49 @@ class PesananManualController extends Controller
         $validated = $request->validated();
         $secretary = Auth::user();
 
-        // Mengambil profil entitas klien pemesan atau menetapkan akun pembeli default
+        // Mengambil profil entitas klien pemesan atau membuat/menggunakan profil pembeli baru
         $clientId = $validated['client_id'] ?? null;
         $client = $clientId ? User::find($clientId) : null;
+
         if (!$client) {
-            $client = User::where('role', 'KLIEN')->first() ?? $secretary;
+            $clientName = !empty($validated['client_name']) ? trim($validated['client_name']) : 'Pelanggan Walk-In';
+            $clientPhone = !empty($validated['client_phone']) ? trim($validated['client_phone']) : '0812-3456-7890';
+            $deliveryAddress = !empty($validated['delivery_address']) ? trim($validated['delivery_address']) : 'Kota Bandung, Jawa Barat';
+            $picName = !empty($validated['client_contact']) ? trim($validated['client_contact']) : $clientName;
+
+            // Cari apakah user KLIEN dengan nama / company_name tersebut sudah ada di database
+            $client = User::where('role', 'KLIEN')
+                ->where(function ($q) use ($clientName) {
+                    $q->where('company_name', $clientName)
+                      ->orWhere('name', $clientName);
+                })
+                ->first();
+
+            // Jika belum ada, daftarkan sebagai pembeli reguler baru
+            if (!$client) {
+                $slug = Str::slug($clientName) ?: 'pembeli';
+                $email = 'pembeli.' . $slug . '@agroorder.gpa';
+                $counter = 1;
+                while (User::where('email', $email)->exists()) {
+                    $email = 'pembeli.' . $slug . '.' . $counter . '@agroorder.gpa';
+                    $counter++;
+                }
+
+                $client = User::create([
+                    'name'              => $clientName,
+                    'company_name'      => $clientName,
+                    'email'             => $email,
+                    'phone'             => $clientPhone,
+                    'address'           => $deliveryAddress,
+                    'pic_name'          => $picName,
+                    'pic_phone'         => $clientPhone,
+                    'role'              => 'KLIEN',
+                    'client_type'       => 'REGULER',
+                    'is_active'         => true,
+                    'email_verified_at' => now(),
+                    'password'          => Hash::make(Str::random(16)),
+                ]);
+            }
         }
 
         $requestedStatus = $validated['status'] ?? 'LUNAS';
@@ -369,9 +410,7 @@ class PesananManualController extends Controller
                     'id'           => $order->id,
                     'order_number' => $order->order_number,
                     'grand_total'  => (float) $order->grand_total,
-                    'client_name'  => (!empty($validated['client_name']) && empty($validated['client_id']))
-                        ? $validated['client_name']
-                        : ($client?->company_name ?: ($client?->name ?: 'Pelanggan Walk-In')),
+                    'client_name'  => $client?->company_name ?: ($client?->name ?: 'Pelanggan Walk-In'),
                     'receipt_url'  => route('prints.thermal-receipt', ['invoice' => $order->order_number]),
                     'invoice_url'  => route('prints.invoice', ['invoice' => $order->order_number]),
                 ],

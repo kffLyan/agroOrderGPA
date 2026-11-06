@@ -306,11 +306,12 @@ Berkas: [`app/Services/TataKelolaService.php`](file:///d:/UKK/agroOrderGPA/app/S
 
 ---
 
-### 5.5 Layanan Cetak Dokumen (Surat Jalan, Faktur, Laporan, Retur)
-1. [`SuratJalanPrintService.php`](file:///d:/UKK/agroOrderGPA/app/Services/SuratJalanPrintService.php): Cetak Surat Jalan A4 resmi pengantaran logistik.
-2. [`FakturPrintService.php`](file:///d:/UKK/agroOrderGPA/app/Services/FakturPrintService.php): Cetak Faktur Penjualan komersial resmi (tempo 30 hari).
-3. [`LaporanPrintService.php`](file:///d:/UKK/agroOrderGPA/app/Services/LaporanPrintService.php): Cetak Rekapitulasi Pembukuan Kas & Tonase Penjualan.
-4. [`ReturPrintService.php`](file:///d:/UKK/agroOrderGPA/app/Services/ReturPrintService.php): Cetak Berita Acara Kerusakan / Retur Fisik di lokasi klien.
+### 5.5 Kontroler Cetak Dokumen Resmi (`app/Http/Controllers/Prints`)
+1. [`PrintSuratJalanController.php`](file:///d:/UKK/agroOrderGPA/app/Http/Controllers/Prints/PrintSuratJalanController.php): Cetak Surat Jalan A4 resmi pengantaran logistik.
+2. [`PrintFakturController.php`](file:///d:/UKK/agroOrderGPA/app/Http/Controllers/Prints/PrintFakturController.php): Cetak Faktur Penjualan komersial resmi (tempo 30 hari).
+3. [`PrintLaporanController.php`](file:///d:/UKK/agroOrderGPA/app/Http/Controllers/Prints/PrintLaporanController.php): Cetak Rekapitulasi Pembukuan Kas & Tonase Penjualan, serta ekspor CSV/Excel.
+4. [`PrintBeritaAcaraReturController.php`](file:///d:/UKK/agroOrderGPA/app/Http/Controllers/Prints/PrintBeritaAcaraReturController.php): Cetak Berita Acara Kerusakan / Retur Fisik di lokasi klien.
+5. [`PrintStrukThermalController.php`](file:///d:/UKK/agroOrderGPA/app/Http/Controllers/Prints/PrintStrukThermalController.php): Cetak Struk POS Thermal 58mm/80mm untuk pembayaran kasir.
 
 ---
 

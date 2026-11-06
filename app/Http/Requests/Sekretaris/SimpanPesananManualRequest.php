@@ -27,6 +27,13 @@ class SimpanPesananManualRequest extends FormRequest
                 $this->merge(['items' => $daftarTerurai]);
             }
         }
+
+        if ($this->has('client_id')) {
+            $clientId = $this->input('client_id');
+            if ($clientId === '' || $clientId === 'null' || $clientId === null) {
+                $this->merge(['client_id' => null]);
+            }
+        }
     }
 
     // Aturan validasi input pesanan manual
@@ -35,6 +42,7 @@ class SimpanPesananManualRequest extends FormRequest
         return [
             'client_id'            => ['nullable', 'exists:users,id'],
             'client_name'          => ['nullable', 'string', 'max:255'],
+            'client_contact'       => ['nullable', 'string', 'max:255'],
             'client_phone'         => ['nullable', 'string', 'max:50'],
             'delivery_address'     => ['nullable', 'string', 'max:500'],
             'target_delivery_date' => ['nullable', 'date'],
@@ -89,7 +97,7 @@ class SimpanPesananManualRequest extends FormRequest
             }
 
             // 2. Cek pembekuan plafon kredit klien
-            $idKlien = (int) ($this->input('client_id') ?: (User::where('role', 'KLIEN')->first()?->id ?? 0));
+            $idKlien = (int) ($this->input('client_id') ?: 0);
             if ($idKlien > 0 && $layananTataKelola->isClientFrozen($idKlien)) {
                 $validator->errors()->add('client_id', 'Plafon kredit klien ini sedang dibekukan oleh Direktur Utama. Tidak dapat membuat pesanan baru.');
                 return;

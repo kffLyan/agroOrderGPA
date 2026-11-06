@@ -122,10 +122,10 @@
 
     $pagination = [
         'page'        => 1,
-        'per_page'    => max(1, count($invoices)),
+        'per_page'    => 10,
         'total'       => count($invoices),
-        'total_pages' => 1,
-        'last_page'   => 1,
+        'total_pages' => max(1, (int) ceil(count($invoices) / 10)),
+        'last_page'   => max(1, (int) ceil(count($invoices) / 10)),
     ];
 @endphp
 
@@ -279,7 +279,7 @@
                 <span class="gpa-meta-lg text-ink-body">Periode:</span>
                 <span class="relative flex min-w-0 items-center">
                     <x-gpa.icon name="calendar" class="pointer-events-none absolute left-2 h-3.5 w-3.5 text-ink-body" />
-                    <select x-model="period"
+                    <select x-model="period" @change="page = 1; keepSelectionVisible()"
                         class="gpa-control h-9 w-full min-w-0 appearance-none rounded-lg border-line-soft bg-surface py-1 pl-8 pr-2 text-xs font-medium text-ink">
                         @foreach ($periods as $period)
                             <option value="{{ $period['value'] }}">{{ $period['label'] }}</option>
@@ -309,7 +309,7 @@
                     <label class="relative flex w-full items-center sm:w-64">
                         <span class="sr-only">Cari No. Faktur / SJ...</span>
                         <x-gpa.icon name="search" class="pointer-events-none absolute left-3 h-3 w-3 text-ink-body" />
-                        <input type="search" x-model.debounce.200ms="search" placeholder="Cari No. Faktur / SJ..."
+                        <input type="search" x-model.debounce.200ms="search" @input="page = 1; keepSelectionVisible()" placeholder="Cari No. Faktur / SJ..."
                             class="gpa-control h-8 w-full rounded-lg border-line-soft bg-surface pl-8 pr-3 text-xs">
                     </label>
                     <button type="button" @click="resetFilters()" x-cloak x-show="hasFilters()"
@@ -511,29 +511,25 @@
 
             <div class="flex flex-col gap-3 border-t border-line-soft bg-surface-shell px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                 <p class="gpa-micro-bold uppercase leading-3 tracking-[1.08px] text-ink-body" x-text="summaryLabel()">
-                    Menampilkan {{ $pagination['per_page'] }} dari {{ $pagination['total'] }} total faktur konsolidasi (2026)
+                    Menampilkan 1-10 dari {{ $pagination['total'] }} total faktur konsolidasi (2026)
                 </p>
 
-                <nav class="flex items-center gap-1" aria-label="Navigasi halaman faktur">
-                    <button type="button" @click="page > 1 && goToPage(page - 1)" :disabled="page === 1"
-                        class="rounded bg-surface px-2 py-1 text-xs leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-50">
+                <nav class="flex items-center gap-1" aria-label="Navigasi halaman faktur" x-show="lastPage > 1">
+                    <button type="button" @click="goToPage(page - 1)" :disabled="page === 1"
+                        class="rounded bg-surface px-2.5 py-1 text-xs font-semibold leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed">
                         Sebelumnya
                     </button>
 
                     <template x-for="number in pageNumbers()" :key="number">
                         <button type="button" @click="goToPage(number)"
-                            class="rounded px-2 py-1 text-xs leading-4 transition-colors"
+                            class="rounded px-2.5 py-1 text-xs font-semibold leading-4 transition-colors cursor-pointer"
                             :class="page === number ? 'bg-ink font-bold text-white' : 'bg-surface-pill text-ink-body hover:bg-surface-disabled'"
                             :aria-current="page === number ? 'page' : null"
                             x-text="number"></button>
                     </template>
 
-                    @if ($pagination['last_page'] > 3)
-                        <span class="px-1 text-xs leading-4 text-ink-body" aria-hidden="true">...</span>
-                    @endif
-
                     <button type="button" @click="goToPage(page + 1)" :disabled="page === lastPage"
-                        class="rounded bg-surface px-2 py-1 text-xs leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-50">
+                        class="rounded bg-surface px-2.5 py-1 text-xs font-semibold leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed">
                         Selanjutnya
                     </button>
                 </nav>

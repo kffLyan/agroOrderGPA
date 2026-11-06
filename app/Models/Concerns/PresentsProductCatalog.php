@@ -124,17 +124,17 @@ trait PresentsProductCatalog
 
     public function getMoqAttribute(): float
     {
-        return (float) ($this->minimum_order ?? 10);
+        return (float) ($this->minimum_order ?: 1);
     }
 
     public function getStepAttribute(): float
     {
-        return max(1, $this->moq);
+        return 1.0;
     }
 
     public function getInitialQtyAttribute(): float
     {
-        return $this->step;
+        return $this->moq;
     }
 
     public function getBadgesAttribute(): array

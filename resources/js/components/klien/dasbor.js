@@ -22,7 +22,7 @@ export default function clientDashboard(catalogue = []) {
         statusFilter: 'all',
         draft: [],
         quantities: Object.fromEntries(
-            catalogue.map((item) => [item.key, item.initial_qty]),
+            catalogue.map((item) => [item.key, Number(item.initial_qty ?? item.minimum_order ?? 1)]),
         ),
 
         init() {
@@ -68,26 +68,30 @@ export default function clientDashboard(catalogue = []) {
         },
 
         setQuantity(item, value) {
+            const minQty = Number(item.initial_qty ?? item.minimum_order ?? 1);
             const step = item.step || 1;
-            const next = Math.max(0, Math.min(item.remaining, Number(value) || 0));
+            const next = Math.max(minQty, Math.min(item.remaining, Number(value) || 0));
             const rounded = Math.round(next / step) * step;
 
-            this.quantities[item.key] = Math.max(0, Math.min(item.remaining, rounded));
+            this.quantities[item.key] = Math.max(minQty, Math.min(item.remaining, rounded));
         },
 
         step(item, direction) {
+            const minQty = Number(item.initial_qty ?? item.minimum_order ?? 1);
             const step = item.step || 1;
+            const current = Number(this.quantities[item.key] ?? minQty);
 
-            this.setQuantity(item, (this.quantities[item.key] ?? 0) + step * direction);
+            this.setQuantity(item, current + step * direction);
         },
 
         addToDraft(item) {
-            const qty = this.quantities[item.key] ?? 0;
+            const minQty = Number(item.initial_qty ?? item.minimum_order ?? 1);
+            const qty = Number(this.quantities[item.key] ?? minQty);
 
-            if (qty <= 0) {
+            if (qty < minQty) {
                 this.$dispatch('gpa:toast', {
                     title: 'Jumlah belum valid',
-                    message: `Isi minimal 1 kg untuk ${item.name}.`,
+                    message: `Minimal pemesanan untuk ${item.name} adalah ${minQty} kg.`,
                     tone: 'danger',
                 });
 

@@ -49,10 +49,25 @@
 
 <body class="flex min-h-screen flex-col items-center px-4 py-6 font-sans text-ink antialiased">
     <header class="no-print mb-6 flex w-full max-w-[210mm] flex-wrap items-center justify-between gap-3 rounded-lg border border-line-hair bg-surface p-3 shadow-card">
-        <a href="{{ url()->previous() }}"
+        @php
+            $currentUser = auth()->user();
+            $backUrl = match($currentUser?->role) {
+                'SEKRETARIS'  => route('sekretaris.monitoring-pod'),
+                'KOORDINATOR' => route('koordinator.dashboard'),
+                'ARMADA'      => route('armada.riwayat'),
+                default       => route('klien.dokumen'),
+            };
+            $backLabel = match($currentUser?->role) {
+                'SEKRETARIS'  => 'Kembali ke Monitoring POD',
+                'KOORDINATOR' => 'Kembali ke Dashboard',
+                'ARMADA'      => 'Kembali ke Riwayat',
+                default       => 'Kembali ke Dokumen',
+            };
+        @endphp
+        <a href="{{ $backUrl }}"
             class="inline-flex items-center gap-1.5 rounded-md border border-line-board px-3 py-1.5 gpa-meta font-semibold text-ink transition-colors hover:bg-surface-shell">
             <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5" />
-            Kembali
+            <span>{{ $backLabel }}</span>
         </a>
         <button type="button" onclick="window.print()"
             class="inline-flex items-center gap-1.5 rounded-md bg-brand px-4 py-1.5 gpa-meta font-semibold text-white shadow-sub transition-colors hover:bg-brand-deep">

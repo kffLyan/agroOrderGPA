@@ -21,8 +21,8 @@ class RegistrationOtpMail extends Mailable
     // Konfigurasi amplop email pengiriman kode OTP verifikasi pendaftaran akun
     public function envelope(): Envelope
     {
-        $fromAddress = config('mail.from.address', 'kafkalyandra@gmail.com');
-        $fromName = config('mail.from.name', 'Green Pasundan Agriculture');
+        $fromAddress = config('mail.from.address') ?: 'no-reply@agroordergpa.my.id';
+        $fromName = config('mail.from.name') ?: 'Green Pasundan Agriculture';
 
         return new Envelope(
             from: new Address($fromAddress, $fromName),

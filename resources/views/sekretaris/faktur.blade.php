@@ -16,7 +16,7 @@
     @endphp
 
     <div class="space-y-3" x-data="secretaryInvoicing(@js($clients), @js($ledgerRows), @js($statusFilters), @js($totalInvoices), @js(route('prints.invoice', ['invoice' => '__invoice__'])))"
-        @gpa:search.window="query = $event.detail">
+        @gpa:search.window="query = $event.detail; page = 1">
         <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
             <div class="min-w-0 flex-1">
                 <h1 class="mt-1 sm:mt-2 font-sans text-xl sm:text-2xl lg:text-3xl font-bold leading-tight sm:leading-10 tracking-[-0.01em] text-ink">
@@ -102,16 +102,25 @@
                 </div>
 
                 <p class="font-sans text-3xl font-bold leading-10 tracking-[-0.01em] text-danger">
-                    Rp 0
+                    Rp {{ number_format($overdueTotal ?? 0, 0, ',', '.') }}
                 </p>
 
                 <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
-                    <p class="gpa-micro-bold tracking-[1.08px] text-success-deep">
-                        Tidak Ada Keterlambatan
-                    </p>
-                    <span class="inline-flex shrink-0 rounded bg-accent px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-success-ink outline outline-1 outline-success-deep">
-                        Aman
-                    </span>
+                    @if (($overdueTotal ?? 0) > 0)
+                        <p class="gpa-micro-bold tracking-[1.08px] text-danger">
+                            Perlu Tindak Lanjut
+                        </p>
+                        <span class="inline-flex shrink-0 rounded bg-danger-soft/60 px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-danger outline outline-1 outline-danger/50">
+                            Peringatan
+                        </span>
+                    @else
+                        <p class="gpa-micro-bold tracking-[1.08px] text-success-deep">
+                            Tidak Ada Keterlambatan
+                        </p>
+                        <span class="inline-flex shrink-0 rounded bg-accent px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-success-ink outline outline-1 outline-success-deep">
+                            Aman
+                        </span>
+                    @endif
                 </div>
             </article>
 
@@ -173,9 +182,9 @@
 
                     <select id="invoice-client" @change="switchClient($event.target.value)"
                         class="h-11 w-full rounded-lg bg-surface px-3 text-sm font-semibold text-ink outline outline-1 outline-line-board focus:outline-2 focus:outline-success-deep">
-                        @foreach ($clients as $client)
-                            <option value="{{ $client['id'] }}" @selected($client['id'] === $clients[0]['id'])}>
-                                {{ $client['name'] }} [{{ $client['terms_label'] }} Hari] — NPWP: {{ $client['npwp'] }}
+                        @foreach ($clients as $index => $client)
+                            <option value="{{ $client['id'] }}" @selected($index === 0)>
+                                {{ $client['name'] }} [{{ $client['terms_label'] }}] — NPWP: {{ $client['npwp'] }}
                             </option>
                         @endforeach
                     </select>
@@ -232,6 +241,19 @@
                             </thead>
 
                             <tbody class="divide-y divide-line-soft">
+                                <tr x-show="documents.length === 0">
+                                    <td colspan="6" class="px-6 py-10 text-center">
+                                        <div class="flex flex-col items-center justify-center gap-2">
+                                            <x-gpa.icon name="file-text" class="h-8 w-8 text-ink-quiet" />
+                                            <p class="font-sans text-sm font-semibold text-ink">
+                                                Tidak Ada Surat Jalan Siap Difakturkan
+                                            </p>
+                                            <p class="max-w-md text-xs text-ink-body">
+                                                Klien ini belum memiliki pengiriman berstatus <em>Siap Kirim</em> atau <em>Selesai</em> yang belum difakturkan. Surat jalan akan masuk otomatis saat pengiriman diterbitkan.
+                                            </p>
+                                        </div>
+                                    </td>
+                                </tr>
                                 @foreach ($clients as $client)
                                     @foreach ($client['documents'] as $document)
                                         <tr x-show="belongsToClient(@js($document['sj']))"
@@ -319,7 +341,7 @@
             </div>
         </section>
 
-        <section class="flex flex-col gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
+        <section id="buku-besar-faktur" class="flex flex-col gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <div class="min-w-0">
                     <h2 class="flex items-center gap-2 font-sans text-lg font-bold leading-6 text-ink">
@@ -374,8 +396,7 @@
 
                     <tbody class="divide-y divide-line-soft">
                         @foreach ($ledgerRows as $row)
-                            <tr x-show="matchesFilter(@js($row))" @class($row['row_class'])
-                                class="transition-colors hover:bg-surface-shell/50">
+                            <tr x-show="isVisible(@js($row))" @class([$row['row_class'], 'transition-colors hover:bg-surface-shell/50'])>
                                 <td class="px-4 py-4">
                                     <p class="gpa-meta-lg font-bold tracking-[0.88px] text-ink">{{ $row['id'] }}</p>
                                     <p class="mt-0.5 text-2xs font-medium leading-4 text-ink-quiet">
@@ -388,12 +409,18 @@
 
                                 <td class="px-4 py-4">
                                     <p class="font-sans text-sm font-bold leading-5 text-ink">{{ $row['client'] }}</p>
-                                    <p @class(['mt-0.5 text-2xs leading-4', $row['contract_class']])}>
-                                        Kontrak: {{ $row['contract'] }}
-                                        @if (! empty($row['contract_note']))
-                                            <span class="font-mono">{{ $row['contract_note'] }}</span>
-                                        @endif
-                                    </p>
+                                    @if (! empty($row['is_contract']) && $row['contract'] !== 'Non-Kontrak (Reguler)')
+                                        <p @class(['mt-0.5 text-2xs leading-4', $row['contract_class']])>
+                                            Kontrak: <span class="font-mono font-semibold">{{ $row['contract'] }}</span>
+                                            @if (! empty($row['contract_note']))
+                                                <span class="font-mono">{{ $row['contract_note'] }}</span>
+                                            @endif
+                                        </p>
+                                    @else
+                                        <p class="mt-0.5 text-2xs leading-4 text-ink-quiet">
+                                            Skema: <span class="font-medium text-ink-body">Non-Kontrak (Reguler)</span>
+                                        </p>
+                                    @endif
                                 </td>
 
                                 <td class="px-4 py-4">
@@ -436,14 +463,14 @@
 
                                 <td class="px-4 py-4">
                                     <div class="flex items-center justify-end gap-1.5">
-                                        <button type="button" @click="viewInvoice(@js($row))" title="Lihat detail faktur"
-                                            aria-label="Lihat detail faktur {{ $row['id'] }}"
+                                        <button type="button" @click="viewInvoice(@js($row))" title="Lihat Pratinjau Dokumen Faktur (Tab Baru)"
+                                            aria-label="Lihat pratinjau faktur {{ $row['id'] }}"
                                             class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-surface-track text-ink transition-colors hover:bg-surface-disabled">
                                             <x-gpa.icon name="eye" class="h-[15px] w-[15px] shrink-0" />
                                         </button>
 
-                                        <button type="button" @click="printInvoice(@js($row))" title="Cetak faktur resmi"
-                                            aria-label="Cetak faktur resmi {{ $row['id'] }}"
+                                        <button type="button" @click="printInvoice(@js($row))" title="Cetak Langsung Faktur (Buka Dialog Print Browser)"
+                                            aria-label="Cetak langsung faktur {{ $row['id'] }}"
                                             class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-surface-track text-ink transition-colors hover:bg-surface-disabled">
                                             <x-gpa.icon name="printer" class="h-[15px] w-[15px] shrink-0" />
                                         </button>
@@ -464,14 +491,30 @@
                 </table>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft pt-3">
-                <p class="gpa-note text-ink-body"
-                    x-text="'Menampilkan ' + visibleRows().length + ' dari ' + {{ $totalInvoices }} + ' baris ledger piutang berjalan'">
+            <div class="flex flex-col gap-3 border-t border-line-soft bg-surface-shell px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p class="gpa-note text-ink-body" x-text="summaryLabel()">
+                    Menampilkan 1-10 dari {{ $totalInvoices }} baris ledger piutang berjalan
                 </p>
-                <p class="gpa-note text-ink-body">
-                    Total Piutang Terkonfirmasi:
-                    <span class="font-bold text-success-deep">42 Faktur Aktif</span>
-                </p>
+
+                <nav class="flex items-center gap-1" aria-label="Navigasi halaman faktur" x-show="lastPage > 1">
+                    <button type="button" @click="goToPage(page - 1)" :disabled="page === 1"
+                        class="rounded bg-surface px-2.5 py-1 text-xs font-semibold leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed">
+                        Sebelumnya
+                    </button>
+
+                    <template x-for="number in pageNumbers()" :key="number">
+                        <button type="button" @click="goToPage(number)"
+                            class="rounded px-2.5 py-1 text-xs font-semibold leading-4 transition-colors cursor-pointer"
+                            :class="page === number ? 'bg-brand font-bold text-white' : 'bg-surface-pill text-ink-body hover:bg-surface-disabled'"
+                            :aria-current="page === number ? 'page' : null"
+                            x-text="number"></button>
+                    </template>
+
+                    <button type="button" @click="goToPage(page + 1)" :disabled="page === lastPage"
+                        class="rounded bg-surface px-2.5 py-1 text-xs font-semibold leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed">
+                        Selanjutnya
+                    </button>
+                </nav>
             </div>
         </section>
     </div>

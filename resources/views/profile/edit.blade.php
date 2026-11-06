@@ -283,8 +283,8 @@
                                 {{ $role === 'ARMADA' ? 'Pangkalan / Home Base Armada' : ($role === 'KLIEN' ? 'Nama Usaha / Badan Hukum PT' : 'Instansi / Divisi') }} <span class="font-normal text-ink-subtle">(Opsional)</span>
                             </label>
                             <input id="company_name" name="company_name" type="text"
-                                value="{{ old('company_name', $user->company_name ?? ($role === 'ARMADA' ? 'Gudang Sentral Hub Bogor' : 'PT Kuliner Prima Nusantara')) }}"
-                                placeholder="{{ $role === 'ARMADA' ? 'Gudang Sentral Hub Bogor' : 'PT Kuliner Prima Nusantara' }}"
+                                value="{{ old('company_name', $user->company_name ?? ($role === 'ARMADA' ? 'Sentra Logistik GPA Ciwidey' : 'PT Kuliner Prima Nusantara')) }}"
+                                placeholder="{{ $role === 'ARMADA' ? 'Sentra Logistik GPA Ciwidey' : 'PT Kuliner Prima Nusantara' }}"
                                 class="mt-1.5 block w-full rounded-lg border border-line bg-canvas/40 px-3.5 py-2.5 font-sans text-sm text-ink placeholder:text-ink-subtle/60 focus:border-brand focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand">
                             @error('company_name')
                                 <p class="mt-1 font-mono text-[11px] text-red-600">{{ $message }}</p>

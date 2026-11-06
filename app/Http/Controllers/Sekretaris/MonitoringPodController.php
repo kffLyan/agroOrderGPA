@@ -65,7 +65,7 @@ class MonitoringPodController extends Controller
             END")
             ->latest('arrival_time')
             ->latest('updated_at')
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         // Menghitung metrik ringkasan pengiriman (bersih, komplain retur, dalam rute) secara efisien

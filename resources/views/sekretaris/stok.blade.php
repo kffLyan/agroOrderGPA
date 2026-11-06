@@ -170,7 +170,7 @@
 
                     <tbody class="divide-y divide-line-faint">
                         @foreach ($rows as $row)
-                            <tr x-show="matchesFilter(@js($row))" class="align-middle transition-colors hover:bg-surface-shell/60">
+                            <tr x-show="isVisible(@js($row))" class="align-middle transition-colors hover:bg-surface-shell/60">
                                 <td class="px-4 py-3.5 min-w-[13rem]">
                                     <p class="font-sans text-sm font-bold leading-5 text-ink">{{ $row['name'] }}</p>
                                     <p class="mt-0.5 gpa-note text-ink-quiet">{{ $row['sku'] }}</p>
@@ -244,16 +244,30 @@
                 </table>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-board/60 bg-surface-shell px-4 py-3">
-                <p class="gpa-note text-ink-body"
-                    x-text="'Menampilkan ' + visibleCount() + ' dari ' + {{ count($rows) }} + ' komoditas operasional aktif'">
+            <div class="flex flex-col gap-3 border-t border-line-board/60 bg-surface-shell px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p class="gpa-note text-ink-body" x-text="summaryLabel()">
+                    Menampilkan 1-10 dari {{ count($rows) }} komoditas operasional aktif
                 </p>
-                <p class="gpa-note text-ink-body">
-                    Total Kuota Bebas (ATP): <span x-text="atpFooter()"></span>
-                </p>
-                <p class="w-full uppercase tracking-[1.08px] text-ink-quiet gpa-micro">
-                    Pencatatan resmi gudang sayur sentra.
-                </p>
+
+                <nav class="flex items-center gap-1" aria-label="Navigasi halaman inventaris" x-show="lastPage > 1">
+                    <button type="button" @click="goToPage(page - 1)" :disabled="page === 1"
+                        class="rounded bg-surface px-2.5 py-1 text-xs font-semibold leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed">
+                        Sebelumnya
+                    </button>
+
+                    <template x-for="number in pageNumbers()" :key="number">
+                        <button type="button" @click="goToPage(number)"
+                            class="rounded px-2.5 py-1 text-xs font-semibold leading-4 transition-colors cursor-pointer"
+                            :class="page === number ? 'bg-brand font-bold text-white' : 'bg-surface-pill text-ink-body hover:bg-surface-disabled'"
+                            :aria-current="page === number ? 'page' : null"
+                            x-text="number"></button>
+                    </template>
+
+                    <button type="button" @click="goToPage(page + 1)" :disabled="page === lastPage"
+                        class="rounded bg-surface px-2.5 py-1 text-xs font-semibold leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed">
+                        Selanjutnya
+                    </button>
+                </nav>
             </div>
         </section>
 

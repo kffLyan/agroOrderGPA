@@ -11,7 +11,7 @@ export default function clientDocuments(defaults = {}) {
         tabs: defaults.tabs ?? [],
         counts: defaults.counts ?? {},
         page: 1,
-        lastPage: defaults.pagination?.last_page ?? 1,
+        perPage: 10,
         total: defaults.pagination?.total ?? 0,
         defaultPeriod: defaults.periods?.[0]?.value ?? 'all',
         tab: defaults.tabs?.[0]?.value ?? 'all',
@@ -21,9 +21,10 @@ export default function clientDocuments(defaults = {}) {
         proofMenuOpen: false,
 
         init() {
-            this.lastPage = defaults.pagination?.last_page ?? 1;
-            this.total = defaults.pagination?.total ?? 0;
+            this.perPage = 10;
+            this.page = 1;
             this.selected = defaults.invoices?.[0]?.po ?? null;
+            this.keepSelectionVisible();
         },
 
         selectTab(value) {
@@ -94,16 +95,36 @@ export default function clientDocuments(defaults = {}) {
                 .some((value) => String(value).toLowerCase().includes(keyword));
         },
 
-        isVisible(invoice) {
+        matchesFilter(invoice) {
             return this.matchesTab(invoice) && this.matchesPeriod(invoice) && this.matchesSearch(invoice);
         },
 
+        filteredInvoices() {
+            return this.invoices.filter((invoice) => this.matchesFilter(invoice));
+        },
+
+        get lastPage() {
+            return Math.max(1, Math.ceil(this.filteredInvoices().length / this.perPage));
+        },
+
+        pagedInvoices() {
+            const start = (this.page - 1) * this.perPage;
+            return this.filteredInvoices().slice(start, start + this.perPage);
+        },
+
+        isVisible(invoice) {
+            if (! this.matchesFilter(invoice)) {
+                return false;
+            }
+            return this.pagedInvoices().some((item) => item.po === invoice.po);
+        },
+
         visibleInvoices() {
-            return this.invoices.filter((invoice) => this.isVisible(invoice));
+            return this.pagedInvoices();
         },
 
         visibleCount() {
-            return this.visibleInvoices().length;
+            return this.filteredInvoices().length;
         },
 
         hasFilters() {
@@ -131,7 +152,7 @@ export default function clientDocuments(defaults = {}) {
          * supaya detail tidak pernah menampilkan faktur tersaring.
          */
         keepSelectionVisible() {
-            const visible = this.visibleInvoices();
+            const visible = this.pagedInvoices();
 
             if (visible.length === 0) {
                 return;
@@ -143,21 +164,41 @@ export default function clientDocuments(defaults = {}) {
         },
 
         summaryLabel() {
-            return `Menampilkan ${this.visibleCount()} dari ${this.total} total faktur konsolidasi (2026)`;
+            const total = this.filteredInvoices().length;
+            if (total === 0) {
+                return '0 faktur ditemukan';
+            }
+            const start = (this.page - 1) * this.perPage + 1;
+            const end = Math.min(this.page * this.perPage, total);
+            return `Menampilkan ${start}–${end} dari ${total} total faktur konsolidasi`;
         },
 
         goToPage(page) {
-            this.page = Math.min(Math.max(1, page), this.lastPage);
-
-            this.$dispatch('gpa:toast', {
-                title: `Halaman ${this.page} dari ${this.lastPage}`,
-                message: 'Halaman berikutnya dimuat dari API Dokumen & Faktur GPA saat modul terhubung.',
-                tone: 'info',
-            });
+            const target = Math.min(Math.max(1, page), this.lastPage);
+            if (this.page !== target) {
+                this.page = target;
+                this.keepSelectionVisible();
+            }
         },
 
         pageNumbers() {
-            return [...new Set([1, 2, this.lastPage])].sort((a, b) => a - b);
+            const pages = [];
+            const total = this.lastPage;
+            if (total <= 5) {
+                for (let i = 1; i <= total; i++) pages.push(i);
+            } else {
+                let start = Math.max(1, this.page - 2);
+                let end = Math.min(total, this.page + 2);
+                if (this.page <= 3) {
+                    start = 1;
+                    end = 5;
+                } else if (this.page >= total - 2) {
+                    start = total - 4;
+                    end = total;
+                }
+                for (let i = start; i <= end; i++) pages.push(i);
+            }
+            return pages;
         },
 
         runAction(action, invoice = null) {

@@ -261,6 +261,12 @@
                     </div>
                 @endforelse
             </div>
+
+            @if ($products instanceof \Illuminate\Pagination\LengthAwarePaginator && $products->hasPages())
+                <div class="p-3 border-t border-line-board/60 bg-surface-shell rounded-b-xl">
+                    {{ $products->links() }}
+                </div>
+            @endif
         </section>
     </div>
 @endsection

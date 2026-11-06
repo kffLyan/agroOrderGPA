@@ -104,6 +104,8 @@ export default function directorAccess(users = []) {
     return {
         userSearch: '',
         roleFilter: 'all',
+        page: 1,
+        perPage: 10,
         accessRoles,
         accessFeatures,
         accessOptions,
@@ -141,12 +143,76 @@ export default function directorAccess(users = []) {
             return needle === '' || user.haystack.includes(needle);
         },
 
-        visibleUsers() {
+        filteredUsers() {
             return this.users.filter((user) => this.matchesUser(user));
+        },
+
+        get lastPage() {
+            return Math.max(1, Math.ceil(this.filteredUsers().length / this.perPage));
+        },
+
+        pagedUsers() {
+            const start = (this.page - 1) * this.perPage;
+            return this.filteredUsers().slice(start, start + this.perPage);
+        },
+
+        isUserVisible(user) {
+            if (! this.matchesUser(user)) {
+                return false;
+            }
+            return this.pagedUsers().some((item) => item.id === user.id);
+        },
+
+        visibleUsers() {
+            return this.pagedUsers();
+        },
+
+        visibleCount() {
+            return this.filteredUsers().length;
+        },
+
+        goToPage(page) {
+            const target = Math.min(Math.max(1, page), this.lastPage);
+            if (this.page !== target) {
+                this.page = target;
+            }
+        },
+
+        pageDirectory(step) {
+            this.goToPage(this.page + step);
+        },
+
+        pageNumbers() {
+            const pages = [];
+            const total = this.lastPage;
+            if (total <= 5) {
+                for (let i = 1; i <= total; i++) pages.push(i);
+            } else {
+                let start = Math.max(1, this.page - 2);
+                let end = Math.min(total, this.page + 2);
+                if (this.page <= 3) {
+                    start = 1;
+                    end = 5;
+                } else if (this.page >= total - 2) {
+                    start = total - 4;
+                    end = total;
+                }
+                for (let i = start; i <= end; i++) pages.push(i);
+            }
+            return pages;
+        },
+
+        summaryLabel() {
+            const total = this.filteredUsers().length;
+            if (total === 0) return '0 entri otorisasi terdaftar';
+            const start = (this.page - 1) * this.perPage + 1;
+            const end = Math.min(this.page * this.perPage, total);
+            return `Menampilkan ${start}–${end} dari ${total} entri otorisasi terdaftar`;
         },
 
         setRole(role) {
             this.roleFilter = String(role);
+            this.page = 1;
         },
 
         roleClass(role) {

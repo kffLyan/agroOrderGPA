@@ -308,6 +308,12 @@
                 Menampilkan <span class="font-bold text-ink">{{ $products->count() }}</span> dari {{ $totalProducts }} komoditas resmi.
             </p>
         </footer>
+
+        @if ($products instanceof \Illuminate\Pagination\LengthAwarePaginator && $products->hasPages())
+            <div class="p-3 border-t border-line-board/60 bg-surface-shell rounded-xl">
+                {{ $products->links() }}
+            </div>
+        @endif
     </section>
 </div>
 @endsection

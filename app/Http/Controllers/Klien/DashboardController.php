@@ -198,24 +198,34 @@ class DashboardController extends Controller
         $reorderData = [];
         foreach ($products as $product) {
             $unitPrice = (float) $product->base_price;
+            $hasActiveContract = false;
+            $contractVolume = 0;
             if ($isContractClient && isset($userContractsMap[$product->id])) {
                 $userContract = $userContractsMap[$product->id];
+                $hasActiveContract = true;
                 if ($userContract->fixed_price_per_kg) {
                     $unitPrice = (float) $userContract->fixed_price_per_kg;
                 }
+                $contractVolume = (float) ($userContract->committed_volume_per_cycle ?: 2500);
             }
+            $moq = (float) ($product->minimum_order ?: 1);
+            $rawGrade = $product->grade ?: 'Super A';
+            $cleanGrade = preg_match('/^grade\b/i', $rawGrade) ? $rawGrade : ('Grade ' . $rawGrade);
+
             $reorderData[] = [
-                'key' => (string) $product->id,
-                'id' => $product->id,
-                'sku' => $product->sku ?? ('SKU-' . $product->id),
-                'name' => $product->name,
-                'grade' => 'Grade ' . ($product->grade ?: 'Super A'),
-                'price' => $unitPrice,
-                'remaining' => 2500,
-                'step' => 50,
-                'initial_qty' => 100,
-                'image_path' => $product->image_path,
-                'image_url' => asset($product->image_path),
+                'key'           => (string) $product->id,
+                'id'            => $product->id,
+                'sku'           => $product->sku ?? ('SKU-' . $product->id),
+                'name'          => $product->name,
+                'grade'         => $cleanGrade,
+                'price'         => $unitPrice,
+                'is_contract'   => $hasActiveContract,
+                'remaining'     => $hasActiveContract ? $contractVolume : 5000,
+                'step'          => 1,
+                'initial_qty'   => $moq,
+                'minimum_order' => $moq,
+                'image_path'    => $product->image_path,
+                'image_url'     => asset($product->image_path),
             ];
         }
 

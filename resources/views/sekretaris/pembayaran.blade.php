@@ -16,7 +16,7 @@
             {key: 'bank', label: 'Transfer Bank BCA / Mandiri'},
             {key: 'qris', label: 'QRIS'},
             {key: 'giro', label: 'Giro / Tempo B2B'}
-        ], @js($operatorCode), {{ count($auditRows) }})"
+        ], @js($operatorCode), {{ count($auditRows) }}, @js($auditRows))"
         @gpa:search.window="query = $event.detail">
         <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
             <div class="min-w-0 flex-1">
@@ -540,7 +540,7 @@
 
                     <tbody class="divide-y divide-line-soft">
                         @forelse ($auditRows as $row)
-                            <tr @class(['transition-colors hover:bg-surface-shell/50', $row['status'] === 'rejected' ? 'bg-danger-soft/20' : ''])>
+                            <tr x-show="isAuditVisible(@js($row))" @class(['transition-colors hover:bg-surface-shell/50', $row['status'] === 'rejected' ? 'bg-danger-soft/20' : ''])>
                                 <td class="px-4 py-4 font-mono text-2xs font-medium tracking-[0.88px] text-ink-quiet">
                                     {{ $row['timestamp'] }}
                                 </td>
@@ -580,27 +580,30 @@
                 </table>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft pt-3">
-                <p class="gpa-note text-ink-body"
-                    x-text="'Menampilkan ' + {{ count($auditRows) }} + ' dari ' + auditTotal + ' Transaksi Rekonsiliasi Hari Ini'">
-                    Menampilkan {{ count($auditRows) }} dari {{ count($auditRows) }} Transaksi Rekonsiliasi Hari Ini
+            <div class="flex flex-col gap-3 border-t border-line-soft bg-surface-shell px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p class="gpa-note text-ink-body" x-text="auditSummaryLabel()">
+                    Menampilkan 1-10 dari {{ count($auditRows) }} Transaksi Rekonsiliasi Hari Ini
                 </p>
 
-                <div class="flex flex-wrap items-center gap-1.5">
-                    <button type="button" @click="goToPage(auditPage - 1)"
-                        class="rounded-lg px-3 py-1.5 gpa-micro-bold uppercase tracking-[1.08px] text-ink-body transition-colors hover:bg-surface-track">
+                <nav class="flex items-center gap-1" aria-label="Navigasi riwayat pembayaran" x-show="auditLastPage > 1">
+                    <button type="button" @click="goToPage(auditPage - 1)" :disabled="auditPage === 1"
+                        class="rounded bg-surface px-2.5 py-1 text-xs font-semibold leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed">
                         Sebelumnya
                     </button>
 
-                    <button type="button" @click="goToPage(1)"
-                        :class="auditPage === 1 ? 'bg-brand text-white' : 'bg-surface-track text-ink-body hover:bg-surface-disabled'"
-                        class="h-8 min-w-8 rounded-lg px-2 gpa-micro-bold tracking-[1.08px] transition-colors">1</button>
+                    <template x-for="number in auditPageNumbers()" :key="number">
+                        <button type="button" @click="goToPage(number)"
+                            class="rounded px-2.5 py-1 text-xs font-semibold leading-4 transition-colors cursor-pointer"
+                            :class="auditPage === number ? 'bg-brand font-bold text-white' : 'bg-surface-pill text-ink-body hover:bg-surface-disabled'"
+                            :aria-current="auditPage === number ? 'page' : null"
+                            x-text="number"></button>
+                    </template>
 
-                    <button type="button" @click="goToPage(auditPage + 1)"
-                        class="rounded-lg px-3 py-1.5 gpa-micro-bold uppercase tracking-[1.08px] text-ink-body transition-colors hover:bg-surface-track">
+                    <button type="button" @click="goToPage(auditPage + 1)" :disabled="auditPage === auditLastPage"
+                        class="rounded bg-surface px-2.5 py-1 text-xs font-semibold leading-4 text-ink-body outline outline-1 outline-line-board transition-colors enabled:hover:bg-surface-muted disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed">
                         Selanjutnya
                     </button>
-                </div>
+                </nav>
             </div>
         </section>
 

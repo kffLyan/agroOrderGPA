@@ -384,7 +384,7 @@
                         <span class="sr-only">Cari NIK, Nama, atau ID...</span>
                         <x-gpa.icon name="search"
                             class="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-ink-body" />
-                        <input id="directory-search" type="search" x-model="userSearch"
+                        <input id="directory-search" type="search" x-model="userSearch" @input="page = 1"
                             placeholder="Cari NIK, Nama, atau ID..."
                             class="w-56 rounded bg-surface-shell py-1.5 pl-8 pr-2.5 text-[11px] leading-4 text-ink outline outline-1 -outline-offset-1 outline-line-board placeholder:text-ink-body/70 focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">
                     </label>
@@ -453,7 +453,7 @@
                     <tbody class="divide-y divide-line-hair">
                         @foreach ($directoryRows as $row)
                             <tr class="align-top transition-colors hover:bg-surface-shell/50"
-                                x-show="matchesUser(@js($row))">
+                                x-show="isUserVisible(@js($row))">
                                 <th scope="row" class="px-3 py-4 text-left align-top font-normal">
                                     <div class="flex items-start gap-2.5">
                                         <span @class([
@@ -547,21 +547,20 @@
                 Tidak ada pengguna yang cocok dengan pencarian atau filter role.
             </p>
 
-            <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-line-board/60 pt-3">
+            <footer class="flex flex-col gap-3 border-t border-line-board/60 pt-3 sm:flex-row sm:items-center sm:justify-between">
                 <p class="flex items-start gap-2">
                     <span class="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
-                    <span class="gpa-note font-bold text-success-deep">Seluruh perubahan disimpan dalam ledger tamper-proof SHA-256.</span>
+                    <span class="gpa-note font-bold text-success-deep" x-text="summaryLabel()">Menampilkan {{ count($directoryRows) }} dari {{ $totalUsers }} entri otorisasi terdaftar.</span>
                 </p>
-                <div class="flex items-center gap-2">
-                    <span class="gpa-note text-ink-body">Menampilkan {{ count($directoryRows) }} dari {{ $totalUsers }} entri otorisasi terdaftar.</span>
-                    <span class="gpa-micro-bold text-ink">1 / 1</span>
-                    <button type="button" @click="pageDirectory(-1)" disabled
+                <div class="flex items-center gap-2" x-show="lastPage > 1">
+                    <span class="gpa-micro-bold text-ink" x-text="page + ' / ' + lastPage"></span>
+                    <button type="button" @click="pageDirectory(-1)" :disabled="page === 1"
                         class="inline-flex items-center gap-1 rounded bg-surface-track px-2 py-1 gpa-note font-semibold text-ink-body outline outline-1 -outline-offset-1 outline-line-board disabled:cursor-not-allowed disabled:opacity-45">
                         <x-gpa.icon name="arrow-left" class="h-3 w-3 shrink-0" />
                         Sebelumnya
                     </button>
-                    <button type="button" @click="pageDirectory(1)"
-                        class="inline-flex items-center gap-1 rounded bg-ink px-2 py-1 gpa-note font-semibold text-accent transition-opacity hover:opacity-90">
+                    <button type="button" @click="pageDirectory(1)" :disabled="page === lastPage"
+                        class="inline-flex items-center gap-1 rounded bg-ink px-2 py-1 gpa-note font-semibold text-accent transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-45">
                         Selanjutnya
                         <x-gpa.icon name="arrow-right" class="h-3 w-3 shrink-0" />
                     </button>

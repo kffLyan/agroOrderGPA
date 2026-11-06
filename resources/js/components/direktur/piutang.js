@@ -66,6 +66,8 @@ export default function directorReceivables(rows = [], policy = {}, verification
             { key: '30', label: 'TOP 30' },
             { key: '45', label: 'TOP 45' },
         ],
+        page: 1,
+        perPage: 10,
 
         /* ---------- filter buku besar ---------- */
 
@@ -82,21 +84,61 @@ export default function directorReceivables(rows = [], policy = {}, verification
         matchesTop(row) {
             return this.topFilter === 'all' || String(row.top_days) === this.topFilter;
         },
+        filteredRows() {
+            return this.rows.filter((row) => this.matchesQuery(row) && this.matchesTop(row));
+        },
+        get lastPage() {
+            return Math.max(1, Math.ceil(this.filteredRows().length / this.perPage));
+        },
+        pagedRows() {
+            const start = (this.page - 1) * this.perPage;
+            return this.filteredRows().slice(start, start + this.perPage);
+        },
         rowVisible(index) {
             const row = this.rows[index];
-
-            return row ? this.matchesQuery(row) && this.matchesTop(row) : true;
+            if (! row || ! (this.matchesQuery(row) && this.matchesTop(row))) {
+                return false;
+            }
+            return this.pagedRows().some((item) => item.client_id === row.client_id);
         },
         visibleCount() {
-            return this.rows.filter((row) => this.matchesQuery(row) && this.matchesTop(row)).length;
+            return this.filteredRows().length;
+        },
+        goToPage(page) {
+            const target = Math.min(Math.max(1, page), this.lastPage);
+            if (this.page !== target) {
+                this.page = target;
+            }
+        },
+        pageNumbers() {
+            const pages = [];
+            const total = this.lastPage;
+            if (total <= 5) {
+                for (let i = 1; i <= total; i++) pages.push(i);
+            } else {
+                let start = Math.max(1, this.page - 2);
+                let end = Math.min(total, this.page + 2);
+                if (this.page <= 3) {
+                    start = 1;
+                    end = 5;
+                } else if (this.page >= total - 2) {
+                    start = total - 4;
+                    end = total;
+                }
+                for (let i = start; i <= end; i++) pages.push(i);
+            }
+            return pages;
         },
         shownLabel() {
-            return `Menampilkan ${this.visibleCount()} dari ${this.activeContracts} Klien Kontrak Aktif B2B`;
+            const total = this.filteredRows().length;
+            if (total === 0) return '0 Klien Kontrak Aktif B2B';
+            const start = (this.page - 1) * this.perPage + 1;
+            const end = Math.min(this.page * this.perPage, total);
+            return `Menampilkan ${start}–${end} dari ${total} Klien Kontrak Aktif B2B`;
         },
         outstandingTotal() {
             return rupiah(
-                this.rows.filter((row) => this.matchesQuery(row) && this.matchesTop(row))
-                    .reduce((total, row) => total + row.outstanding, 0),
+                this.filteredRows().reduce((total, row) => total + row.outstanding, 0),
             );
         },
         frozenRows() {
@@ -110,6 +152,7 @@ export default function directorReceivables(rows = [], policy = {}, verification
         },
         setTopFilter(key) {
             this.topFilter = key;
+            this.page = 1;
         },
 
         /* ---------- tindakan direksi ---------- */
@@ -222,6 +265,7 @@ export default function directorReceivables(rows = [], policy = {}, verification
             const cycle = ['all', '14', '30', '45'];
             const currentIndex = cycle.indexOf(this.topFilter);
             this.topFilter = cycle[(currentIndex + 1) % cycle.length];
+            this.page = 1;
             this.notify(
                 'Filter TOP Diperbarui',
                 this.topFilter === 'all' ? 'Menampilkan seluruh termin pembayaran.' : `Menampilkan faktur dengan tenor TOP ${this.topFilter} hari.`,

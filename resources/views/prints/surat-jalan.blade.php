@@ -103,10 +103,23 @@
     <div class="no-print sticky top-0 z-30 border-b border-line bg-surface/95 shadow-sm backdrop-blur">
         <div class="mx-auto flex max-w-[210mm] items-center justify-between gap-3 px-4 py-2.5">
             <div class="flex items-center gap-2">
-                <a href="{{ url()->previous() }}"
+                @php
+                    $currentUser = auth()->user();
+                    $backUrl = match($currentUser?->role) {
+                        'ARMADA'     => route('armada.surat-jalan'),
+                        'SEKRETARIS' => route('sekretaris.surat-jalan'),
+                        default      => route('klien.dokumen'),
+                    };
+                    $backLabel = match($currentUser?->role) {
+                        'ARMADA'     => 'Kembali ke Surat Jalan',
+                        'SEKRETARIS' => 'Kembali ke Surat Jalan',
+                        default      => 'Kembali ke Dokumen',
+                    };
+                @endphp
+                <a href="{{ $backUrl }}"
                     class="inline-flex items-center gap-1.5 rounded border border-line-strong bg-white px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-sunken">
                     <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5" />
-                    Kembali
+                    <span>{{ $backLabel }}</span>
                 </a>
                 <span class="rounded bg-brand/10 px-2.5 py-1 text-xs font-bold text-brand">
                     SURAT JALAN PENGIRIMAN
@@ -154,15 +167,8 @@
                 </p>
             </div>
 
-            <!-- Lambang Koperasi Indonesia di Kanan -->
-            <div class="flex items-center justify-end">
-                <svg class="h-14 w-14 text-yellow-600 shrink-0" viewBox="0 0 100 100" fill="currentColor">
-                    <circle cx="50" cy="50" r="46" fill="#fef08a" stroke="#ca8a04" stroke-width="3"/>
-                    <circle cx="50" cy="50" r="35" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
-                    <path d="M50 18 L59 36 L79 36 L63 49 L69 69 L50 57 L31 69 L37 49 L21 36 L41 36 Z" fill="#ca8a04"/>
-                    <circle cx="50" cy="50" r="9" fill="#dc2626"/>
-                </svg>
-            </div>
+            <!-- Spacer Penyeimbang Header -->
+            <div class="w-14 shrink-0"></div>
         </header>
 
         <!-- Garis Pemisah Ganda Khas Surat Jalan -->

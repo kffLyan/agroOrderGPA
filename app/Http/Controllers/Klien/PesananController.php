@@ -196,7 +196,7 @@ class PesananController extends Controller
         $koordinatorName = User::where('role', 'KOORDINATOR')->first()?->name ?? 'Koordinator Lapangan GPA';
         $sekretarisName  = User::where('role', 'SEKRETARIS')->first()?->name ?? 'Sekretaris GPA';
 
-        return view('prints.client-orders-rekap', compact(
+        return view('prints.klien-orders-rekap', compact(
             'user',
             'orders',
             'totalKgOrder',

@@ -30,17 +30,17 @@ class PrintBeritaAcaraReturController extends Controller
     public function resolveOrder(?string $orderId): ?Order
     {
         if ($orderId) {
-            $order = Order::with(['user', 'orderItems.product', 'driver', 'verifier'])->find($orderId);
+            $order = Order::with(['user.contracts', 'orderItems.product', 'driver', 'verifier'])->find($orderId);
             if ($order) {
                 return $order;
             }
         }
 
-        return Order::with(['user', 'orderItems.product', 'driver', 'verifier'])
+        return Order::with(['user.contracts', 'orderItems.product', 'driver', 'verifier'])
             ->whereHas('orderItems', fn ($query) => $query->where('returned_weight', '>', 0))
             ->latest()
             ->first()
-            ?? Order::with(['user', 'orderItems.product', 'driver', 'verifier'])->latest()->first();
+            ?? Order::with(['user.contracts', 'orderItems.product', 'driver', 'verifier'])->latest()->first();
     }
 
     // Membangun payload data terstruktur untuk lembar cetak Berita Acara Retur dan penyelesaian kompensasi
@@ -82,13 +82,37 @@ class PrintBeritaAcaraReturController extends Controller
             'accepted' => (float) array_sum(array_column($items, 'accepted')),
         ];
 
+        $client = $order?->user;
+        $contracts = $client?->contracts ? $client->contracts->where('status', 'ACTIVE') : collect();
+        $isB2B = ($client?->client_type === 'B2B_KONTRAK' || $contracts->isNotEmpty());
+        $clientTypeLabel = $isB2B ? 'Mitra B2B (Kontrak / Tempo)' : 'Pelanggan Reguler (Retail / Tunai)';
+
+        $returnedValue = $returQty * $returPrice;
+        if ($returnedValue === 0.0 && !empty($items)) {
+            $returnedValue = (float) array_reduce($items, fn ($carry, $it) => $carry + ($it['returned'] * $it['price']), 0.0);
+        }
+
+        if ($isB2B) {
+            $selectedOptionTitle     = 'Opsi A (Khusus Mitra B2B): Pemotongan Nilai Faktur Tagihan (Credit Note)';
+            $selectedOptionDesc      = 'Faktur penagihan diterbitkan hanya sebesar nilai netto komoditas yang lolos QC dock (dikurangi nilai retur Rp ' . number_format($returnedValue, 0, ',', '.') . ').';
+            $alternativeOptionTitle = 'Opsi Alternatif: Kompensasi kuota pengganti pada siklus pengiriman berikutnya';
+            $alternativeOptionDesc  = 'Penggantian fisik komoditas dijadwalkan pada siklus distribusi terdekat.';
+        } else {
+            $selectedOptionTitle     = 'Opsi B (Khusus Pelanggan Reguler): Pengembalian Dana Langsung (Direct Transfer Refund)';
+            $selectedOptionDesc      = 'Dana kompensasi retur senilai Rp ' . number_format($returnedValue, 0, ',', '.') . ' dikembalikan via transfer ke nomor rekening klien oleh Keuangan GPA dalam 1x24 jam kerja.';
+            $alternativeOptionTitle = 'Opsi Alternatif: Penggantian fisik komoditas sayuran segar pada pengiriman berikutnya';
+            $alternativeOptionDesc  = 'Sesuai konfirmasi ketersediaan stok panen di gudang sentral Ciwidey.';
+        }
+
         return [
-            'brand'         => 'KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)',
-            'company_lines' => [
+            'brand'             => 'KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)',
+            'company_lines'     => [
                 'Sentra Distribusi & Logistik Hortikultura Dataran Tinggi',
                 'Kp. Batukasur RT. 001 RW. 019 Desa Panundaan Kec. Ciwidey, Kab. Bandung 40973',
                 'Tlp/ Whatsapp: 0812-2323-9133 / 0813-2142-2231',
             ],
+            'is_b2b'            => $isB2B,
+            'client_type_label' => $clientTypeLabel,
             'document' => [
                 'title'      => 'BERITA ACARA RETUR & SELISIH MUTU',
                 'number'     => 'BAP-RET-' . ($order ? date('Ym') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT) : '-'),
@@ -116,12 +140,16 @@ class PrintBeritaAcaraReturController extends Controller
             'items'      => $items,
             'totals'     => $totals,
             'settlement' => [
-                'returned_price'  => $returPrice,
-                'returned_value'  => $returQty * $returPrice,
-                'price_reference' => 'Harga Kontrak / Dasar Perjanjian GPA',
-                'selected_option' => 'Kompensasi kuota pengganti pada siklus pengiriman berikutnya',
-                'schedule'        => 'Jadwal distribusi terdekat',
-                'alternative'     => 'Pemotongan nilai faktur tagihan bulanan (Credit Note)',
+                'returned_price'           => $returPrice,
+                'returned_value'           => $returnedValue,
+                'price_reference'          => $isB2B ? 'Harga Kontrak / Dasar Perjanjian GPA' : 'Harga Standar Katalog GPA',
+                'selected_option'          => $selectedOptionTitle,
+                'selected_option_title'    => $selectedOptionTitle,
+                'selected_option_desc'     => $selectedOptionDesc,
+                'schedule'                 => '1x24 jam kerja / siklus distribusi terdekat',
+                'alternative'              => $alternativeOptionTitle,
+                'alternative_option_title' => $alternativeOptionTitle,
+                'alternative_option_desc'  => $alternativeOptionDesc,
             ],
             'clause' => 'Berita acara ini dibuat dengan sadar dan ditandatangani oleh saksi lapangan yang berwenang di titik serah terima. Selisih timbangan dan penolakan mutu telah diperiksa bersama menggunakan timbangan digital standar platform logistik GPA.',
         ];

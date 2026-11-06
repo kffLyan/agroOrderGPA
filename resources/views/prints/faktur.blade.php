@@ -290,13 +290,23 @@
         <div class="mt-3 table-scroll-container overflow-x-auto">
             <table class="table-bordered text-[8pt] sm:text-[8.5pt] min-w-[500px] sm:min-w-full">
                 <tfoot>
-                    @if (($shipping_cost ?? 0) > 0 || ($tax_amount ?? 0) > 0)
+                    @if (($shipping_cost ?? 0) > 0 || ($tax_amount ?? 0) > 0 || ($credit_adjustment ?? 0) > 0)
                         <tr class="bg-gray-50 text-ink">
                             <td class="py-1 px-3 text-right font-medium" style="width: 70%;">
                                 Subtotal Komoditas
                             </td>
                             <td class="py-1 px-3 text-right font-mono font-semibold" style="width: 30%;">
-                                Rp {{ number_format($subtotal ?? ($grand_total - ($shipping_cost ?? 0) - ($tax_amount ?? 0)), 0, ',', '.') }}
+                                Rp {{ number_format($subtotal ?? ($grand_total - ($shipping_cost ?? 0) - ($tax_amount ?? 0) + ($credit_adjustment ?? 0)), 0, ',', '.') }}
+                            </td>
+                        </tr>
+                    @endif
+                    @if (($credit_adjustment ?? 0) > 0)
+                        <tr class="bg-rose-50 text-rose-800">
+                            <td class="py-1 px-3 text-right font-medium" style="width: 70%;">
+                                Penyesuaian Retur Mutu &amp; Selisih Timbangan (Credit Note)
+                            </td>
+                            <td class="py-1 px-3 text-right font-mono font-bold text-rose-700" style="width: 30%;">
+                                - Rp {{ number_format($credit_adjustment, 0, ',', '.') }}
                             </td>
                         </tr>
                     @endif

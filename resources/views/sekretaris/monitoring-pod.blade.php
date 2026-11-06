@@ -307,6 +307,14 @@
                                                 Lihat
                                             </button>
                                         @endif
+                                        @if ($isDiscrepancy || $returItems->isNotEmpty())
+                                            <a href="{{ route('prints.return-act', ['order_id' => $order->id]) }}" target="_blank"
+                                                title="Cetak Berita Acara Retur"
+                                                class="inline-flex items-center gap-1 rounded bg-rose-50 px-2 py-1 gpa-note font-semibold text-rose-700 outline outline-1 -outline-offset-1 outline-rose-300 transition-colors hover:bg-rose-100">
+                                                <x-gpa.icon name="file-text" class="h-3 w-3 shrink-0" />
+                                                BAP Retur
+                                            </a>
+                                        @endif
                                         <a href="{{ route('prints.surat-jalan', ['order_id' => $order->id]) }}" target="_blank"
                                             title="Cetak Surat Jalan"
                                             class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">

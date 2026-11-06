@@ -128,12 +128,23 @@ class PrintFakturController extends Controller
         }
 
         $subtotal = $totalItemsAmount;
-        if ($invoiceModel && $shippingCost <= 0 && $taxAmount <= 0 && ($invoiceModel->grand_total - $subtotal) > 0) {
-            $shippingCost = (float) ($invoiceModel->grand_total - $subtotal);
+
+        $creditAdjustment = 0.0;
+        if ($invoiceModel) {
+            $creditAdjustment = (float) $invoiceModel->orders->flatMap->orderItems->sum(function ($it) {
+                return ((float) ($it->returned_weight ?? 0)) * ((float) ($it->unit_price ?? 0));
+            });
+            if ($creditAdjustment <= 0 && ($subtotal - (float) $invoiceModel->grand_total) > 0 && $shippingCost <= 0) {
+                $creditAdjustment = (float) ($subtotal - (float) $invoiceModel->grand_total);
+            }
+        }
+
+        if ($invoiceModel && $shippingCost <= 0 && $taxAmount <= 0 && ($invoiceModel->grand_total - ($subtotal - $creditAdjustment)) > 0) {
+            $shippingCost = (float) ($invoiceModel->grand_total - ($subtotal - $creditAdjustment));
         }
 
         $grandTotal = $invoiceModel
-            ? (float) ($invoiceModel->grand_total ?: ($subtotal + $shippingCost + $taxAmount))
+            ? (float) ($invoiceModel->grand_total ?: max(0, $subtotal + $shippingCost + $taxAmount - $creditAdjustment))
             : 0;
 
         $status = $invoiceModel ? $invoiceModel->status : 'UNPAID';
@@ -174,6 +185,7 @@ class PrintFakturController extends Controller
                 'subtotal' => $totalItemsAmount,
             ],
             'subtotal'           => $subtotal,
+            'credit_adjustment'  => $creditAdjustment,
             'shipping_cost'      => $shippingCost,
             'tax_amount'         => $taxAmount,
             'tax_label'          => $taxLabel ?: 'Bebas PPN 0% (DTP Pertanian)',

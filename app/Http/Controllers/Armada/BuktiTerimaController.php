@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Armada;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Armada\SimpanBuktiTerimaRequest;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Services\ArmadaService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 // Controller bukti serah terima digital (PoD) untuk Armada
 class BuktiTerimaController extends Controller
@@ -104,6 +106,26 @@ class BuktiTerimaController extends Controller
             $order->driver_id = $user->id;
         }
         $order->save();
+
+        // Skema A (Khusus Mitra B2B): Otomatis sesuaikan grand_total faktur (Credit Note) jika pesanan memiliki faktur berjalan
+        if ($hasReturn && $order->invoice_id) {
+            $invoice = $order->invoice;
+            if ($invoice && !in_array($invoice->status, ['PAID'])) {
+                $client = $order->user;
+                $isB2B = ($client?->client_type === 'B2B_KONTRAK' || ($client?->contracts && $client->contracts->where('status', 'ACTIVE')->isNotEmpty()));
+                if ($isB2B) {
+                    $totalInvoiceReturns = (float) OrderItem::whereHas('order', function ($q) use ($invoice) {
+                        $q->where('invoice_id', $invoice->id);
+                    })->sum(DB::raw('returned_weight * unit_price'));
+
+                    $baseSubtotal = (float) ($invoice->subtotal_amount ?: $invoice->grand_total);
+                    if ($baseSubtotal > 0) {
+                        $invoice->grand_total = max(0, $baseSubtotal - $totalInvoiceReturns);
+                        $invoice->save();
+                    }
+                }
+            }
+        }
 
         return redirect()
             ->route('armada.tugas')

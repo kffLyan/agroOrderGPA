@@ -125,6 +125,10 @@
                             <dt class="text-[8pt] text-ink-muted">Armada &amp; Pengemudi</dt>
                             <dd class="text-right text-[8pt] font-medium text-ink-strong">{{ $document['vehicle'] }}</dd>
                         </div>
+                        <div class="col-span-2 flex items-baseline justify-between gap-2 border-b border-dotted border-line-board py-0.5">
+                            <dt class="text-[8pt] text-ink-muted">Segmentasi Klien</dt>
+                            <dd class="text-right text-[8pt] font-semibold text-brand">{{ $client_type_label ?? ($is_b2b ? 'Mitra B2B (Kontrak / Tempo)' : 'Pelanggan Reguler') }}</dd>
+                        </div>
                         <div class="col-span-2 flex items-baseline justify-between gap-2 pt-0.5">
                             <dt class="text-[8pt] text-ink-muted">Lokasi Bongkar / Titik QC</dt>
                             <dd class="text-right text-[8pt] font-medium text-ink-strong">{{ $document['location'] }}</dd>
@@ -203,12 +207,12 @@
                         <div class="col-span-7">
                             <p class="mb-1.5 text-[8pt] font-semibold text-ink-strong">Skema rekonsiliasi yang disepakati para pihak:</p>
                             <div class="border border-brand bg-surface-shell p-1.5">
-                                <p class="text-[8pt] font-semibold text-ink-strong">X &nbsp; Opsi A: {{ $settlement['selected_option'] }}</p>
-                                <p class="pl-5 text-[7pt] text-ink-body">Dijadwalkan {{ $settlement['schedule'] }}.</p>
+                                <p class="text-[8pt] font-semibold text-ink-strong">X &nbsp; {{ $settlement['selected_option_title'] ?? ('Opsi: ' . $settlement['selected_option']) }}</p>
+                                <p class="pl-5 text-[7pt] text-ink-body">{{ $settlement['selected_option_desc'] ?? ('Dijadwalkan ' . $settlement['schedule']) }}</p>
                             </div>
                             <div class="mt-1 border border-line-board p-1.5 text-ink-muted">
-                                <p class="text-[8pt]">{{ $settlement['alternative'] }}</p>
-                                <p class="pl-5 text-[7pt]">Faktur diterbitkan sebesar nilai netto penerimaan barang.</p>
+                                <p class="text-[8pt]">{{ $settlement['alternative_option_title'] ?? $settlement['alternative'] }}</p>
+                                <p class="pl-5 text-[7pt]">{{ $settlement['alternative_option_desc'] ?? 'Penyesuaian administratif diselesaikan oleh Divisi Keuangan.' }}</p>
                             </div>
                         </div>
                     </div>

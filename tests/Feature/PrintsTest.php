@@ -223,5 +223,60 @@ class PrintsTest extends TestCase
         $response->assertSee('Daftar Pasokan Komoditas');
         $response->assertViewHas('is_contract', false);
     }
+
+    public function test_return_act_displays_credit_note_for_b2b_client(): void
+    {
+        $sekretaris = User::factory()->create(['role' => 'SEKRETARIS', 'is_active' => true]);
+        $b2bClient = User::factory()->create([
+            'role'         => 'KLIEN',
+            'client_type'  => 'B2B_KONTRAK',
+            'company_name' => 'PT Hotel Mewah B2B',
+            'is_active'    => true,
+        ]);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-B2B-RET-01',
+            'user_id'              => $b2bClient->id,
+            'order_source'         => 'WEB_PORTAL',
+            'status'               => 'SELESAI_CATATAN',
+            'target_delivery_date' => now()->toDateString(),
+            'delivery_address'     => 'Jl Asia Afrika Bandung',
+            'grand_total'          => 1500000,
+        ]);
+
+        $response = $this->actingAs($sekretaris)->get(route('prints.return-act', ['order_id' => $order->id]));
+        $response->assertStatus(200);
+        $response->assertSee('BERITA ACARA RETUR');
+        $response->assertSee('Mitra B2B (Kontrak / Tempo)');
+        $response->assertSee('Pemotongan Nilai Faktur Tagihan (Credit Note)');
+    }
+
+    public function test_return_act_displays_direct_refund_for_reguler_client(): void
+    {
+        $sekretaris = User::factory()->create(['role' => 'SEKRETARIS', 'is_active' => true]);
+        $regulerClient = User::factory()->create([
+            'role'         => 'KLIEN',
+            'client_type'  => 'REGULER',
+            'company_name' => null,
+            'name'         => 'Ibu Siska Reguler',
+            'is_active'    => true,
+        ]);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-REG-RET-01',
+            'user_id'              => $regulerClient->id,
+            'order_source'         => 'WEB_PORTAL',
+            'status'               => 'SELESAI_CATATAN',
+            'target_delivery_date' => now()->toDateString(),
+            'delivery_address'     => 'Jl Buah Batu Bandung',
+            'grand_total'          => 300000,
+        ]);
+
+        $response = $this->actingAs($sekretaris)->get(route('prints.return-act', ['order_id' => $order->id]));
+        $response->assertStatus(200);
+        $response->assertSee('BERITA ACARA RETUR');
+        $response->assertSee('Pelanggan Reguler (Retail / Tunai)');
+        $response->assertSee('Pengembalian Dana Langsung (Direct Transfer Refund)');
+    }
 }
 

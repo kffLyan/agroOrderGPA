@@ -757,12 +757,12 @@
                             </div>
                         </dl>
 
-                        @if ($order->pod_photo_asset_url)
+                        @if ($order->pod_dock_photo_url)
                             <div class="mt-2 flex flex-col gap-1.5">
-                                <span class="text-[10px] font-semibold text-ink-quiet uppercase">Foto Fisik Dokumen / Timbangan:</span>
+                                <span class="text-[10px] font-semibold text-ink-quiet uppercase">Bukti Penurunan Barang / Muatan Dock:</span>
                                 <div class="group relative block overflow-hidden rounded-xl border border-line-soft bg-surface-shell cursor-pointer"
                                     @click="podModalOpen = true">
-                                    <img src="{{ $order->pod_photo_asset_url }}" alt="Bukti Serah Terima"
+                                    <img src="{{ $order->pod_dock_photo_url }}" alt="Bukti Penurunan Barang"
                                         class="h-44 w-full object-cover transition-transform duration-200 group-hover:scale-105"
                                         onerror="this.onerror=null;this.style.opacity='0.4';" />
                                     <div class="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
@@ -773,8 +773,8 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center justify-between text-[11px] text-ink-body">
-                                    <span>Stempel basah &amp; paraf penerima</span>
-                                    <a href="{{ $order->pod_photo_asset_url }}" target="_blank"
+                                    <span>Dokumentasi bongkar muatan di lokasi serah terima</span>
+                                    <a href="{{ $order->pod_dock_photo_url }}" target="_blank"
                                         class="font-semibold text-success-deep hover:underline">
                                         Buka di Tab Baru &rarr;
                                     </a>
@@ -917,7 +917,7 @@
                             </span>
                             <div class="flex flex-col">
                                 <h3 class="font-sans text-sm font-bold text-ink">
-                                    Bukti Serah Terima Fisik (Proof of Delivery / PoD)
+                                    Dokumentasi Penurunan Barang (Dock PoD)
                                 </h3>
                                 <p class="text-[11px] text-ink-body">
                                     Surat Jalan: <strong class="text-ink font-mono">{{ $order->surat_jalan_number ?: '-' }}</strong> &bull; Pesanan: <strong class="text-ink font-mono">{{ $order->order_number }}</strong>
@@ -931,7 +931,7 @@
                     </div>
 
                     <div class="flex max-h-[70vh] items-center justify-center overflow-auto bg-black p-4">
-                        <img src="{{ $order->pod_photo_asset_url }}" alt="Bukti Serah Terima Fisik"
+                        <img src="{{ $order->pod_dock_photo_url }}" alt="Bukti Penurunan Barang"
                             class="max-h-[65vh] w-auto max-w-full rounded-lg object-contain shadow-2xl">
                     </div>
 
@@ -942,7 +942,7 @@
                         </div>
 
                         <div class="flex items-center gap-2">
-                            <a href="{{ $order->pod_photo_asset_url }}" target="_blank"
+                            <a href="{{ $order->pod_dock_photo_url }}" target="_blank"
                                 class="inline-flex items-center gap-1.5 rounded-lg border border-line-soft bg-surface px-3 py-2 text-xs font-bold text-ink shadow-xs transition-colors hover:bg-surface-muted">
                                 <x-gpa.icon name="eye" class="h-3.5 w-3.5 text-ink-body" />
                                 <span>Buka di Tab Baru</span>

@@ -140,13 +140,25 @@ trait PresentsOrderDetails
     public function getPodManifestPhotoUrlAttribute(): ?string
     {
         $urls = $this->pod_photo_asset_urls;
+        foreach ($urls as $url) {
+            $base = strtolower(basename($url));
+            if (str_starts_with($base, 'pod_') || str_starts_with($base, 'manifest_')) {
+                return $url;
+            }
+        }
         return $urls[0] ?? null;
     }
 
-    // Foto Fisik Muatan & Pembongkaran di Dock (Foto 2)
+    // Foto Fisik Muatan & Pembongkaran di Dock / Penurunan Barang (Foto 2)
     public function getPodDockPhotoUrlAttribute(): ?string
     {
         $urls = $this->pod_photo_asset_urls;
+        foreach ($urls as $url) {
+            $base = strtolower(basename($url));
+            if (str_starts_with($base, 'dock_')) {
+                return $url;
+            }
+        }
         return $urls[1] ?? ($urls[0] ?? null);
     }
 

@@ -5,18 +5,28 @@
 @section('content')
     <div x-data="{
         photoModalOpen: false,
-        activePhotoUrl: '',
+        activeTab: 'manifest',
+        manifestPhotoUrl: '',
+        dockPhotoUrl: '',
         activeOrderNum: '',
         activeSjNum: '',
         activeReceiver: '',
         activeTime: '',
-        openPhoto(url, orderNum, sjNum, receiver, time) {
-            this.activePhotoUrl = url;
+        openPhotos(manifestUrl, dockUrl, orderNum, sjNum, receiver, time) {
+            this.manifestPhotoUrl = manifestUrl || '';
+            this.dockPhotoUrl = dockUrl || '';
+            this.activeTab = this.manifestPhotoUrl ? 'manifest' : (this.dockPhotoUrl ? 'dock' : 'manifest');
             this.activeOrderNum = orderNum;
             this.activeSjNum = sjNum;
             this.activeReceiver = receiver;
             this.activeTime = time;
             this.photoModalOpen = true;
+        },
+        currentPhotoUrl() {
+            if (this.activeTab === 'dock' && this.dockPhotoUrl) {
+                return this.dockPhotoUrl;
+            }
+            return this.manifestPhotoUrl || this.dockPhotoUrl || '';
         }
     }" class="flex flex-col gap-3">
 
@@ -201,7 +211,10 @@
                                 $isInTransit = ($order->status === 'DALAM_PENGIRIMAN');
                                 $isReady = ($order->status === 'SIAP_KIRIM');
 
-                                $podUrl = $order->pod_photo_asset_url;
+                                $manifestPhoto = $order->pod_manifest_photo_url;
+                                $dockPhoto = $order->pod_dock_photo_url;
+                                $hasAnyPhoto = ($manifestPhoto || $dockPhoto);
+                                $photoCount = ($manifestPhoto ? 1 : 0) + ($dockPhoto && $dockPhoto !== $manifestPhoto ? 1 : 0);
 
                                 $returItems = $order->orderItems->filter(fn($it) => (float)($it->returned_weight ?? 0) > 0);
                             @endphp
@@ -279,17 +292,39 @@
 
                                 {{-- 6. Foto PoD --}}
                                 <td class="px-3 py-3.5 text-center">
-                                    @if ($podUrl)
-                                        <button type="button"
-                                            @click="openPhoto('{{ $podUrl }}', '{{ $order->order_number }}', '{{ $sjNum }}', '{{ $receiver }}', '{{ $arrivalTime }}')"
-                                            class="group relative mx-auto block h-12 w-16 overflow-hidden rounded-lg border border-line-board bg-surface-shell">
-                                            <img src="{{ $podUrl }}" alt="Bukti PoD"
-                                                class="h-full w-full object-cover transition-opacity group-hover:opacity-80"
-                                                onerror="this.onerror=null;this.style.opacity='0.4';">
-                                            <div class="absolute inset-0 flex items-center justify-center bg-ink/40 opacity-0 transition-opacity group-hover:opacity-100">
-                                                <x-gpa.icon name="eye" class="h-3.5 w-3.5 text-accent" />
-                                            </div>
-                                        </button>
+                                    @if ($hasAnyPhoto)
+                                        <div class="flex items-center justify-center gap-1.5">
+                                            @if ($manifestPhoto)
+                                                <button type="button"
+                                                    @click="openPhotos('{{ $manifestPhoto }}', '{{ $dockPhoto }}', '{{ $order->order_number }}', '{{ $sjNum }}', '{{ $receiver }}', '{{ $arrivalTime }}'); activeTab = 'manifest';"
+                                                    title="Foto 1: Lembar Surat Jalan Berstempel & Tanda Tangan"
+                                                    class="group relative block h-12 w-14 overflow-hidden rounded-lg border border-line-board bg-surface-shell shadow-2xs transition-transform hover:scale-105 hover:border-accent">
+                                                    <img src="{{ $manifestPhoto }}" alt="Surat Jalan"
+                                                        class="h-full w-full object-cover transition-opacity group-hover:opacity-80"
+                                                        onerror="this.onerror=null;this.style.opacity='0.4';">
+                                                    <div class="absolute inset-0 flex items-center justify-center bg-ink/40 opacity-0 transition-opacity group-hover:opacity-100">
+                                                        <x-gpa.icon name="eye" class="h-3 w-3 text-accent" />
+                                                    </div>
+                                                    <span class="absolute bottom-0 inset-x-0 bg-ink/75 py-0.5 text-[8px] font-bold text-white text-center leading-none">SJ Fisik</span>
+                                                </button>
+                                            @endif
+
+                                            @if ($dockPhoto && $dockPhoto !== $manifestPhoto)
+                                                <button type="button"
+                                                    @click="openPhotos('{{ $manifestPhoto }}', '{{ $dockPhoto }}', '{{ $order->order_number }}', '{{ $sjNum }}', '{{ $receiver }}', '{{ $arrivalTime }}'); activeTab = 'dock';"
+                                                    title="Foto 2: Penurunan Muatan di Dock / Timbangan"
+                                                    class="group relative block h-12 w-14 overflow-hidden rounded-lg border border-line-board bg-surface-shell shadow-2xs transition-transform hover:scale-105 hover:border-accent">
+                                                    <img src="{{ $dockPhoto }}" alt="Muatan Dock"
+                                                        class="h-full w-full object-cover transition-opacity group-hover:opacity-80"
+                                                        onerror="this.onerror=null;this.style.opacity='0.4';">
+                                                    <div class="absolute inset-0 flex items-center justify-center bg-ink/40 opacity-0 transition-opacity group-hover:opacity-100">
+                                                        <x-gpa.icon name="eye" class="h-3 w-3 text-accent" />
+                                                    </div>
+                                                    <span class="absolute bottom-0 inset-x-0 bg-emerald-900/80 py-0.5 text-[8px] font-bold text-white text-center leading-none">Bongkar</span>
+                                                </button>
+                                            @endif
+                                        </div>
+                                        <p class="mt-1 text-[9px] font-mono font-semibold text-ink-quiet">{{ $photoCount }} Berkas Foto</p>
                                     @else
                                         <span class="inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold leading-[15px] gpa-meta text-ink-body">Belum Ada</span>
                                     @endif
@@ -298,13 +333,13 @@
                                 {{-- 7. Aksi --}}
                                 <td class="px-3 py-3.5 text-right">
                                     <div class="flex flex-wrap items-center justify-end gap-1.5">
-                                        @if ($podUrl)
+                                        @if ($hasAnyPhoto)
                                             <button type="button"
-                                                @click="openPhoto('{{ $podUrl }}', '{{ $order->order_number }}', '{{ $sjNum }}', '{{ $receiver }}', '{{ $arrivalTime }}')"
-                                                title="Lihat Foto PoD"
+                                                @click="openPhotos('{{ $manifestPhoto }}', '{{ $dockPhoto }}', '{{ $order->order_number }}', '{{ $sjNum }}', '{{ $receiver }}', '{{ $arrivalTime }}')"
+                                                title="Lihat Berkas Foto PoD Lengkap"
                                                 class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                                                 <x-gpa.icon name="eye" class="h-3 w-3 shrink-0" />
-                                                Lihat
+                                                Lihat ({{ $photoCount }})
                                             </button>
                                         @endif
                                         @if ($isDiscrepancy || $returItems->isNotEmpty())
@@ -357,7 +392,7 @@
             <div class="fixed inset-0 bg-ink/75 backdrop-blur-xs transition-opacity"
                 @click="photoModalOpen = false"></div>
 
-            <div class="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-surface shadow-pop ring-1 ring-ink/10"
+            <div class="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-surface shadow-pop ring-1 ring-ink/10"
                 x-show="photoModalOpen"
                 x-transition:enter="ease-out duration-200"
                 x-transition:enter-start="opacity-0 scale-95"
@@ -374,7 +409,7 @@
                         </span>
                         <div class="flex flex-col">
                             <h3 class="font-sans text-sm font-bold text-ink">
-                                Berkas Fisik Bukti Serah Terima (Proof of Delivery)
+                                Audit Berkas Fisik Bukti Serah Terima (PoD Lengkap)
                             </h3>
                             <p class="text-[11px] text-ink-body">
                                 Surat Jalan: <strong class="text-ink" x-text="activeSjNum"></strong> &bull; PO: <strong class="text-ink" x-text="activeOrderNum"></strong>
@@ -387,10 +422,42 @@
                     </button>
                 </div>
 
+                {{-- Tab Pemilih 2 Berkas: Surat Jalan vs Penurunan Barang --}}
+                <div class="flex flex-wrap items-center justify-center gap-2 border-b border-line-hair bg-surface px-4 py-2.5">
+                    <template x-if="manifestPhotoUrl">
+                        <button type="button" @click="activeTab = 'manifest'"
+                            :class="activeTab === 'manifest' ? 'bg-ink text-accent ring-1 ring-ink shadow-xs' : 'bg-surface-shell text-ink-body hover:text-ink border border-line-board'"
+                            class="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all">
+                            <x-gpa.icon name="file-text" class="h-3.5 w-3.5" />
+                            <span>1. Lembar Surat Jalan Fisik (Tanda Tangan &amp; Cap)</span>
+                        </button>
+                    </template>
+                    <template x-if="dockPhotoUrl">
+                        <button type="button" @click="activeTab = 'dock'"
+                            :class="activeTab === 'dock' ? 'bg-ink text-accent ring-1 ring-ink shadow-xs' : 'bg-surface-shell text-ink-body hover:text-ink border border-line-board'"
+                            class="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all">
+                            <x-gpa.icon name="truck" class="h-3.5 w-3.5" />
+                            <span>2. Bukti Penurunan Barang / Dock &amp; Timbangan</span>
+                        </button>
+                    </template>
+                </div>
+
                 {{-- Modal Body Image Container --}}
-                <div class="flex max-h-[70vh] items-center justify-center overflow-auto bg-black p-4">
-                    <img :src="activePhotoUrl" alt="Foto Fisik Bukti Terima"
-                        class="max-h-[65vh] w-auto max-w-full rounded-lg object-contain shadow-2xl">
+                <div class="flex max-h-[65vh] min-h-[280px] items-center justify-center overflow-auto bg-black p-4">
+                    <template x-if="activeTab === 'manifest' && manifestPhotoUrl">
+                        <img :src="manifestPhotoUrl" alt="Foto Lembar Surat Jalan Berstempel"
+                            class="max-h-[60vh] w-auto max-w-full rounded-lg object-contain shadow-2xl">
+                    </template>
+                    <template x-if="activeTab === 'dock' && dockPhotoUrl">
+                        <img :src="dockPhotoUrl" alt="Foto Penurunan Barang / Dock"
+                            class="max-h-[60vh] w-auto max-w-full rounded-lg object-contain shadow-2xl">
+                    </template>
+                    <template x-if="!currentPhotoUrl()">
+                        <div class="flex flex-col items-center justify-center gap-2 text-ink-muted">
+                            <x-gpa.icon name="image" class="h-8 w-8" />
+                            <p class="text-xs">Tidak ada foto tersedia untuk kategori ini.</p>
+                        </div>
+                    </template>
                 </div>
 
                 {{-- Modal Footer Metadata & Aksi --}}
@@ -401,7 +468,7 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <a :href="activePhotoUrl" target="_blank"
+                        <a :href="currentPhotoUrl()" target="_blank"
                             class="inline-flex items-center gap-1.5 rounded-lg border border-line-soft bg-surface px-3 py-2 text-xs font-bold text-ink shadow-xs transition-colors hover:bg-surface-muted">
                             <x-gpa.icon name="eye" class="h-3.5 w-3.5 text-ink-body" />
                             <span>Buka di Tab Baru</span>

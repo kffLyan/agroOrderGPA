@@ -111,7 +111,7 @@
 
                     $orderNetWeight = 0;
                     foreach ($order->orderItems as $item) {
-                        $orderNetWeight += (float) ($item->net_weight ?? $item->quantity ?? 0);
+                        $orderNetWeight += (float) ($item->ordered_qty ?? $item->net_weight ?? $item->quantity ?? 0);
                     }
                 @endphp
                 <article @class([
@@ -172,7 +172,7 @@
                         <div class="flex flex-col gap-1">
                             @foreach ($order->orderItems as $item)
                                 @php
-                                    $itemKg = (float) ($item->net_weight ?? $item->quantity ?? 0);
+                                    $itemKg = (float) ($item->ordered_qty ?? $item->net_weight ?? $item->quantity ?? 0);
                                 @endphp
                                 <div class="flex items-center justify-between gap-2 text-xs">
                                     <span class="text-ink">{{ $item->product?->name ?? 'Komoditas Sayur' }}</span>

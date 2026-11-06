@@ -23,6 +23,7 @@ export default function secretaryManualOrder(
     client = {},
     clientList = [],
     paymentChannels = [],
+    taxSettings = {},
 ) {
     const rows = Array.isArray(commodities) ? commodities.map(clone) : [];
     const catalogList = Array.isArray(catalog) ? catalog.map(clone) : [];
@@ -32,6 +33,7 @@ export default function secretaryManualOrder(
     const clientForm = clone(client) ?? {};
     const clients = Array.isArray(clientList) ? clientList.map(clone) : [];
     const channels = Array.isArray(paymentChannels) ? paymentChannels.map(clone) : [];
+    const taxSettingsData = clone(taxSettings) ?? {};
 
     const defaultChannelId = channels.length > 0 ? channels[0].id : 'bca';
     const defaultChannelName = channels.length > 0 ? channels[0].name : 'Bank BCA';
@@ -311,8 +313,34 @@ export default function secretaryManualOrder(
             return toNumber(this.logistics?.fee);
         },
 
+        set fee(val) {
+            if (!this.logistics) {
+                this.logistics = {};
+            }
+            this.logistics.fee = Math.max(0, toNumber(val));
+        },
+
+        taxSettings: taxSettingsData,
+
+        get taxEnabled() {
+            return Boolean(this.taxSettings?.enabled);
+        },
+
+        get taxRate() {
+            return toNumber(this.taxSettings?.percent ?? 11.0);
+        },
+
+        get taxNote() {
+            return String(this.taxSettings?.note ?? 'Fasilitas Bebas PPN Produk Pertanian DTP (PPN 0%)');
+        },
+
+        get taxAmount() {
+            if (!this.taxEnabled) return 0;
+            return Math.round(this.subtotal * (this.taxRate / 100));
+        },
+
         get total() {
-            return this.subtotal + this.fee;
+            return this.subtotal + this.fee + this.taxAmount;
         },
 
         get cashReceived() {
@@ -602,9 +630,10 @@ export default function secretaryManualOrder(
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
             const formData = new FormData();
             formData.append('client_id', this.clientMode === 'registered' ? (this.client.id || '') : '');
-            formData.append('client_name', this.client.name || 'Pelanggan Walk-In');
-            formData.append('client_phone', this.client.phone || '');
-            formData.append('delivery_address', this.client.address || 'Gudang Utama Klien, Jawa Barat');
+            formData.append('client_name', this.client.name?.trim() ? this.client.name.trim() : 'Pelanggan Walk-In');
+            formData.append('client_contact', this.client.contact?.trim() ? this.client.contact.trim() : '');
+            formData.append('client_phone', this.client.phone?.trim() ? this.client.phone.trim() : '');
+            formData.append('delivery_address', this.client.address?.trim() ? this.client.address.trim() : 'Gudang Utama Klien, Jawa Barat');
             if (this.logistics.date) formData.append('target_delivery_date', this.logistics.date);
             formData.append('order_source', (this.channel || 'WHATSAPP').toUpperCase());
             formData.append('source_reference', this.source.reference || '');
@@ -659,28 +688,18 @@ export default function secretaryManualOrder(
                     );
 
                     const orderNum = data.order?.order_number || ('PO-' + Date.now());
-                    const receiptUrl = data.order?.receipt_url || `/cetak/struk/${orderNum}`;
+                    const baseReceipt = data.order?.receipt_url || `/cetak/struk/${orderNum}`;
+                    const receiptUrl = baseReceipt.includes('?') ? `${baseReceipt}&print=1` : `${baseReceipt}?print=1`;
                     const invoiceUrl = data.order?.invoice_url || `/cetak/faktur/${orderNum}`;
 
                     if (this.autoPrintReceipt) {
                         window.open(receiptUrl, '_blank');
                     }
 
-                    if (targetStatus === 'DRAFT') {
-                        setTimeout(() => {
-                            window.location.href = data.redirect_url || '/sekretaris/verifikasi';
-                        }, 800);
-                    } else {
-                        // Tampilkan modal sukses langsung ke Penerbitan Surat Jalan
-                        this.savedOrderModal = {
-                            order_number: orderNum,
-                            grand_total: data.order?.grand_total || this.total,
-                            client_name: data.order?.client_name || (this.client.name || 'Pelanggan Walk-In'),
-                            receipt_url: receiptUrl,
-                            invoice_url: invoiceUrl,
-                            redirect_url: data.redirect_url || '/sekretaris/surat-jalan',
-                        };
-                    }
+                    const destination = data.redirect_url || (targetStatus === 'DRAFT' ? '/sekretaris/verifikasi' : '/sekretaris/surat-jalan');
+                    setTimeout(() => {
+                        window.location.href = destination;
+                    }, 400);
                 } else {
                     if (window.hideGpaLoader) window.hideGpaLoader();
                     this.isSubmitting = false;
@@ -711,14 +730,14 @@ export default function secretaryManualOrder(
         async cancel() {
             const ok = await window.$confirm({
                 title: 'Batalkan Order Manual',
-                message: 'Apakah Anda yakin ingin membatalkan pengisian order manual dan kembali ke antrean verifikasi?',
+                message: 'Apakah Anda yakin ingin membatalkan pengisian order manual dan kembali ke antrean Surat Jalan?',
                 icon: 'warning',
                 tone: 'warning',
                 confirmText: 'Ya, Batalkan',
                 cancelText: 'Tetap Lanjutkan',
             });
             if (ok) {
-                window.location.href = '/sekretaris/verifikasi';
+                window.location.href = '/sekretaris/surat-jalan';
             }
         },
     };

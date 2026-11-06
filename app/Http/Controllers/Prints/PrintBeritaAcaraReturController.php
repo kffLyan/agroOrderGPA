@@ -23,7 +23,7 @@ class PrintBeritaAcaraReturController extends Controller
 
         $document = $this->buildPrintData($order);
 
-        return view('prints.return-act', $document);
+        return view('prints.berita-acara-retur', $document);
     }
 
     // Mengambil objek pesanan yang memiliki catatan komplain retur atau pesanan terbaru untuk dicetak

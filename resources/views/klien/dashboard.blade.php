@@ -229,16 +229,24 @@
             <article class="gpa-card flex flex-col justify-between gap-3 p-3 sm:gap-4 sm:p-5 xl:p-6">
                 <div class="flex flex-col gap-1">
                     <div class="flex items-start justify-between gap-1.5">
-                        <h2 class="gpa-micro text-ink-body line-clamp-2 leading-tight">Plafon Kredit &amp; Tempo (Top 30D)
+                        <h2 class="gpa-micro text-ink-body line-clamp-2 leading-tight">
+                            {{ $isContractClient ? 'Plafon Kredit & Tempo (Top 30D)' : 'Skema Pemesanan' }}
                         </h2>
                         <x-gpa.icon name="gauge" class="h-4 w-4 shrink-0 text-success-deep" />
                     </div>
-                    <p class="gpa-figure pt-1 text-ink text-base sm:text-[1.75rem] leading-tight">Rp
-                        {{ number_format($availableCredit, 0, ',', '.') }}</p>
-                    <p class="gpa-body text-ink-body text-xs sm:text-sm leading-tight">
-                        Sisa kuota dari total
-                        <span class="font-medium text-ink">Rp {{ number_format($creditLimit, 0, ',', '.') }}</span>
-                    </p>
+                    @if ($isContractClient)
+                        <p class="gpa-figure pt-1 text-ink text-base sm:text-[1.75rem] leading-tight">Rp
+                            {{ number_format($availableCredit, 0, ',', '.') }}</p>
+                        <p class="gpa-body text-ink-body text-xs sm:text-sm leading-tight">
+                            Sisa kuota dari total
+                            <span class="font-medium text-ink">Rp {{ number_format($creditLimit, 0, ',', '.') }}</span>
+                        </p>
+                    @else
+                        <p class="gpa-figure pt-1 text-ink text-base sm:text-[1.75rem] leading-tight">Klien Reguler</p>
+                        <p class="gpa-body text-ink-body text-xs sm:text-sm leading-tight">
+                            Transfer Bank sebelum pengiriman (Non-Kontrak)
+                        </p>
+                    @endif
                 </div>
             </article>
 
@@ -258,7 +266,9 @@
             <article class="gpa-card flex flex-col justify-between gap-3 p-3 sm:gap-4 sm:p-5 xl:p-6">
                 <div class="flex flex-col gap-1">
                     <div class="flex items-start justify-between gap-1.5">
-                        <h2 class="gpa-micro text-ink-body line-clamp-2 leading-tight">Serapan Kuota Panen (Bulan Ini)</h2>
+                        <h2 class="gpa-micro text-ink-body line-clamp-2 leading-tight">
+                            {{ $isContractClient ? 'Serapan Kuota Panen (Bulan Ini)' : 'Total Serapan Panen (Bulan Ini)' }}
+                        </h2>
                         <x-gpa.icon name="leaf" class="h-4 w-4 shrink-0 text-success-deep" />
                     </div>
                     <p class="flex flex-wrap items-baseline gap-1 text-ink">
@@ -271,7 +281,11 @@
                         @endif
                     </p>
                     <p class="gpa-body font-bold text-success-deep text-xs sm:text-sm leading-tight">
-                        {{ number_format($harvestPercent, 1, ',', '') }}% kuota alokasi bulanan terpenuhi
+                        @if ($targetKg > 0)
+                            {{ number_format($harvestPercent, 1, ',', '') }}% kuota alokasi bulanan terpenuhi
+                        @else
+                            Total pembelian komoditas bulan ini
+                        @endif
                     </p>
                 </div>
             </article>
@@ -667,7 +681,9 @@
             <div class="flex flex-col gap-3 border-b border-line-soft pb-4 lg:flex-row lg:items-center lg:justify-between">
                 <div class="min-w-0 flex flex-col gap-1">
                     <div class="flex items-center gap-2">
-                        <h2 class="gpa-section-title text-ink">Pesan Cepat Kuota Harian</h2>
+                        <h2 class="gpa-section-title text-ink">
+                            {{ $isContractClient ? 'Pesan Cepat Kuota Harian' : 'Pesan Cepat Komoditas' }}
+                        </h2>
                     </div>
                 </div>
             </div>
@@ -693,8 +709,14 @@
                                 <span class="font-inter text-xs text-ink-body">/ kg</span>
                             </p>
                             <p class="hidden sm:flex items-baseline gap-1 gpa-micro text-ink-body">
-                                <span>Sisa Alokasi Kontrak:</span>
-                                <span class="font-bold text-ink">{{ number_format($item['remaining'], 0, ',', '.') }} kg</span>
+                                @if ($isContractClient && !empty($item['is_contract']))
+                                    <span>Sisa Alokasi Kontrak:</span>
+                                    <span class="font-bold text-ink">{{ number_format($item['remaining'], 0, ',', '.') }} kg</span>
+                                @else
+                                    <span>Min. Pembelian:</span>
+                                    <span class="font-bold text-ink">{{ number_format($item['minimum_order'], 0, ',', '.') }} kg</span>
+                                    <span class="font-normal text-ink-quiet">&bull; Stok Siap Kirim</span>
+                                @endif
                             </p>
                         </div>
 

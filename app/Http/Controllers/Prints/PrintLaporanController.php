@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-// Controller pusat penyedia data & ekspor untuk tampilan cetak laporan resmi eksekutif (prints.report & prints.report-excel)
+// Controller pusat penyedia data & ekspor untuk tampilan cetak laporan resmi eksekutif (prints.laporan & prints.laporan-excel)
 class PrintLaporanController extends Controller
 {
     public function __construct(
@@ -38,7 +38,7 @@ class PrintLaporanController extends Controller
             $period
         );
 
-        return view('prints.report', $data);
+        return view('prints.laporan', $data);
     }
 
     // Menyiapkan data dan mengekspor buku besar transaksi konsolidasi ke format Excel (.xls SpreadsheetML) atau CSV
@@ -152,7 +152,7 @@ class PrintLaporanController extends Controller
                 'namaDirektur' => $namaDirektur,
             ]);
 
-            $xmlContent = view('prints.report-excel', $payload)->render();
+            $xmlContent = view('prints.laporan-excel', $payload)->render();
             $namaFile = 'Laporan_Eksekutif_Penjualan_GPA_' . date('Ymd_His') . '.xls';
 
             return response($xmlContent, 200, [

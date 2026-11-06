@@ -36,6 +36,7 @@ class FakturKlienResource extends JsonResource
 
         // Ambil data kontrak aktif untuk menentukan batas TOP dan plafon kredit
         $activeContract = method_exists($client, 'contracts') ? $client->contracts()->where('status', 'ACTIVE')->first() : null;
+        $isContractClient = ($client->client_type === 'B2B_KONTRAK' || $activeContract !== null);
         $topDays = $activeContract?->top_days ?: 30;
         $creditLimit = $activeContract ? (float) ($activeContract->fixed_price_per_kg * $activeContract->committed_volume_per_cycle * 2) : 0;
         $usedCredit = (float) $client->orders()->whereIn('status', ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])->sum('grand_total');
@@ -46,7 +47,8 @@ class FakturKlienResource extends JsonResource
             'terms_label' => 'Tempo ' . $topDays . ' Hari',
             'terms_days'  => $topDays,
             'npwp'        => '—',
-            'contract'    => $activeContract?->contract_number ?: ('KONTRAK-' . str_pad((string) $client->id, 3, '0', STR_PAD_LEFT)),
+            'is_contract' => $isContractClient,
+            'contract'    => $activeContract?->contract_number ?: 'Non-Kontrak (Reguler)',
             'plafon'      => $creditLimit,
             'used'        => $usedCredit,
             'issue_date'  => now()->format('Y-m-d'),

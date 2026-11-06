@@ -75,7 +75,7 @@ class DokumenController extends Controller
         $sekretarisName = User::where('role', 'SEKRETARIS')->first()?->name ?? 'Sekretaris GPA';
         $direkturName   = User::where('role', 'DIREKTUR')->first()?->name ?? 'Direktur GPA';
 
-        return view('prints.client-documents-rekap', compact(
+        return view('prints.klien-dokumen', compact(
             'user',
             'invoices',
             'totalNetto',

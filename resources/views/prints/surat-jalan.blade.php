@@ -103,10 +103,23 @@
     <div class="no-print sticky top-0 z-30 border-b border-line bg-surface/95 shadow-sm backdrop-blur">
         <div class="mx-auto flex max-w-[210mm] items-center justify-between gap-3 px-4 py-2.5">
             <div class="flex items-center gap-2">
-                <a href="{{ url()->previous() }}"
+                @php
+                    $currentUser = auth()->user();
+                    $backUrl = match($currentUser?->role) {
+                        'ARMADA'     => route('armada.surat-jalan'),
+                        'SEKRETARIS' => route('sekretaris.surat-jalan'),
+                        default      => route('klien.dokumen'),
+                    };
+                    $backLabel = match($currentUser?->role) {
+                        'ARMADA'     => 'Kembali ke Surat Jalan',
+                        'SEKRETARIS' => 'Kembali ke Surat Jalan',
+                        default      => 'Kembali ke Dokumen',
+                    };
+                @endphp
+                <a href="{{ $backUrl }}"
                     class="inline-flex items-center gap-1.5 rounded border border-line-strong bg-white px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-sunken">
                     <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5" />
-                    Kembali
+                    <span>{{ $backLabel }}</span>
                 </a>
                 <span class="rounded bg-brand/10 px-2.5 py-1 text-xs font-bold text-brand">
                     SURAT JALAN PENGIRIMAN

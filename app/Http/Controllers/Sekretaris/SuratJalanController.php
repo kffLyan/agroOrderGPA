@@ -129,6 +129,8 @@ class SuratJalanController extends Controller
                 'order'       => $order,
                 'driver_name' => $driverName,
                 'driver_id'   => $driverId,
+                'plate'       => $order->vehicle_plate_number ?: $vehiclePlateNumber,
+                'sj_number'   => $suratJalanNumber,
             ]);
         }
 

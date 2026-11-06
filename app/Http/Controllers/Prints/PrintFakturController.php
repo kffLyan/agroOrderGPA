@@ -10,11 +10,12 @@ use Illuminate\Http\Request;
 
 class PrintFakturController extends Controller
 {
-    // Menyiapkan cetak faktur penagihan resmi (invoice) format kontrak maupun reguler dengan validasi kepemilikan
+    // Menyiapkan cetak faktur penagihan resmi (invoice) format standar resmi GPA
     public function __invoke(Request $request, string $invoice): View
     {
         $invoiceModel = Invoice::where('invoice_number', $invoice)
             ->orWhere('id', $invoice)
+            ->orWhereHas('orders', fn ($q) => $q->where('order_number', $invoice))
             ->first();
 
         // Memvalidasi kepemilikan faktur (Anti-IDOR) agar klien hanya dapat mencetak fakturnya sendiri
@@ -22,22 +23,22 @@ class PrintFakturController extends Controller
             abort(403, 'Akses Ditolak: Anda tidak memiliki izin untuk melihat faktur pelanggan lain.');
         }
 
-        $format = $request->query('format');
-        $data   = $this->buildPrintData($invoice, $format);
+        $data = $this->buildPrintData($invoice);
 
-        return view('prints.invoice', $data);
+        return view('prints.faktur', $data);
     }
 
-    // Membangun payload data terstruktur untuk lembar cetak faktur tagihan resmi (format kontrak dan reguler)
+    // Membangun payload data terstruktur untuk lembar cetak faktur tagihan resmi standar tunggal GPA
     public function buildPrintData(string $invoice, ?string $requestedFormat = null): array
     {
-        $invoiceModel = Invoice::with(['user.contracts.product', 'orders.orderItems.product'])
+        $invoiceModel = Invoice::with(['user.contracts.product', 'orders.orderItems.product', 'payments'])
             ->where('invoice_number', $invoice)
             ->orWhere('id', $invoice)
+            ->orWhereHas('orders', fn ($q) => $q->where('order_number', $invoice))
             ->first();
 
         if (!$invoiceModel) {
-            $invoiceModel = Invoice::with(['user.contracts.product', 'orders.orderItems.product'])
+            $invoiceModel = Invoice::with(['user.contracts.product', 'orders.orderItems.product', 'payments'])
                 ->latest()
                 ->first();
         }
@@ -58,16 +59,13 @@ class PrintFakturController extends Controller
         $formatDateIndo = fn ($date) => $date ? Carbon::parse($date)->translatedFormat('l, d F Y') : '-';
 
         $client             = $invoiceModel?->user;
+        $contracts          = $client?->contracts ? $client->contracts->where('status', 'ACTIVE') : collect();
+        $isContractClient   = ($client?->client_type === 'B2B_KONTRAK' || $contracts->isNotEmpty());
+        $clientTypeLabel    = $isContractClient ? 'Mitra B2B Kontrak' : 'Pelanggan Reguler';
+
         $clientName         = $client?->company_name ?: ($client?->name ?: ($invoiceModel ? 'Mitra Klien' : '-'));
         $picName            = $client?->pic_name ?: ($client?->name ?: ($invoiceModel ? 'Pimpinan Purchasing' : '-'));
-        $contracts          = $client?->contracts ? $client->contracts->where('status', 'ACTIVE') : collect();
-        $contractsByProduct = $contracts->keyBy('product_id');
-
-        $isContract = match ($requestedFormat) {
-            'kontrak'            => true,
-            'reguler', 'standar' => false,
-            default              => ($client?->client_type === 'KONTRAK' || $contracts->isNotEmpty()),
-        };
+        $officeName         = $client?->company_name ?: ($isContractClient ? ($client?->name ?: '-') : 'Pelanggan Reguler / Perorangan');
 
         $poNumbers = $invoiceModel ? $invoiceModel->orders->pluck('order_number')->filter()->unique()->values() : collect();
         $poDisplay = $poNumbers->isNotEmpty()
@@ -77,12 +75,8 @@ class PrintFakturController extends Controller
         $issuedDate = $invoiceModel?->created_at ?: now();
         $dueDate    = $invoiceModel?->due_date ?: $issuedDate->copy()->addDays(14);
 
-        $warehouseItems = [];
-        $contractGroups = [];
-        $regularItems   = [];
-        $totalWarehouse = 0.0;
-        $totalContract  = 0.0;
-        $totalRegular   = 0.0;
+        $items            = [];
+        $totalItemsAmount = 0.0;
 
         if ($invoiceModel) {
             $orders = $invoiceModel->orders->sortBy(
@@ -107,105 +101,16 @@ class PrintFakturController extends Controller
                         $fullName .= " ({$branch})";
                     }
 
-                    $regularItems[] = [
+                    $items[] = [
                         'date'   => $shortDate,
                         'name'   => $fullName,
                         'qty'    => $qty,
                         'price'  => $price,
                         'amount' => $amount,
                     ];
-                    $totalRegular += $amount;
-
-                    $contract = $product ? $contractsByProduct->get($product->id) : null;
-
-                    if ($contract && $isContract) {
-                        $contractPrice = (float) ($contract->fixed_price_per_kg ?: $price);
-                        $contractQuota = (float) $contract->committed_volume_per_cycle;
-
-                        if ($contractQuota > 0 && $qty > $contractQuota) {
-                            $contractQty    = $contractQuota;
-                            $contractPrice  = $contractPrice;
-                            $contractAmount = $contractQty * $contractPrice;
-
-                            $regularQty     = $qty - $contractQuota;
-                            $regularPrice   = (float) ($product->base_price ?: $price);
-                            $regularAmount  = $regularQty * $regularPrice;
-                            $lineTotal      = $contractAmount + $regularAmount;
-                        } else {
-                            $contractQty    = $qty;
-                            $contractPrice  = $contractPrice;
-                            $contractAmount = $qty * $contractPrice;
-                            $regularQty     = 0;
-                            $regularPrice   = 0;
-                            $regularAmount  = 0;
-                            $lineTotal      = $contractAmount;
-                        }
-
-                        $contractGroups[$shortDate][] = [
-                            'name'     => $fullName,
-                            'all_qty'  => $qty,
-                            'c_qty'    => $contractQty,
-                            'c_price'  => $contractPrice,
-                            'c_amount' => $contractAmount,
-                            'r_qty'    => $regularQty,
-                            'r_price'  => $regularPrice,
-                            'r_amount' => $regularAmount,
-                            'total'    => $lineTotal,
-                        ];
-
-                        $totalContract += $lineTotal;
-                    } else {
-                        $warehouseItems[] = [
-                            'date'   => $shortDate,
-                            'name'   => $fullName,
-                            'qty'    => $qty,
-                            'price'  => $price,
-                            'amount' => $amount,
-                        ];
-
-                        $totalWarehouse += $amount;
-                    }
+                    $totalItemsAmount += $amount;
                 }
             }
-        }
-
-        $contractPages = [];
-        $contractSummary = [
-            'all_qty'  => 0,
-            'c_qty'    => 0,
-            'c_amount' => 0,
-            'r_qty'    => 0,
-            'r_amount' => 0,
-            'total'    => 0,
-        ];
-
-        foreach ($contractGroups as $groupDate => $rows) {
-            $subTotalQty     = array_sum(array_column($rows, 'all_qty'));
-            $subTotalContractQty = array_sum(array_column($rows, 'c_qty'));
-            $subTotalContractNom = array_sum(array_column($rows, 'c_amount'));
-            $subTotalRegularQty  = array_sum(array_column($rows, 'r_qty'));
-            $subTotalRegularNom  = array_sum(array_column($rows, 'r_amount'));
-            $subTotalLine        = array_sum(array_column($rows, 'total'));
-
-            $contractPages[] = [
-                'date'     => $groupDate,
-                'rows'     => $rows,
-                'subtotal' => [
-                    'all_qty'  => $subTotalQty,
-                    'c_qty'    => $subTotalContractQty,
-                    'c_amount' => $subTotalContractNom,
-                    'r_qty'    => $subTotalRegularQty,
-                    'r_amount' => $subTotalRegularNom,
-                    'total'    => $subTotalLine,
-                ],
-            ];
-
-            $contractSummary['all_qty']  += $subTotalQty;
-            $contractSummary['c_qty']    += $subTotalContractQty;
-            $contractSummary['c_amount'] += $subTotalContractNom;
-            $contractSummary['r_qty']    += $subTotalRegularQty;
-            $contractSummary['r_amount'] += $subTotalRegularNom;
-            $contractSummary['total']    += $subTotalLine;
         }
 
         $shippingCost = 0.0;
@@ -222,7 +127,7 @@ class PrintFakturController extends Controller
             }
         }
 
-        $subtotal = $isContract ? ($totalWarehouse + $totalContract) : $totalRegular;
+        $subtotal = $totalItemsAmount;
         if ($invoiceModel && $shippingCost <= 0 && $taxAmount <= 0 && ($invoiceModel->grand_total - $subtotal) > 0) {
             $shippingCost = (float) ($invoiceModel->grand_total - $subtotal);
         }
@@ -231,45 +136,48 @@ class PrintFakturController extends Controller
             ? (float) ($invoiceModel->grand_total ?: ($subtotal + $shippingCost + $taxAmount))
             : 0;
 
+        $status = $invoiceModel ? $invoiceModel->status : 'UNPAID';
+        if ($invoiceModel && $status !== 'PAID') {
+            $hasVerifiedPayment = $invoiceModel->payments->where('status', 'LUNAS')->isNotEmpty();
+            $allOrdersPaid = $invoiceModel->orders->isNotEmpty() && $invoiceModel->orders->every(fn ($o) => in_array($o->status, ['LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']));
+            if ($hasVerifiedPayment || ($allOrdersPaid && in_array($invoiceModel->orders->first()?->payment_method, ['CASH', 'TUNAI']))) {
+                $status = 'PAID';
+            } elseif ($invoiceModel->due_date && Carbon::parse($invoiceModel->due_date)->endOfDay()->isPast()) {
+                $status = 'OVERDUE';
+            }
+        }
+
         return [
-            'company'           => $company,
-            'brand'             => $company['full_brand'],
-            'is_contract'       => $isContract,
-            'invoice'           => [
+            'company'            => $company,
+            'brand'              => $company['full_brand'],
+            'is_contract'        => false,
+            'is_contract_client' => $isContractClient,
+            'client_type_label'  => $clientTypeLabel,
+            'client_type'        => $client?->client_type ?: ($isContractClient ? 'B2B_KONTRAK' : 'REGULER'),
+            'invoice'            => [
                 'id'        => $invoiceModel ? $invoiceModel->invoice_number : ($invoice ?: '-'),
                 'po_number' => $poDisplay,
                 'issued'    => $formatDateIndo($issuedDate),
                 'due'       => $formatDateIndo($dueDate),
-                'status'    => $invoiceModel ? $invoiceModel->status : 'DRAFT',
+                'status'    => $status,
             ],
-            'client'            => [
+            'client'             => [
                 'to'       => $picName,
-                'office'   => $clientName,
+                'office'   => $officeName,
                 'name'     => $clientName,
                 'contract' => $contracts->first()?->contract_number ?: '-',
             ],
-            'hasWarehouseItems' => !empty($warehouseItems),
-            'warehouse'         => [
-                'title'    => 'Sayur Gudang Pasirimpun / Non-Kontrak',
-                'items'    => $warehouseItems,
-                'subtotal' => $totalWarehouse,
+            'items'              => $items,
+            'regular'            => [
+                'title'    => 'Daftar Pasokan Komoditas',
+                'items'    => $items,
+                'subtotal' => $totalItemsAmount,
             ],
-            'hasContractItems'  => !empty($contractPages),
-            'contract'          => [
-                'title'          => 'Sayur Kontrak Mitra GPA',
-                'pages'          => $contractPages,
-                'grand_subtotal' => $contractSummary,
-            ],
-            'regular'           => [
-                'title'    => 'Rincian Pasokan Komoditas Reguler',
-                'items'    => $regularItems,
-                'subtotal' => $totalRegular,
-            ],
-            'subtotal'          => $subtotal,
-            'shipping_cost'     => $shippingCost,
-            'tax_amount'        => $taxAmount,
-            'tax_label'         => $taxLabel ?: 'Bebas PPN 0% (DTP Pertanian)',
-            'grand_total'       => $grandTotal,
+            'subtotal'           => $subtotal,
+            'shipping_cost'      => $shippingCost,
+            'tax_amount'         => $taxAmount,
+            'tax_label'          => $taxLabel ?: 'Bebas PPN 0% (DTP Pertanian)',
+            'grand_total'        => $grandTotal,
         ];
     }
 }

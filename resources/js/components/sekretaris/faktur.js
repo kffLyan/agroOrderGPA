@@ -2,13 +2,14 @@ const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', '
 
 const normalize = (value) => String(value ?? '').toLowerCase();
 
-export default function secretaryInvoicing(clients = [], ledger = [], statusFilters = {}, totalInvoices = 42) {
+export default function secretaryInvoicing(clients = [], ledger = [], statusFilters = {}, totalInvoices = 42, printUrl = '') {
     const clientList = Array.isArray(clients) ? clients : [];
     const ledgerRows = Array.isArray(ledger) ? ledger : [];
 
     return {
         clients: clientList,
         ledger: ledgerRows,
+        printUrl: printUrl || '/cetak/faktur/__invoice__',
         query: '',
         statusFilters: {
             all: 'Filter Status',
@@ -34,7 +35,7 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
         },
 
         get client() {
-            return this.clients.find((item) => item.id === this.clientId) ?? this.clients[0] ?? null;
+            return this.clients.find((item) => String(item.id) === String(this.clientId)) ?? this.clients[0] ?? null;
         },
 
         get documents() {
@@ -64,12 +65,20 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
                 return '—';
             }
 
-            const issued = new Date(`${client.issue_date}T00:00:00Z`);
-            issued.setUTCDate(issued.getUTCDate() + Number(client.terms_days || 0));
+            const issueStr = client.issue_date || new Date().toISOString().slice(0, 10);
+            const issued = new Date(`${issueStr}T00:00:00`);
+            if (isNaN(issued.getTime())) {
+                const now = new Date();
+                now.setDate(now.getDate() + Number(client.terms_days || 30));
+                const day = String(now.getDate()).padStart(2, '0');
+                return `${day} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+            }
 
-            const day = String(issued.getUTCDate()).padStart(2, '0');
+            issued.setDate(issued.getDate() + Number(client.terms_days || 0));
 
-            return `${day} ${MONTHS[issued.getUTCMonth()]} ${issued.getUTCFullYear()}`;
+            const day = String(issued.getDate()).padStart(2, '0');
+
+            return `${day} ${MONTHS[issued.getMonth()]} ${issued.getFullYear()}`;
         },
 
         creditLimit() {
@@ -123,22 +132,22 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
         },
 
         switchClient(id) {
-            if (! id || id === this.clientId) {
+            if (! id || String(id) === String(this.clientId)) {
                 return;
             }
 
-            const next = this.clients.find((item) => item.id === id);
+            const next = this.clients.find((item) => String(item.id) === String(id));
 
             if (! next) {
                 return;
             }
 
-            this.clientId = id;
+            this.clientId = next.id;
             this.selected = next.documents.map((document) => document.sj);
 
             this.run(
                 'Entitas Klien B2B Dipilih',
-                `${next.name} [${next.terms_label} Hari] • sisa plafon ${this.rupiah(this.creditSisa())} • ${next.documents.length} SJ sah siap difakturkan.`
+                `${next.name} [${next.terms_label}] • sisa plafon ${this.rupiah(this.creditSisa())} • ${next.documents.length} SJ sah siap difakturkan.`
             );
         },
 
@@ -208,17 +217,18 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
             const index = order.indexOf(this.statusMode);
 
             this.statusMode = order[(index + 1) % order.length];
+            this.page = 1;
 
             this.run('Filter Status Diperbarui', `${this.statusLabel()} • ${this.visibleRows().length} faktur ditampilkan.`);
         },
 
         setTerms(filter) {
-            this.termsFilter = filter;
+            this.termsFilter = String(filter);
             this.page = 1;
         },
 
         matchesFilter(row) {
-            if (this.termsFilter !== 'all' && Number(row.terms_days) !== Number(this.termsFilter)) {
+            if (this.termsFilter !== 'all' && String(row.terms_days) !== String(this.termsFilter)) {
                 return false;
             }
 
@@ -313,11 +323,22 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
         },
 
         viewInvoice(row) {
-            this.run('Detail Faktur', `${row.id} — ${row.client} • ${row.total_label} • ${row.terms_label} • jatuh tempo ${row.due}.`, 'info');
+            if (row?.id) {
+                const url = this.printUrl ? this.printUrl.replace('__invoice__', row.id) : `/cetak/faktur/${row.id}`;
+                window.open(url, '_blank');
+            } else {
+                this.run('Detail Faktur', `${row.id} — ${row.client} • ${row.total_label} • ${row.terms_label} • jatuh tempo ${row.due}.`, 'info');
+            }
         },
 
         printInvoice(row) {
-            window.print();
+            if (row?.id) {
+                const baseUrl = this.printUrl ? this.printUrl.replace('__invoice__', row.id) : `/cetak/faktur/${row.id}`;
+                const url = baseUrl.includes('?') ? `${baseUrl}&print=1` : `${baseUrl}?print=1`;
+                window.open(url, '_blank');
+            } else {
+                window.print();
+            }
         },
 
         followUp(row) {

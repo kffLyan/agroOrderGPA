@@ -104,12 +104,12 @@ class PrintsTest extends TestCase
 
         $ordersPrint = $this->actingAs($klien)->get(route('klien.pesanan.print-rekap'));
         $ordersPrint->assertStatus(200);
-        $ordersPrint->assertViewIs('prints.client-orders-rekap');
+        $ordersPrint->assertViewIs('prints.klien-orders-rekap');
         $ordersPrint->assertSee('REKAPITULASI RESMI TRANSAKSI PEMESANAN');
 
         $docsPrint = $this->actingAs($klien)->get(route('klien.dokumen.print-rekap'));
         $docsPrint->assertStatus(200);
-        $docsPrint->assertViewIs('prints.client-documents-rekap');
+        $docsPrint->assertViewIs('prints.klien-dokumen');
         $docsPrint->assertSee('REKAPITULASI RESMI FAKTUR KONSOLIDASI');
     }
 
@@ -162,6 +162,66 @@ class PrintsTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('STRUK KASIR');
         $response->assertSee('Green Pasundan Agriculture');
+    }
+
+    public function test_invoice_print_displays_standard_format_for_b2b_client(): void
+    {
+        $sekretaris = User::factory()->create(['role' => 'SEKRETARIS', 'is_active' => true]);
+        $client = User::factory()->create([
+            'role'         => 'KLIEN',
+            'client_type'  => 'B2B_KONTRAK',
+            'company_name' => 'PT Katering Boga Mandiri',
+            'is_active'    => true,
+        ]);
+
+        $invoice = Invoice::create([
+            'invoice_number'  => 'INV-TEST-B2B-001',
+            'user_id'         => $client->id,
+            'period_start'    => now()->toDateString(),
+            'period_end'      => now()->toDateString(),
+            'subtotal_amount' => 1500000,
+            'grand_total'     => 1500000,
+            'due_date'        => now()->addDays(14)->toDateString(),
+            'status'          => 'UNPAID',
+        ]);
+
+        $response = $this->actingAs($sekretaris)->get(route('prints.invoice', ['invoice' => $invoice->invoice_number]));
+        $response->assertStatus(200);
+        $response->assertSee('FAKTUR / INVOICE PENAGIHAN');
+        $response->assertSee('PT Katering Boga Mandiri');
+        $response->assertSee('Daftar Pasokan Komoditas');
+        $response->assertViewHas('is_contract', false);
+    }
+
+    public function test_invoice_print_displays_standard_format_for_reguler_client(): void
+    {
+        $sekretaris = User::factory()->create(['role' => 'SEKRETARIS', 'is_active' => true]);
+        $client = User::factory()->create([
+            'role'         => 'KLIEN',
+            'client_type'  => 'REGULER',
+            'name'         => 'Pak Budi Retail',
+            'company_name' => null,
+            'is_active'    => true,
+        ]);
+
+        $invoice = Invoice::create([
+            'invoice_number'  => 'INV-TEST-REG-001',
+            'user_id'         => $client->id,
+            'period_start'    => now()->toDateString(),
+            'period_end'      => now()->toDateString(),
+            'subtotal_amount' => 250000,
+            'grand_total'     => 250000,
+            'due_date'        => now()->toDateString(),
+            'status'          => 'PAID',
+        ]);
+
+        $response = $this->actingAs($sekretaris)->get(route('prints.invoice', ['invoice' => $invoice->invoice_number]));
+        $response->assertStatus(200);
+        $response->assertSee('FAKTUR / INVOICE PENAGIHAN');
+        $response->assertSee('Pak Budi Retail');
+        $response->assertSee('Pelanggan Reguler / Perorangan');
+        $response->assertSee('Daftar Pasokan Komoditas');
+        $response->assertViewHas('is_contract', false);
     }
 }
 

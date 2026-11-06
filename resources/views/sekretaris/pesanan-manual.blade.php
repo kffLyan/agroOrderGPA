@@ -68,7 +68,7 @@
     </script>
 
     <div class="space-y-4"
-        x-data="secretaryManualOrder(@js($commodities ?? []), @js($catalog ?? []), @js($logisticsData), @js($paymentData), @js($sourceData), @js($clientData), @js($clients ?? []), @js($paymentChannels ?? []))">
+        x-data="secretaryManualOrder(@js($commodities ?? []), @js($catalog ?? []), @js($logisticsData), @js($paymentData), @js($sourceData), @js($clientData), @js($clients ?? []), @js($paymentChannels ?? []), @js($taxSettings ?? []))">
 
         {{-- 01 // Sumber Order --}}
         <section class="gpa-panel overflow-hidden">
@@ -155,14 +155,14 @@
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div class="inline-flex flex-wrap gap-1.5 rounded-lg bg-surface-shell p-1" role="group"
                         aria-label="Mode registrasi klien">
-                        <button type="button" @click="clientMode = 'registered'"
+                        <button type="button" @click="setClientMode('registered')"
                             :class="clientMode === 'registered'
                                 ? 'bg-brand text-accent shadow-sub'
                                 : 'text-ink-body hover:bg-surface'"
                             class="rounded px-3 py-1.5 gpa-meta-lg font-semibold tracking-[0.07em] transition-colors">
                             Pembeli Terdaftar
                         </button>
-                        <button type="button" @click="clientMode = 'new'"
+                        <button type="button" @click="setClientMode('new')"
                             :class="clientMode === 'new'
                                 ? 'bg-brand text-accent shadow-sub'
                                 : 'text-ink-body hover:bg-surface'"
@@ -187,20 +187,30 @@
                 <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                     <div>
                         <label class="gpa-label" for="manual-client-name">Nama Klien / Perusahaan</label>
-                        <input id="manual-client-name" type="text" x-model="client.name" class="gpa-control mt-1.5">
+                        <input id="manual-client-name" type="text" x-model="client.name" class="gpa-control mt-1.5"
+                            placeholder="Contoh: CV Barokah Sejahtera">
                         <span class="gpa-hint mt-1">Segmen: Hotel, Resto &amp; Katering</span>
                     </div>
 
                     <div>
-                        <label class="gpa-label" for="manual-client-contact">Penanggung Jawab / PIC Dapur</label>
-                        <input id="manual-client-contact" type="text" x-model="client.contact" class="gpa-control mt-1.5">
-                        <span class="gpa-hint mt-1">Telepon: <span x-text="client.phone"></span></span>
+                        <label class="gpa-label" for="manual-client-contact">Penanggung Jawab / PIC</label>
+                        <input id="manual-client-contact" type="text" x-model="client.contact" class="gpa-control mt-1.5"
+                            placeholder="Nama PIC penerima">
+                        <span class="gpa-hint mt-1">Kontak penerima barang di lokasi</span>
                     </div>
 
-                    <div class="md:col-span-2">
+                    <div>
+                        <label class="gpa-label" for="manual-client-phone">No. Telepon / WhatsApp</label>
+                        <input id="manual-client-phone" type="text" x-model="client.phone" class="gpa-control mt-1.5"
+                            placeholder="Contoh: 0812-3456-7890">
+                        <span class="gpa-hint mt-1">Untuk konfirmasi kirim &amp; surat jalan</span>
+                    </div>
+
+                    <div>
                         <label class="gpa-label" for="manual-client-address">Alamat Pengiriman Sayur</label>
-                        <input id="manual-client-address" type="text" x-model="client.address" class="gpa-control mt-1.5">
-                        <span class="gpa-hint mt-1">Batas armada: Akses Armada: Mobil Boks Pendingin</span>
+                        <input id="manual-client-address" type="text" x-model="client.address" class="gpa-control mt-1.5"
+                            placeholder="Alamat lengkap penerima">
+                        <span class="gpa-hint mt-1">Akses bongkar muat armada</span>
                     </div>
                 </div>
 
@@ -359,7 +369,7 @@
                     class="mt-4 rounded-xl border border-dashed border-line-board bg-surface-shell px-3 py-8 text-center">
                     <span class="block text-xs font-semibold text-ink">Belum ada baris komoditas.</span>
                     <span class="mt-1 block gpa-note text-ink-quiet">
-                        Tambahkan minimal satu komoditas sebelum menyimpan draf PO.
+                        Tambahkan minimal satu komoditas sebelum memverifikasi pesanan.
                     </span>
                 </p>
             </div>
@@ -385,6 +395,10 @@
                     <span class="inline-flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 gpa-micro-bold text-ink-body">
                         <x-gpa.icon name="scale" class="h-3 w-3 shrink-0 text-success-deep" />
                         <span x-text="'Total ' + number(totalWeight, 1) + ' kg'"></span>
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 rounded-full bg-surface px-3 py-1 gpa-micro-bold text-ink shadow-sm">
+                        <span class="text-ink-quiet">Total Komoditas:</span>
+                        <span class="font-mono font-bold text-brand" x-text="rupiah(subtotal)"></span>
                     </span>
                     <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 gpa-micro-bold"
                         :class="ready ? 'bg-success-soft text-success-ink' : 'bg-danger-soft text-danger-ink'">
@@ -430,43 +444,24 @@
                 <div>
                     <label class="gpa-label" for="manual-route">Rute Distribusi</label>
                     <input id="manual-route" type="text" x-model="logistics.route" class="gpa-control mt-1.5"
-                        spellcheck="false">
+                        spellcheck="false" placeholder="Contoh: Sentra Lembang &rarr; Dapur Klien">
                 </div>
 
                 <div>
-                    <label class="gpa-label" for="manual-fleet">Jenis Armada Pengiriman</label>
-                    <select id="manual-fleet" x-model="logistics.fleet" class="gpa-control mt-1.5">
-                        <option value="CDD Reefer Chilled (4-5 Ton, 2°C - 8°C)">CDD Reefer Chilled (4-5 Ton, 2°C - 8°C)</option>
-                        <option value="L300 Box Pendingin (1-1.5 Ton, Chiller)">L300 Box Pendingin (1-1.5 Ton, Chiller)</option>
-                        <option value="Blind Van Chilled (600-800 kg, Cepat)">Blind Van Chilled (600-800 kg, Cepat)</option>
-                        <option value="Tronton Reefer (10-15 Ton, Kontrak Besar)">Tronton Reefer (10-15 Ton, Kontrak Besar)</option>
-                        <option value="Pickup Terpal Ventilasi (1 Ton, Non-Reefer)">Pickup Terpal Ventilasi (1 Ton, Non-Reefer)</option>
-                        <option value="Armada Khusus / Custom">Armada Khusus / Custom</option>
-                    </select>
-                    <span class="gpa-hint mt-1">Standar cold-chain suhu terkontrol GPA</span>
+                    <label class="gpa-label" for="manual-fee">Biaya Kirim / Ongkos Kirim (Rp)</label>
+                    <div class="relative mt-1.5 flex items-center">
+                        <span class="absolute left-3 font-mono text-xs font-bold text-ink-quiet">Rp</span>
+                        <input id="manual-fee" type="number" min="0" step="1000" x-model.number="fee"
+                            class="gpa-control pl-9 font-mono font-semibold" placeholder="0">
+                    </div>
+                    <span class="gpa-hint mt-1">Isi nominal ongkir atau 0 jika bebas ongkir</span>
                 </div>
 
-                <div x-cloak x-show="logistics.fleet === 'Armada Khusus / Custom'" class="md:col-span-2">
-                    <label class="gpa-label" for="manual-fleet-custom">Keterangan Armada Kustom</label>
-                    <input id="manual-fleet-custom" type="text" x-model="logistics.customFleet"
-                        placeholder="Contoh: Truk Sewa Pihak Ketiga / Plat D 8821 XX" class="gpa-control mt-1.5" spellcheck="false">
-                </div>
-
-                <div class="md:col-span-2 xl:col-span-3">
+                <div class="md:col-span-2 xl:col-span-4">
                     <label class="gpa-label" for="manual-notes">Catatan Khusus Pengiriman</label>
                     <textarea id="manual-notes" rows="2" x-model="logistics.notes"
-                        class="gpa-control mt-1.5 font-sans text-xs leading-5"></textarea>
-                </div>
-
-                <div>
-                    <span class="gpa-label">Biaya Kirim (Flat)</span>
-                    <p
-                        class="mt-1.5 flex items-center gap-2 rounded-lg bg-surface-shell px-3 py-2 gpa-mono-xs font-bold text-brand">
-                        <span x-text="rupiah(fee)"></span>
-                        <span class="rounded bg-accent px-1.5 py-0.5 gpa-micro-bold text-success-ink">
-                            Tarif flat standar pengiriman
-                        </span>
-                    </p>
+                        class="gpa-control mt-1.5 font-sans text-xs leading-5"
+                        placeholder="Contoh: Titip di loading dock 2, koordinasi dengan petugas penerima..."></textarea>
                 </div>
             </div>
         </section>
@@ -933,48 +928,62 @@
 
         {{-- Ringkasan & Aksi --}}
         <section class="gpa-panel overflow-hidden">
-            <div class="grid gap-5 px-6 py-5 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+            <div class="px-6 py-5 space-y-5">
                 <div>
-                    <p class="gpa-eyebrow">Ringkasan Order</p>
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <p class="gpa-eyebrow">Ringkasan Order</p>
+                        <span class="gpa-hint text-xs">Total estimasi mencakup komoditas, estimasi ongkir, dan perlakuan perpajakan</span>
+                    </div>
 
-                    <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                        <div class="rounded-xl bg-surface-shell px-3 py-2.5">
+                    <div class="mt-3 grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+                        <div class="rounded-xl bg-surface-shell px-4 py-3 border border-line-soft/60 shadow-xs">
                             <p class="gpa-micro text-ink-quiet">Total Berat</p>
-                            <p class="gpa-figure text-[1.25rem] leading-6 text-ink" x-text="kg(totalWeight)"></p>
+                            <p class="gpa-figure mt-1 font-mono text-lg font-bold leading-tight text-ink" x-text="kg(totalWeight)"></p>
                         </div>
-                        <div class="rounded-xl bg-surface-shell px-3 py-2.5">
+                        <div class="rounded-xl bg-surface-shell px-4 py-3 border border-line-soft/60 shadow-xs">
                             <p class="gpa-micro text-ink-quiet">Subtotal Komoditas</p>
-                            <p class="gpa-figure text-[1.25rem] leading-6 text-ink" x-text="rupiah(subtotal)"></p>
+                            <p class="gpa-figure mt-1 font-mono text-lg font-bold leading-tight text-ink whitespace-nowrap" x-text="rupiah(subtotal)"></p>
                         </div>
-                        <div class="rounded-xl bg-surface-shell px-3 py-2.5">
+                        <div class="rounded-xl bg-surface-shell px-4 py-3 border border-line-soft/60 shadow-xs">
                             <p class="gpa-micro text-ink-quiet">Ongkos Kirim</p>
-                            <p class="gpa-figure text-[1.25rem] leading-6 text-ink" x-text="rupiah(fee)"></p>
+                            <p class="gpa-figure mt-1 font-mono text-lg font-bold leading-tight text-ink whitespace-nowrap" x-text="rupiah(fee)"></p>
                         </div>
-                        <div class="rounded-xl bg-brand px-3 py-2.5">
-                            <p class="gpa-micro text-accent">Total Estimasi</p>
-                            <p class="gpa-figure text-[1.25rem] leading-6 text-accent" x-text="rupiah(total)"></p>
+                        <div class="rounded-xl bg-surface-shell px-4 py-3 border border-line-soft/60 shadow-xs">
+                            <div class="flex items-center justify-between">
+                                <p class="gpa-micro text-ink-quiet">PPN (Pajak)</p>
+                                <span class="rounded bg-success-soft px-1.5 py-0.5 text-[9px] font-bold text-success-ink uppercase tracking-wider" x-show="!taxEnabled">DTP 0%</span>
+                            </div>
+                            <p class="gpa-figure mt-1 font-mono text-lg font-bold leading-tight text-ink whitespace-nowrap" x-text="taxEnabled ? rupiah(taxAmount) : 'Rp 0'"></p>
+                        </div>
+                        <div class="col-span-2 sm:col-span-1 rounded-xl bg-brand px-4 py-3 shadow-sm border border-brand/20">
+                            <p class="gpa-micro text-accent/90">Total Estimasi Final</p>
+                            <p class="gpa-figure mt-1 font-mono text-lg font-bold leading-tight text-accent whitespace-nowrap" x-text="rupiah(total)"></p>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-2 xl:justify-end">
-                    <button type="button" @click="cancel()" :disabled="isSubmitting"
-                        class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-surface px-4 text-ink-body outline outline-1 outline-line-board transition-colors hover:bg-surface-muted disabled:opacity-50">
+                <div class="flex flex-wrap items-center justify-between gap-3 border-t border-line-soft pt-4">
+                    <a href="{{ route('sekretaris.surat-jalan') }}"
+                        class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-surface px-4 text-xs font-bold text-ink-body outline outline-1 outline-line-board transition-colors hover:bg-surface-muted">
                         <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5" />
-                        <span class="gpa-meta-lg font-bold tracking-[0.07em]">Kembali</span>
-                    </button>
+                        <span>Kembali ke Surat Jalan</span>
+                    </a>
 
-                    <button type="button" @click="saveDraft()" :disabled="isSubmitting"
-                        class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-surface px-4 text-brand outline outline-1 outline-brand-line transition-colors hover:bg-surface-muted disabled:opacity-50">
-                        <x-gpa.icon name="save" class="h-3.5 w-3.5" />
-                        <span class="gpa-meta-lg font-bold tracking-[0.07em]" x-text="isSubmitting ? 'Menyimpan...' : 'Simpan Draf PO'"></span>
-                    </button>
+                    <div class="flex flex-wrap items-center gap-2.5 sm:justify-end">
+                        <button type="button" @click="saveAndPrintReceipt()" :disabled="isSubmitting"
+                            class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-surface px-4 text-xs font-bold text-ink outline outline-1 outline-line-board transition-colors hover:bg-surface-muted disabled:opacity-50"
+                            title="Verifikasi pesanan resmi dan langsung cetak struk kasir thermal 58mm/80mm">
+                            <x-gpa.icon name="printer" class="h-3.5 w-3.5 text-brand" />
+                            <span x-text="isSubmitting ? 'Mencetak...' : 'Verifikasi & Cetak Struk'"></span>
+                        </button>
 
-                    <button type="button" @click="verify()" :disabled="isSubmitting"
-                        class="inline-flex h-10 items-center gap-1.5 rounded-lg bg-brand px-5 text-accent shadow-sub transition-colors hover:bg-brand-hover disabled:opacity-50">
-                        <span class="gpa-meta-lg font-bold tracking-[0.07em]" x-text="isSubmitting ? 'Memproses Pesanan...' : 'Verifikasi & Teruskan'"></span>
-                        <x-gpa.icon name="arrow-right" class="h-3.5 w-3.5" />
-                    </button>
+                        <button type="button" @click="verify()" :disabled="isSubmitting"
+                            class="inline-flex h-10 items-center gap-2 rounded-lg bg-brand px-5 text-xs font-bold text-accent shadow-sub transition-colors hover:bg-brand-hover disabled:opacity-50"
+                            title="Verifikasi pesanan dan langsung teruskan ke antrean Surat Jalan">
+                            <span x-text="isSubmitting ? 'Memproses Pesanan...' : 'Verifikasi & Teruskan'"></span>
+                            <x-gpa.icon name="arrow-right" class="h-3.5 w-3.5" />
+                        </button>
+                    </div>
                 </div>
             </div>
         </section>

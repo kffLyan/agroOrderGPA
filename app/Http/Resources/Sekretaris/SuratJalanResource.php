@@ -66,6 +66,7 @@ class SuratJalanResource extends JsonResource
             'driver'       => $driverName,
             'driver_id'    => $driver?->id,
             'sj'           => $suratJalanNumber,
+            'receipt_url'  => route('prints.thermal-receipt', ['invoice' => $order->order_number]),
             'issued_at'    => ($order->updated_at ?: now())->format('d F Y (H:i') . ' WIB)',
             'handover_at'  => 'Gudang Pusat Sentra GPA',
             'auth_key'     => 'GPA-AUTH-' . substr(hash('sha256', $suratJalanNumber), 0, 8),

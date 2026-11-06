@@ -943,6 +943,73 @@ class SekretarisModuleTest extends TestCase
         $this->assertStringContainsString('Kembalian Rp 50.000', $payment->verification_note);
     }
 
+    public function test_sekretaris_can_submit_manual_order_for_new_buyer_without_client_id(): void
+    {
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $product = Product::create([
+            'sku'           => 'GPA-VGT-NEWB01',
+            'name'          => 'Tomat Cherry Lembang',
+            'unit'          => 'kg',
+            'grade'         => 'Grade A',
+            'base_price'    => 18000,
+            'minimum_order' => 1,
+            'is_active'     => true,
+        ]);
+
+        HarvestBatch::create([
+            'product_id'         => $product->id,
+            'source_type'        => 'PETANI_BINAAN',
+            'supplier_name'      => 'Kelompok Tani Lembang',
+            'batch_date'         => now()->toDateString(),
+            'initial_quantity'   => 100,
+            'available_quantity' => 100,
+            'inputted_by'        => $sekretaris->id,
+        ]);
+
+        $payload = [
+            'client_id'            => '',
+            'client_name'          => 'Katering Berkah Bandung',
+            'client_contact'       => 'Ibu Fatimah',
+            'client_phone'         => '081234567899',
+            'delivery_address'     => 'Jl. Riau No. 45, Bandung',
+            'target_delivery_date' => now()->addDays(2)->toDateString(),
+            'order_source'         => 'WHATSAPP_ADMIN',
+            'payment_method'       => 'CASH',
+            'cash_amount'          => 180000,
+            'status'               => 'LUNAS',
+            'items'                => [
+                [
+                    'product_id' => $product->id,
+                    'quantity'   => 10,
+                    'price'      => 18000,
+                ],
+            ],
+        ];
+
+        $response = $this->actingAs($sekretaris)->postJson('/sekretaris/pesanan-manual', $payload);
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'order'   => [
+                'client_name' => 'Katering Berkah Bandung',
+            ],
+        ]);
+
+        $newClient = User::where('company_name', 'Katering Berkah Bandung')->first();
+        $this->assertNotNull($newClient);
+        $this->assertEquals('KLIEN', $newClient->role);
+        $this->assertEquals('REGULER', $newClient->client_type);
+        $this->assertEquals('081234567899', $newClient->phone);
+
+        $order = Order::latest('id')->first();
+        $this->assertEquals($newClient->id, $order->user_id);
+        $this->assertEquals('Jl. Riau No. 45, Bandung', $order->delivery_address);
+    }
+
     public function test_manual_order_rejects_duplicate_items(): void
     {
         $sekretaris = User::factory()->create([

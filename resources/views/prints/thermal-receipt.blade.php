@@ -97,10 +97,24 @@
     <div class="no-print sticky top-0 z-30 w-full border-b border-line bg-surface/95 shadow-sm backdrop-blur">
         <div class="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-2.5">
             <div class="flex items-center gap-2">
-                <a href="{{ url()->previous() }}"
+                @php
+                    $currentUser = auth()->user();
+                    $backUrl = match($currentUser?->role) {
+                        'SEKRETARIS' => route('sekretaris.surat-jalan'),
+                        'DIREKTUR'   => route('direktur.piutang'),
+                        default      => route('klien.dokumen'),
+                    };
+                    $backLabel = match($currentUser?->role) {
+                        'SEKRETARIS' => 'Kembali ke Surat Jalan',
+                        'DIREKTUR'   => 'Kembali ke Piutang',
+                        default      => 'Kembali ke Dokumen',
+                    };
+                @endphp
+                <a href="{{ $backUrl }}"
+                    onclick="if (window.opener) { window.close(); return false; } else if (window.history.length > 1) { window.history.back(); return false; }"
                     class="inline-flex items-center gap-1.5 rounded-lg border border-line-strong bg-white px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-sunken">
                     <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5" />
-                    Kembali
+                    <span>{{ $backLabel }}</span>
                 </a>
                 <span class="rounded bg-brand/10 px-2.5 py-1 text-xs font-extrabold uppercase tracking-wider text-brand">
                     STRUK KASIR THERMAL
@@ -253,11 +267,6 @@
                     </div>
                 @endif
 
-                <div class="flex justify-between items-center pt-0.5">
-                    <span class="text-gray-500">Status</span>
-                    <span class="font-bold text-black uppercase tracking-wider">[ {{ $payment_status_label ?? str_replace('_', ' ', $payment_status) }} ]</span>
-                </div>
-
                 @if ($payment_ref)
                     <div class="flex justify-between text-[9px] text-gray-500 font-mono pt-0.5">
                         <span>No. Ref</span>
@@ -296,6 +305,10 @@
                 btn58.classList.remove('bg-brand', 'text-white', 'font-bold');
                 btn58.classList.add('text-ink-body');
             }
+        }
+
+        if (new URLSearchParams(window.location.search).get('print') === '1' || new URLSearchParams(window.location.search).has('autoprint')) {
+            window.addEventListener('load', () => setTimeout(() => window.print(), 350));
         }
     </script>
 </body>

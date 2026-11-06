@@ -127,7 +127,7 @@ class LaporanController extends Controller
         $operatorName     = Auth::user()?->name ?: 'Sekretaris GPA';
         $direkturName     = User::where('role', 'DIREKTUR')->first()?->name ?? 'Direktur GPA';
 
-        return view('prints.secretary-report', [
+        return view('prints.sekretaris-laporan', [
             'journalRows'      => $journalRows,
             'totalEstimate'    => $totalEstimate,
             'totalNet'         => $totalNet,

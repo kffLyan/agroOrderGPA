@@ -55,7 +55,7 @@
 
                     <div class="flex flex-wrap gap-1 pt-1">
                         <span class="rounded px-2 py-0.5 font-mono text-[9px] font-bold bg-surface-shell text-ink outline outline-1 -outline-offset-1 outline-line-board">
-                            PANGKALAN: GUDANG SENTRAL BOGOR
+                            PANGKALAN: SENTRA PUSAT CIWIDEY
                         </span>
                         <span class="rounded px-2 py-0.5 font-mono text-[9px] font-bold bg-accent/40 text-ink outline outline-1 -outline-offset-1 outline-accent">
                             SIM B1 UMUM: AKTIF RESMI

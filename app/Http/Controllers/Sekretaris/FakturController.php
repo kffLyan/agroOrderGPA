@@ -46,6 +46,14 @@ class FakturController extends Controller
             return $diffDays >= 0 && $diffDays <= 7;
         })->sum('grand_total');
 
+        $overdueTotal = (float) $invoices->filter(function ($invoice) use ($today) {
+            if ($invoice->status === 'PAID') {
+                return false;
+            }
+            $dueDate = $invoice->due_date ? Carbon::parse($invoice->due_date)->startOfDay() : $today->copy()->addDays(30);
+            return $today->gt($dueDate);
+        })->sum('grand_total');
+
         $ledgerRows = BukuBesarFakturResource::collection($invoices)->resolve();
 
         return view('sekretaris.faktur', [
@@ -53,6 +61,7 @@ class FakturController extends Controller
             'ledgerRows'      => $ledgerRows,
             'receivableTotal' => $receivableTotal,
             'dueSoonTotal'    => $dueSoonTotal,
+            'overdueTotal'    => $overdueTotal,
             'paidTotal'       => $paidTotal,
         ]);
     }
@@ -85,10 +94,11 @@ class FakturController extends Controller
                 'Status Tagihan',
             ], ';');
 
-            $invoices = Invoice::with(['user', 'orders'])->latest()->get();
+            $invoices = Invoice::with(['user.contracts', 'orders'])->latest()->get();
             foreach ($invoices as $invoice) {
                 $clientName = $invoice->user?->company_name ?: ($invoice->user?->name ?: 'Mitra Klien');
-                $contractNo = 'KONTRAK-' . ($invoice->user_id ? str_pad((string) $invoice->user_id, 3, '0', STR_PAD_LEFT) : '001');
+                $activeContract = $invoice->user?->contracts ? $invoice->user->contracts->firstWhere('status', 'ACTIVE') : null;
+                $contractNo = $activeContract?->contract_number ?: 'Non-Kontrak (Reguler)';
                 $dueDate = $invoice->due_date ?: now()->addDays(30);
 
                 fputcsv($handle, [

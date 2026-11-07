@@ -246,7 +246,7 @@
                                             <div>
                                                 <template x-if="r.order_status === 'LUNAS' || r.state === 'ready'">
                                                     <div class="flex items-center gap-2">
-                                                        <a :href="'/cetak/struk/' + r.id" target="_blank" @click.stop
+                                                        <a :href="'/print/struk/' + r.id" target="_blank" @click.stop
                                                             title="Lihat &amp; Cetak Struk Kasir Thermal"
                                                             class="inline-flex items-center gap-1 rounded-lg border border-line-soft bg-surface px-2.5 py-2 text-xs font-bold text-ink shadow-xs transition-colors hover:bg-surface-muted hover:text-brand">
                                                             <x-gpa.icon name="receipt" class="h-3.5 w-3.5 text-brand" />
@@ -278,14 +278,14 @@
                                                     <x-gpa.icon name="check-circle" class="h-3 w-3 shrink-0" />
                                                     Diterbitkan
                                                 </span>
-                                                <a :href="'/cetak/struk/' + r.id" target="_blank" @click.stop
+                                                <a :href="'/print/struk/' + r.id" target="_blank" @click.stop
                                                     title="Lihat &amp; Cetak Struk Kasir Thermal"
                                                     class="inline-flex items-center gap-1 rounded-lg border border-line-soft bg-surface px-2.5 py-2 text-xs font-bold text-ink shadow-xs transition-colors hover:bg-surface-muted hover:text-brand">
                                                     <x-gpa.icon name="receipt" class="h-3.5 w-3.5 text-brand" />
                                                     <span>Struk</span>
                                                 </a>
 
-                                                <a :href="'/cetak/surat-jalan?order_id=' + r.order_id" target="_blank" @click.stop
+                                                <a :href="'/print/surat-jalan?order_id=' + r.order_id" target="_blank" @click.stop
                                                     class="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-2 text-white shadow transition-colors hover:bg-brand-hover gpa-meta font-bold tracking-[0.88px]">
                                                     <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0" />
                                                     Print
@@ -361,7 +361,7 @@
                 <template x-if="selected && !isReleased(selected.id) && !['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'].includes(selected.order_status)">
                     <div class="flex flex-wrap items-center gap-2">
                         <template x-if="selected.order_status === 'LUNAS' || selected.state === 'ready'">
-                            <a :href="'/cetak/struk/' + (selected.id || '')" target="_blank"
+                            <a :href="'/print/struk/' + (selected.id || '')" target="_blank"
                                 class="inline-flex items-center gap-2 rounded-lg border border-line-soft bg-surface px-4 py-2.5 font-mono text-xs font-bold tracking-[0.88px] text-ink shadow-xs hover:bg-surface-muted transition-colors">
                                 <x-gpa.icon name="receipt" class="h-3.5 w-3.5 text-brand" />
                                 <span>Cetak Struk Kasir</span>
@@ -382,13 +382,13 @@
                 {{-- SESI 2: Sudah Terbit -> Cetak Surat Jalan & Struk --}}
                 <template x-if="selected && (isReleased(selected.id) || ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'].includes(selected.order_status))">
                     <div class="flex flex-wrap items-center gap-2">
-                        <a :href="'/cetak/struk/' + (selected.id || '')" target="_blank"
+                        <a :href="'/print/struk/' + (selected.id || '')" target="_blank"
                             class="inline-flex items-center gap-2 rounded-lg border border-line-soft bg-surface px-4 py-2.5 font-mono text-xs font-bold tracking-[0.88px] text-ink shadow-xs hover:bg-surface-muted transition-colors">
                             <x-gpa.icon name="receipt" class="h-3.5 w-3.5 text-brand" />
                             <span>Cetak Struk Kasir</span>
                         </a>
 
-                        <a :href="'/cetak/surat-jalan?order_id=' + (selected.order_id || '')" target="_blank"
+                        <a :href="'/print/surat-jalan?order_id=' + (selected.order_id || '')" target="_blank"
                             class="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-2.5 font-mono text-xs font-bold tracking-[0.88px] text-ink shadow-sub hover:bg-accent-deep transition-colors">
                             <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0" />
                             <span>Cetak Surat Jalan (Nota/A5)</span>

@@ -14,13 +14,13 @@ class PrintsTest extends TestCase
 
     public function test_guest_is_redirected_to_login_when_accessing_print_routes(): void
     {
-        $response = $this->get('/cetak/surat-jalan');
+        $response = $this->get('/print/surat-jalan');
         $response->assertRedirect('/login');
 
-        $response = $this->get('/cetak/faktur/INV-001');
+        $response = $this->get('/print/faktur/INV-001');
         $response->assertRedirect('/login');
 
-        $response = $this->get('/cetak/berita-acara-retur');
+        $response = $this->get('/print/berita-acara-retur');
         $response->assertRedirect('/login');
     }
 

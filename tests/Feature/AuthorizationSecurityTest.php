@@ -49,7 +49,7 @@ class AuthorizationSecurityTest extends TestCase
     }
 
     /**
-     * 2. Pengujian Rute /cetak/laporan-eksekutif hanya untuk Direktur & Sekretaris
+     * 2. Pengujian Rute /print/laporan-eksekutif hanya untuk Direktur & Sekretaris
      */
     public function test_klien_cannot_access_laporan_eksekutif_print(): void
     {
@@ -58,7 +58,7 @@ class AuthorizationSecurityTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($klien)->get('/cetak/laporan-eksekutif');
+        $response = $this->actingAs($klien)->get('/print/laporan-eksekutif');
         $response->assertStatus(403);
     }
 
@@ -69,7 +69,7 @@ class AuthorizationSecurityTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($armada)->get('/cetak/laporan-eksekutif');
+        $response = $this->actingAs($armada)->get('/print/laporan-eksekutif');
         $response->assertStatus(403);
     }
 
@@ -80,7 +80,7 @@ class AuthorizationSecurityTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($direktur)->get('/cetak/laporan-eksekutif');
+        $response = $this->actingAs($direktur)->get('/print/laporan-eksekutif');
         $response->assertStatus(200);
     }
 
@@ -123,7 +123,7 @@ class AuthorizationSecurityTest extends TestCase
             'status'          => 'UNPAID',
         ]);
 
-        $response = $this->actingAs($klienA)->get('/cetak/faktur/' . $invoiceB->invoice_number);
+        $response = $this->actingAs($klienA)->get('/print/faktur/' . $invoiceB->invoice_number);
         $response->assertStatus(403);
     }
 
@@ -144,7 +144,7 @@ class AuthorizationSecurityTest extends TestCase
             'status'               => 'SIAP_KIRIM',
         ]);
 
-        $response = $this->actingAs($klienA)->get('/cetak/surat-jalan?order_id=' . $orderB->id);
+        $response = $this->actingAs($klienA)->get('/print/surat-jalan?order_id=' . $orderB->id);
         $response->assertStatus(403);
     }
 

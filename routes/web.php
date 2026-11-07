@@ -296,19 +296,25 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/verify-email-now', [ProfileController::class, 'verifyEmailDirectly'])->name('profile.verify-email-now');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Dokumen Cetak Format Resmi A4
-    Route::get('/cetak/surat-jalan', PrintSuratJalanController::class)->name('prints.surat-jalan');
-    Route::get('/cetak/faktur/{invoice}', PrintFakturController::class)->name('prints.invoice');
-    Route::get('/cetak/struk/{invoice}', PrintStrukThermalController::class)->name('prints.thermal-receipt');
-    Route::get('/cetak/berita-acara-retur', PrintBeritaAcaraReturController::class)->name('prints.return-act');
+    // Dokumen Print Format Resmi A4
+    Route::get('/print/surat-jalan', PrintSuratJalanController::class)->name('prints.surat-jalan');
+    Route::get('/print/faktur/{invoice}', PrintFakturController::class)->name('prints.invoice');
+    Route::get('/print/struk/{invoice}', PrintStrukThermalController::class)->name('prints.thermal-receipt');
+    Route::get('/print/berita-acara-retur', PrintBeritaAcaraReturController::class)->name('prints.return-act');
 
     // Laporan rekap eksekutif hanya boleh diakses Direktur & Sekretaris
-    Route::get('/cetak/laporan-eksekutif', PrintLaporanController::class)
+    Route::get('/print/laporan-eksekutif', PrintLaporanController::class)
         ->middleware('role:DIREKTUR,SEKRETARIS')
         ->name('prints.report');
-    Route::get('/cetak/laporan-eksekutif/export', [PrintLaporanController::class, 'export'])
+    Route::get('/print/laporan-eksekutif/export', [PrintLaporanController::class, 'export'])
         ->middleware('role:DIREKTUR,SEKRETARIS')
         ->name('prints.report.export');
+
+    // Kompatibilitas rute lama /cetak/* dialihkan ke /print/*
+    Route::get('/cetak/{path}', function (string $path) {
+        $query = request()->getQueryString();
+        return redirect('/print/' . $path . ($query ? '?' . $query : ''), 301);
+    })->where('path', '.*');
 });
 
 // Fallback rute untuk menyajikan berkas storage publik jika symlink public/storage tidak aktif di web server

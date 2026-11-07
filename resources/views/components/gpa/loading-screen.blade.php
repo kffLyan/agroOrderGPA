@@ -465,6 +465,7 @@
         hrefLower.includes('.pdf') ||
         hrefLower.includes('.xlsx') ||
         hrefLower.includes('/cetak') ||
+        hrefLower.includes('/print') ||
         hrefLower.includes('download')
       ) {
         return;

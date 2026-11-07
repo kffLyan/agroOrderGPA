@@ -309,12 +309,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/print/laporan-eksekutif/export', [PrintLaporanController::class, 'export'])
         ->middleware('role:DIREKTUR,SEKRETARIS')
         ->name('prints.report.export');
-
-    // Kompatibilitas rute lama /cetak/* dialihkan ke /print/*
-    Route::get('/cetak/{path}', function (string $path) {
-        $query = request()->getQueryString();
-        return redirect('/print/' . $path . ($query ? '?' . $query : ''), 301);
-    })->where('path', '.*');
 });
 
 // Fallback rute untuk menyajikan berkas storage publik jika symlink public/storage tidak aktif di web server

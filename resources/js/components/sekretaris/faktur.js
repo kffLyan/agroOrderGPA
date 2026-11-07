@@ -9,7 +9,7 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
     return {
         clients: clientList,
         ledger: ledgerRows,
-        printUrl: printUrl || '/cetak/faktur/__invoice__',
+        printUrl: printUrl || '/print/faktur/__invoice__',
         query: '',
         statusFilters: {
             all: 'Filter Status',
@@ -324,7 +324,7 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
 
         viewInvoice(row) {
             if (row?.id) {
-                const url = this.printUrl ? this.printUrl.replace('__invoice__', row.id) : `/cetak/faktur/${row.id}`;
+                const url = this.printUrl ? this.printUrl.replace('__invoice__', row.id) : `/print/faktur/${row.id}`;
                 window.open(url, '_blank');
             } else {
                 this.run('Detail Faktur', `${row.id} — ${row.client} • ${row.total_label} • ${row.terms_label} • jatuh tempo ${row.due}.`, 'info');
@@ -333,7 +333,7 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
 
         printInvoice(row) {
             if (row?.id) {
-                const baseUrl = this.printUrl ? this.printUrl.replace('__invoice__', row.id) : `/cetak/faktur/${row.id}`;
+                const baseUrl = this.printUrl ? this.printUrl.replace('__invoice__', row.id) : `/print/faktur/${row.id}`;
                 const url = baseUrl.includes('?') ? `${baseUrl}&print=1` : `${baseUrl}?print=1`;
                 window.open(url, '_blank');
             } else {

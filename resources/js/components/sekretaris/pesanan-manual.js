@@ -688,9 +688,9 @@ export default function secretaryManualOrder(
                     );
 
                     const orderNum = data.order?.order_number || ('PO-' + Date.now());
-                    const baseReceipt = data.order?.receipt_url || `/cetak/struk/${orderNum}`;
+                    const baseReceipt = data.order?.receipt_url || `/print/struk/${orderNum}`;
                     const receiptUrl = baseReceipt.includes('?') ? `${baseReceipt}&print=1` : `${baseReceipt}?print=1`;
-                    const invoiceUrl = data.order?.invoice_url || `/cetak/faktur/${orderNum}`;
+                    const invoiceUrl = data.order?.invoice_url || `/print/faktur/${orderNum}`;
 
                     if (this.autoPrintReceipt) {
                         window.open(receiptUrl, '_blank');

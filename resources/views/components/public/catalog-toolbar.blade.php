@@ -65,7 +65,7 @@
                     {{ $toolbar['sortLabel'] ?? 'Urutkan:' }}
                 </span>
                 <select x-model="sort"
-                    class="h-9 rounded border border-line-board bg-canvas px-2 text-xs font-semibold text-ink outline-none focus:border-brand-strong focus:ring-1 focus:ring-brand-strong">
+                    class="h-9 rounded border border-line-board bg-canvas px-5 text-xs font-semibold text-ink outline-none focus:border-brand-strong focus:ring-1 focus:ring-brand-strong">
                     @foreach ($sortOptions as $option)
                         <option value="{{ $option['value'] }}" @selected($option['value'] === 'stock')>
                             {{ $option['label'] }}

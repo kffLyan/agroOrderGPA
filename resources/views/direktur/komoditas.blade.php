@@ -8,6 +8,10 @@
         $allocationsList = $allocationsList ?? [];
         $maxWeekly = !empty($weeklyRows) ? max(array_column($weeklyRows, 'total')) : 0;
         $maxWeekly = $maxWeekly > 0 ? $maxWeekly : 1;
+        $weeklyChartTicks = [100, 75, 50, 25, 0];
+        $weeklyRangeLabel = !empty($weeklyRows)
+            ? $weeklyRows[0]['week'] . ' - ' . $weeklyRows[array_key_last($weeklyRows)]['week']
+            : '—';
         $peakWeek = !empty($weeklyRows) ? ($weeklyRows[array_search(max(array_column($weeklyRows, 'total')), array_column($weeklyRows, 'total'))] ?? null) : null;
         $totalCommitment = (float) collect($allocationsList)->sum('commitment');
     @endphp
@@ -248,7 +252,7 @@
             <div class="flex min-h-[420px] flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
                 <header class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-line-board">
                     <div class="flex min-w-0 flex-col gap-1">
-                        <h2 class="font-sans text-lg font-semibold leading-6 text-ink">Tren Mingguan Volume vs Kapasitas Panen (W40 - W47)</h2>
+                        <h2 class="font-sans text-lg font-semibold leading-6 text-ink">Tren Mingguan Volume vs Kapasitas Panen ({{ $weeklyRangeLabel }})</h2>
                         <p class="text-xs leading-4 text-ink-body">Komparasi demand kontrak vs yield riil petani vs safety buffer reserve.</p>
                     </div>
 
@@ -268,41 +272,71 @@
                     </ul>
                 </header>
 
-                <div class="flex items-end gap-3 border-b border-line-board px-2 pt-6 pb-2">
-                    @foreach ($weeklyRows as $row)
-                        @php
-                            $yieldTons = round($row['total'] * $row['yield'] / 100, 2);
-                            $reserveTons = round($row['total'] * $row['reserve'] / 100, 2);
-                            $demandTons = round($row['total'] - $yieldTons - $reserveTons, 2);
-                            $barPercent = round(($row['total'] / $maxWeekly) * 100, 1);
-                            $isForecast = $row['status'] === 'forecast';
-                            $isRunning = $row['status'] === 'running';
-                        @endphp
-                        <div class="flex min-w-0 flex-1 flex-col items-center gap-2">
-                            <span
-                                class="rounded px-1 py-0.5 text-[9px] font-bold leading-3 gpa-micro-bold {{ $isRunning ? 'bg-accent text-ink-strong' : ($isForecast ? 'text-success-deep' : 'text-ink') }}">
-                                {{ $isForecast ? '~' : '' }}{{ number_format($row['total'], 0, '.', '') }} T
-                            </span>
+                <div class="flex min-h-[240px] flex-1 gap-2">
+                    <div class="flex min-w-0 flex-1 flex-col">
+                        <div class="relative min-h-0 flex-1">
+                            @foreach ($weeklyChartTicks as $tick)
+                                <div class="absolute inset-x-0 border-t border-line-board/60"
+                                    style="top: {{ 100 - $tick }}%" aria-hidden="true"></div>
+                            @endforeach
 
-                            <div class="flex h-52 w-full max-w-[42px] items-end">
-                                <button type="button" @click="inspectWeek(@js($row))"
-                                    class="flex w-full flex-col justify-end overflow-hidden rounded-t bg-surface-track {{ $isForecast ? 'opacity-70' : '' }} {{ $isRunning ? 'shadow-[0_0_0_2px_#aabd06]' : '' }}"
-                                    style="height: {{ $barPercent }}%">
-                                    <span class="w-full {{ $isForecast ? 'bg-accent/60' : 'bg-accent' }}"
-                                        style="height: {{ $row['total'] > 0 ? round($reserveTons / $row['total'] * 100, 2) : 0 }}%"></span>
-                                    <span class="w-full {{ $isForecast ? 'bg-accent-deep/60' : 'bg-accent-deep' }}"
-                                        style="height: {{ $row['total'] > 0 ? round($yieldTons / $row['total'] * 100, 2) : 0 }}%"></span>
-                                    <span class="w-full {{ $isForecast ? 'bg-ink-strong/60' : 'bg-ink-strong' }}"
-                                        style="height: {{ $row['total'] > 0 ? round($demandTons / $row['total'] * 100, 2) : 0 }}%"></span>
-                                </button>
+                            <div class="absolute inset-0 flex items-stretch gap-2">
+                                @foreach ($weeklyRows as $row)
+                                    @php
+                                        $yieldTons = round($row['total'] * $row['yield'] / 100, 2);
+                                        $reserveTons = round($row['total'] * $row['reserve'] / 100, 2);
+                                        $demandTons = round($row['total'] - $yieldTons - $reserveTons, 2);
+                                        $barPercent = round(($row['total'] / $maxWeekly) * 100, 1);
+                                        $isForecast = $row['status'] === 'forecast';
+                                        $isRunning = $row['status'] === 'running';
+                                    @endphp
+                                    <div class="relative min-w-0 flex-1">
+                                        <button type="button" @click="inspectWeek(@js($row))"
+                                            class="absolute inset-x-0 bottom-0 mx-auto flex w-full max-w-10 flex-col justify-end overflow-hidden rounded-t bg-surface-track {{ $isForecast ? 'opacity-70' : '' }} {{ $isRunning ? 'shadow-[0_0_0_2px_#aabd06]' : '' }}"
+                                            style="height: {{ $barPercent }}%"
+                                            title="{{ $isForecast ? '~' : '' }}{{ number_format($row['total'], 1, ',', '.') }} ton">
+                                            <span class="w-full {{ $isForecast ? 'bg-accent/60' : 'bg-accent' }}"
+                                                style="height: {{ $row['total'] > 0 ? round($reserveTons / $row['total'] * 100, 2) : 0 }}%"></span>
+                                            <span class="w-full {{ $isForecast ? 'bg-accent-deep/60' : 'bg-accent-deep' }}"
+                                                style="height: {{ $row['total'] > 0 ? round($yieldTons / $row['total'] * 100, 2) : 0 }}%"></span>
+                                            <span class="w-full {{ $isForecast ? 'bg-ink-strong/60' : 'bg-ink-strong' }}"
+                                                style="height: {{ $row['total'] > 0 ? round($demandTons / $row['total'] * 100, 2) : 0 }}%"></span>
+                                        </button>
+                                    </div>
+                                @endforeach
                             </div>
-
-                            <span
-                                class="text-[9px] font-bold leading-3 tracking-[1.08px] font-mono {{ $isRunning ? 'text-ink' : 'text-success-deep' }}">
-                                {{ $row['week'] }}{{ $isRunning ? ' [AKTIF]' : ($isForecast ? ' (EST)' : '') }}
-                            </span>
                         </div>
-                    @endforeach
+
+                        <div class="flex h-6 shrink-0 items-end gap-2">
+                            @foreach ($weeklyRows as $row)
+                                @php
+                                    $isForecast = $row['status'] === 'forecast';
+                                    $isRunning = $row['status'] === 'running';
+                                @endphp
+                                <span class="min-w-0 flex-1 truncate text-center text-[9px] font-bold leading-3 tracking-[1.08px] font-mono {{ $isRunning ? 'text-ink' : 'text-success-deep' }}"
+                                    title="{{ $row['week'] }}{{ $isRunning ? ' [AKTIF]' : ($isForecast ? ' (EST)' : '') }}">
+                                    {{ $row['week'] }}{{ $isRunning ? ' [AKTIF]' : ($isForecast ? ' (EST)' : '') }}
+                                </span>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    @if ($weeklyRows)
+                        <div class="flex w-10 shrink-0 flex-col">
+                            <div class="relative min-h-0 flex-1">
+                                @foreach ($weeklyChartTicks as $tick)
+                                    @php
+                                        $tickValue = $maxWeekly * $tick / 100;
+                                    @endphp
+                                    <span class="absolute right-0 -translate-y-1/2 gpa-micro text-ink-subtle"
+                                        style="top: {{ 100 - $tick }}%">
+                                        {{ number_format($tickValue, 1, ',', '.') }}
+                                    </span>
+                                @endforeach
+                            </div>
+                            <div class="h-6 shrink-0"></div>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="flex flex-col gap-2">

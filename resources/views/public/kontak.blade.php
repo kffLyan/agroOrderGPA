@@ -15,18 +15,21 @@
             <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_384px] lg:items-start">
                 <div class="flex flex-col items-center gap-6 text-center md:items-start md:text-left">
 
-                    <h1 class="text-center text-3xl font-extrabold leading-tight sm:text-3xl md:text-left md:text-5xl md:leading-[1.05]">
+                    <h1
+                        class="text-center text-3xl font-extrabold leading-tight sm:text-3xl md:text-left md:text-5xl md:leading-[1.05]">
                         <span class="block text-white">Konsultasi Pasokan Komersial &amp; Kemitraan</span>
-                        <span class="block text-accent underline underline-offset-4">AgroOrder GPA</span>
+                        <span class="block text-accent-deep underline underline-offset-4">AgroOrder GPA</span>
                     </h1>
 
                     <p class="max-w-3xl text-sm leading-relaxed text-white/90 sm:text-base md:text-left md:text-lg">
-                        Diskusikan kebutuhan hortikultura berkala dapur usaha Anda bersama tim procurement kami. Kami siap menyusun jadwal kirim, uji sampel mutu, dan penetapan harga kontrak flat kuartalan.
+                        Diskusikan kebutuhan hortikultura berkala dapur usaha Anda bersama tim procurement kami. Kami siap
+                        menyusun jadwal kirim, uji sampel mutu, dan penetapan harga kontrak flat kuartalan.
                     </p>
                 </div>
 
-                <aside aria-label="Komitmen waktu tanggap" class="rounded-2xl border border-white/15 bg-brand-deep/70 p-5 sm:p-6">
-                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                <aside aria-label="Komitmen waktu tanggap"
+                    class="rounded-2xl border border-white/15 bg-brand-deep/70 p-5 sm:p-6">
+                    <div class="flex flex-wrap items-center justify-between gap-3 pb-4">
                         <p class="gpa-mono-xs font-bold uppercase tracking-wider text-accent">
                             RESPON CEPAT TANGGAP
                         </p>
@@ -37,7 +40,8 @@
                     </div>
 
                     <p class="mt-4 text-sm leading-relaxed text-white/80">
-                        Permohonan draf PKS, permintaan sampel, atau pengajuan jadwal kirim dijawab maksimal <strong class="font-bold text-accent">2 jam kerja</strong> oleh Account Manager B2B kami.
+                        Permohonan draf PKS, permintaan sampel, atau pengajuan jadwal kirim dijawab maksimal <strong
+                            class="font-bold text-accent">2 jam kerja</strong> oleh Account Manager B2B kami.
                     </p>
                 </aside>
             </div>
@@ -51,17 +55,18 @@
 
                 {{-- KOLOM KIRI: DIREKTORI KANTOR & HUB --}}
                 <div class="flex flex-col gap-4">
-                    <div class="flex flex-col items-center gap-3 border-b-2 border-brand-strong pb-3 text-center">
-                        <h2 class="text-center text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
+                    <div class="flex flex-col items-center gap-3 pb-3 text-center">
+                        <h2
+                            class="text-center text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
                             Direktori Kantor &amp; Hub Operasional
                         </h2>
                     </div>
 
                     {{-- CARD 1: KANTOR PUSAT & GUDANG KONSOLIDASI --}}
                     <article class="rounded-2xl border border-line-hair bg-white p-5 shadow-sub md:p-6">
-                        <header class="flex items-start justify-between gap-3 border-b border-line-hair pb-4">
+                        <header class="flex items-start justify-between gap-3 pb-4">
                             <div class="flex items-center gap-3">
-                                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-canvas">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-[#EAF2D7]">
                                     <x-gpa.icon name="building" class="h-5 w-5 text-success" />
                                 </span>
                                 <h3 class="text-base font-bold leading-snug text-brand-strong">
@@ -72,35 +77,28 @@
 
                         <div class="mt-4 flex flex-col gap-3">
                             <div class="space-y-1">
-                                <p class="gpa-mono-xs font-bold uppercase tracking-wider text-[#5E6953]">Alamat Fasilitas:</p>
+                                <p class="gpa-mono-xs font-bold uppercase tracking-wider text-[#5E6953]">Alamat Fasilitas:
+                                </p>
                                 <p class="text-sm leading-relaxed text-[#2C3527]">
-                                    Jl. Raya Ciwidey - Patengan KM 4, Panundaan, Kec. Ciwidey, Kabupaten Bandung, Jawa Barat 40973
+                                    Jl. Raya Ciwidey - Patengan KM 4, Panundaan, Kec. Ciwidey, Kabupaten Bandung, Jawa Barat
+                                    40973
                                 </p>
                             </div>
-                            <div class="border-t border-line-hair pt-3 space-y-1">
-                                <p class="gpa-mono-xs font-bold uppercase tracking-wider text-[#5E6953]">Fasilitas Utama:</p>
+                            <div class="pt-3 space-y-1">
+                                <p class="gpa-mono-xs font-bold uppercase tracking-wider text-[#5E6953]">Fasilitas Utama:
+                                </p>
                                 <p class="text-xs leading-relaxed text-ink-body">
-                                    Stasiun Timbang Digital Bersertifikasi Tera, Ruang Pra-Pendinginan (Pre-Cooling 4°C), Cold Storage Buffer Kapasitas 15 Ton, dan Loading Dock Armada Box Pendingin.
+                                    Stasiun Timbang Digital Bersertifikasi Tera, Ruang Pra-Pendinginan (Pre-Cooling 4°C),
+                                    Cold Storage Buffer Kapasitas 15 Ton, dan Loading Dock Armada Box Pendingin.
                                 </p>
                             </div>
-                        </div>
-
-                        <div class="mt-4 rounded-xl border border-line-hair bg-[#EFF4DC] p-4">
-                            <div class="flex flex-wrap items-center justify-between gap-2">
-                                <p class="gpa-mono-xs font-bold uppercase tracking-wider text-[#5E6953]">Operasional Penerimaan Petik</p>
-                                <span class="rounded-full bg-success px-2 py-0.5 gpa-mono-xs font-bold text-white">SETIAP HARI</span>
-                            </div>
-                            <p class="mt-1.5 font-mono text-lg font-bold text-brand-strong">04:30 – 11:00 WIB</p>
-                            <p class="mt-2 border-t border-line-hair pt-2 text-xs leading-relaxed text-ink-body">
-                                Penerimaan panen segar harian dari kelompok tani binaan kawasan Ciwidey &amp; Lembang.
-                            </p>
                         </div>
                     </article>
 
                     {{-- CARD 2: SALURAN KOMUNIKASI --}}
                     <article class="rounded-2xl border border-line-hair bg-white p-5 shadow-sub md:p-6">
-                        <header class="flex items-center gap-3 border-b border-line-hair pb-4">
-                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-canvas">
+                        <header class="flex items-center gap-3 pb-4">
+                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-[#EAF2D7]">
                                 <x-gpa.icon name="phone" class="h-5 w-5 text-success" />
                             </span>
                             <h3 class="text-base font-bold leading-snug text-brand-strong">
@@ -109,26 +107,36 @@
                         </header>
 
                         <ul class="mt-4 flex flex-col gap-2.5">
-                            <li class="flex flex-col gap-1 rounded-lg border border-line-hair bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                            <li
+                                class="flex flex-col gap-1 rounded-lg border border-line-hair bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                 <div>
                                     <p class="text-sm font-semibold leading-5 text-brand-strong">WhatsApp Hotline B2B</p>
-                                    <p class="gpa-mono-xs mt-0.5 text-ink-subtle">Layanan Konsultasi &amp; Info Draf Kontrak</p>
+                                    <p class="gpa-mono-xs mt-0.5 text-ink-subtle">Layanan Konsultasi &amp; Info Draf Kontrak
+                                    </p>
                                 </div>
-                                <p class="font-mono text-xs font-bold text-success sm:text-right">{{ config('app.contact_phone', '+62 811-1223-3445') }}</p>
+                                <p class="font-mono text-xs font-bold text-success sm:text-right">
+                                    {{ config('app.contact_phone', '+62 811-1223-3445') }}</p>
                             </li>
-                            <li class="flex flex-col gap-1 rounded-lg border border-line-hair bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                            <li
+                                class="flex flex-col gap-1 rounded-lg border border-line-hair bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                 <div>
-                                    <p class="text-sm font-semibold leading-5 text-brand-strong">Email Pengadaan &amp; Tender</p>
-                                    <p class="gpa-mono-xs mt-0.5 text-ink-subtle">Permohonan Penawaran &amp; Dokumen Legalitas</p>
+                                    <p class="text-sm font-semibold leading-5 text-brand-strong">Email Pengadaan &amp;
+                                        Tender</p>
+                                    <p class="gpa-mono-xs mt-0.5 text-ink-subtle">Permohonan Penawaran &amp; Dokumen
+                                        Legalitas</p>
                                 </div>
-                                <p class="font-mono text-xs font-bold text-success sm:text-right">procurement@agropastiada.co.id</p>
+                                <p class="font-mono text-xs font-bold text-success sm:text-right">
+                                    procurement@agropastiada.co.id</p>
                             </li>
-                            <li class="flex flex-col gap-1 rounded-lg border border-line-hair bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                            <li
+                                class="flex flex-col gap-1 rounded-lg border border-line-hair bg-white/80 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                                 <div>
-                                    <p class="text-sm font-semibold leading-5 text-brand-strong">Helpdesk Dispatch Logistik</p>
+                                    <p class="text-sm font-semibold leading-5 text-brand-strong">Helpdesk Dispatch Logistik
+                                    </p>
                                     <p class="gpa-mono-xs mt-0.5 text-ink-subtle">Monitoring Armada Pengiriman Subuh</p>
                                 </div>
-                                <p class="font-mono text-xs font-bold text-success sm:text-right">{{ config('app.contact_phone', '+62 811-1223-3445') }} (Hub Bogor)</p>
+                                <p class="font-mono text-xs font-bold text-success sm:text-right">
+                                    {{ config('app.contact_phone', '+62 811-1223-3445') }} (Hub Bogor)</p>
                             </li>
                         </ul>
                     </article>
@@ -136,94 +144,100 @@
 
                 {{-- KOLOM KANAN: FORMULIR KONSULTASI B2B --}}
                 <div id="formulir" class="scroll-mt-36 flex flex-col">
-                    <div class="flex w-full flex-col gap-6 rounded-2xl border-2 border-success/80 bg-white p-6 shadow-sub md:p-8">
+                    <div
+                        class="flex w-full flex-col gap-6 rounded-2xl border-2 border-success/80 bg-white p-6 shadow-sub md:p-8">
                         <div class="space-y-2 border-b border-line-hair pb-5">
-                            <span class="rounded-full bg-success-soft px-2.5 py-0.5 gpa-micro-bold text-success-deep">
-                                FORMULIR PERMOHONAN RESMI
-                            </span>
-                            <h2 class="text-center text-lg font-extrabold leading-snug text-brand-strong md:text-xl">
+                            <h2 class="text-lg font-extrabold leading-snug text-brand-strong md:text-xl">
                                 Ajukan Permohonan Pasokan &amp; Kontrak
                             </h2>
                             <p class="text-sm leading-relaxed text-ink-body">
-                                Isi formulir di bawah ini untuk memulai pengkajian kebutuhan pasokan komoditas segar bagi entitas bisnis Anda.
+                                Isi formulir di bawah ini untuk memulai pengkajian kebutuhan pasokan komoditas segar bagi
+                                entitas bisnis Anda.
                             </p>
                         </div>
 
-                        <form class="flex flex-col gap-5"
-                            x-data="{
-                                submitInquiry(e) {
-                                    const f = new FormData(e.target);
-                                    const pic = f.get('pic') || '';
-                                    const company = f.get('company') || '';
-                                    const phone = f.get('phone') || '';
-                                    const email = f.get('email') || '';
-                                    const bType = f.get('business_type') || '';
-                                    const vol = f.get('volume') || '';
-                                    const pay = f.get('pembayaran') || '';
-                                    const notes = f.get('catatan') || '';
-                                    const komoditas = f.getAll('komoditas[]').join(', ');
+                        <form class="flex flex-col gap-5" x-data="{
+                                    submitInquiry(e) {
+                                        const f = new FormData(e.target);
+                                        const pic = f.get('pic') || '';
+                                        const company = f.get('company') || '';
+                                        const phone = f.get('phone') || '';
+                                        const email = f.get('email') || '';
+                                        const bType = f.get('business_type') || '';
+                                        const vol = f.get('volume') || '';
+                                        const pay = f.get('pembayaran') || '';
+                                        const notes = f.get('catatan') || '';
+                                        const komoditas = f.getAll('komoditas[]').join(', ');
 
-                                    const msg = `Halo Tim Kemitraan GPA, saya ingin mengajukan permohonan pasokan komoditas:%0A` +
-                                        `• PIC: ${pic}%0A` +
-                                        `• Perusahaan: ${company}%0A` +
-                                        `• Kontak: ${phone} (${email})%0A` +
-                                        `• Kategori Usaha: ${bType}%0A` +
-                                        (komoditas ? `• Komoditas: ${komoditas}%0A` : '') +
-                                        (vol ? `• Estimasi Volume: ${vol}%0A` : '') +
-                                        `• Preferensi TOP: ${pay}%0A` +
-                                        (notes ? `• Catatan: ${notes}` : '');
+                                        const msg = `Halo Tim Kemitraan GPA, saya ingin mengajukan permohonan pasokan komoditas:%0A` +
+                                            `• PIC: ${pic}%0A` +
+                                            `• Perusahaan: ${company}%0A` +
+                                            `• Kontak: ${phone} (${email})%0A` +
+                                            `• Kategori Usaha: ${bType}%0A` +
+                                            (komoditas ? `• Komoditas: ${komoditas}%0A` : '') +
+                                            (vol ? `• Estimasi Volume: ${vol}%0A` : '') +
+                                            `• Preferensi TOP: ${pay}%0A` +
+                                            (notes ? `• Catatan: ${notes}` : '');
 
-                                    const waUrl = `https://wa.me/{{ config('app.contact_wa', '6281112233445') }}?text=${encodeURIComponent(msg)}`;
-                                    window.open(waUrl, '_blank');
+                                        const waUrl = `https://wa.me/{{ config('app.contact_wa', '6281112233445') }}?text=${encodeURIComponent(msg)}`;
+                                        window.open(waUrl, '_blank');
 
-                                    this.$dispatch('gpa:toast', {
-                                        title: 'Permohonan Kemitraan Diteruskan',
-                                        message: 'Data formulir telah dialihkan ke WhatsApp resmi GPA. Tim kami akan segera menindaklanjuti.',
-                                        tone: 'success'
-                                    });
-                                    e.target.reset();
-                                }
-                            }"
-                            x-on:submit.prevent="submitInquiry($event)">
+                                        this.$dispatch('gpa:toast', {
+                                            title: 'Permohonan Kemitraan Diteruskan',
+                                            message: 'Data formulir telah dialihkan ke WhatsApp resmi GPA. Tim kami akan segera menindaklanjuti.',
+                                            tone: 'success'
+                                        });
+                                        e.target.reset();
+                                    }
+                                }" x-on:submit.prevent="submitInquiry($event)">
 
                             <div class="flex flex-col gap-4 sm:flex-row">
                                 <div class="sm:flex-1">
-                                    <label for="kontak-pic" class="gpa-mono-xs block font-bold uppercase tracking-wider text-[#5E6953]">
+                                    <label for="kontak-pic"
+                                        class="gpa-mono-xs block font-bold uppercase tracking-wider text-[#5E6953]">
                                         Nama Penanggung Jawab (PIC) <span class="text-success">*</span>
                                     </label>
-                                    <input id="kontak-pic" name="pic" type="text" required placeholder="Contoh: Chef Hendra / Bpk. Rudi"
+                                    <input id="kontak-pic" name="pic" type="text" required
+                                        placeholder="Contoh: Chef Hendra / Bpk. Rudi"
                                         class="mt-1.5 w-full rounded-lg border border-line-hair bg-canvas/50 px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-subtle focus:border-success focus:outline-none" />
                                 </div>
 
                                 <div class="sm:flex-1">
-                                    <label for="kontak-company" class="gpa-mono-xs block font-bold uppercase tracking-wider text-[#5E6953]">
+                                    <label for="kontak-company"
+                                        class="gpa-mono-xs block font-bold uppercase tracking-wider text-[#5E6953]">
                                         Nama Perusahaan / Unit Usaha <span class="text-success">*</span>
                                     </label>
-                                    <input id="kontak-company" name="company" type="text" required placeholder="Contoh: Grand Hotel Bandung"
+                                    <input id="kontak-company" name="company" type="text" required
+                                        placeholder="Contoh: Grand Hotel Bandung"
                                         class="mt-1.5 w-full rounded-lg border border-line-hair bg-canvas/50 px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-subtle focus:border-success focus:outline-none" />
                                 </div>
                             </div>
 
                             <div class="flex flex-col gap-4 sm:flex-row">
                                 <div class="sm:flex-1">
-                                    <label for="kontak-phone" class="gpa-mono-xs block font-bold uppercase tracking-wider text-[#5E6953]">
-                                        Nomor Telepon / WhatsApp <span class="text-success">*</span>
+                                    <label for="kontak-phone"
+                                        class="gpa-mono-xs block font-bold uppercase tracking-wider text-[#5E6953]">
+                                        No. Telepon<span class="text-success">*</span>
                                     </label>
-                                    <input id="kontak-phone" name="phone" type="tel" required placeholder="Contoh: 08123456789"
+                                    <input id="kontak-phone" name="phone" type="tel" required
+                                        placeholder="Contoh: 08123456789"
                                         class="mt-1.5 w-full rounded-lg border border-line-hair bg-canvas/50 px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-subtle focus:border-success focus:outline-none" />
                                 </div>
 
                                 <div class="sm:flex-1">
-                                    <label for="kontak-email" class="gpa-mono-xs block font-bold uppercase tracking-wider text-[#5E6953]">
+                                    <label for="kontak-email"
+                                        class="gpa-mono-xs block font-bold uppercase tracking-wider text-[#5E6953]">
                                         Alamat Email Resmi <span class="text-success">*</span>
                                     </label>
-                                    <input id="kontak-email" name="email" type="email" required placeholder="Contoh: purchasing@hotel.com"
+                                    <input id="kontak-email" name="email" type="email" required
+                                        placeholder="Contoh: purchasing@hotel.com"
                                         class="mt-1.5 w-full rounded-lg border border-line-hair bg-canvas/50 px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-subtle focus:border-success focus:outline-none" />
                                 </div>
                             </div>
 
                             <div>
-                                <label for="kontak-type" class="gpa-mono-xs block font-bold uppercase tracking-wider text-[#5E6953]">
+                                <label for="kontak-type"
+                                    class="gpa-mono-xs block font-bold uppercase tracking-wider text-[#5E6953]">
                                     Kategori Entitas Bisnis <span class="text-success">*</span>
                                 </label>
                                 <div class="relative mt-1.5">
@@ -236,7 +250,8 @@
                                         <option value="supermarket">Supermarket &amp; Retail Modern</option>
                                         <option value="industri">Industri Pengolahan Makanan</option>
                                     </select>
-                                    <x-gpa.icon name="chevron-down" class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-subtle" />
+                                    <x-gpa.icon name="chevron-down"
+                                        class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-subtle" />
                                 </div>
                             </div>
 
@@ -248,7 +263,8 @@
 
                                 <div class="mt-2 flex flex-wrap gap-2">
                                     @foreach ($products as $product)
-                                        <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-line-hair bg-canvas/50 px-3 py-2 text-sm text-ink-body hover:bg-canvas">
+                                        <label
+                                            class="flex cursor-pointer items-center gap-2 rounded-lg border border-line-hair bg-canvas/50 px-3 py-2 text-sm text-ink-body hover:bg-canvas">
                                             <input type="checkbox" name="komoditas[]" value="{{ $product->name }}"
                                                 class="h-4 w-4 rounded border-line-hair accent-success" />
                                             {{ $product->name }}
@@ -256,7 +272,8 @@
                                     @endforeach
                                 </div>
 
-                                <label for="kontak-volume" class="gpa-mono-xs mt-4 block font-bold uppercase tracking-wider text-[#5E6953]">
+                                <label for="kontak-volume"
+                                    class="gpa-mono-xs mt-4 block font-bold uppercase tracking-wider text-[#5E6953]">
                                     Estimasi Kebutuhan Rutin (kg / Siklus Kirim)
                                 </label>
                                 <input id="kontak-volume" name="volume" type="text" placeholder="Contoh: 300 kg / minggu"
@@ -270,23 +287,30 @@
                                 </legend>
 
                                 <div class="mt-2 flex flex-wrap gap-2">
-                                    <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-line-hair bg-canvas/50 px-3 py-2 text-sm text-ink-body">
-                                        <input type="radio" name="pembayaran" value="TOP 14 Hari" checked class="h-4 w-4 border-line-hair accent-success" />
+                                    <label
+                                        class="flex cursor-pointer items-center gap-2 rounded-lg border border-line-hair bg-canvas/50 px-3 py-2 text-sm text-ink-body">
+                                        <input type="radio" name="pembayaran" value="TOP 14 Hari" checked
+                                            class="h-4 w-4 border-line-hair accent-success" />
                                         Tempo 14 Hari (TOP 14)
                                     </label>
-                                    <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-line-hair bg-canvas/50 px-3 py-2 text-sm text-ink-body">
-                                        <input type="radio" name="pembayaran" value="TOP 30 Hari" class="h-4 w-4 border-line-hair accent-success" />
+                                    <label
+                                        class="flex cursor-pointer items-center gap-2 rounded-lg border border-line-hair bg-canvas/50 px-3 py-2 text-sm text-ink-body">
+                                        <input type="radio" name="pembayaran" value="TOP 30 Hari"
+                                            class="h-4 w-4 border-line-hair accent-success" />
                                         Tempo 30 Hari (TOP 30)
                                     </label>
-                                    <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-line-hair bg-canvas/50 px-3 py-2 text-sm text-ink-body">
-                                        <input type="radio" name="pembayaran" value="Cash On Delivery" class="h-4 w-4 border-line-hair accent-success" />
+                                    <label
+                                        class="flex cursor-pointer items-center gap-2 rounded-lg border border-line-hair bg-canvas/50 px-3 py-2 text-sm text-ink-body">
+                                        <input type="radio" name="pembayaran" value="Cash On Delivery"
+                                            class="h-4 w-4 border-line-hair accent-success" />
                                         Bayar di Tempat (COD Dock)
                                     </label>
                                 </div>
                             </fieldset>
 
                             <div>
-                                <label for="kontak-catatan" class="gpa-mono-xs block font-bold uppercase tracking-wider text-[#5E6953]">
+                                <label for="kontak-catatan"
+                                    class="gpa-mono-xs block font-bold uppercase tracking-wider text-[#5E6953]">
                                     Catatan Khusus / Spesifikasi Tambahan
                                 </label>
                                 <textarea id="kontak-catatan" name="catatan" rows="3"
@@ -303,7 +327,8 @@
                                 </x-gpa.btn>
 
                                 <p class="text-center text-xs leading-relaxed text-ink-subtle">
-                                    Data Anda terlindungi oleh kebijakan kerahasiaan komersial PT Green Pasundan Agriculture.
+                                    Data Anda terlindungi oleh kebijakan kerahasiaan komersial PT Green Pasundan
+                                    Agriculture.
                                 </p>
                             </div>
                         </form>
@@ -317,7 +342,7 @@
     {{-- DENAH AKSES LOGISTIK --}}
     <section id="denah" class="scroll-mt-36 bg-canvas">
         <div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-12 sm:px-6 md:py-14">
-            <div class="flex flex-col items-center gap-3 border-b-2 border-brand-strong pb-3 text-center">
+            <div class="flex flex-col items-center gap-3 pb-3 text-center">
                 <h2 class="text-center text-xl font-extrabold uppercase leading-tight text-brand-strong md:text-2xl">
                     Skema Rute Pengiriman &amp; Akses Logistik Subuh
                 </h2>
@@ -328,16 +353,23 @@
                 <ol class="flex flex-col gap-3 lg:flex-row lg:items-stretch lg:gap-0">
                     <li class="flex-1 rounded-2xl border border-success/30 bg-[#F7F9F1] p-5">
                         <div class="flex items-center justify-between gap-3">
-                            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-success gpa-mono-xs font-bold text-white">01</span>
-                            <span class="rounded-full bg-white px-3 py-1 gpa-mono-xs font-bold text-success">04:30 WIB</span>
+                            <span
+                                class="flex h-9 w-9 items-center justify-center rounded-full bg-success gpa-mono-xs font-bold text-white">01</span>
+                            <span class="rounded-full bg-white px-3 py-1 gpa-mono-xs font-bold text-success">04:30
+                                WIB</span>
                         </div>
                         <h3 class="mt-4 text-base font-extrabold leading-6 text-brand-strong">Kebun Ciwidey</h3>
-                        <p class="mt-1 text-xs leading-relaxed text-ink-body">Petik daun dan sortasi lapang oleh mitra petani GAP.</p>
-                        <p class="mt-4 inline-flex rounded-lg border border-success/20 bg-white px-3 py-1.5 gpa-mono-xs font-semibold text-success">Mitra Petani GAP</p>
+                        <p class="mt-1 text-xs leading-relaxed text-ink-body">Petik daun dan sortasi lapang oleh mitra
+                            petani GAP.</p>
+                        <p
+                            class="mt-4 inline-flex rounded-lg border border-success/20 bg-white px-3 py-1.5 gpa-mono-xs font-semibold text-success">
+                            Mitra Petani GAP</p>
                     </li>
 
-                    <li aria-hidden="true" class="flex shrink-0 flex-col items-center justify-center gap-1 py-1 lg:w-28 lg:px-3 lg:py-0">
-                        <span class="rounded-full bg-[#EFF4DC] px-3 py-1 gpa-mono-xs font-bold text-brand-strong">60 Menit</span>
+                    <li aria-hidden="true"
+                        class="flex shrink-0 flex-col items-center justify-center gap-1 py-1 lg:w-28 lg:px-3 lg:py-0">
+                        <span class="rounded-full bg-[#EFF4DC] px-3 py-1 gpa-mono-xs font-bold text-brand-strong">60
+                            Menit</span>
                         <span class="font-mono text-xl font-bold leading-none text-success lg:hidden">↓</span>
                         <span class="hidden h-px w-full bg-success/40 lg:block"></span>
                         <span class="gpa-mono-xs text-ink-subtle">Insulasi</span>
@@ -345,16 +377,24 @@
 
                     <li class="flex-1 rounded-2xl border-2 border-brand bg-brand p-5 text-white shadow-sub">
                         <div class="flex items-center justify-between gap-3">
-                            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-accent gpa-mono-xs font-bold text-brand-deep">02</span>
-                            <span class="rounded-full border border-white/15 bg-white/10 px-3 py-1 gpa-mono-xs font-bold text-accent">06:00 - 15:00 WIB</span>
+                            <span
+                                class="flex h-9 w-9 items-center justify-center rounded-full bg-accent gpa-mono-xs font-bold text-brand-deep">02</span>
+                            <span
+                                class="rounded-full border border-white/15 bg-white/10 px-3 py-1 gpa-mono-xs font-bold text-accent">06:00
+                                - 15:00 WIB</span>
                         </div>
                         <h3 class="mt-4 text-base font-extrabold leading-6">Hub Konsolidasi</h3>
-                        <p class="mt-1 text-xs leading-relaxed text-white/80">Pre-cooling, inspeksi QC, dan persiapan produk untuk dikirim.</p>
-                        <p class="mt-4 inline-flex rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 gpa-mono-xs font-semibold text-white/85">Cold Room 4°C</p>
+                        <p class="mt-1 text-xs leading-relaxed text-white/80">Pre-cooling, inspeksi QC, dan persiapan produk
+                            untuk dikirim.</p>
+                        <p
+                            class="mt-4 inline-flex rounded-lg border border-white/15 bg-white/10 px-3 py-1.5 gpa-mono-xs font-semibold text-white/85">
+                            Cold Room 4°C</p>
                     </li>
 
-                    <li aria-hidden="true" class="flex shrink-0 flex-col items-center justify-center gap-1 py-1 lg:w-28 lg:px-3 lg:py-0">
-                        <span class="rounded-full bg-[#EFF4DC] px-3 py-1 gpa-mono-xs font-bold text-brand-strong">Dispatch 03:00</span>
+                    <li aria-hidden="true"
+                        class="flex shrink-0 flex-col items-center justify-center gap-1 py-1 lg:w-28 lg:px-3 lg:py-0">
+                        <span class="rounded-full bg-[#EFF4DC] px-3 py-1 gpa-mono-xs font-bold text-brand-strong">Dispatch
+                            03:00</span>
                         <span class="font-mono text-xl font-bold leading-none text-success lg:hidden">↓</span>
                         <span class="hidden h-px w-full bg-success/40 lg:block"></span>
                         <span class="gpa-mono-xs text-ink-subtle">Reefer Truck</span>
@@ -362,27 +402,36 @@
 
                     <li class="flex-1 rounded-2xl border border-success/30 bg-[#F7F9F1] p-5">
                         <div class="flex items-center justify-between gap-3">
-                            <span class="flex h-9 w-9 items-center justify-center rounded-full bg-success gpa-mono-xs font-bold text-white">03</span>
-                            <span class="rounded-full bg-white px-3 py-1 gpa-mono-xs font-bold text-success">05:30 - 06:30 WIB</span>
+                            <span
+                                class="flex h-9 w-9 items-center justify-center rounded-full bg-success gpa-mono-xs font-bold text-white">03</span>
+                            <span class="rounded-full bg-white px-3 py-1 gpa-mono-xs font-bold text-success">05:30 - 06:30
+                                WIB</span>
                         </div>
                         <h3 class="mt-4 text-base font-extrabold leading-6 text-brand-strong">Dock Kitchen Klien</h3>
-                        <p class="mt-1 text-xs leading-relaxed text-ink-body">Serah terima produk disertai bukti serah terima digital (e-PoD).</p>
-                        <p class="mt-4 inline-flex rounded-lg border border-success/20 bg-white px-3 py-1.5 gpa-mono-xs font-semibold text-success">Hotel &amp; Resto</p>
+                        <p class="mt-1 text-xs leading-relaxed text-ink-body">Serah terima produk disertai bukti serah
+                            terima digital (e-PoD).</p>
+                        <p
+                            class="mt-4 inline-flex rounded-lg border border-success/20 bg-white px-3 py-1.5 gpa-mono-xs font-semibold text-success">
+                            Hotel &amp; Resto</p>
                     </li>
                 </ol>
 
                 <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <div class="rounded-xl border border-line-hair bg-canvas/40 p-4">
-                        <p class="gpa-mono-xs font-bold uppercase tracking-wider text-success">Jalur Prioritas Bebas Macet</p>
-                        <p class="mt-1.5 text-xs leading-relaxed text-ink-body">Pengiriman meluncur dini hari melintasi tol Cipularang sehingga tiba sebelum jam operasional dapur restoran.</p>
+                        <p class="gpa-mono-xs font-bold uppercase tracking-wider text-success">Jalur Prioritas Bebas Macet
+                        </p>
+                        <p class="mt-1.5 text-xs leading-relaxed text-ink-body">Pengiriman meluncur dini hari melintasi tol
+                            Cipularang sehingga tiba sebelum jam operasional dapur restoran.</p>
                     </div>
                     <div class="rounded-xl border border-line-hair bg-canvas/40 p-4">
                         <p class="gpa-mono-xs font-bold uppercase tracking-wider text-success">Kontrol Suhu Kargo 4°C</p>
-                        <p class="mt-1.5 text-xs leading-relaxed text-ink-body">Suhu kabin box mobil terus dimonitor sensor telemetri dari titik muat hingga proses bongkar di tujuan.</p>
+                        <p class="mt-1.5 text-xs leading-relaxed text-ink-body">Suhu kabin box mobil terus dimonitor sensor
+                            telemetri dari titik muat hingga proses bongkar di tujuan.</p>
                     </div>
                     <div class="rounded-xl border border-line-hair bg-canvas/40 p-4">
                         <p class="gpa-mono-xs font-bold uppercase tracking-wider text-success">Garansi Penggantian</p>
-                        <p class="mt-1.5 text-xs leading-relaxed text-ink-body">Jika sayuran mengalami kerusakan selama perjalanan, penggantian atau pemotongan tagihan langsung diproses.</p>
+                        <p class="mt-1.5 text-xs leading-relaxed text-ink-body">Jika sayuran mengalami kerusakan selama
+                            perjalanan, penggantian atau pemotongan tagihan langsung diproses.</p>
                     </div>
                 </div>
             </div>

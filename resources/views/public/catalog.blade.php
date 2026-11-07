@@ -4,7 +4,7 @@
 
 @section('content')
 
-<x-public.catalog-hero />
+<!-- <x-public.catalog-hero /> -->
 
 <div class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 lg:py-8">
     <div x-data="clientCatalog(@js($commodities))" x-on:keydown.escape.window="mobileCartOpen = false" class="flex flex-col gap-6">
@@ -22,8 +22,6 @@
                     class="rounded-xl border border-dashed border-line-board bg-surface px-4 py-8 text-center text-xs text-ink-body">
                     Tidak ada komoditas yang sesuai dengan kriteria pencarian dan filter saat ini.
                 </p>
-
-                <x-public.catalog-contract />
             </div>
 
             <aside class="hidden lg:flex flex-col gap-6 lg:sticky lg:top-28 lg:h-fit lg:self-start">
@@ -31,6 +29,8 @@
                 <x-public.catalog-cart />
             </aside>
         </div>
+
+        <x-public.catalog-contract />
 
         {{-- Mobile floating bar --}}
         <div x-show="draftCount() > 0" x-cloak x-data="{ mobileCartOpen: false }" class="lg:hidden pb-24">

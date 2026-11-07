@@ -2,8 +2,8 @@
     'validation' => null,
 ])
 
-<section class="rounded-xl border border-accent-deep/50 bg-surface p-4 shadow-sub sm:p-5">
-    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line-hair pb-3">
+<section class="rounded-xl bg-surface p-4 shadow-card sm:p-5">
+    <div class="flex flex-wrap items-center justify-between gap-2 pb-3">
         <h2 class="flex items-center gap-2 text-sm font-bold text-ink">
             {{ $validation['title'] ?? 'Validasi Kuota & Kontrak' }}
         </h2>

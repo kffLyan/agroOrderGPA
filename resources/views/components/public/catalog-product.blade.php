@@ -49,7 +49,7 @@
 
         <dl class="hidden space-y-1.5 rounded-lg border border-line-hair bg-canvas px-3 py-2.5 sm:block">
             <div class="flex items-baseline justify-between gap-3">
-                <dt class="gpa-mono-xs text-ink-subtle">Min. Order (MOQ)</dt>
+                <dt class="gpa-mono-xs text-ink-subtle">Min. Order</dt>
                 <dd class="gpa-mono-xs font-semibold text-brand-strong">{{ $item['moq'] }} {{ $item['unit'] }}</dd>
             </div>
             <div class="flex items-baseline justify-between gap-3">
@@ -67,7 +67,7 @@
         </dl>
 
         <div class="mt-auto space-y-2 sm:space-y-3">
-            <p class="flex items-center justify-between gap-1 border-t border-line-hair pt-2 sm:pt-3">
+            <p class="flex items-center justify-between gap-1 pt-2 sm:pt-3">
                 <span class="gpa-mono-xs font-semibold uppercase tracking-wider text-ink-body">
                     {{ $item['price_label'] }}:</span>
                 <span class="text-sm font-extrabold leading-tight text-brand-strong sm:text-lg">

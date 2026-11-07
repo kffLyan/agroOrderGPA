@@ -17,7 +17,7 @@
 
                     <h1 class="text-center text-4xl font-extrabold leading-tight sm:text-4xl md:text-left md:text-5xl md:leading-[1.05]">
                         <span class="block text-white">Arsip Dokumentasi Operasional</span>
-                        <span class="block text-accent underline underline-offset-4">AgroOrder GPA</span>
+                        <span class="block text-accent-deep underline underline-offset-4">AgroOrder GPA</span>
                     </h1>
 
                     <p class="mx-auto max-w-3xl text-center text-base leading-relaxed text-white/90 md:mx-0 md:text-left md:text-lg">
@@ -85,40 +85,28 @@
 
     {{-- STATS STRIP --}}
     <section aria-label="Ringkasan arsip dokumentasi" class="border-b border-line-hair bg-canvas">
-        <div class="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 md:py-8">
-            <dl class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div class="gpa-panel p-4 shadow-sub">
-                    <div class="flex items-center justify-between gap-2">
-                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Sentra Lahan Produksi</dt>
-                        <x-gpa.icon name="leaf" class="h-3.5 w-3.5 shrink-0 text-success" />
-                    </div>
+        <div class="w-full py-6 md:py-8">
+            <dl class="grid sm:grid-cols-2 lg:grid-cols-4">
+                <div class="px-4 py-4 sm:px-6 sm:py-0">
+                    <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Sentra Lahan Produksi</dt>
                     <dd class="mt-2 text-2xl font-extrabold leading-tight text-brand-strong">1.200 - 1.400 mdpl</dd>
                     <p class="mt-1 text-xs font-medium text-ink-body">Ciwidey, Lembang &amp; Garut</p>
                 </div>
 
-                <div class="gpa-panel p-4 shadow-sub">
-                    <div class="flex items-center justify-between gap-2">
-                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Suhu Ruang Cold Storage</dt>
-                        <x-gpa.icon name="gauge" class="h-3.5 w-3.5 shrink-0 text-success" />
-                    </div>
+                <div class="border-t border-line-hair px-4 py-4 sm:border-l sm:border-t-0 sm:px-6 sm:py-0">
+                    <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Suhu Ruang Cold Storage</dt>
                     <dd class="mt-2 text-2xl font-extrabold leading-tight text-brand-strong">2°C – 4°C</dd>
                     <p class="mt-1 text-xs font-medium text-ink-body">Kontrol kelembapan 90-95%</p>
                 </div>
 
-                <div class="gpa-panel p-4 shadow-sub">
-                    <div class="flex items-center justify-between gap-2">
-                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Pemberangkatan Armada</dt>
-                        <x-gpa.icon name="truck" class="h-3.5 w-3.5 shrink-0 text-success" />
-                    </div>
+                <div class="border-t border-line-hair px-4 py-4 sm:px-6 sm:py-4 lg:border-l lg:border-t-0 lg:py-0">
+                    <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Pemberangkatan Armada</dt>
                     <dd class="mt-2 text-2xl font-extrabold leading-tight text-brand-strong">03:00 WIB</dd>
                     <p class="mt-1 text-xs font-medium text-ink-body">Pengiriman subuh harian</p>
                 </div>
 
-                <div class="gpa-panel p-4 shadow-sub">
-                    <div class="flex items-center justify-between gap-2">
-                        <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Tingkat Ketepatan Pengiriman</dt>
-                        <x-gpa.icon name="badge-check" class="h-3.5 w-3.5 shrink-0 text-success" />
-                    </div>
+                <div class="border-t border-line-hair px-4 py-4 sm:border-l sm:px-6 sm:py-4 lg:border-t-0 lg:py-0">
+                    <dt class="gpa-mono-xs font-semibold uppercase tracking-wide text-ink-body">Tingkat Ketepatan Pengiriman</dt>
                     <dd class="mt-2 text-2xl font-extrabold leading-tight text-brand-strong">99.8%</dd>
                     <p class="mt-1 text-xs font-medium text-ink-body">Kepatuhan pasokan B2B</p>
                 </div>
@@ -182,7 +170,7 @@
         </div>
 
         <div class="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 md:py-14">
-            <div class="flex flex-col gap-2 border-b-2 border-brand-strong pb-3 sm:flex-row sm:items-end sm:justify-between">
+            <div class="flex flex-col gap-2 pb-3 sm:flex-row sm:items-end sm:justify-between">
                 <p class="flex items-center gap-2 gpa-mono-xs font-bold uppercase tracking-wider text-brand-strong">
                     <span class="h-2 w-2 shrink-0 rounded-full bg-success" aria-hidden="true"></span>
                     <span>GALERI KEGIATAN &amp; FASILITAS OPERASIONAL</span>
@@ -249,81 +237,6 @@
                             <h3 class="text-sm font-bold leading-snug text-white sm:text-base">Kultivasi Tomat Beef Berkualitas Restoran</h3>
                             <p class="mt-1 text-xs leading-relaxed text-white/90">
                                 Tomat dipetik saat tingkat kematangan 80% dengan ketebalan daging buah terjamin agar tidak pecah selama distribusi logistik ke jaringan burger dan hotel.
-                            </p>
-                        </div>
-                    </div>
-                </article>
-
-                {{-- CARD 4: GUDANG --}}
-                <article class="relative overflow-hidden cursor-pointer md:group"
-                    x-show="matches('gudang', 'gudang pre-cooling cold storage hub ciwidey')" x-transition.opacity
-                    @click.stop="activeItem = activeItem === 4 ? null : 4">
-                    <div class="relative aspect-[4/3] w-full overflow-hidden bg-[linear-gradient(171deg,#F6F8F2_0%,#EAF2D7_100%)]">
-                        <div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-                            <x-gpa.icon name="building" class="h-10 w-10 text-success" />
-                            <span class="mt-2 font-mono text-sm font-bold text-brand-strong">Hub Konsolidasi Ciwidey</span>
-                            <span class="font-mono text-xs text-success">Kapasitas 15 Ton / Hari</span>
-                        </div>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                        <div class="absolute inset-x-0 bottom-0 p-4 transition-all duration-300"
-                            :class="activeItem === 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:group-hover:opacity-100 md:group-hover:translate-y-0'">
-                            <div class="mb-2 flex items-center justify-between gap-2">
-                                <span class="rounded bg-brand-deep/90 px-2 py-0.5 gpa-mono-xs text-accent">PRE-COOLING BLAST CHAMBER</span>
-                                <span class="rounded-full bg-brand-strong/90 px-2 py-0.5 gpa-micro-bold text-accent">Gudang</span>
-                            </div>
-                            <h3 class="text-sm font-bold leading-snug text-white sm:text-base">Ruang Pra-Pendinginan Cepat &amp; Buffer Cold Storage</h3>
-                            <p class="mt-1 text-xs leading-relaxed text-white/90">
-                                Menurunkan panas lapang dari daun sayur dalam 90 menit setelah tiba dari ladang guna menghentikan degradasi nutrisi dan layu daun.
-                            </p>
-                        </div>
-                    </div>
-                </article>
-
-                {{-- CARD 5: MUTU --}}
-                <article class="relative overflow-hidden cursor-pointer md:group"
-                    x-show="matches('mutu', 'qc tera timbangan inspeksi mutu metrologi')" x-transition.opacity
-                    @click.stop="activeItem = activeItem === 5 ? null : 5">
-                    <div class="relative aspect-[4/3] w-full overflow-hidden bg-[linear-gradient(171deg,#F6F8F2_0%,#EAF2D7_100%)]">
-                        <div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-                            <x-gpa.icon name="gauge" class="h-10 w-10 text-success" />
-                            <span class="mt-2 font-mono text-sm font-bold text-brand-strong">Stasiun Tera &amp; QC Mutu</span>
-                            <span class="font-mono text-xs text-success">Tera Sah Bersertifikat</span>
-                        </div>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                        <div class="absolute inset-x-0 bottom-0 p-4 transition-all duration-300"
-                            :class="activeItem === 5 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:group-hover:opacity-100 md:group-hover:translate-y-0'">
-                            <div class="mb-2 flex items-center justify-between gap-2">
-                                <span class="rounded bg-brand-deep/90 px-2 py-0.5 gpa-mono-xs text-accent">TOLERANSI CACAT &le; 2%</span>
-                                <span class="rounded-full bg-accent/90 px-2 py-0.5 gpa-micro-bold text-brand-strong">Mutu QC</span>
-                            </div>
-                            <h3 class="text-sm font-bold leading-snug text-white sm:text-base">Inspeksi Grade A &amp; Penimbangan Digital Legal</h3>
-                            <p class="mt-1 text-xs leading-relaxed text-white/90">
-                                Setiap krat melalui uji organoleptik, pembersihan sisa akar, dan penimbangan dengan alat tera resmi yang disegel oleh dinas metrologi.
-                            </p>
-                        </div>
-                    </div>
-                </article>
-
-                {{-- CARD 6: LOGISTIK --}}
-                <article class="relative overflow-hidden cursor-pointer md:group"
-                    x-show="matches('logistik', 'armada mobil box pendingin reefer logistik')" x-transition.opacity
-                    @click.stop="activeItem = activeItem === 6 ? null : 6">
-                    <div class="relative aspect-[4/3] w-full overflow-hidden bg-[linear-gradient(171deg,#F6F8F2_0%,#EAF2D7_100%)]">
-                        <div class="absolute inset-0 flex flex-col items-center justify-center p-4 text-center">
-                            <x-gpa.icon name="truck" class="h-10 w-10 text-success" />
-                            <span class="mt-2 font-mono text-sm font-bold text-brand-strong">Armada Reefer Box Cold-Chain</span>
-                            <span class="font-mono text-xs text-success">Suhu Kargo 2°C - 4°C Terjaga</span>
-                        </div>
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                        <div class="absolute inset-x-0 bottom-0 p-4 transition-all duration-300"
-                            :class="activeItem === 6 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 md:group-hover:opacity-100 md:group-hover:translate-y-0'">
-                            <div class="mb-2 flex items-center justify-between gap-2">
-                                <span class="rounded bg-brand-deep/90 px-2 py-0.5 gpa-mono-xs text-accent">DISPATCH SUBUH · BANDUNG - JKT</span>
-                                <span class="rounded-full bg-success-soft px-2 py-0.5 gpa-micro-bold text-success-deep">Logistik</span>
-                            </div>
-                            <h3 class="text-sm font-bold leading-snug text-white sm:text-base">Armada Mobil Box Berpendingin &amp; IoT Tracker</h3>
-                            <p class="mt-1 text-xs leading-relaxed text-white/90">
-                                Unit armada pengangkut dilengkapi unit pendingin thermo ganda dan sensor nirkabel yang memonitor suhu kargo hingga tiba di dock kitchen pelanggan.
                             </p>
                         </div>
                     </div>
@@ -409,7 +322,7 @@
                     </p>
                 </div>
 
-                <div class="relative mt-8 flex flex-col items-center gap-3 border-t border-white/10 pt-6">
+                <div class="relative mt-8 flex flex-col items-center gap-3 pt-6">
                     <div class="flex w-full max-w-sm flex-col gap-3">
                         <x-gpa.btn :href="route('public.kontak')" variant="accent" size="xl" block>
                             Hubungi Kami

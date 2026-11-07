@@ -81,7 +81,7 @@ class PesananManualController extends Controller
                 'key'          => 'prod-' . $product->id,
                 'product_id'   => $product->id,
                 'name'         => $product->name,
-                'sku'          => $product->sku ?: ('GPA-VEG-' . str_pad((string) $product->id, 3, '0', STR_PAD_LEFT)),
+                'sku'          => $product->sku ?: ('GPA-' . str_pad((string) $product->id, 3, '0', STR_PAD_LEFT)),
                 'grade'        => $product->grade ?: 'Grade A Pilihan',
                 'unit'         => $product->unit ?: 'kg',
                 'min_order'    => (float) ($product->minimum_order ?: 5),

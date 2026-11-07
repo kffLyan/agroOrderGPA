@@ -56,11 +56,23 @@ class ProductService
         ];
     }
 
-    // Menghasilkan usulan kode SKU komoditas berikutnya dengan format sekuensial GPA-VGT-XX.
+    // Menghasilkan usulan kode SKU komoditas berikutnya dengan format template sekuensial 'GPA-001'.
     public function getSuggestedSku(): string
     {
-        $nextId = (Product::max('id') ?: 0) + 1;
-        return 'GPA-VGT-' . str_pad((string) $nextId, 2, '0', STR_PAD_LEFT);
+        $highestNumber = 0;
+        $skus = Product::query()->pluck('sku');
+        foreach ($skus as $sku) {
+            if (preg_match('/^GPA-(\d+)$/i', (string) $sku, $matches)) {
+                $num = (int) $matches[1];
+                if ($num > $highestNumber) {
+                    $highestNumber = $num;
+                }
+            }
+        }
+
+        $nextNumber = max($highestNumber, (int) (Product::max('id') ?: 0)) + 1;
+
+        return 'GPA-' . str_pad((string) $nextNumber, 3, '0', STR_PAD_LEFT);
     }
 
     // Menyimpan data komoditas baru, menangani upload aset visual, dan mencatat riwayat audit.

@@ -29,7 +29,7 @@ class VerifikasiPesananResource extends JsonResource
             $quantity = (float) $item->ordered_qty;
             return [
                 'name'         => ($item->product?->name ?: 'Komoditas') . ' Grade A Pilihan',
-                'sku'          => 'Kode: ' . ($item->product?->sku ?: 'GPA-VEG-01') . ' • Toleransi Sortir max 3%',
+                'sku'          => 'Kode: ' . ($item->product?->sku ?: 'GPA-001') . ' • Toleransi Sortir max 3%',
                 'request'      => number_format($quantity, 0, ',', '.'),
                 'request_unit' => 'KG',
                 'system'       => number_format($quantity * 1.2, 0, ',', '.'),

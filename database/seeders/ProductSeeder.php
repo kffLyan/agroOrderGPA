@@ -18,7 +18,7 @@ class ProductSeeder extends Seeder
         DB::table('products')->insert([
             [
                 'id'            => 1,
-                'sku'           => 'GPA-VGT-RMN01',
+                'sku'           => 'GPA-001',
                 'name'          => 'Selada Romaine Hydroponic Super',
                 'unit'          => 'kg',
                 'grade'         => 'Grade A',
@@ -32,7 +32,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'id'            => 2,
-                'sku'           => 'GPA-VGT-BRK02',
+                'sku'           => 'GPA-002',
                 'name'          => 'Brokoli Super Lembang',
                 'unit'          => 'kg',
                 'grade'         => 'Grade A',
@@ -46,7 +46,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'id'            => 3,
-                'sku'           => 'GPA-FRT-TMT03',
+                'sku'           => 'GPA-003',
                 'name'          => 'Tomat Beef Garut & Sayur',
                 'unit'          => 'kg',
                 'grade'         => 'Grade A',
@@ -60,7 +60,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'id'            => 4,
-                'sku'           => 'GPA-BER-STR04',
+                'sku'           => 'GPA-004',
                 'name'          => 'Stroberi Ciwidey Sweet Grade',
                 'unit'          => 'pack',
                 'grade'         => 'Grade A',
@@ -74,7 +74,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'id'            => 5,
-                'sku'           => 'GPA-VGT-KOL05',
+                'sku'           => 'GPA-005',
                 'name'          => 'Kol Putih Organik Pangalengan',
                 'unit'          => 'kg',
                 'grade'         => 'Grade A',
@@ -88,7 +88,7 @@ class ProductSeeder extends Seeder
             ],
             [
                 'id'            => 6,
-                'sku'           => 'GPA-VGT-WRT06',
+                'sku'           => 'GPA-006',
                 'name'          => 'Wortel Brastagi / Cipanas',
                 'unit'          => 'kg',
                 'grade'         => 'Grade A',

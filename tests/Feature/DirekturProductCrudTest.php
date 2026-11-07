@@ -261,4 +261,25 @@ class DirekturProductCrudTest extends TestCase
             'is_active' => 0,
         ]);
     }
+
+    public function test_product_service_generates_gpa_three_digit_sku_template(): void
+    {
+        $service = app(\App\Services\ProductService::class);
+        $suggested = $service->getSuggestedSku();
+        $this->assertMatchesRegularExpression('/^GPA-\d{3}$/', $suggested);
+
+        // Jika produk berurutan dengan format GPA-001, saran berikutnya berlanjut sekuensial
+        Product::create([
+            'sku'           => 'GPA-001',
+            'name'          => 'Komoditas Template Test',
+            'unit'          => 'kg',
+            'grade'         => 'Grade A',
+            'base_price'    => 10000,
+            'minimum_order' => 5,
+            'is_active'     => true,
+        ]);
+
+        $nextSku = $service->getSuggestedSku();
+        $this->assertMatchesRegularExpression('/^GPA-\d{3}$/', $nextSku);
+    }
 }

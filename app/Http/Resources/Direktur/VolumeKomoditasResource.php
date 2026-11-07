@@ -43,7 +43,7 @@ class VolumeKomoditasResource extends JsonResource
         $statusTone         = $availableStock > 500 ? 'success' : ($availableStock > 0 ? 'caution' : 'danger');
 
         return [
-            'code'           => $product->sku ?: ('KMD-' . str_pad((string) ($this->index + 1), 2, '0', STR_PAD_LEFT)),
+            'code'           => $product->sku ?: ('GPA-' . str_pad((string) ($this->index + 1), 3, '0', STR_PAD_LEFT)),
             'name'           => $product->name,
             'grade'          => $product->grade ?: 'Grade A Standard',
             'share'          => $volumeSharePercent,

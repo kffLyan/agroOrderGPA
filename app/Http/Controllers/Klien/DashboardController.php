@@ -215,7 +215,7 @@ class DashboardController extends Controller
             $reorderData[] = [
                 'key'           => (string) $product->id,
                 'id'            => $product->id,
-                'sku'           => $product->sku ?? ('SKU-' . $product->id),
+                'sku'           => $product->sku ?? ('GPA-' . str_pad((string) $product->id, 3, '0', STR_PAD_LEFT)),
                 'name'          => $product->name,
                 'grade'         => $cleanGrade,
                 'price'         => $unitPrice,

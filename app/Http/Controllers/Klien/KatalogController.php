@@ -84,8 +84,8 @@ class KatalogController extends Controller
             return [
                 'key'                => (string) $product->id,
                 'id'                 => $product->id,
-                'sku'                => $product->sku ?? ('SKU-' . $product->id),
-                'code'               => $product->sku ?? ('SKU-' . $product->id),
+                'sku'                => $product->sku ?? ('GPA-' . str_pad((string) $product->id, 3, '0', STR_PAD_LEFT)),
+                'code'               => $product->sku ?? ('GPA-' . str_pad((string) $product->id, 3, '0', STR_PAD_LEFT)),
                 'name'               => $product->name,
                 'image_path'         => $product->image_path,
                 'image_url'          => asset($product->image_path),

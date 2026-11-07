@@ -41,8 +41,9 @@
                         Kode SKU <span class="text-red-600">*</span>
                     </label>
                     <input type="text" id="sku" name="sku" value="{{ old('sku', $suggestedSku) }}" required
+                        placeholder="Contoh: GPA-001"
                         class="rounded bg-surface-shell py-2 px-3 text-[12px] leading-5 text-ink font-mono outline outline-1 -outline-offset-1 outline-line-board focus:outline-2 focus:-outline-offset-2 focus:outline-success-deep">
-                    <span class="text-[10px] text-ink-body">Kode unik komoditas</span>
+                    <span class="text-[10px] text-ink-body">Kode unik komoditas (format: GPA-001)</span>
                 </div>
 
                 <div class="flex flex-col gap-1.5">

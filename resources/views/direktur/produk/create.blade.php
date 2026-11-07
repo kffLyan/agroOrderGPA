@@ -67,9 +67,9 @@
                 <div>
                     <label for="sku" class="block font-bold text-ink mb-1">Kode SKU Komoditas *</label>
                     <input type="text" id="sku" name="sku" value="{{ old('sku', $suggestedSku) }}" required
-                        placeholder="Contoh: GPA-VGT-06"
+                        placeholder="Contoh: GPA-001"
                         class="w-full rounded border-line-board bg-surface-shell px-3 py-2 text-xs font-mono font-bold text-ink focus:border-brand focus:ring-1 focus:ring-brand">
-                    <p class="mt-1 text-[11px] text-ink-body">Format unik kode penamaan standar GPA.</p>
+                    <p class="mt-1 text-[11px] text-ink-body">Format unik kode penamaan standar GPA (contoh: GPA-001).</p>
                 </div>
 
                 {{-- Nama Komoditas --}}

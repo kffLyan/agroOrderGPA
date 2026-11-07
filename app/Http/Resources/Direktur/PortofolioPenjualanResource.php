@@ -56,7 +56,7 @@ class PortofolioPenjualanResource extends JsonResource
 
         return [
             'name'             => $product->name,
-            'sku'              => $product->sku ?: ('KMD-' . str_pad((string) $product->id, 3, '0', STR_PAD_LEFT)),
+            'sku'              => $product->sku ?: ('GPA-' . str_pad((string) $product->id, 3, '0', STR_PAD_LEFT)),
             'volume'           => $totalVolume,
             'volume_label'     => number_format($totalVolume, 0, ',', '.'),
             'list_price_label' => 'Rp ' . number_format($catalogPrice, 0, ',', '.'),

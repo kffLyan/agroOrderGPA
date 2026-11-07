@@ -55,7 +55,7 @@ class KeranjangController extends Controller
             return [
                 'key'        => (string) $product->id,
                 'id'         => $product->id,
-                'sku'        => $product->sku ?? ('SKU-' . $product->id),
+                'sku'        => $product->sku ?? ('GPA-' . str_pad((string) $product->id, 3, '0', STR_PAD_LEFT)),
                 'name'       => $product->name,
                 'grade'      => $product->grade ?: 'Grade A',
                 'packaging'  => "Krat Plastik Higienis 10 {$product->unit}",

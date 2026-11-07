@@ -952,6 +952,7 @@
                             <div class="flex items-center justify-between">
                                 <p class="gpa-micro text-ink-quiet">PPN (Pajak)</p>
                                 <span class="rounded bg-success-soft px-1.5 py-0.5 text-[9px] font-bold text-success-ink uppercase tracking-wider" x-show="!taxEnabled">DTP 0%</span>
+                                <span class="rounded bg-brand/10 px-1.5 py-0.5 text-[9px] font-bold text-brand uppercase tracking-wider" x-show="taxEnabled" x-text="taxRate + '%'"></span>
                             </div>
                             <p class="gpa-figure mt-1 font-mono text-lg font-bold leading-tight text-ink whitespace-nowrap" x-text="taxEnabled ? rupiah(taxAmount) : 'Rp 0'"></p>
                         </div>

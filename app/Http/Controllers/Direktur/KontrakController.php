@@ -88,11 +88,33 @@ class KontrakController extends Controller
     // Menolak pengajuan draf kontrak kemitraan yang dinilai tidak memenuhi batas margin atau skor kredit
     public function reject(Request $request, Contract $contract)
     {
-        $reason = $request->input('rejection_reason', 'Margin di bawah threshold ketentuan Direksi atau riwayat kredit tidak memenuhi kualifikasi.');
+        $reason = trim((string) $request->input('rejection_reason', 'Margin di bawah threshold ketentuan Direksi atau riwayat kredit tidak memenuhi kualifikasi.'));
+        if (empty($reason)) {
+            $reason = 'Margin usulan harga belum memenuhi batas kelayakan ketentuan Direksi GPA.';
+        }
 
         $contract->update([
             'status' => 'TERMINATED',
         ]);
+
+        // Simpan catatan penolakan ke penyimpanan tata kelola agar tampil langsung di portal klien
+        $settings = $this->tataKelolaService->getSettings();
+        $rejectedContracts = $settings['rejected_contracts'] ?? [];
+        $rejectedContracts[$contract->user_id] = [
+            'contract_id'       => $contract->id,
+            'contract_number'   => $contract->contract_number,
+            'user_id'           => $contract->user_id,
+            'product_id'        => $contract->product_id,
+            'product_name'      => $contract->product?->name ?? 'Komoditas Pertanian',
+            'committed_volume'  => (float) $contract->committed_volume_per_cycle,
+            'fixed_price'       => (float) $contract->fixed_price_per_kg,
+            'top_days'          => (int) $contract->top_days,
+            'rejection_reason'  => $reason,
+            'rejected_at'       => now()->translatedFormat('d F Y, H:i') . ' WIB',
+            'rejected_by'       => Auth::guard('web')->user()?->name ?: 'Direktur Utama GPA',
+        ];
+        $settings['rejected_contracts'] = $rejectedContracts;
+        $this->tataKelolaService->updateSettings($settings);
 
         $this->tataKelolaService->addAuditLog(
             'KONTRAK_DITOLAK',
@@ -103,7 +125,7 @@ class KontrakController extends Controller
             'REJECTED'
         );
 
-        $message = "Kontrak {$contract->contract_number} berhasil ditolak. Alasan tercatat di audit log.";
+        $message = "Kontrak {$contract->contract_number} berhasil ditolak. Keterangan alasan telah dikirimkan ke portal klien.";
         if ($request->wantsJson() || $request->ajax()) {
             return response()->json(['success' => true, 'message' => $message]);
         }

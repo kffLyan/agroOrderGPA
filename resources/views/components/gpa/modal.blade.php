@@ -23,16 +23,21 @@
     x-on:gpa-modal-open.window="if ($event.detail === @js($name)) open = true"
     x-on:gpa-modal-close.window="if ($event.detail === @js($name)) open = false"
     x-on:keydown.escape.window="open = false"
-    x-effect="document.body.classList.toggle('overflow-hidden', open)" {{ $attributes }}>
+    x-effect="
+        document.body.classList.toggle('overflow-hidden', open);
+        document.documentElement.classList.toggle('overflow-hidden', open);
+    " {{ $attributes }}>
 
-    <div x-show="open" x-cloak class="fixed inset-0 z-50 overflow-y-auto" role="presentation">
+    <div x-show="open" x-cloak class="fixed inset-0 z-50 overflow-y-auto overscroll-contain" role="presentation">
         <div @if ($closeOnBackdrop) x-on:click="open = false" @endif
-            class="fixed inset-0 bg-brand-deep/70 backdrop-blur-[2px]"></div>
+            @wheel.prevent
+            @touchmove.prevent
+            class="fixed inset-0 bg-black/80 transition-opacity"></div>
 
         <div class="relative flex min-h-full items-end justify-center p-0 sm:items-center sm:p-6">
             <div role="dialog" aria-modal="true" @if ($title) aria-labelledby="{{ $headingId }}" @endif
                 @if ($description) aria-describedby="{{ $name }}-description" @endif
-                class="relative w-full {{ $sizeClass }} max-w-full rounded-t-xl border border-line bg-surface shadow-card sm:rounded-xl">
+                class="relative w-full {{ $sizeClass }} max-w-full transform-gpu rounded-t-xl border border-line bg-surface shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] ring-1 ring-white/10 sm:rounded-xl">
                 <div class="flex items-start justify-between gap-3 border-b border-line px-4 py-3 md:px-5">
                     <div class="min-w-0">
                         @if ($title)

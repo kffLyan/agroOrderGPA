@@ -66,38 +66,40 @@
             ];
         })->all() : [];
 
-        return [
-            'no'                => str_pad($idx + 1, 2, '0', STR_PAD_LEFT),
-            'po'                => $inv->invoice_number,
-            'period'            => $inv->created_at ? ($inv->created_at->isCurrentMonth() ? 'current' : 'last-month') : 'current',
-            'printed'           => $inv->created_at ? $inv->created_at->format('d M Y') : '-',
-            'period_label'      => ($inv->period_start ? $inv->period_start->format('d M') : '-') . ' - ' . ($inv->period_end ? $inv->period_end->format('d M Y') : '-'),
-            'sj_chip'           => ($inv->orders ? $inv->orders->count() : 0) . ' Surat Jalan',
-            'sj_chip_muted'     => false,
-            'netto_value'       => number_format($totalNetto, 1, ',', '.'),
-            'netto_unit'        => 'kg',
-            'netto_weight'      => 600,
-            'total_label'       => 'Rp ' . number_format($inv->grand_total, 0, ',', '.'),
-            'total_weight'      => 700,
-            'due'               => $inv->due_date ? $inv->due_date->format('d M Y') : '-',
-            'due_muted'         => $isPaid,
-            'due_struck'        => $isPaid,
-            'due_note'          => $isPaid ? 'Sudah Lunas' : ($inv->due_date && $inv->due_date->isPast() ? 'Overdue' : 'Tempo 30 Hari'),
-            'due_note_tone'     => $isPaid ? 'success' : 'default',
-            'status'            => $statusText,
-            'status_tone'       => $statusTone,
-            'status_kind'       => $isPaid ? 'check' : 'dot',
-            'status_raw'        => $inv->status,
-            'row_tone'          => $isPaid ? 'plain' : 'active',
-            'tempo_days'        => 30,
-            'sj_count'          => $inv->orders ? $inv->orders->count() : 0,
-            'netto_net_label'   => number_format($totalNetto, 1, ',', '.') . ' kg Netto Sah',
-            'subtotal_label'    => 'Rp ' . number_format($inv->subtotal_amount ?: $inv->grand_total, 0, ',', '.'),
-            'ppn_label'         => 'PPN DTP Hasil Pertanian (0%)',
-            'ppn_value'         => 'Bebas PPN',
-            'credit_label'      => 'Penyesuaian Mutu / Retur',
-            'credit_value'      => '- Rp 0',
-            'grand_total_label' => 'Rp ' . number_format($inv->grand_total, 0, ',', '.'),
+            $taxAmount          = (float) ($inv->orders ? $inv->orders->sum(fn ($o) => (float) ($o->tax_amount ?? 0)) : 0);
+
+            return [
+                'no'                => str_pad($idx + 1, 2, '0', STR_PAD_LEFT),
+                'po'                => $inv->invoice_number,
+                'period'            => $inv->created_at ? ($inv->created_at->isCurrentMonth() ? 'current' : 'last-month') : 'current',
+                'printed'           => $inv->created_at ? $inv->created_at->format('d M Y') : '-',
+                'period_label'      => ($inv->period_start ? $inv->period_start->format('d M') : '-') . ' - ' . ($inv->period_end ? $inv->period_end->format('d M Y') : '-'),
+                'sj_chip'           => ($inv->orders ? $inv->orders->count() : 0) . ' Surat Jalan',
+                'sj_chip_muted'     => false,
+                'netto_value'       => number_format($totalNetto, 1, ',', '.'),
+                'netto_unit'        => 'kg',
+                'netto_weight'      => 600,
+                'total_label'       => 'Rp ' . number_format($inv->grand_total, 0, ',', '.'),
+                'total_weight'      => 700,
+                'due'               => $inv->due_date ? $inv->due_date->format('d M Y') : '-',
+                'due_muted'         => $isPaid,
+                'due_struck'        => $isPaid,
+                'due_note'          => $isPaid ? 'Sudah Lunas' : ($inv->due_date && $inv->due_date->isPast() ? 'Overdue' : 'Tempo 30 Hari'),
+                'due_note_tone'     => $isPaid ? 'success' : 'default',
+                'status'            => $statusText,
+                'status_tone'       => $statusTone,
+                'status_kind'       => $isPaid ? 'check' : 'dot',
+                'status_raw'        => $inv->status,
+                'row_tone'          => $isPaid ? 'plain' : 'active',
+                'tempo_days'        => 30,
+                'sj_count'          => $inv->orders ? $inv->orders->count() : 0,
+                'netto_net_label'   => number_format($totalNetto, 1, ',', '.') . ' kg Netto Sah',
+                'subtotal_label'    => 'Rp ' . number_format($inv->subtotal_amount ?: $inv->grand_total, 0, ',', '.'),
+                'ppn_label'         => $taxAmount > 0 ? 'PPN (11%)' : 'PPN DTP Hasil Pertanian (0%)',
+                'ppn_value'         => $taxAmount > 0 ? ('Rp ' . number_format($taxAmount, 0, ',', '.')) : 'Bebas PPN',
+                'credit_label'      => 'Penyesuaian Mutu / Retur',
+                'credit_value'      => '- Rp 0',
+                'grand_total_label' => 'Rp ' . number_format($inv->grand_total, 0, ',', '.'),
             'attachments'       => $attachments,
             'has_rejected_proof'=> $hasRejectedProof,
             'rejected_note'     => $inv->rejected_proof_payment?->verification_note,
@@ -236,25 +238,34 @@
 
             <article class="gpa-card flex flex-col justify-between gap-3 p-4">
                 <div class="flex items-start justify-between gap-2">
-                    <h2 class="gpa-micro-bold uppercase text-ink-body">Sisa Plafon Kredit B2B</h2>
+                    <h2 class="gpa-micro-bold uppercase text-ink-body">
+                        {{ $isB2b ? 'Sisa Plafon Kredit B2B' : 'Skema Penagihan' }}
+                    </h2>
                     <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent/50 text-ink">
                         <x-gpa.icon name="wallet" class="h-3.5 w-3.5" />
                     </span>
                 </div>
-                <div class="flex flex-col gap-1">
-                    <p class="pb-1 text-2xl font-bold leading-8 text-ink">Rp {{ number_format(max(0, 50000000 - $unpaidAmount), 0, ',', '.') }}</p>
+                <div class="flex flex-col gap-0.5">
+                    @if ($isB2b)
+                        <p class="pb-0.5 text-2xl font-bold leading-8 text-ink">Rp {{ number_format($creditLimitRemaining, 0, ',', '.') }}</p>
+                        <p class="gpa-micro text-ink-quiet">Dari pagu Rp {{ number_format($creditLimit, 0, ',', '.') }}</p>
+                    @else
+                        <p class="pb-0.5 text-xl font-bold leading-8 text-ink">Klien Reguler</p>
+                        <p class="gpa-micro text-ink-quiet">Pembayaran langsung per pesanan (Non-Tempo)</p>
+                    @endif
                 </div>
             </article>
 
             <article class="gpa-card flex flex-col justify-between gap-3 p-4">
                 <div class="flex items-start justify-between gap-2">
-                    <h2 class="gpa-micro-bold uppercase text-ink-body">Deviasi &amp; Rekonsiliasi Timbang</h2>
+                    <h2 class="gpa-micro-bold uppercase text-ink-body">Total Berkas Faktur</h2>
                     <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-surface-pill text-ink">
-                        <x-gpa.icon name="scale" class="h-3.5 w-3.5" />
+                        <x-gpa.icon name="file-text" class="h-3.5 w-3.5" />
                     </span>
                 </div>
-                <div class="flex flex-col gap-1">
-                    <p class="pb-1 text-2xl font-bold leading-8 text-ink">0.34%</p>
+                <div class="flex flex-col gap-0.5">
+                    <p class="pb-0.5 text-2xl font-bold leading-8 text-ink">{{ $rawInvoices->count() }} Faktur</p>
+                    <p class="gpa-micro text-ink-quiet">{{ $rawInvoices->where('status', 'PAID')->count() }} Lunas &bull; {{ $rawInvoices->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])->count() }} Berjalan</p>
                 </div>
             </article>
         </section>
@@ -597,7 +608,7 @@
 
                 <div class="flex flex-col gap-2 border-b border-line-soft bg-surface-pill px-4 py-2 sm:flex-row sm:items-center sm:justify-between">
                     <p class="text-xs font-medium leading-4 text-ink-body">
-                        Rekap {{ $invoice['sj_count'] }} Surat Jalan Fisik (Terintegrasi Netto Timbangan Digital):
+                        Rekap {{ $invoice['sj_count'] }} Surat Jalan Fisik Terlampir:
                     </p>
                     <p class="text-xs font-bold leading-4 text-ink">{{ $invoice['netto_net_label'] }}</p>
                 </div>

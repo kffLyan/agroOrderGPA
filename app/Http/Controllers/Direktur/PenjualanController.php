@@ -171,17 +171,26 @@ class PenjualanController extends Controller
             $targetWeekDate = (clone $now)->addWeeks($weekOffset);
             $weekStart = (clone $targetWeekDate)->startOfWeek();
             $weekEnd = (clone $targetWeekDate)->endOfWeek();
-            $weekLabel = 'W' . $weekStart->format('W');
+
+            // Format rentang tanggal mingguan yang ramah dan mudah dipahami (contoh: 05–11 Okt)
+            $startMonth = $weekStart->translatedFormat('M');
+            $endMonth = $weekEnd->translatedFormat('M');
+            $dateRangeLabel = ($startMonth === $endMonth)
+                ? ($weekStart->format('d') . '–' . $weekEnd->translatedFormat('d M'))
+                : ($weekStart->translatedFormat('d M') . '–' . $weekEnd->translatedFormat('d M'));
+
             $weeklyRevenue = (float) Order::whereIn('status', ['SELESAI', 'SELESAI_CATATAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'LUNAS'])
                 ->whereBetween('created_at', [$weekStart, $weekEnd])
                 ->sum('grand_total');
 
             $status = $weekOffset === 0 ? 'running' : 'closed';
             $trendRows[] = [
-                'week'   => $weekLabel,
-                'value'  => $weeklyRevenue,
-                'label'  => $formatShortMoney($weeklyRevenue, $weekOffset === 0),
-                'status' => $status,
+                'week'       => $dateRangeLabel,
+                'week_code'  => 'W' . $weekStart->format('W'),
+                'date_range' => $dateRangeLabel,
+                'value'      => $weeklyRevenue,
+                'label'      => $formatShortMoney($weeklyRevenue, $weekOffset === 0),
+                'status'     => $status,
             ];
         }
 
@@ -201,9 +210,9 @@ class PenjualanController extends Controller
             };
         }
 
-        $firstWeek = !empty($trendRows) ? $trendRows[0]['week'] : ('W' . $now->format('W'));
-        $lastWeek = !empty($trendRows) ? end($trendRows)['week'] : ('W' . $now->format('W'));
-        $trendTitle = "Tren Realisasi 5 Pekan Terakhir ({$firstWeek} - {$lastWeek})";
+        $firstWeek = !empty($trendRows) ? $trendRows[0]['week'] : '';
+        $lastWeek = !empty($trendRows) ? end($trendRows)['week'] : '';
+        $trendTitle = "Tren Realisasi Omzet Mingguan ({$firstWeek} s/d {$lastWeek})";
 
         // 5. Pembagian komposisi omzet berdasarkan kanal penjualan (B2B Horeca, Retail Modern, dan WhatsApp)
         $b2bRevenue = (float) Order::whereHas('user', fn ($query) => $query->where('client_type', 'B2B_KONTRAK'))

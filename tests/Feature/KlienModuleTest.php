@@ -418,6 +418,110 @@ class KlienModuleTest extends TestCase
         $this->assertEquals('B2B_KONTRAK', $regulerClient->client_type);
     }
 
+    public function test_klien_can_submit_contract_proposal_with_custom_proposed_price(): void
+    {
+        $regulerClient = User::factory()->create([
+            'role'        => 'KLIEN',
+            'client_type' => 'REGULER',
+            'is_active'   => true,
+            'phone'       => '081298765432',
+        ]);
+
+        $product = \App\Models\Product::create([
+            'sku'           => 'GPA-PRC-001',
+            'name'          => 'Brokoli Organik Lembang',
+            'unit'          => 'kg',
+            'grade'         => 'Grade A',
+            'base_price'    => 24000.00,
+            'minimum_order' => 10.00,
+            'is_active'     => true,
+        ]);
+
+        $response = $this->actingAs($regulerClient)->post(route('klien.pengajuan-kontrak'), [
+            'product_id'                 => $product->id,
+            'committed_volume_per_cycle' => 500,
+            'proposed_price_per_kg'      => 21000,
+            'top_days'                   => 30,
+        ]);
+
+        $response->assertRedirect(route('klien.dashboard'));
+        $response->assertSessionHas('success');
+
+        $contract = \App\Models\Contract::where('user_id', $regulerClient->id)->first();
+        $this->assertNotNull($contract);
+        $this->assertEquals(21000.00, (float) $contract->fixed_price_per_kg);
+        $this->assertEquals('PENDING_APPROVAL', $contract->status);
+    }
+
+    public function test_regular_client_sees_rejection_banner_when_contract_proposal_is_rejected_by_direktur(): void
+    {
+        $regulerClient = User::factory()->create([
+            'role'        => 'KLIEN',
+            'client_type' => 'REGULER',
+            'is_active'   => true,
+            'phone'       => '081298765432',
+        ]);
+
+        $direktur = User::factory()->create([
+            'role'      => 'DIREKTUR',
+            'is_active' => true,
+        ]);
+
+        $product = \App\Models\Product::create([
+            'sku'           => 'GPA-REJ-001',
+            'name'          => 'Selada Romaine Segar',
+            'unit'          => 'kg',
+            'grade'         => 'Grade A',
+            'base_price'    => 18000.00,
+            'minimum_order' => 10.00,
+            'is_active'     => true,
+        ]);
+
+        // 1. Klien mengajukan proposal
+        $this->actingAs($regulerClient)->post(route('klien.pengajuan-kontrak'), [
+            'product_id'                 => $product->id,
+            'committed_volume_per_cycle' => 100,
+            'proposed_price_per_kg'      => 12000,
+            'top_days'                   => 30,
+        ]);
+
+        $contract = \App\Models\Contract::where('user_id', $regulerClient->id)->latest()->first();
+        $this->assertNotNull($contract);
+
+        // 2. Direktur menolak proposal dengan alasan spesifik
+        $rejectionReason = 'Margin harga Rp 12.000/kg terlalu rendah dari HPP kebun dan volume 100kg belum mencapai batas minimal kelayakan.';
+        $rejectResponse = $this->actingAs($direktur)->post(route('direktur.kontrak.reject', $contract->id), [
+            'rejection_reason' => $rejectionReason,
+        ]);
+        $rejectResponse->assertSessionHas('success');
+
+        $contract->refresh();
+        $this->assertEquals('TERMINATED', $contract->status);
+
+        // 3. Klien membuka dasbor dan melihat pemberitahuan penolakan beserta alasan Direktur
+        $dashResponse = $this->actingAs($regulerClient)->get(route('klien.dashboard'));
+        $dashResponse->assertStatus(200);
+        $dashResponse->assertSee('Pengajuan Kontrak Ditolak');
+        $dashResponse->assertSee($contract->contract_number);
+        $dashResponse->assertSee($rejectionReason);
+        $dashResponse->assertSee('Ajukan Proposal Baru');
+
+        // 4. Klien mengajukan proposal baru dengan penyesuaian harga & volume
+        $resubmitResponse = $this->actingAs($regulerClient)->post(route('klien.pengajuan-kontrak'), [
+            'product_id'                 => $product->id,
+            'committed_volume_per_cycle' => 300,
+            'proposed_price_per_kg'      => 16000,
+            'top_days'                   => 30,
+        ]);
+        $resubmitResponse->assertRedirect(route('klien.dashboard'));
+
+        // 5. Notifikasi penolakan lama bersih dan digantikan banner pengajuan sedang ditinjau
+        $dashResponseAfter = $this->actingAs($regulerClient)->get(route('klien.dashboard'));
+        $dashResponseAfter->assertStatus(200);
+        $dashResponseAfter->assertDontSee('Pengajuan Kontrak Ditolak');
+        $dashResponseAfter->assertSee('Pengajuan Kontrak Kemitraan B2B Sedang Ditinjau Direktur Utama');
+    }
+
     public function test_klien_order_detail_shows_bayar_sekarang_when_status_menunggu_pembayaran(): void
     {
         $klien = User::factory()->create([

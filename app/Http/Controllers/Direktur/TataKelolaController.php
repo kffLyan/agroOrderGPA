@@ -64,6 +64,10 @@ class TataKelolaController extends Controller
 
         if ($request->has('tax_ppn_enabled')) {
             $validated['tax_ppn_enabled'] = $request->boolean('tax_ppn_enabled');
+            $percent = $validated['tax_ppn_percent'] ?? 11.0;
+            $validated['tax_ppn_note'] = $validated['tax_ppn_enabled']
+                ? "Pajak Pertambahan Nilai (PPN {$percent}%)"
+                : 'Fasilitas Bebas PPN Produk Pertanian DTP (PPN 0%)';
         }
 
         $this->tataKelolaService->updateSettings($validated);

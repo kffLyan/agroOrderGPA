@@ -32,6 +32,17 @@ class DashboardController extends Controller
             ->latest()
             ->first();
 
+        // 1b. Riwayat Penolakan Kontrak dari Tata Kelola (jika pengajuan terakhir ditolak Direktur)
+        $rejectedContract = null;
+        if (!$isContractClient && !$pendingContract) {
+            try {
+                $settings = app(\App\Services\TataKelolaService::class)->getSettings();
+                $rejectedContract = $settings['rejected_contracts'][$user->id] ?? null;
+            } catch (\Throwable $e) {
+                $rejectedContract = null;
+            }
+        }
+
         // 2. Plafon Kredit & Tempo (Top 30D)
         $creditLimit = 0.0;
         if ($contract && $contract->fixed_price_per_kg && $contract->committed_volume_per_cycle) {
@@ -255,6 +266,7 @@ class DashboardController extends Controller
             'products'             => $products,
             'allAvailableProducts' => $allAvailableProducts,
             'rejectedPayment'      => $rejectedPayment,
+            'rejectedContract'     => $rejectedContract,
         ]);
     }
 }

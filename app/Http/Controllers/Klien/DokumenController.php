@@ -28,14 +28,18 @@ class DokumenController extends Controller
         $unpaidAmount = (float) $rawInvoices->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])->sum('grand_total');
         $settledAmount = (float) $rawInvoices->where('status', 'PAID')->sum('grand_total');
 
+        $isB2b = ($user?->client_type === 'B2B_KONTRAK') || ($user && $user->contracts()->where('status', 'ACTIVE')->exists());
+
         $activeContracts = Contract::where('user_id', $userId)
             ->where('status', 'ACTIVE')
             ->get();
         $creditLimit = (float) $activeContracts->sum(function ($contract) {
             return (float) (($contract->fixed_price_per_kg ?: 0) * ($contract->committed_volume_per_cycle ?: 0) * 2);
         });
-        if ($creditLimit <= 0) {
-            $creditLimit = 150000000.0;
+        if ($creditLimit <= 0 && $isB2b) {
+            $creditLimit = 50000000.0;
+        } elseif (!$isB2b) {
+            $creditLimit = 0.0;
         }
 
         $creditLimitRemaining = max(0, $creditLimit - $unpaidAmount);
@@ -43,8 +47,10 @@ class DokumenController extends Controller
         return view('klien.dokumen', compact(
             'rawInvoices',
             'user',
+            'isB2b',
             'unpaidAmount',
             'settledAmount',
+            'creditLimit',
             'creditLimitRemaining'
         ));
     }

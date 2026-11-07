@@ -21,7 +21,7 @@ class FakturController extends Controller
         // Mengambil data klien B2B beserta pesanan sah yang telah siap kirim, dalam perjalanan, atau selesai
         $clientsQuery = User::where('client_type', 'B2B_KONTRAK')
             ->orWhere('role', 'KLIEN')
-            ->with(['orders' => fn($orderQuery) => $orderQuery->whereIn('status', ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI'])->with('orderItems.product')])
+            ->with(['orders' => fn($orderQuery) => $orderQuery->whereIn('status', ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'])->with('orderItems.product')])
             ->get();
 
         if ($clientsQuery->isEmpty()) {

@@ -331,7 +331,7 @@ export default function secretaryManualOrder(
         },
 
         get taxNote() {
-            return String(this.taxSettings?.note ?? 'Fasilitas Bebas PPN Produk Pertanian DTP (PPN 0%)');
+            return String(this.taxSettings?.note ?? (this.taxEnabled ? `Pajak Pertambahan Nilai (PPN ${this.taxRate}%)` : 'Fasilitas Bebas PPN Produk Pertanian DTP (PPN 0%)'));
         },
 
         get taxAmount() {

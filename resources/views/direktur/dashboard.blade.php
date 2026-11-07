@@ -583,12 +583,19 @@
             @if ($worstOverdueInvoice)
                 {{-- Modal Lihat Catatan Audit CV Mitra Boga --}}
                 <div x-cloak x-show="showOverdueAuditModal"
-                    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm"
-                    x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
-                    x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 overscroll-contain"
+                    x-effect="
+                        document.body.classList.toggle('overflow-hidden', showOverdueAuditModal);
+                        document.documentElement.classList.toggle('overflow-hidden', showOverdueAuditModal);
+                    "
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
                     @keydown.escape.window="showOverdueAuditModal = false">
-                    <div class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-surface p-6 shadow-2xl outline outline-1 outline-line-board"
+                    <div class="relative w-full max-w-lg transform-gpu overflow-hidden rounded-2xl bg-surface p-6 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] ring-1 ring-white/10 border border-line-board"
                         @click.outside="showOverdueAuditModal = false">
 
                         <div class="flex items-start justify-between gap-4 border-b border-line-board/60 pb-4">
@@ -662,12 +669,19 @@
 
                 {{-- Modal Ajukan Pengecualian / Dispensasi CV Mitra Boga --}}
                 <div x-cloak x-show="showDispensationModal"
-                    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm"
-                    x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
-                    x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                    class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 overscroll-contain"
+                    x-effect="
+                        document.body.classList.toggle('overflow-hidden', showDispensationModal);
+                        document.documentElement.classList.toggle('overflow-hidden', showDispensationModal);
+                    "
+                    x-transition:enter="transition ease-out duration-150"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-100"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
                     @keydown.escape.window="showDispensationModal = false">
-                    <div class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-surface p-6 shadow-2xl outline outline-1 outline-line-board"
+                    <div class="relative w-full max-w-lg transform-gpu overflow-hidden rounded-2xl bg-surface p-6 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] ring-1 ring-white/10 border border-line-board"
                         @click.outside="showDispensationModal = false">
 
                         <div class="flex items-start justify-between gap-4 border-b border-line-board/60 pb-4">

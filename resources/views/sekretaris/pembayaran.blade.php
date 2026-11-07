@@ -610,21 +610,27 @@
         {{-- Modal Pratinjau Bukti Pembayaran / Transfer Ukuran Penuh --}}
         <div x-cloak x-show="proofModalOpen"
             @keydown.escape.window="proofModalOpen = false"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
-            role="dialog" aria-modal="true">
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overscroll-contain"
+            role="dialog" aria-modal="true"
+            x-effect="
+                document.body.classList.toggle('overflow-hidden', proofModalOpen);
+                document.documentElement.classList.toggle('overflow-hidden', proofModalOpen);
+            ">
 
             {{-- Backdrop --}}
-            <div class="fixed inset-0 bg-ink/75 backdrop-blur-xs transition-opacity"
-                @click="proofModalOpen = false"></div>
+            <div class="fixed inset-0 bg-black/80 transition-opacity"
+                @click="proofModalOpen = false"
+                @wheel.prevent
+                @touchmove.prevent></div>
 
-            <div class="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-surface shadow-pop ring-1 ring-ink/10"
+            <div class="relative flex w-full max-w-3xl transform-gpu flex-col overflow-hidden rounded-2xl bg-surface shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] ring-1 ring-white/10 border border-line-board/80"
                 x-show="proofModalOpen"
-                x-transition:enter="ease-out duration-200"
-                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter="ease-out duration-150"
+                x-transition:enter-start="opacity-0 scale-98"
                 x-transition:enter-end="opacity-100 scale-100"
-                x-transition:leave="ease-in duration-150"
+                x-transition:leave="ease-in duration-100"
                 x-transition:leave-start="opacity-100 scale-100"
-                x-transition:leave-end="opacity-0 scale-95">
+                x-transition:leave-end="opacity-0 scale-98">
 
                 {{-- Modal Header --}}
                 <div class="flex items-center justify-between border-b border-line-hair bg-surface-shell px-5 py-3.5">

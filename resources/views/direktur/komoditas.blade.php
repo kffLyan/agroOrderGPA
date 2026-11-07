@@ -42,14 +42,6 @@
                         UNDUH NERACA VOLUME (CSV)
                     </span>
                 </a>
-
-                <button type="button" @click="reconcile()"
-                    class="inline-flex w-full sm:w-auto h-10 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-ink shadow-sub transition-colors hover:bg-accent-deep">
-                    <x-gpa.icon name="scale" class="h-4 w-4 shrink-0" />
-                    <span class="text-sm font-semibold leading-5 text-ink font-inter">
-                        REKONSILIASI NERACA
-                    </span>
-                </button>
             </div>
         </section>
 
@@ -252,8 +244,8 @@
             <div class="flex min-h-[420px] flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
                 <header class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-line-board">
                     <div class="flex min-w-0 flex-col gap-1">
-                        <h2 class="font-sans text-lg font-semibold leading-6 text-ink">Tren Mingguan Volume vs Kapasitas Panen ({{ $weeklyRangeLabel }})</h2>
-                        <p class="text-xs leading-4 text-ink-body">Komparasi demand kontrak vs yield riil petani vs safety buffer reserve.</p>
+                        <h2 class="font-sans text-lg font-semibold leading-6 text-ink">Tren Mingguan Volume Permintaan vs Kapasitas Panen</h2>
+                        <p class="text-xs leading-4 text-ink-body">Komparasi demand kontrak vs yield riil petani vs safety buffer reserve (Periode 8 Pekan: {{ $weeklyRows[0]['week'] ?? '' }} s/d {{ end($weeklyRows)['week'] ?? '' }}).</p>
                     </div>
 
                     <ul class="flex flex-wrap items-center gap-3">

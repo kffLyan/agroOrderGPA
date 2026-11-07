@@ -225,13 +225,13 @@ export default function directorApproval(rows = [], labels = {}) {
             const row = this.rows.find((item) => item.id === id || item.contract === id);
             const targetId = row ? row.id : id;
             const reason = await window.$prompt({
-                title: 'Tolak Pengesahan Kontrak',
-                message: 'Masukkan alasan penolakan kontrak untuk catatan arsip audit:',
-                defaultValue: 'Margin di bawah threshold atau plafon risiko kredit terlampaui.',
-                placeholder: 'Alasan penolakan...',
+                title: 'Tolak Pengajuan Kontrak Kemitraan',
+                message: `Masukkan alasan penolakan kontrak untuk ${row?.client || 'klien'} (alasan ini akan diteruskan dan ditampilkan di portal klien):`,
+                defaultValue: 'Margin usulan harga belum memenuhi batas kelayakan kemitraan B2B GPA.',
+                placeholder: 'Tuliskan alasan penolakan secara jelas...',
                 icon: 'danger',
                 tone: 'danger',
-                confirmText: 'Tolak Kontrak',
+                confirmText: 'Tolak Pengajuan',
                 cancelText: 'Batal',
             });
 
@@ -252,7 +252,7 @@ export default function directorApproval(rows = [], labels = {}) {
 
                 if (response.ok) {
                     this.rows = this.rows.filter((item) => item.id !== targetId);
-                    this.run('Kontrak Ditolak', `Kontrak ${row?.contract || targetId} resmi ditolak. Alasan tercatat di audit log.`, 'danger');
+                    this.run('Pengajuan Ditolak', `Pengajuan kontrak ${row?.contract || targetId} resmi ditolak. Alasan telah dikirimkan ke portal klien.`, 'danger');
                     setTimeout(() => window.location.reload(), 1200);
                 } else {
                     const data = await response.json().catch(() => ({}));

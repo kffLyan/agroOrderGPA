@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Storage;
 // Layanan orkestrasi kebijakan tata kelola, sakelar freeze darurat, kanal pembayaran, dan log audit immutable.
 class TataKelolaService
 {
+    public const MAX_AUDIT_LOGS = 100;
+
     protected string $settingsPath;
     protected string $auditLogPath;
 
@@ -100,10 +102,18 @@ class TataKelolaService
     public function getTaxSettings(): array
     {
         $settings = $this->getSettings();
+        $enabled = (bool) ($settings['tax_ppn_enabled'] ?? false);
+        $percent = (float) ($settings['tax_ppn_percent'] ?? 11.0);
+        $defaultNote = $enabled ? "Pajak Pertambahan Nilai (PPN {$percent}%)" : 'Fasilitas Bebas PPN Produk Pertanian DTP (PPN 0%)';
+        $note = (string) ($settings['tax_ppn_note'] ?? $defaultNote);
+        if ($enabled && str_contains($note, '0%')) {
+            $note = "Pajak Pertambahan Nilai (PPN {$percent}%)";
+        }
+
         return [
-            'enabled' => (bool) ($settings['tax_ppn_enabled'] ?? false),
-            'percent' => (float) ($settings['tax_ppn_percent'] ?? 11.0),
-            'note'    => (string) ($settings['tax_ppn_note'] ?? 'Fasilitas Bebas PPN Produk Pertanian DTP (PPN 0%)'),
+            'enabled' => $enabled,
+            'percent' => $percent,
+            'note'    => $note,
         ];
     }
 
@@ -127,7 +137,8 @@ class TataKelolaService
     public function getAuditLogs(): array
     {
         $this->ensureFilesExist();
-        return json_decode(File::get($this->auditLogPath), true) ?? [];
+        $logs = json_decode(File::get($this->auditLogPath), true) ?? [];
+        return is_array($logs) ? array_slice($logs, 0, self::MAX_AUDIT_LOGS) : [];
     }
 
     // Mencatat riwayat aktivitas (audit log) sistem ke file penyimpanan
@@ -154,6 +165,9 @@ class TataKelolaService
         ];
 
         array_unshift($logs, $newEntry);
+        if (count($logs) > self::MAX_AUDIT_LOGS) {
+            $logs = array_slice($logs, 0, self::MAX_AUDIT_LOGS);
+        }
         File::put($this->auditLogPath, json_encode($logs, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
         return $newEntry;

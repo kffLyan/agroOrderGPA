@@ -101,7 +101,7 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             <div class="p-4 border-b border-gray-100">
                 <h3 class="font-bold text-sm text-gray-900 flex items-center gap-2">
-                    Rincian Komoditas &amp; Harga Upfront
+                    Rincian Komoditas &amp; Nilai Transaksi
                 </h3>
                 <p class="text-xs text-gray-500">Harga dan kuantitas disepakati secara pasti pada pemesanan</p>
             </div>
@@ -151,7 +151,7 @@
                     </tbody>
                     <tfoot>
                         <tr class="bg-gray-50 font-bold text-gray-900 border-t border-gray-200">
-                            <td colspan="4" class="p-3 text-right">TOTAL NILAI TRANSAKSI (UPFRONT):</td>
+                            <td colspan="4" class="p-3 text-right">TOTAL NILAI TRANSAKSI PESANAN:</td>
                             <td class="p-3 text-right text-emerald-800 text-base">
                                 Rp {{ number_format($order->grand_total, 0, ',', '.') }}
                             </td>

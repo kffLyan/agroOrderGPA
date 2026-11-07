@@ -39,7 +39,15 @@ class FakturKlienResource extends JsonResource
         $isContractClient = ($client->client_type === 'B2B_KONTRAK' || $activeContract !== null);
         $topDays = $activeContract?->top_days ?: 30;
         $creditLimit = $activeContract ? (float) ($activeContract->fixed_price_per_kg * $activeContract->committed_volume_per_cycle * 2) : 0;
-        $usedCredit = (float) $client->orders()->whereIn('status', ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])->sum('grand_total');
+        
+        $unpaidInvoices = (float) \App\Models\Invoice::where('user_id', $client->id)
+            ->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])
+            ->sum('grand_total');
+        $uninvoicedOrders = (float) $client->orders()
+            ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'])
+            ->whereNull('invoice_id')
+            ->sum('grand_total');
+        $usedCredit = $unpaidInvoices + $uninvoicedOrders;
 
         return [
             'id'          => (string) $client->id,

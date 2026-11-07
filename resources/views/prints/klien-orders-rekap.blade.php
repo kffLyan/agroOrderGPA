@@ -332,7 +332,7 @@
         <section class="mt-3 rounded border border-line-board bg-surface-shell/50 p-2 text-[7pt] text-ink-body">
             <h4 class="font-bold uppercase tracking-wider text-brand">Catatan Ketentuan &amp; Standar Mutu GPA (SOP Cold-Chain):</h4>
             <ol class="mt-0.5 list-decimal list-inside space-y-0.5">
-                <li>Data bobot netto sah merupakan hasil penimbangan digital terkalibrasi di Packing House Lembang yang tercantum pada Surat Jalan resmi fisik.</li>
+                <li>Data kuantitas dan bobot netto sah merupakan rincian resmi yang disahkan pada Surat Jalan fisik oleh tim operasional Sentra GPA.</li>
                 <li>Untuk pesanan Klien Kontrak B2B dengan termin <em>Term of Payment (TOP)</em>, seluruh nominal tagihan sah diagregasi ke dalam Faktur Bulanan Konsolidasi.</li>
                 <li>Batas toleransi deviasi susut perjalanan cold-chain maksimum 0.5% sesuai standar garansi mutu Green Pasundan Agriculture.</li>
             </ol>

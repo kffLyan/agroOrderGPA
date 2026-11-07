@@ -315,13 +315,11 @@
                                             <x-gpa.icon name="check" class="h-3.5 w-3.5 shrink-0" />
                                             {{ $row['approve_label'] }}
                                         </button>
-                                        <button type="button" @click="revise({{ $row['id'] }})"
-                                            class="text-[11px] font-medium leading-4 text-ink-body underline-offset-2 transition-colors hover:text-ink hover:underline">
-                                            Minta Revisi
-                                        </button>
                                         <button type="button" @click="reject({{ $row['id'] }})"
-                                            class="text-[11px] font-medium leading-4 text-danger underline-offset-2 transition-colors hover:underline">
-                                            Tolak
+                                            class="inline-flex items-center gap-1 rounded-md border border-danger/30 bg-rose-50/60 px-2.5 py-1.5 text-[11px] font-semibold leading-4 text-danger transition-colors hover:bg-rose-100 hover:border-danger/50"
+                                            title="Tolak pengajuan kontrak dan kirimkan alasan ke pihak klien">
+                                            <x-gpa.icon name="x" class="h-3 w-3 shrink-0" />
+                                            <span>Tolak</span>
                                         </button>
                                     </div>
                                 </td>

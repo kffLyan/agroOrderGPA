@@ -37,6 +37,8 @@ export default function clientDashboard(catalogue = []) {
         destroy() {
             window.clearInterval(this.timer);
             this.stopDraftSync?.();
+            document.body.classList.remove('overflow-hidden');
+            document.documentElement.classList.remove('overflow-hidden');
         },
 
         tickClock() {

@@ -6,6 +6,9 @@
     $rupiah = fn ($value) => 'Rp ' . number_format($value, 0, ',', '.');
     $kilogram = fn ($value) => number_format($value, 1, ',', '.') . ' kg';
 
+    $user = auth()->user();
+    $isB2b = ($user?->client_type === 'B2B_KONTRAK') || ($order->user?->client_type === 'B2B_KONTRAK') || ($order->user && $order->user->contracts()->where('status', 'ACTIVE')->exists());
+
     $hasPendingProof = ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_pending_proof);
 
     $isPaymentVerified = in_array($order->status, ['LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'])
@@ -170,41 +173,79 @@
                 </div>
             </div>
         @elseif ($order->status === 'MENUNGGU_PEMBAYARAN')
-            <div class="flex flex-col gap-3 rounded-2xl border-2 border-brand/40 bg-brand p-5 text-white shadow-card sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex items-start gap-3.5">
-                    <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-ink shadow-sub">
-                        <x-gpa.icon name="wallet" class="h-6 w-6 text-ink" />
-                    </span>
-                    <div class="flex flex-col gap-1">
-                        <div class="flex items-center gap-2">
-                            <span class="rounded bg-accent px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-ink">
-                                Menunggu Pembayaran
-                            </span>
-                            @if ($order->invoice)
-                                <a href="{{ route('prints.invoice', ['invoice' => $order->invoice->invoice_number]) }}" target="_blank"
-                                    class="text-xs text-line-soft hover:text-accent hover:underline inline-flex items-center gap-1 transition-colors">
-                                    <x-gpa.icon name="invoice" class="h-3 w-3" />
-                                    Faktur #{{ $order->invoice->invoice_number }}
-                                </a>
-                            @endif
+            @if ($isB2b)
+                <div class="flex flex-col gap-3 rounded-2xl border-2 border-brand/40 bg-brand p-5 text-white shadow-card sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-start gap-3.5">
+                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-ink shadow-sub">
+                            <x-gpa.icon name="shield-check" class="h-6 w-6 text-ink" />
+                        </span>
+                        <div class="flex flex-col gap-1">
+                            <div class="flex items-center gap-2">
+                                <span class="rounded bg-accent px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-ink">
+                                    Fasilitas Kontrak B2B (Tempo TOP 30 Hari)
+                                </span>
+                                @if ($order->invoice)
+                                    <a href="{{ route('prints.invoice', ['invoice' => $order->invoice->invoice_number]) }}" target="_blank"
+                                        class="text-xs text-line-soft hover:text-accent hover:underline inline-flex items-center gap-1 transition-colors">
+                                        <x-gpa.icon name="invoice" class="h-3 w-3" />
+                                        Faktur #{{ $order->invoice->invoice_number }}
+                                    </a>
+                                @endif
+                            </div>
+                            <h2 class="font-sans text-base font-bold text-white sm:text-lg">
+                                Pesanan Terverifikasi &bull; Total Tagihan: {{ $rupiah($order->grand_total) }}
+                            </h2>
+                            <p class="text-xs text-line-soft max-w-2xl leading-relaxed">
+                                Sekretariat GPA telah menyetujui pesanan Anda dan mengunci kuota panen. Sebagai mitra B2B Kontrak, pesanan Anda langsung diproses ke pengiriman tanpa harus bayar di muka. Pembayaran dilakukan sesuai jatuh tempo TOP 30 Hari.
+                            </p>
                         </div>
-                        <h2 class="font-sans text-base font-bold text-white sm:text-lg">
-                            Pesanan Telah Diverifikasi &bull; Total Tagihan: {{ $rupiah($order->grand_total) }}
-                        </h2>
-                        <p class="text-xs text-line-soft max-w-2xl leading-relaxed">
-                            Sekretariat GPA telah menyetujui pesanan Anda dan mengunci kuota panen kebun. Segera lakukan pembayaran agar Surat Jalan diterbitkan dan armada dikirim tepat waktu.
-                        </p>
+                    </div>
+
+                    <div class="flex shrink-0 items-center gap-2 sm:self-center">
+                        <a href="{{ route('klien.bukti-pembayaran', ['tagihan' => $order->invoice?->invoice_number, 'order_id' => $order->id]) }}"
+                            class="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 font-sans text-xs font-extrabold uppercase tracking-wider text-ink shadow-lg transition-transform hover:scale-105 hover:bg-accent-deep">
+                            <x-gpa.icon name="wallet" class="h-4 w-4 text-ink" />
+                            Bayar Tagihan / Unggah Bukti
+                        </a>
                     </div>
                 </div>
+            @else
+                <div class="flex flex-col gap-3 rounded-2xl border-2 border-brand/40 bg-brand p-5 text-white shadow-card sm:flex-row sm:items-center sm:justify-between">
+                    <div class="flex items-start gap-3.5">
+                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent text-ink shadow-sub">
+                            <x-gpa.icon name="wallet" class="h-6 w-6 text-ink" />
+                        </span>
+                        <div class="flex flex-col gap-1">
+                            <div class="flex items-center gap-2">
+                                <span class="rounded bg-accent px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-ink">
+                                    Menunggu Pembayaran Transfer
+                                </span>
+                                @if ($order->invoice)
+                                    <a href="{{ route('prints.invoice', ['invoice' => $order->invoice->invoice_number]) }}" target="_blank"
+                                        class="text-xs text-line-soft hover:text-accent hover:underline inline-flex items-center gap-1 transition-colors">
+                                        <x-gpa.icon name="invoice" class="h-3 w-3" />
+                                        Faktur #{{ $order->invoice->invoice_number }}
+                                    </a>
+                                @endif
+                            </div>
+                            <h2 class="font-sans text-base font-bold text-white sm:text-lg">
+                                Pesanan Telah Diverifikasi &bull; Total Tagihan: {{ $rupiah($order->grand_total) }}
+                            </h2>
+                            <p class="text-xs text-line-soft max-w-2xl leading-relaxed">
+                                Sekretariat GPA telah menyetujui pesanan Anda dan mengunci kuota panen kebun. Segera lakukan pembayaran transfer agar Surat Jalan diterbitkan dan armada dikirim tepat waktu.
+                            </p>
+                        </div>
+                    </div>
 
-                <div class="flex shrink-0 items-center gap-2 sm:self-center">
-                    <a href="{{ route('klien.bukti-pembayaran', ['tagihan' => $order->invoice?->invoice_number, 'order_id' => $order->id]) }}"
-                        class="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 font-sans text-xs font-extrabold uppercase tracking-wider text-ink shadow-lg transition-transform hover:scale-105 hover:bg-accent-deep">
-                        <x-gpa.icon name="send" class="h-4 w-4 text-ink" />
-                        Bayar Sekarang &amp; Unggah Bukti
-                    </a>
+                    <div class="flex shrink-0 items-center gap-2 sm:self-center">
+                        <a href="{{ route('klien.bukti-pembayaran', ['tagihan' => $order->invoice?->invoice_number, 'order_id' => $order->id]) }}"
+                            class="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-2.5 font-sans text-xs font-extrabold uppercase tracking-wider text-ink shadow-lg transition-transform hover:scale-105 hover:bg-accent-deep">
+                            <x-gpa.icon name="send" class="h-4 w-4 text-ink" />
+                            Bayar Sekarang &amp; Unggah Bukti
+                        </a>
+                    </div>
                 </div>
-            </div>
+            @endif
         @endif
 
         {{-- Banner Notifikasi Pesanan Selesai & Diterima di Dock --}}
@@ -485,14 +526,14 @@
                     </div>
 
                     <p class="font-sans text-xs font-bold leading-4 {{ $s3 === 'pending' ? 'text-ink-quiet' : 'text-ink' }}">
-                        Faktur &amp; Konfirmasi Bayar
+                        {{ $isB2b ? 'Faktur & Termin Kontrak' : 'Faktur & Konfirmasi Bayar' }}
                     </p>
                     <p class="text-[11px] leading-4 text-ink-body">
                         {{ in_array($order->status, ['LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'])
-                            ? 'Pembayaran telah disetujui lunas oleh kasir/sekretariat GPA.'
+                            ? ($isB2b ? 'Fasilitas kredit TOP 30 Hari aktif. Surat jalan diterbitkan langsung tanpa menunggu bayar di muka.' : 'Pembayaran telah disetujui lunas oleh kasir/sekretariat GPA.')
                             : ($hasPendingProof 
                                 ? 'Bukti transfer telah dikirim ke Sekretaris. Menunggu pencocokan mutasi kas bank.'
-                                : ($order->invoice ? "Faktur #{$order->invoice->invoice_number} terbit. Total tagihan dikunci upfront." : 'Menunggu penerbitan invoice resmi oleh Sekretaris.')) }}
+                                : ($order->invoice ? ($isB2b ? "Faktur #{$order->invoice->invoice_number} terbit dengan fasilitas tempo TOP 30 Hari." : "Faktur #{$order->invoice->invoice_number} terbit. Menunggu pembayaran transfer.") : 'Menunggu penerbitan invoice resmi oleh Sekretaris.')) }}
                     </p>
                 </li>
 
@@ -583,7 +624,7 @@
                 <section class="gpa-card overflow-hidden">
                     <header class="border-b border-line-hair bg-surface-shell p-4 sm:px-6">
                         <div class="flex items-center justify-between">
-                            <h2 class="font-sans text-base font-bold text-ink">Rincian Komoditas &amp; Harga Upfront</h2>
+                            <h2 class="font-sans text-base font-bold text-ink">Rincian Komoditas &amp; Kesepakatan Harga</h2>
                             <span class="rounded bg-surface-pill px-2 py-0.5 text-xs font-semibold text-ink-body">
                                 {{ $order->orderItems->count() }} Komoditas
                             </span>
@@ -636,6 +677,30 @@
                             </tbody>
                             <tfoot class="border-t-2 border-line-soft bg-surface-shell">
                                 <tr>
+                                    <td colspan="4" class="px-4 py-2 text-right text-xs text-ink-body">
+                                        Subtotal Komoditas:
+                                    </td>
+                                    <td class="px-4 py-2 text-right font-semibold text-xs text-ink">
+                                        {{ $rupiah($order->subtotal_amount) }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="px-4 py-2 text-right text-xs text-ink-body">
+                                        Biaya Distribusi Logistik (Armada Chiller):
+                                    </td>
+                                    <td class="px-4 py-2 text-right font-semibold text-xs text-ink">
+                                        {{ (float) $order->shipping_cost > 0 ? $rupiah($order->shipping_cost) : 'Rp 0 (Bebas Ongkir)' }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="4" class="px-4 py-2 text-right text-xs text-ink-body">
+                                        {{ $order->tax_label ?: 'PPN (11%)' }}:
+                                    </td>
+                                    <td class="px-4 py-2 text-right font-semibold text-xs text-ink">
+                                        {{ (float) $order->tax_amount > 0 ? $rupiah($order->tax_amount) : 'Rp 0' }}
+                                    </td>
+                                </tr>
+                                <tr class="border-t border-line-hair bg-surface-muted/60">
                                     <td colspan="4" class="px-4 py-3 text-right font-bold text-ink">
                                         Total Tagihan (Grand Total):
                                     </td>
@@ -686,9 +751,23 @@
                             </article>
                         @endforeach
 
-                        <div class="flex items-center justify-between gap-3 rounded-lg border border-line-hair bg-surface-shell p-3">
-                            <span class="text-xs font-bold text-ink">Total Tagihan</span>
-                            <span class="text-right text-sm font-extrabold text-ink">{{ $rupiah($order->grand_total) }}</span>
+                        <div class="flex flex-col gap-1.5 rounded-lg border border-line-hair bg-surface-shell p-3 text-xs">
+                            <div class="flex justify-between text-ink-body">
+                                <span>Subtotal Komoditas</span>
+                                <span class="font-semibold text-ink">{{ $rupiah($order->subtotal_amount) }}</span>
+                            </div>
+                            <div class="flex justify-between text-ink-body">
+                                <span>Biaya Distribusi Logistik</span>
+                                <span class="font-semibold text-ink">{{ (float) $order->shipping_cost > 0 ? $rupiah($order->shipping_cost) : 'Rp 0 (Bebas Ongkir)' }}</span>
+                            </div>
+                            <div class="flex justify-between text-ink-body">
+                                <span>{{ $order->tax_label ?: 'PPN (11%)' }}</span>
+                                <span class="font-semibold text-ink">{{ (float) $order->tax_amount > 0 ? $rupiah($order->tax_amount) : 'Rp 0' }}</span>
+                            </div>
+                            <div class="flex items-center justify-between border-t border-line-hair/60 pt-2 font-bold text-ink">
+                                <span class="text-xs">Total Tagihan</span>
+                                <span class="text-right text-sm font-extrabold text-ink">{{ $rupiah($order->grand_total) }}</span>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -862,7 +941,7 @@
                             <div class="flex items-center justify-between">
                                 <span class="text-xs font-bold text-ink">{{ $order->has_rejected_proof ? 'Bukti Bayar Ditolak' : 'Menunggu Pembayaran' }}</span>
                                 <span class="rounded {{ $order->has_rejected_proof ? 'bg-danger text-white' : 'bg-accent text-ink' }} px-1.5 py-0.5 text-[9px] font-extrabold uppercase">
-                                    {{ $order->has_rejected_proof ? 'REJECTED' : 'UPFRONT' }}
+                                    {{ $order->has_rejected_proof ? 'REJECTED' : ($isB2b ? 'TEMPO 30 HARI' : 'TRANSFER BANK') }}
                                 </span>
                             </div>
                             <p class="text-xs text-ink-body">Total Tagihan: <span class="font-extrabold text-ink">{{ $rupiah($order->grand_total) }}</span></p>
@@ -896,12 +975,18 @@
         @if ($order->pod_photo_asset_url)
             <div x-cloak x-show="podModalOpen"
                 @keydown.escape.window="podModalOpen = false"
-                class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
-                role="dialog" aria-modal="true">
-                <div class="fixed inset-0 bg-ink/75 backdrop-blur-xs transition-opacity"
-                    @click="podModalOpen = false"></div>
+                class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overscroll-contain"
+                role="dialog" aria-modal="true"
+                x-effect="
+                    document.body.classList.toggle('overflow-hidden', podModalOpen);
+                    document.documentElement.classList.toggle('overflow-hidden', podModalOpen);
+                ">
+                <div class="fixed inset-0 bg-black/80 transition-opacity"
+                    @click="podModalOpen = false"
+                    @wheel.prevent
+                    @touchmove.prevent></div>
 
-                <div class="relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl bg-surface shadow-pop ring-1 ring-ink/10"
+                <div class="relative flex w-full max-w-3xl transform-gpu flex-col overflow-hidden rounded-2xl bg-surface shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] ring-1 ring-white/10 border border-line-board/80"
                     x-show="podModalOpen"
                     x-transition:enter="ease-out duration-200"
                     x-transition:enter-start="opacity-0 scale-95"

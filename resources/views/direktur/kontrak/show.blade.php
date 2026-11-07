@@ -17,10 +17,46 @@
             </div>
             <div class="flex flex-wrap items-center gap-2">
                 @if($contract->status === 'PENDING_APPROVAL')
+                    @php
+                        $picPhone = $contract->user?->pic_phone ?: $contract->user?->phone;
+                        $rawPhone = preg_replace('/[^0-9]/', '', (string)$picPhone);
+                        if (str_starts_with($rawPhone, '0')) {
+                            $waClientPhone = '62' . substr($rawPhone, 1);
+                        } elseif (str_starts_with($rawPhone, '62')) {
+                            $waClientPhone = $rawPhone;
+                        } else {
+                            $waClientPhone = $rawPhone ?: '6281234567890';
+                        }
+                        $clientName = $contract->user?->company_name ?: ($contract->user?->name ?: 'Mitra B2B');
+                        $waText = "Halo Bapak/Ibu PIC {$clientName}, kami dari Direksi Koperasi Agro Green Pasundan (GPA) terkait pengajuan kontrak kemitraan {$contract->contract_number} untuk komoditas {$contract->product->name}. Kami ingin mendiskusikan usulan harga Rp " . number_format($contract->fixed_price_per_kg, 0, ',', '.') . "/kg dan komitmen pasokan {$contract->committed_volume_per_cycle} kg. Terima kasih.";
+                        $waDirekturUrl = 'https://wa.me/' . $waClientPhone . '?text=' . rawurlencode($waText);
+                    @endphp
+                    @if($picPhone)
+                        <a href="{{ $waDirekturUrl }}" target="_blank"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg transition shadow-sm"
+                            title="Buka Chat WhatsApp untuk Negosiasi Harga">
+                            <x-gpa.icon name="whatsapp" class="h-3.5 w-3.5 text-white" />
+                            <span>Nego WA PIC Klien</span>
+                        </a>
+                    @endif
+
                     <form action="{{ route('direktur.kontrak.approve', $contract->id) }}" method="POST" class="inline">
                         @csrf
-                        <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-sm transition">
+                        <button type="submit" class="px-4 py-2 bg-ink hover:bg-brand-deep text-accent text-xs font-bold rounded-lg shadow-sm transition">
                             Sahkan Kontrak Ini
+                        </button>
+                    </form>
+
+                    <form action="{{ route('direktur.kontrak.reject', $contract->id) }}" method="POST" class="inline"
+                        data-gpa-prompt="Masukkan alasan penolakan kontrak (alasan ini akan diteruskan dan ditampilkan di portal klien):"
+                        data-gpa-title="Tolak Pengajuan Kontrak"
+                        data-gpa-tone="danger"
+                        data-gpa-input-name="rejection_reason"
+                        data-gpa-default="Margin usulan harga belum memenuhi batas kelayakan kemitraan B2B GPA."
+                        data-gpa-ok="Tolak Pengajuan">
+                        @csrf
+                        <button type="submit" class="px-3.5 py-2 bg-rose-50 border border-rose-300 hover:bg-rose-100 text-danger text-xs font-bold rounded-lg shadow-sm transition">
+                            Tolak Pengajuan
                         </button>
                     </form>
                 @elseif($contract->status === 'ACTIVE')
@@ -45,6 +81,21 @@
         @if(session('success'))
             <div class="p-4 bg-emerald-50 border-l-4 border-emerald-500 text-emerald-900 text-xs rounded shadow-sm">
                 <strong>Berhasil:</strong> {{ session('success') }}
+            </div>
+        @endif
+
+        @php
+            $rejectionRecord = app(\App\Services\TataKelolaService::class)->getSettings()['rejected_contracts'][$contract->user_id] ?? null;
+            $hasRejectionNote = $rejectionRecord && (($rejectionRecord['contract_id'] ?? null) == $contract->id || ($rejectionRecord['contract_number'] ?? null) == $contract->contract_number);
+        @endphp
+        @if($hasRejectionNote && $contract->status === 'TERMINATED')
+            <div class="p-4 bg-rose-50 border-l-4 border-rose-500 text-rose-900 text-xs rounded-lg shadow-sm flex items-start gap-2.5">
+                <x-gpa.icon name="alert-triangle" class="h-4 w-4 shrink-0 text-danger mt-0.5" />
+                <div>
+                    <strong class="font-bold">Pengajuan Kontrak Resmi Ditolak Direktur:</strong>
+                    <p class="mt-0.5 text-danger font-medium italic">"{{ $rejectionRecord['rejection_reason'] }}"</p>
+                    <span class="text-[10px] text-gray-500">Tercatat: {{ $rejectionRecord['rejected_at'] ?? '-' }}</span>
+                </div>
             </div>
         @endif
 
@@ -166,12 +217,16 @@
                     </div>
 
                     <div class="grid grid-cols-3 gap-2 items-center">
-                        <span class="text-gray-500">Harga Kesepakatan PKS:</span>
+                        <span class="text-gray-500">
+                            {{ $contract->status === 'PENDING_APPROVAL' ? 'Usulan Harga Klien (PKS):' : 'Harga Kesepakatan PKS:' }}
+                        </span>
                         <div class="col-span-2">
                             <span class="font-extrabold text-base text-emerald-700">
                                 Rp {{ number_format($contract->fixed_price_per_kg, 0, ',', '.') }}
                             </span>
-                            <span class="text-gray-500 text-[10px]">/Kg (Tetap)</span>
+                            <span class="text-gray-500 text-[10px]">
+                                {{ $contract->status === 'PENDING_APPROVAL' ? '/Kg (Usulan Awal)' : '/Kg (Tetap)' }}
+                            </span>
                             @php
                                 $diff = $contract->fixed_price_per_kg - $contract->product->base_price;
                             @endphp

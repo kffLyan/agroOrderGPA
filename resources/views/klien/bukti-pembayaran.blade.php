@@ -6,7 +6,7 @@
     $invoices = $invoices ?? [];
     $selected = $selected ?? ($invoices[0]['po'] ?? '');
     $selectedPo = $selectedPo ?? ($selected ?? ($invoices[0]['po'] ?? ''));
-    $creditLimit = $creditLimit ?? 50000000.0;
+    $creditLimit = $creditLimit ?? ($isB2b ? 50000000.0 : 0.0);
     $outstandingTotal = $outstandingTotal ?? 0.0;
     $form = $form ?? [
         'sender_bank' => '',
@@ -47,7 +47,7 @@
         <section class="flex flex-col gap-3 border-b border-line-soft pb-4 lg:flex-row lg:items-center lg:justify-between">
             <div class="flex min-w-0 flex-col gap-2">
                 <h1 class="gpa-section-title text-ink">Unggah Bukti Pembayaran &amp; Rekonsiliasi Bank</h1>
-                <p class="max-w-[60rem] text-sm leading-5 text-ink-body">Konfirmasi pembayaran transfer bank / giro korporat atas faktur tempo konsolidasi komoditas agro B2B.</p>
+                <p class="max-w-[60rem] text-sm leading-5 text-ink-body">Konfirmasi pembayaran transfer bank / kanal resmi atas {{ ($isB2b ?? false) ? 'faktur tempo konsolidasi komoditas agro B2B.' : 'tagihan transaksi komoditas segar GPA.' }}</p>
                 <p class="max-w-[60rem] text-xs leading-4 text-ink-quiet">Setiap bukti transfer akan diverifikasi silang dengan mutasi rekening koran BCA/Mandiri GPA oleh Staf Sekretariat.</p>
             </div>
 
@@ -88,7 +88,7 @@
                         Faktur Ini Telah Lunas &amp; Diverifikasi Sah oleh Sekretariat GPA
                     </h2>
                     <p class="text-xs leading-relaxed text-ink-body">
-                        Seluruh kewajiban pembayaran faktur <strong class="text-ink font-mono" x-text="current?.po"></strong> sebesar <strong class="text-ink" x-text="current?.payable_label"></strong> telah diterima di rekening giro resmi GPA dan diverifikasi sah oleh <strong class="text-ink" x-text="current?.verifier_name || 'Staf Sekretariat Keuangan GPA'"></strong>. Plafon kredit tempo Anda telah dipulihkan.
+                        Seluruh kewajiban pembayaran faktur <strong class="text-ink font-mono" x-text="current?.po"></strong> sebesar <strong class="text-ink" x-text="current?.payable_label"></strong> telah diterima di rekening giro resmi GPA dan diverifikasi sah oleh <strong class="text-ink" x-text="current?.verifier_name || 'Staf Sekretariat Keuangan GPA'"></strong>. {{ ($isB2b ?? false) ? 'Plafon kredit tempo Anda telah dipulihkan.' : 'Pesanan Anda telah dinyatakan lunas sah.' }}
                     </p>
                     <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-ink-body border-t border-success-deep/20 pt-2">
                         <span>Kanal: <strong class="text-ink" x-text="(current?.payment_method_label || current?.payment_method || 'Transfer Bank').replaceAll('_', ' ')"></strong></span>
@@ -697,7 +697,7 @@
                                 class="mt-0.5 h-4 w-4 shrink-0 rounded border-line-soft text-success-deep focus:ring-success">
                             <p class="text-xs leading-4 text-ink-body">
                                 <span class="font-bold text-ink">Pernyataan Kepatuhan Keuangan:</span>
-                                Saya menyatakan bahwa bukti transfer yang diunggah adalah sah, dana berasal dari rekening koran resmi perusahaan mitra, dan nominal yang dikirimkan sesuai dengan kewajiban tagihan tempo berjalan.
+                                Saya menyatakan bahwa bukti transfer yang diunggah adalah sah, dana berasal dari rekening resmi, dan nominal yang dikirimkan sesuai dengan kewajiban tagihan berjalan.
                             </p>
                         </div>
 
@@ -928,7 +928,7 @@
                                 <div x-show="isCurrentPaid" class="rounded-xl border border-success-deep/40 bg-surface-shell p-2.5 shadow-xs transition-all">
                                     <div class="flex flex-wrap items-center justify-between gap-2">
                                         <p class="text-xs font-bold leading-4 text-ink">
-                                            3. Kuitansi Resmi &amp; Plafon Pulih
+                                            3. {{ ($isB2b ?? false) ? 'Kuitansi Resmi & Plafon Pulih' : 'Kuitansi Resmi & Status Lunas' }}
                                         </p>
                                         <span class="rounded bg-accent px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[1.08px] text-ink">
                                             Lunas Sah
@@ -937,7 +937,9 @@
                                     <p class="font-mono text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-success-deep mt-1">
                                         Sistem Otomatis GPA
                                     </p>
-                                    <p class="pt-0.5 text-xs leading-4 text-ink">Status faktur lunas dan limit plafon kredit tempo kembali dipulihkan secara instan.</p>
+                                    <p class="pt-0.5 text-xs leading-4 text-ink">
+                                        {{ ($isB2b ?? false) ? 'Status faktur lunas dan limit plafon kredit tempo kembali dipulihkan secara instan.' : 'Status tagihan lunas sah dan Surat Jalan pengiriman dapat diproses.' }}
+                                    </p>
                                     <template x-if="current?.receipt_number">
                                         <div class="mt-1.5 flex items-center justify-between rounded bg-surface px-2 py-1 text-[11px] font-mono text-ink border border-line-soft">
                                             <span class="text-ink-quiet">No. Kuitansi:</span>
@@ -948,7 +950,9 @@
 
                                 <div x-show="!isCurrentPaid" class="flex flex-col gap-1 pt-0.5 opacity-60">
                                     <div class="flex items-center justify-between gap-2">
-                                        <p class="text-xs font-semibold leading-4 text-ink-body">3. Penerbitan Kuitansi Resmi &amp; Pemulihan Plafon</p>
+                                        <p class="text-xs font-semibold leading-4 text-ink-body">
+                                            3. {{ ($isB2b ?? false) ? 'Penerbitan Kuitansi Resmi & Pemulihan Plafon' : 'Penerbitan Kuitansi Resmi & Status Lunas' }}
+                                        </p>
                                         <span class="rounded bg-surface-shell px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-ink-quiet">
                                             Tahap Akhir
                                         </span>
@@ -956,7 +960,9 @@
                                     <p class="font-mono text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
                                         Sistem Otomatis GPA
                                     </p>
-                                    <p class="text-xs leading-4 text-ink-body">Status faktur berubah menjadi LUNAS dan limit plafon kredit tempo kembali dipulihkan secara instan.</p>
+                                    <p class="text-xs leading-4 text-ink-body">
+                                        {{ ($isB2b ?? false) ? 'Status faktur berubah menjadi LUNAS dan limit plafon kredit tempo kembali dipulihkan secara instan.' : 'Status tagihan berubah menjadi LUNAS dan pesanan siap diberangkatkan armada.' }}
+                                    </p>
                                 </div>
                             </div>
                         </li>
@@ -990,28 +996,45 @@
                 </section>
 
                 <section class="gpa-card flex flex-col gap-2 p-4">
-                    <h2 class="text-[11px] font-bold uppercase tracking-[0.55px] text-ink-body">Kondisi Plafon Kredit Tempo</h2>
+                    @if ($isB2b ?? false)
+                        <h2 class="text-[11px] font-bold uppercase tracking-[0.55px] text-ink-body">Kondisi Plafon Kredit Tempo</h2>
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="flex flex-col gap-1 rounded-lg bg-surface-shell p-3">
-                            <p class="text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
-                                Plafon Disetujui
-                            </p>
-                            <p class="font-mono text-sm font-bold tracking-[0.28px] text-ink">
-                                Rp {{ number_format($creditLimit, 0, ',', '.') }}
-                            </p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="flex flex-col gap-1 rounded-lg bg-surface-shell p-3">
+                                <p class="text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
+                                    Plafon Disetujui
+                                </p>
+                                <p class="font-mono text-sm font-bold tracking-[0.28px] text-ink">
+                                    Rp {{ number_format($creditLimit, 0, ',', '.') }}
+                                </p>
+                            </div>
+                            <div class="flex flex-col gap-1 rounded-lg bg-surface-shell p-3">
+                                <p class="text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
+                                    Total Tagihan Berjalan
+                                </p>
+                                <p class="font-mono text-sm font-bold tracking-[0.28px] text-success-deep">
+                                    Rp {{ number_format($outstandingTotal, 0, ',', '.') }}
+                                </p>
+                            </div>
                         </div>
-                        <div class="flex flex-col gap-1 rounded-lg bg-surface-shell p-3">
-                            <p class="text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">
-                                Total Tagihan Berjalan
-                            </p>
-                            <p class="font-mono text-sm font-bold tracking-[0.28px] text-success-deep">
-                                Rp {{ number_format($outstandingTotal, 0, ',', '.') }}
-                            </p>
-                        </div>
-                    </div>
 
-                    <p class="text-[10px] leading-4 text-ink-body">Setelah bukti diverifikasi sah oleh Sekretariat, sisa limit kredit Anda akan bertambah sebesar nominal yang dilunasi.</p>
+                        <p class="text-[10px] leading-4 text-ink-body">Setelah bukti diverifikasi sah oleh Sekretariat, sisa limit kredit Anda akan bertambah sebesar nominal yang dilunasi.</p>
+                    @else
+                        <h2 class="text-[11px] font-bold uppercase tracking-[0.55px] text-ink-body">Skema Pembayaran Klien Reguler</h2>
+
+                        <div class="flex flex-col gap-2 rounded-lg bg-surface-shell p-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">Status Skema</span>
+                                <span class="rounded bg-surface-pill px-2 py-0.5 text-[9px] font-bold text-ink">Pembayaran Dimuka / Langsung</span>
+                            </div>
+                            <div class="flex items-center justify-between border-t border-line-faint pt-2">
+                                <span class="text-[9px] font-semibold uppercase leading-3 tracking-[1.08px] text-ink-body">Total Tagihan Berjalan</span>
+                                <span class="font-mono text-sm font-bold tracking-[0.28px] text-success-deep">Rp {{ number_format($outstandingTotal, 0, ',', '.') }}</span>
+                            </div>
+                        </div>
+
+                        <p class="text-[10px] leading-4 text-ink-body">Pembayaran langsung diproses dan diverifikasi oleh Sekretariat Keuangan GPA sebelum Surat Jalan pengiriman diterbitkan.</p>
+                    @endif
                 </section>
             </div>
         </div>
@@ -1099,10 +1122,10 @@
         {{-- Modal Lightbox Barcode QRIS Layar Penuh --}}
         <template x-teleport="body">
             <div x-show="fullQrisModal" x-cloak 
-                class="fixed inset-0 z-[999999] flex items-center justify-center overflow-y-auto p-4 sm:p-6 bg-black/80 backdrop-blur-md"
+                class="fixed inset-0 z-[999999] flex items-center justify-center overflow-y-auto p-4 sm:p-6 bg-black/85"
                 @click.self="fullQrisModal = null" 
                 @keydown.escape.window="fullQrisModal = null">
-                <div class="relative m-auto flex max-h-[90vh] w-full max-w-md flex-col rounded-2xl border border-line-soft bg-surface p-5 shadow-2xl overflow-hidden"
+                <div class="relative m-auto flex max-h-[90vh] w-full max-w-md transform-gpu flex-col rounded-2xl border border-line-soft bg-surface p-5 shadow-2xl overflow-hidden"
                     @click.stop>
                     {{-- Header Modal --}}
                     <div class="relative flex items-center justify-between pb-3 border-b border-line-soft shrink-0">

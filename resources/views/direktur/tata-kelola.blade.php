@@ -760,10 +760,14 @@
             {{-- Modal Lightbox Pratinjau Layar Penuh Barcode QRIS --}}
             <template x-teleport="body">
                 <div x-show="modalImage" x-cloak 
-                    class="fixed inset-0 z-[999999] flex items-center justify-center overflow-y-auto p-4 sm:p-6 bg-black/80 backdrop-blur-md" 
+                    class="fixed inset-0 z-[999999] flex items-center justify-center overflow-y-auto p-4 sm:p-6 bg-black/85 overscroll-contain" 
+                    x-effect="
+                        document.body.classList.toggle('overflow-hidden', Boolean(modalImage));
+                        document.documentElement.classList.toggle('overflow-hidden', Boolean(modalImage));
+                    "
                     @click.self="modalImage = null" 
                     @keydown.escape.window="modalImage = null">
-                    <div class="relative m-auto flex max-h-[90vh] w-full max-w-md flex-col rounded-2xl border border-line-soft bg-surface p-5 shadow-2xl overflow-hidden"
+                    <div class="relative m-auto flex max-h-[90vh] w-full max-w-md transform-gpu flex-col rounded-2xl border border-line-soft bg-surface p-5 shadow-2xl overflow-hidden"
                         @click.stop>
                         <div class="relative flex items-center justify-between pb-3 border-b border-line-soft shrink-0">
                             <div class="text-left">
@@ -979,15 +983,19 @@
 
         {{-- Modal Pengaturan Parameter Kebijakan & PPN 11% (Direktur) --}}
         <div x-show="paramModalOpen" x-cloak
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm"
-            x-transition:enter="transition ease-out duration-200"
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 overscroll-contain"
+            x-effect="
+                document.body.classList.toggle('overflow-hidden', paramModalOpen);
+                document.documentElement.classList.toggle('overflow-hidden', paramModalOpen);
+            "
+            x-transition:enter="transition ease-out duration-150"
             x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100"
-            x-transition:leave="transition ease-in duration-150"
+            x-transition:leave="transition ease-in duration-100"
             x-transition:leave-start="opacity-100"
             x-transition:leave-end="opacity-0">
             
-            <div class="w-full max-w-lg rounded-2xl bg-surface p-6 shadow-2xl border border-line space-y-5"
+            <div class="w-full max-w-lg transform-gpu rounded-2xl bg-surface p-6 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] ring-1 ring-white/10 border border-line space-y-5"
                 @click.away="paramModalOpen = false">
                 <div class="flex items-center justify-between border-b border-line pb-3">
                     <div class="flex items-center gap-2">

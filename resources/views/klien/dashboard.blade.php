@@ -23,7 +23,14 @@
                 'packaging' => $ord->delivery_address ?: 'Dock Logistik Mitra',
                 'weight' => (int) $totalQty > 0 ? number_format($totalQty, 0, ',', '.') . ' kg' : null,
                 'weight_note' => in_array($ord->status, ['SELESAI', 'SELESAI_CATATAN']) ? '(Netto Sah)' : '(Estimasi PO)',
-                'scale_note' => in_array($ord->status, ['SELESAI', 'SELESAI_CATATAN']) ? 'Timbang Tera SAH' : (in_array($ord->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN']) ? 'Netto Sah Siap Kirim' : 'Menunggu Tera Akhir'),
+                'scale_note' => match ($ord->status) {
+                    'SELESAI', 'SELESAI_CATATAN' => 'Netto Sah Diterima',
+                    'SIAP_KIRIM', 'DALAM_PENGIRIMAN' => 'Muatan Siap Kirim',
+                    'LUNAS' => 'Pembayaran Terverifikasi',
+                    'MENUNGGU_PEMBAYARAN' => 'Menunggu Pembayaran',
+                    'BATAL' => 'Pesanan Dibatalkan',
+                    default => 'Menunggu Verifikasi Kuota',
+                },
                 'driver' => in_array($ord->status, ['DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? $driverName : null,
                 'sj' => in_array($ord->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? $sjNumber : null,
                 'driver_note' => in_array($ord->status, ['DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? ($ord->vehicle_plate_number ?: 'Chiller Truck Ready') : 'Menunggu Alokasi Supir',
@@ -178,6 +185,72 @@
                                 class="inline-flex items-center gap-2 rounded-xl bg-surface-pill px-4 py-2.5 font-sans text-xs font-bold text-ink outline outline-1 outline-line-hair transition-all hover:bg-surface-disabled">
                                 <x-gpa.icon name="message-square" class="h-4 w-4 text-success-deep" />
                                 <span>Konfirmasi via WhatsApp</span>
+                            </a>
+                        </div>
+                    </div>
+                </section>
+            @elseif ($rejectedContract)
+                {{-- Banner Pemberitahuan Penolakan Pengajuan Kontrak B2B --}}
+                <section
+                    class="relative overflow-hidden rounded-2xl border border-danger/40 bg-gradient-to-r from-danger/15 via-danger/5 to-surface p-5 lg:p-6 shadow-sm">
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                        <div class="flex items-start gap-3.5 min-w-0">
+                            <span
+                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-danger/20 text-danger">
+                                <x-gpa.icon name="alert-triangle" class="h-5 w-5" />
+                            </span>
+                            <div class="flex flex-col gap-1.5 min-w-0">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span
+                                        class="rounded-full bg-danger/20 border border-danger/30 px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-danger">
+                                        Pengajuan Kontrak Ditolak
+                                    </span>
+                                    <span class="font-mono text-xs font-semibold text-ink">
+                                        No. PKS: {{ $rejectedContract['contract_number'] ?? '-' }}
+                                    </span>
+                                    @if (!empty($rejectedContract['rejected_at']))
+                                        <span class="text-[11px] text-ink-quiet font-mono">
+                                            &bull; {{ $rejectedContract['rejected_at'] }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <h2 class="text-base font-bold text-ink">
+                                    Pengajuan Kontrak Kemitraan {{ $rejectedContract['product_name'] ?? 'Komoditas' }} Tidak Disetujui
+                                </h2>
+                                <p class="max-w-3xl text-xs leading-relaxed text-ink-body">
+                                    Proposal kemitraan B2B yang Anda ajukan belum dapat disahkan oleh Direksi GPA pada tahap ini. Anda dapat mempelajari catatan penolakan di bawah untuk mengajukan revisi proposal baru atau berkonsultasi via WhatsApp.
+                                </p>
+
+                                {{-- Kotak Alasan Penolakan dari Direktur --}}
+                                <div class="mt-1 rounded-xl border border-danger/20 bg-surface p-3.5 shadow-2xs">
+                                    <div class="flex items-start gap-2.5">
+                                        <div class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-danger/10 text-danger mt-0.5">
+                                            <x-gpa.icon name="x" class="h-3 w-3" />
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="font-mono text-[11px] font-bold uppercase tracking-wider text-danger">
+                                                Alasan Penolakan dari {{ $rejectedContract['rejected_by'] ?? 'Direktur Utama GPA' }}:
+                                            </p>
+                                            <p class="mt-1 text-xs font-medium leading-relaxed text-ink italic">
+                                                "{{ $rejectedContract['rejection_reason'] ?? 'Margin usulan harga atau komitmen volume belum memenuhi batas kelayakan.' }}"
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex shrink-0 flex-wrap items-center gap-2 pt-1 lg:pt-0">
+                            <button type="button" @click="showContractModal = true"
+                                class="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 font-sans text-xs font-bold text-accent shadow-sm transition hover:bg-brand-deep">
+                                <x-gpa.icon name="plus" class="h-4 w-4 text-accent" />
+                                <span>Ajukan Proposal Baru</span>
+                            </button>
+                            <a href="https://wa.me/6281112233445?text={{ rawurlencode('Halo Tim Kemitraan GPA, saya ingin berkonsultasi mengenai penolakan proposal kontrak PKS ' . ($rejectedContract['contract_number'] ?? '') . ': ' . ($rejectedContract['rejection_reason'] ?? '')) }}"
+                                target="_blank" rel="noopener noreferrer"
+                                class="inline-flex items-center gap-2 rounded-xl bg-surface-pill px-4 py-2.5 font-sans text-xs font-bold text-emerald-800 border border-emerald-200 transition hover:bg-emerald-50">
+                                <x-gpa.icon name="whatsapp" class="h-4 w-4 text-emerald-700" />
+                                <span>Konsultasi WA</span>
                             </a>
                         </div>
                     </div>
@@ -391,8 +464,8 @@
                         <p class="flex items-center gap-1.5 gpa-micro-bold text-success-deep">
                             Fase 1 &bull; Selesai
                         </p>
-                        <p class="pt-0.5 text-sm font-bold leading-5 text-ink">Verifikasi PO</p>
-                        <p class="gpa-body text-ink-body">Disetujui oleh Sekretariat GPA &amp; alokasi kuota panen dikunci.</p>
+                        <p class="pt-0.5 text-sm font-bold leading-5 text-ink">Pengajuan Draf PO</p>
+                        <p class="gpa-body text-ink-body">Draf kebutuhan komoditas diajukan mandiri dari katalog web.</p>
                     </li>
 
                     <li class="flex flex-col gap-1 rounded-xl border border-transparent p-3">
@@ -405,8 +478,8 @@
                         <p class="flex items-center gap-1.5 gpa-micro-bold text-success-deep">
                             Fase 2 &bull; Selesai
                         </p>
-                        <p class="pt-0.5 text-sm font-bold leading-5 text-ink">Sortir &amp; Grading</p>
-                        <p class="gpa-body text-ink-body">QC Grade Super di Packing House Lembang dinyatakan lolos 100%.</p>
+                        <p class="pt-0.5 text-sm font-bold leading-5 text-ink">Verifikasi &amp; Kunci Kuota</p>
+                        <p class="gpa-body text-ink-body">Disetujui oleh Sekretariat GPA &amp; alokasi kuota panen dikunci.</p>
                     </li>
 
                     <li class="flex flex-col gap-1 rounded-xl border border-transparent p-3">
@@ -419,8 +492,8 @@
                         <p class="flex items-center gap-1.5 gpa-micro-bold text-success-deep">
                             Fase 3 &bull; Selesai
                         </p>
-                        <p class="pt-0.5 text-sm font-bold leading-5 text-ink">Penimbangan Tera</p>
-                        <p class="gpa-body text-ink-body">Netto sah ditimbang digital sebelum armada diberangkatkan.</p>
+                        <p class="pt-0.5 text-sm font-bold leading-5 text-ink">Surat Jalan &amp; Armada</p>
+                        <p class="gpa-body text-ink-body">Surat Jalan resmi diterbitkan &amp; armada chiller siap berangkat.</p>
                     </li>
 
                     <li class="flex flex-col gap-1 rounded-xl border border-accent-edge bg-surface-shell p-3">
@@ -452,8 +525,8 @@
                         <p class="flex items-center gap-1.5 gpa-micro-bold text-ink-body">
                             Fase 5 &bull; Menunggu Tiba
                         </p>
-                        <p class="pt-0.5 text-sm font-bold leading-5 text-ink-quiet">Bongkar Muat Dock Klien</p>
-                        <p class="gpa-body text-ink-body">Pemeriksaan timbang ulang serah-terima dan tanda tangan digital BAST.
+                        <p class="pt-0.5 text-sm font-bold leading-5 text-ink-quiet">Serah Terima &amp; Bukti PoD</p>
+                        <p class="gpa-body text-ink-body">Pemeriksaan fisik komoditas di receiving dock, foto bukti PoD, dan pengesahan surat jalan.
                         </p>
                     </li>
                 </ol>
@@ -889,15 +962,36 @@
         {{-- ---------------------------------------------------------------- --}}
         @if (!$isContractClient && !$pendingContract)
             <div x-cloak x-show="showContractModal"
-                class="fixed inset-0 z-50 flex min-h-full items-center justify-center overflow-y-auto bg-black/60 p-3 sm:p-6 backdrop-blur-sm"
-                x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0"
-                x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-150"
-                x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+                class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-3 sm:p-6 overscroll-contain"
+                role="dialog" aria-modal="true"
+                @keydown.escape.window="showContractModal = false"
+                x-effect="
+                    document.body.classList.toggle('overflow-hidden', showContractModal);
+                    document.documentElement.classList.toggle('overflow-hidden', showContractModal);
+                ">
 
-                <div @click.away="showContractModal = false"
-                    class="relative my-auto flex max-h-[92vh] w-full max-w-xl flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl outline outline-1 outline-line-board/50"
-                    x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 scale-95"
-                    x-transition:enter-end="opacity-100 scale-100">
+                {{-- Backdrop Gelap Berfokus Tinggi (Zero-Lag 60fps dengan deep dark overlay & scroll lock) --}}
+                <div class="fixed inset-0 bg-black/80 transition-opacity"
+                    x-show="showContractModal"
+                    x-transition:enter="ease-out duration-150"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="ease-in duration-100"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    @click="showContractModal = false"
+                    @wheel.prevent
+                    @touchmove.prevent></div>
+
+                {{-- Kontainer Kartu Modal Berfokus Tajam --}}
+                <div class="relative my-auto flex max-h-[92vh] w-full max-w-2xl transform-gpu flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] ring-1 ring-white/10 border border-line-board/80 overscroll-contain"
+                    x-show="showContractModal"
+                    x-transition:enter="ease-out duration-150"
+                    x-transition:enter-start="opacity-0 scale-98"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    x-transition:leave="ease-in duration-100"
+                    x-transition:leave-start="opacity-100 scale-100"
+                    x-transition:leave-end="opacity-0 scale-98">
 
                     <header class="flex shrink-0 items-start justify-between border-b border-line-hair pb-3.5">
                         <div class="flex flex-col gap-1">
@@ -911,13 +1005,13 @@
                             </p>
                         </div>
                         <button type="button" @click="showContractModal = false"
-                            class="rounded-lg p-1 text-ink-quiet hover:bg-surface-disabled hover:text-ink">
+                            class="rounded-lg p-1.5 text-ink-quiet hover:bg-surface-disabled hover:text-ink transition">
                             <x-gpa.icon name="x" class="h-5 w-5" />
                         </button>
                     </header>
 
                     <form action="{{ route('klien.pengajuan-kontrak') }}" method="POST"
-                        class="mt-3 flex flex-1 flex-col gap-3.5 overflow-y-auto pr-1 gpa-scrollbar">
+                        class="mt-3 flex flex-1 flex-col gap-3.5 overflow-y-auto pr-1 gpa-scrollbar overscroll-contain">
                         @csrf
 
                         {{-- SEKSI 1: IDENTITAS ENTITAS USAHA (Tabel users) --}}
@@ -994,42 +1088,115 @@
                             </p>
                         </div>
 
-                        {{-- SEKSI 3: KLAUSUL PASOKAN & TERMIN (Tabel contracts) --}}
-                        <div class="rounded-xl border border-line-hair bg-surface-shell/40 p-3.5 space-y-2.5">
-                            <div class="flex items-center gap-1.5 border-b border-line-hair pb-1.5">
-                                <x-gpa.icon name="package" class="h-3.5 w-3.5 text-brand-deep" />
-                                <h4 class="font-mono text-xs font-bold uppercase tracking-wider text-ink">3. Klausul Pasokan
-                                    Komoditas &amp; Finansial</h4>
-                            </div>
-
-                            <div>
-                                <label class="mb-1 block font-mono text-xs font-semibold text-ink">Komoditas Utama yang
-                                    Dikontrakkan <span class="text-danger">*</span></label>
-                                <select name="product_id" required
-                                    class="h-9 w-full rounded-lg border border-line-strong bg-surface px-3 text-xs text-ink focus:border-brand focus:ring-0">
-                                    <option value="">-- Pilih Komoditas --</option>
-                                    @foreach ($allAvailableProducts as $prod)
-                                        <option value="{{ $prod->id }}">
-                                            {{ $prod->name }} (Rp {{ number_format($prod->base_price, 0, ',', '.') }}/kg) - Min
-                                            Order {{ $prod->minimum_order }} kg
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="grid grid-cols-2 gap-2.5">
-                                <div>
-                                    <label class="mb-1 block font-mono text-xs font-semibold text-ink">Estimasi Komitmen Volume
-                                        (Kg) <span class="text-danger">*</span></label>
-                                    <input type="number" name="committed_volume_per_cycle" min="50" step="10" required
-                                        placeholder="Contoh: 500"
-                                        class="h-9 w-full rounded-lg border border-line-strong bg-surface px-3 font-mono text-xs text-ink focus:border-brand focus:ring-0">
-                                    <span class="mt-0.5 block text-[10px] text-ink-quiet">Minimal 50 kg per siklus kirim</span>
+                        <div x-data="{
+                            selectedProductId: '{{ old('product_id', '') }}',
+                            proposedVolume: '{{ old('committed_volume_per_cycle', '') }}',
+                            proposedPrice: '{{ old('proposed_price_per_kg', '') }}',
+                            proposedTop: '{{ old('top_days', '30') }}',
+                            products: {{ Js::from($allAvailableProducts->map(fn($p) => ['id' => (string)$p->id, 'name' => $p->name, 'price' => (float)$p->base_price, 'min' => (float)$p->minimum_order])) }},
+                            get selectedProduct() {
+                                return this.products.find(p => p.id == this.selectedProductId);
+                            },
+                            get priceDiff() {
+                                if (!this.selectedProduct || !this.proposedPrice) return 0;
+                                return Number(this.proposedPrice) - this.selectedProduct.price;
+                            },
+                            get discountPct() {
+                                if (!this.selectedProduct || !this.proposedPrice || this.priceDiff >= 0) return 0;
+                                return Math.round((Math.abs(this.priceDiff) / this.selectedProduct.price) * 100);
+                            },
+                            get waMessage() {
+                                const pic = '{{ addslashes(Auth::user()->pic_name ?: Auth::user()->name) }}';
+                                const company = '{{ addslashes(Auth::user()->company_name ?: Auth::user()->name) }}';
+                                const prod = this.selectedProduct ? this.selectedProduct.name : 'Komoditas Sayur';
+                                const vol = this.proposedVolume ? this.proposedVolume + ' kg/siklus' : 'volume pasokan rutin';
+                                const prc = this.proposedPrice ? 'Rp ' + Number(this.proposedPrice).toLocaleString('id-ID') + '/kg' : (this.selectedProduct ? 'Rp ' + Number(this.selectedProduct.price).toLocaleString('id-ID') + '/kg (harga katalog)' : 'perkiraan harga khusus');
+                                return encodeURIComponent(`Halo Tim Kemitraan GPA, saya ${pic} dari ${company} ingin berkonsultasi mengenai proposal kontrak PKS komoditas ${prod}, estimasi volume ${vol}, dengan usulan harga ${prc} (TOP ${this.proposedTop} hari). Mohon informasinya. Terima kasih.`);
+                            }
+                        }" class="space-y-3.5">
+                            {{-- SEKSI 3: KLAUSUL PASOKAN & TERMIN (Tabel contracts) --}}
+                            <div class="rounded-xl border border-line-hair bg-surface-shell/40 p-3.5 space-y-2.5">
+                                <div class="flex items-center gap-1.5 border-b border-line-hair pb-1.5">
+                                    <x-gpa.icon name="package" class="h-3.5 w-3.5 text-brand-deep" />
+                                    <h4 class="font-mono text-xs font-bold uppercase tracking-wider text-ink">3. Klausul Pasokan
+                                        Komoditas &amp; Finansial</h4>
                                 </div>
+
                                 <div>
-                                    <label class="mb-1 block font-mono text-xs font-semibold text-ink">Term of Payment (TOP)
-                                        <span class="text-danger">*</span></label>
-                                    <select name="top_days" required
+                                    <label class="mb-1 block font-mono text-xs font-semibold text-ink">Komoditas Utama yang
+                                        Dikontrakkan <span class="text-danger">*</span></label>
+                                    <select name="product_id" required x-model="selectedProductId"
+                                        class="h-9 w-full rounded-lg border border-line-strong bg-surface px-3 text-xs text-ink focus:border-brand focus:ring-0">
+                                        <option value="">-- Pilih Komoditas --</option>
+                                        @foreach ($allAvailableProducts as $prod)
+                                            <option value="{{ $prod->id }}">
+                                                {{ $prod->name }} (Rp {{ number_format($prod->base_price, 0, ',', '.') }}/kg) - Min Order {{ $prod->minimum_order }} kg
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+                                    {{-- Kolom 1: Volume --}}
+                                    <div>
+                                        <div class="flex items-center justify-between h-5 mb-1.5">
+                                            <label class="font-mono text-xs font-semibold text-ink">
+                                                Estimasi Volume <span class="text-danger">*</span>
+                                            </label>
+                                            <span class="text-[10px] text-ink-quiet font-mono">Kg / siklus</span>
+                                        </div>
+                                        <input type="number" name="committed_volume_per_cycle" min="50" step="10" required
+                                            x-model="proposedVolume"
+                                            placeholder="Contoh: 500"
+                                            class="h-9 w-full rounded-lg border border-line-strong bg-surface px-3 font-mono text-xs text-ink focus:border-brand focus:ring-0">
+                                        <div class="mt-1 h-5 flex items-center">
+                                            <span class="text-[10px] text-ink-quiet truncate">Minimal 50 kg per siklus kirim</span>
+                                        </div>
+                                    </div>
+
+                                    {{-- Kolom 2: Usulan Harga --}}
+                                    <div>
+                                        <div class="flex items-center justify-between h-5 mb-1.5">
+                                            <label class="font-mono text-xs font-semibold text-ink">
+                                                Usulan Harga (Rp/Kg)
+                                            </label>
+                                            <span class="rounded bg-surface-muted px-1.5 py-0.5 text-[9px] font-mono font-medium text-ink-quiet">Opsional</span>
+                                        </div>
+                                        <div class="relative">
+                                            <span class="pointer-events-none absolute left-3 top-2 font-mono text-xs font-bold text-ink-quiet">Rp</span>
+                                            <input type="number" name="proposed_price_per_kg" min="100" step="100"
+                                                x-model="proposedPrice"
+                                                :placeholder="selectedProduct ? selectedProduct.price : 'Harga katalog'"
+                                                class="h-9 w-full rounded-lg border border-line-strong bg-surface pl-9 pr-3 font-mono text-xs text-ink focus:border-brand focus:ring-0">
+                                        </div>
+                                        <div class="mt-1 h-5 flex items-center">
+                                            <template x-if="selectedProduct && proposedPrice && priceDiff < 0">
+                                                <span class="text-[10px] font-bold text-emerald-700 truncate">
+                                                    🟢 Diskon -Rp <span x-text="Math.abs(priceDiff).toLocaleString('id-ID')"></span>/kg (-<span x-text="discountPct"></span>%)
+                                                </span>
+                                            </template>
+                                            <template x-if="selectedProduct && proposedPrice && priceDiff > 0">
+                                                <span class="text-[10px] font-bold text-blue-700 truncate">
+                                                    🔵 Premi +Rp <span x-text="priceDiff.toLocaleString('id-ID')"></span>/kg
+                                                </span>
+                                            </template>
+                                            <template x-if="!proposedPrice">
+                                                <span class="text-[10px] text-ink-quiet truncate">
+                                                    Default sesuai harga katalog GPA
+                                                </span>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="flex items-center justify-between h-5 mb-1.5">
+                                        <label class="font-mono text-xs font-semibold text-ink">
+                                            Term of Payment (TOP) <span class="text-danger">*</span>
+                                        </label>
+                                        <span class="text-[10px] text-ink-quiet font-mono">Fasilitas tempo bayar invoice</span>
+                                    </div>
+                                    <select name="top_days" required x-model="proposedTop"
                                         class="h-9 w-full rounded-lg border border-line-strong bg-surface px-3 text-xs text-ink focus:border-brand focus:ring-0">
                                         <option value="14">TOP 14 Hari Kalender</option>
                                         <option value="30" selected>TOP 30 Hari Kalender (Standar)</option>
@@ -1037,31 +1204,28 @@
                                     </select>
                                 </div>
                             </div>
-                        </div>
 
-                        {{-- SEKSI 4: HOTLINE WHATSAPP KEMITRAAN GPA --}}
-                        <div
-                            class="flex items-center justify-between rounded-xl border border-line-hair bg-surface-pill p-2.5 text-xs">
-                            <div class="flex items-center gap-2">
-                                <span
-                                    class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
-                                    <x-gpa.icon name="message-square" class="h-3.5 w-3.5 text-white" />
-                                </span>
-                                <div>
-                                    <p class="font-bold text-ink">Hotline WhatsApp Tim Kemitraan GPA</p>
-                                    <p class="text-[10px] text-ink-body">Konsultasi langsung PKS: <strong>+62
-                                            811-1223-3445</strong></p>
+                            {{-- SEKSI 4: HOTLINE WHATSAPP KEMITRAAN GPA --}}
+                            <div class="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3 text-xs">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-2xs">
+                                        <x-gpa.icon name="whatsapp" class="h-4 w-4 text-white" />
+                                    </span>
+                                    <div class="min-w-0">
+                                        <p class="font-bold text-emerald-950 truncate">Konsultasi Langsung via WhatsApp</p>
+                                        <p class="text-[11px] text-emerald-800 font-mono">+62 811-1223-3445 &bull; Hotline Tim GPA</p>
+                                    </div>
                                 </div>
+                                <a :href="'https://wa.me/6281112233445?text=' + waMessage"
+                                    target="_blank" rel="noopener noreferrer"
+                                    class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 font-sans text-xs font-bold text-white shadow-2xs hover:bg-emerald-700 transition">
+                                    <x-gpa.icon name="whatsapp" class="h-3.5 w-3.5 text-white" />
+                                    <span>Nego WA</span>
+                                </a>
                             </div>
-                            <a href="https://wa.me/6281112233445?text=Halo%20Tim%20Kemitraan%20GPA,%20saya%20ingin%20berkonsultasi%20mengenai%20kontrak%20B2B"
-                                target="_blank" rel="noopener noreferrer"
-                                class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-surface px-2.5 py-1 font-mono text-[10px] font-bold text-emerald-800 border border-emerald-300 hover:bg-emerald-50 transition">
-                                <x-gpa.icon name="phone" class="h-3 w-3 text-emerald-700" />
-                                <span>Hubungi GPA</span>
-                            </a>
                         </div>
 
-                        <footer class="mt-2 flex shrink-0 items-center justify-end gap-2 border-t border-line-hair pt-3">
+                        <footer class="mt-1 flex shrink-0 items-center justify-end gap-2 border-t border-line-hair pt-3">
                             <button type="button" @click="showContractModal = false"
                                 class="rounded-lg bg-surface-disabled px-4 py-2 font-mono text-xs font-semibold text-ink hover:bg-surface-muted transition">
                                 Batal

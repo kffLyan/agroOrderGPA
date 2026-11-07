@@ -20,6 +20,7 @@ class SimpanPengajuanKontrakRequest extends FormRequest
         return [
             'product_id'                 => ['required', 'exists:products,id'],
             'committed_volume_per_cycle' => ['required', 'numeric', 'min:50', 'max:50000'],
+            'proposed_price_per_kg'      => ['nullable', 'numeric', 'min:100', 'max:10000000'],
             'top_days'                   => ['required', 'integer', 'in:14,30,45'],
             'company_name'               => ['nullable', 'string', 'max:150'],
             'address'                    => ['nullable', 'string', 'max:255'],

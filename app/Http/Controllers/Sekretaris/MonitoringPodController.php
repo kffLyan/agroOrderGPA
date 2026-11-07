@@ -50,7 +50,10 @@ class MonitoringPodController extends Controller
                             ->orWhere('vehicle_plate_number', 'LIKE', "%{$search}%")
                             ->orWhereHas('user', function ($userQuery) use ($search) {
                                 $userQuery->where('name', 'LIKE', "%{$search}%")
-                                          ->orWhere('company_name', 'LIKE', "%{$search}%");
+                                          ->orWhere('company_name', 'LIKE', "%{$search}%")
+                                          ->orWhere('phone', 'LIKE', "%{$search}%")
+                                          ->orWhere('pic_name', 'LIKE', "%{$search}%")
+                                          ->orWhere('pic_phone', 'LIKE', "%{$search}%");
                             })
                             ->orWhereHas('driver', function ($driverQuery) use ($search) {
                                 $driverQuery->where('name', 'LIKE', "%{$search}%");

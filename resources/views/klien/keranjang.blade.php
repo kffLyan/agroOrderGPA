@@ -55,16 +55,21 @@
 
     $demoLines = $demoLines ?? [];
 
+    $taxSettings = $taxSettings ?? app(\App\Services\TataKelolaService::class)->getTaxSettings();
+    $shippingSettings = $shippingSettings ?? app(\App\Services\TataKelolaService::class)->getShippingSettings();
+
     $cartDefaults = [
-        'date'             => $defaultDeliveryDate,
-        'window'           => '04:00 - 06:00 WIB (Subuh)',
-        'driver_note'      => 'Harap konfirmasi ke PIC dock penerimaan 30 menit sebelum armada tiba.',
-        'dock'             => 'dock-utama',
-        'docks'            => $docks,
-        'default_address'  => $defaultAddress,
-        'payment'          => $isB2b ? 'TEMPO_TOP' : 'TRANSFER_BANK',
-        'status'           => 'Draf Siap Diajukan',
-        'submitted_status' => 'Menunggu Verifikasi Admin',
+        'date'              => $defaultDeliveryDate,
+        'window'            => '04:00 - 06:00 WIB (Subuh)',
+        'driver_note'       => 'Harap konfirmasi ke PIC dock penerimaan 30 menit sebelum armada tiba.',
+        'dock'              => 'dock-utama',
+        'docks'             => $docks,
+        'default_address'   => $defaultAddress,
+        'payment'           => $isB2b ? 'TEMPO_TOP' : 'TRANSFER_BANK',
+        'status'            => 'Draf Siap Diajukan',
+        'submitted_status'  => 'Menunggu Verifikasi Sekretaris',
+        'tax_settings'      => $taxSettings,
+        'shipping_settings' => $shippingSettings,
     ];
 @endphp
 
@@ -480,23 +485,43 @@
                         </div>
 
                         <div class="flex items-start justify-between gap-3">
-                            <dt class="flex items-center gap-1.5 gpa-body text-ink-body">
-                                Biaya Distribusi Logistik
-                                <x-gpa.icon name="info" class="h-3 w-3 text-success" />
+                            <dt class="flex flex-col gap-0.5">
+                                <span class="flex items-center gap-1.5 gpa-body text-ink-body">
+                                    Biaya Distribusi Logistik
+                                    <x-gpa.icon name="truck" class="h-3.5 w-3.5 text-ink-quiet" />
+                                </span>
+                                <span class="gpa-micro text-ink-quiet">
+                                    Disesuaikan saat verifikasi armada &amp; rute oleh Sekretaris
+                                </span>
                             </dt>
                             <dd class="shrink-0 text-right">
-                                <p class="gpa-meta-lg font-bold text-success" x-text="money(shipping())"></p>
-                                <p class="gpa-micro text-ink-quiet">Gratis ongkir</p>
+                                <span class="inline-flex items-center rounded bg-surface-muted px-2 py-0.5 font-mono text-xs font-bold text-ink ring-1 ring-inset ring-line-hair">
+                                    Disesuaikan Sekretaris
+                                </span>
+                                <p class="gpa-micro text-ink-quiet mt-0.5">Menunggu Verifikasi</p>
                             </dd>
                         </div>
 
                         <div class="flex items-start justify-between gap-3">
-                            <dt class="gpa-body text-ink-quiet">PPN Hasil Pertanian (PPN DTP)</dt>
-                            <dd>
-                                <span
-                                    class="inline-block rounded bg-surface-pill px-1.5 py-0.5 gpa-micro-bold text-ink-quiet">
-                                    Bebas PPN 0%
+                            <dt class="flex flex-col gap-0.5">
+                                <span class="flex items-center gap-1.5 gpa-body text-ink-body">
+                                    PPN (11%)
+                                    <x-gpa.icon name="info" class="h-3.5 w-3.5 text-success" />
                                 </span>
+                                <span class="gpa-micro text-ink-quiet">
+                                    {{ $taxSettings['note'] ?? 'Pajak Pertambahan Nilai (PPN 11%)' }}
+                                </span>
+                            </dt>
+                            <dd class="shrink-0 text-right">
+                                <p class="gpa-meta-lg font-bold text-ink" x-text="money(tax())"></p>
+                                <template x-if="taxRate() === 0">
+                                    <p class="gpa-micro font-bold text-success-deep">Bebas PPN 0%</p>
+                                </template>
+                                <template x-if="taxRate() > 0">
+                                    <span class="inline-flex items-center rounded bg-brand/10 px-1.5 py-0.5 gpa-micro-bold text-brand">
+                                        Tarif <span x-text="taxRate()"></span>%
+                                    </span>
+                                </template>
                             </dd>
                         </div>
                     </dl>
@@ -504,7 +529,9 @@
                     <div class="flex flex-col gap-1.5 border-y border-line-hair bg-surface-muted/50 px-4 py-4">
                         <p class="gpa-micro-bold text-ink-quiet">Total Nilai Estimasi PO</p>
                         <p class="font-sans text-xl font-extrabold leading-7 text-ink" x-text="money(grandTotal())"></p>
-                        <p class="gpa-body text-ink-body">*Nilai tagihan final dihitung berdasarkan bobot netto riil pada timbangan digital packing house.</p>
+                        <p class="gpa-body text-xs text-ink-body leading-relaxed">
+                            *Estimasi total pesanan. Nilai tagihan resmi, ongkos kirim armada, dan faktur tempo disahkan oleh Sekretaris Operasional saat verifikasi pesanan.
+                        </p>
                     </div>
 
                     {{-- Informasi Alur Pembayaran GPA (Sesuai SOP Verifikasi Sekretaris) --}}
@@ -541,7 +568,7 @@
                                     </div>
                                     <div class="flex items-start gap-2">
                                         <span class="rounded bg-warning/30 px-1 font-mono text-[10px] font-bold text-warning-deep">02</span>
-                                        <p class="text-ink-body"><strong>Verifikasi Sekretaris:</strong> Admin memeriksa kuota panen riil kebun (&lt; 2 jam kerja).</p>
+                                        <p class="text-ink-body"><strong>Verifikasi Sekretaris:</strong> Sekretaris memeriksa kuota panen riil kebun (&lt; 2 jam kerja).</p>
                                     </div>
                                     <div class="flex items-start gap-2">
                                         <span class="rounded bg-brand/20 px-1 font-mono text-[10px] font-bold text-brand">03</span>
@@ -579,7 +606,7 @@
                                     <span class="inline-flex items-center gap-2">
                                         <x-gpa.icon name="send" class="h-4 w-4 text-white" />
                                         <span class="font-sans text-sm font-bold uppercase tracking-tight text-white">
-                                            Ajukan PO ke Admin
+                                            Ajukan PO ke Sekretaris
                                         </span>
                                     </span>
                                 </template>
@@ -590,7 +617,7 @@
                                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                         </svg>
                                         <span class="font-sans text-sm font-bold uppercase tracking-tight text-white">
-                                            Mengajukan PO ke Admin...
+                                            Mengajukan PO ke Sekretaris...
                                         </span>
                                     </span>
                                 </template>
@@ -610,7 +637,7 @@
                             <span class="text-ink" x-text="statusLabel">Draf Siap Diajukan</span>
                         </p>
                         <p class="gpa-micro text-right text-ink">
-                            SLA Respon Admin: <span class="font-bold">&lt; 2 Jam Kerja</span>
+                            SLA Respon Sekretaris: <span class="font-bold">&lt; 2 Jam Kerja</span>
                         </p>
                     </div>
                 </section>

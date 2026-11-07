@@ -67,6 +67,7 @@ class VerifikasiPesananResource extends JsonResource
             'id'                    => $order->order_number,
             'order_id'              => $order->id,
             'client'                => $clientName,
+            'is_contract'           => $isContractClient,
             'channel'               => $order->order_source === 'WEB_PORTAL' ? 'b2b' : 'wa',
             'meta'                  => ($isContractClient ? 'Kontrak Mitra B2B' : 'Klien Reguler') . ' • Alamat: ' . ($order->delivery_address ?: 'Gudang Klien'),
             'entered'               => 'Masuk: ' . $order->created_at->diffForHumans(),

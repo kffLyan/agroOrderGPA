@@ -419,20 +419,35 @@
         {{-- Modal Promosi Kemitraan Klien Kontrak B2B GPA --}}
         {{-- ---------------------------------------------------------------- --}}
         <div x-cloak x-show="adHocOpen"
-            class="fixed inset-0 z-50 flex min-h-full items-center justify-center overflow-y-auto bg-black/60 p-3 sm:p-6 backdrop-blur-sm"
-            x-transition:enter="transition ease-out duration-200"
-            x-transition:enter-start="opacity-0"
-            x-transition:enter-end="opacity-100"
-            x-transition:leave="transition ease-in duration-150"
-            x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0"
-            x-on:keydown.escape.window="closeAdHocModal()">
+            class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-3 sm:p-6 overscroll-contain"
+            role="dialog" aria-modal="true"
+            x-on:keydown.escape.window="closeAdHocModal()"
+            x-effect="
+                document.body.classList.toggle('overflow-hidden', adHocOpen);
+                document.documentElement.classList.toggle('overflow-hidden', adHocOpen);
+            ">
 
-            <div @click.away="closeAdHocModal()"
-                class="relative my-auto flex max-h-[92vh] w-full max-w-2xl flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-2xl outline outline-1 outline-line-board/50 overflow-hidden"
-                x-transition:enter="transition ease-out duration-200"
-                x-transition:enter-start="opacity-0 scale-95"
-                x-transition:enter-end="opacity-100 scale-100">
+            {{-- Backdrop Gelap Berfokus Tinggi (Zero-Lag 60fps & scroll lock) --}}
+            <div class="fixed inset-0 bg-black/80 transition-opacity"
+                x-show="adHocOpen"
+                x-transition:enter="ease-out duration-150"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="ease-in duration-100"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                @click="closeAdHocModal()"
+                @wheel.prevent
+                @touchmove.prevent></div>
+
+            <div class="relative my-auto flex max-h-[92vh] w-full max-w-2xl transform-gpu flex-col rounded-2xl bg-surface p-5 sm:p-6 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] ring-1 ring-white/10 border border-line-board/80 overflow-hidden"
+                x-show="adHocOpen"
+                x-transition:enter="ease-out duration-150"
+                x-transition:enter-start="opacity-0 scale-98"
+                x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="ease-in duration-100"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-98">
 
                 {{-- Header Modal Promosi --}}
                 <header class="flex shrink-0 items-start justify-between border-b border-line-hair pb-4">

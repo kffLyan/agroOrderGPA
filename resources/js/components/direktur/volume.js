@@ -128,15 +128,6 @@ export default function directorVolume(commodities = [], weeks = [], partners = 
             );
         },
 
-        reconcile() {
-            const tightest = this.tightestCommodity();
-
-            this.notify(
-                'Rekonsiliasi Neraca Komoditas',
-                `Total ${ton(this.volumeTotal())} Ton terbagi ${percent(this.farmerShare())}% (${ton(this.farmerVolume())} Ton) dan ${percent(this.bufferShare())}% buffer (${ton(this.bufferVolume())} Ton). Sisa kuota paling ketat tercatat pada ${tightest?.code ?? '-'}.`,
-                'success',
-            );
-        },
 
         /* ---------- toast ---------- */
 

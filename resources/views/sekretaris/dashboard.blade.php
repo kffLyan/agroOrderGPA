@@ -299,8 +299,8 @@
                                 <x-gpa.icon name="scale" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
                             <p class="mt-2 font-sans text-lg font-bold leading-6 text-ink">{{ $readyOrdersCount ?? 0 }} PO</p>
-                            <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Sortir &amp; Timbang</p>
-                            <p class="mt-0.5 gpa-meta text-ink-body">Tera Netto Sah</p>
+                            <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Siap Kirim</p>
+                            <p class="mt-0.5 gpa-meta text-ink-body">Surat Jalan Terbit</p>
                         </li>
 
                         <li @class([
@@ -336,7 +336,7 @@
                             </div>
                             <p class="mt-2 font-sans text-lg font-bold leading-6 text-ink">{{ $completedOrdersCount ?? 0 }} PO</p>
                             <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Selesai Dock</p>
-                            <p class="mt-0.5 gpa-meta text-ink-body">BAST Digital Sah</p>
+                            <p class="mt-0.5 gpa-meta text-ink-body">Foto PoD &amp; Surat Jalan Sah</p>
                         </li>
                     </ol>
 

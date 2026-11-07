@@ -129,8 +129,22 @@
                                         Harga Katalog: Rp {{ number_format($contract->product->base_price, 0) }}/Kg
                                     </div>
                                 </td>
-                                <td class="p-3 font-bold text-emerald-700 text-sm">
-                                    Rp {{ number_format($contract->fixed_price_per_kg, 0, ',', '.') }}<span class="text-[10px] text-gray-500 font-normal">/Kg</span>
+                                <td class="p-3">
+                                    <div class="font-bold text-emerald-700 text-sm">
+                                        Rp {{ number_format($contract->fixed_price_per_kg, 0, ',', '.') }}<span class="text-[10px] text-gray-500 font-normal">/Kg</span>
+                                    </div>
+                                    @php
+                                        $diffIdx = (float)$contract->fixed_price_per_kg - (float)($contract->product->base_price ?? 0);
+                                    @endphp
+                                    @if($diffIdx < 0 && (float)$contract->product->base_price > 0)
+                                        <span class="inline-block text-[9px] font-semibold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200 mt-0.5">
+                                            Diskon -{{ round((abs($diffIdx) / (float)$contract->product->base_price) * 100) }}%
+                                        </span>
+                                    @elseif($diffIdx > 0)
+                                        <span class="inline-block text-[9px] font-semibold text-blue-700 bg-blue-50 px-1 py-0.2 rounded border border-blue-200 mt-0.5">
+                                            +Rp {{ number_format($diffIdx, 0, ',', '.') }}
+                                        </span>
+                                    @endif
                                 </td>
                                 <td class="p-3 font-semibold text-gray-700">
                                     {{ $contract->top_days }} Hari

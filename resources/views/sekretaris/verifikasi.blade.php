@@ -303,31 +303,55 @@
                     </span>
 
                     <div class="min-w-0">
-                        <span class="rounded bg-accent px-2 py-0.5 gpa-micro-bold text-ink">Skema Pembayaran di Muka (Upfront Payment)</span>
-                        <h4 class="mt-2 font-sans text-[0.9375rem] font-bold leading-5 text-white">
-                            Ketentuan Penetapan Nilai Tagihan Pesanan:
-                        </h4>
-                        <p class="mt-1.5 text-sm leading-6 text-line-soft">
-                            Kuantitas pesanan awal
-                            <span class="gpa-meta-lg font-bold tracking-[0.28px] text-accent"
-                                x-text="selected.initial_qty"></span>
-                            menjadi dasar perhitungan total tagihan (grand total). Setelah pesanan disetujui Sekretaris,
-                            <span class="font-semibold text-white underline underline-offset-2">
-                                sistem menerbitkan Invoice Tagihan resmi
-                            </span>
-                            untuk diproses pembayarannya oleh mitra klien.
-                        </p>
-
-                        <ul class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
-                            <li class="flex items-center gap-1.5 gpa-note text-accent">
-                                <span class="h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
-                                Surat Jalan diterbitkan Sekretaris setelah pembayaran diverifikasi LUNAS
-                            </li>
-                            <li class="flex items-center gap-1.5 gpa-note text-accent">
-                                <span class="h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
-                                Penyesuaian komoditas hanya dilakukan melalui mekanisme retur resmi saat serah terima
-                            </li>
-                        </ul>
+                        <template x-if="selected.is_contract">
+                            <div>
+                                <span class="rounded bg-accent px-2 py-0.5 gpa-micro-bold text-ink">Fasilitas Kontrak B2B (Tempo TOP 30 Hari)</span>
+                                <h4 class="mt-2 font-sans text-[0.9375rem] font-bold leading-5 text-white">
+                                    Ketentuan Pengiriman Mitra B2B Kontrak:
+                                </h4>
+                                <p class="mt-1.5 text-sm leading-6 text-line-soft">
+                                    Pesanan mitra kontrak dapat <span class="font-semibold text-white underline underline-offset-2">langsung diproses untuk alokasi panen &amp; penerbitan Surat Jalan</span> tanpa menunggu pembayaran lunas di awal. Tagihan diagregasi ke faktur konsolidasi bulanan.
+                                </p>
+                                <ul class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                                    <li class="flex items-center gap-1.5 gpa-note text-accent">
+                                        <span class="h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
+                                        Surat Jalan dapat langsung diterbitkan setelah PO disetujui
+                                    </li>
+                                    <li class="flex items-center gap-1.5 gpa-note text-accent">
+                                        <span class="h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
+                                        Pembayaran sesuai termin jatuh tempo kontrak B2B
+                                    </li>
+                                </ul>
+                            </div>
+                        </template>
+                        <template x-if="!selected.is_contract">
+                            <div>
+                                <span class="rounded bg-accent px-2 py-0.5 gpa-micro-bold text-ink">Skema Pembayaran di Muka (Klien Reguler)</span>
+                                <h4 class="mt-2 font-sans text-[0.9375rem] font-bold leading-5 text-white">
+                                    Ketentuan Penetapan Nilai Tagihan Pesanan:
+                                </h4>
+                                <p class="mt-1.5 text-sm leading-6 text-line-soft">
+                                    Kuantitas pesanan awal
+                                    <span class="gpa-meta-lg font-bold tracking-[0.28px] text-accent"
+                                        x-text="selected.initial_qty"></span>
+                                    menjadi dasar perhitungan total tagihan (grand total). Setelah pesanan disetujui Sekretaris,
+                                    <span class="font-semibold text-white underline underline-offset-2">
+                                        sistem menerbitkan Invoice Tagihan resmi
+                                    </span>
+                                    untuk diproses pembayarannya oleh mitra klien.
+                                </p>
+                                <ul class="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+                                    <li class="flex items-center gap-1.5 gpa-note text-accent">
+                                        <span class="h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
+                                        Surat Jalan diterbitkan Sekretaris setelah pembayaran diverifikasi LUNAS
+                                    </li>
+                                    <li class="flex items-center gap-1.5 gpa-note text-accent">
+                                        <span class="h-1 w-1 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
+                                        Penyesuaian komoditas hanya dilakukan melalui mekanisme retur resmi saat serah terima
+                                    </li>
+                                </ul>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>

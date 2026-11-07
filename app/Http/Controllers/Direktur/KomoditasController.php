@@ -64,7 +64,13 @@ class KomoditasController extends Controller
             $targetDate  = (clone $currentDate)->addWeeks($weekOffset);
             $startOfWeek = (clone $targetDate)->startOfWeek();
             $endOfWeek   = (clone $targetDate)->endOfWeek();
-            $weekLabel   = 'W' . $startOfWeek->format('W');
+
+            // Format rentang tanggal mingguan yang ramah dan mudah dipahami
+            $startMonth = $startOfWeek->translatedFormat('M');
+            $endMonth = $endOfWeek->translatedFormat('M');
+            $dateRangeLabel = ($startMonth === $endMonth)
+                ? ($startOfWeek->format('d') . '–' . $endOfWeek->translatedFormat('d M'))
+                : ($startOfWeek->translatedFormat('d M') . '–' . $endOfWeek->translatedFormat('d M'));
 
             $demandKg = (float) OrderItem::whereHas('order', function ($query) use ($startOfWeek, $endOfWeek) {
                 $query->whereBetween('created_at', [$startOfWeek, $endOfWeek]);
@@ -86,12 +92,13 @@ class KomoditasController extends Controller
             $status = $weekOffset < 0 ? 'closed' : ($weekOffset === 0 ? 'running' : 'forecast');
 
             $weeklyRows[] = [
-                'week'    => $weekLabel,
-                'total'   => $totalTons > 0 ? $totalTons : 0.0,
-                'demand'  => $demandPct,
-                'yield'   => $yieldPct,
-                'reserve' => $reservePct,
-                'status'  => $status,
+                'week'      => $dateRangeLabel,
+                'week_code' => 'W' . $startOfWeek->format('W'),
+                'total'     => $totalTons > 0 ? $totalTons : 0.0,
+                'demand'    => $demandPct,
+                'yield'     => $yieldPct,
+                'reserve'   => $reservePct,
+                'status'    => $status,
             ];
         }
 

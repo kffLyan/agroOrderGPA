@@ -256,13 +256,53 @@ window.$alert = function (options) {
 };
 
 /**
- * Otomatis menangani form dan tautan yang memiliki atribut `data-gpa-confirm`
+ * Otomatis menangani form dan tautan yang memiliki atribut `data-gpa-confirm` atau `data-gpa-prompt`
  */
 document.addEventListener(
     'submit',
     async (e) => {
         const form = e.target;
         if (!form || !form.getAttribute) return;
+
+        const promptMsg = form.getAttribute('data-gpa-prompt');
+        if (promptMsg && !form.dataset.gpaConfirmed) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const title = form.getAttribute('data-gpa-title') || 'Alasan Tindakan';
+            const tone = form.getAttribute('data-gpa-tone') || 'danger';
+            const okText = form.getAttribute('data-gpa-ok') || 'Kirim';
+            const inputName = form.getAttribute('data-gpa-input-name') || 'reason';
+            const defaultVal = form.getAttribute('data-gpa-default') || '';
+
+            const value = await window.$prompt({
+                title,
+                message: promptMsg,
+                tone,
+                defaultValue: defaultVal,
+                confirmText: okText,
+                cancelText: 'Batal',
+            });
+
+            if (value !== null && value !== undefined && value.trim() !== '') {
+                let hiddenInput = form.querySelector(`input[name="${inputName}"]`);
+                if (!hiddenInput) {
+                    hiddenInput = document.createElement('input');
+                    hiddenInput.type = 'hidden';
+                    hiddenInput.name = inputName;
+                    form.appendChild(hiddenInput);
+                }
+                hiddenInput.value = value;
+
+                form.dataset.gpaConfirmed = 'true';
+                if (form.requestSubmit) {
+                    form.requestSubmit();
+                } else {
+                    form.submit();
+                }
+            }
+            return;
+        }
 
         const confirmMsg = form.getAttribute('data-gpa-confirm');
         if (confirmMsg && !form.dataset.gpaConfirmed) {

@@ -535,9 +535,13 @@
 
         {{-- Modal Audit Pengawasan Antrean Verifikasi Sekretariat --}}
         <div x-show="auditOpen" x-cloak
-            class="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 overscroll-contain"
+            x-effect="
+                document.body.classList.toggle('overflow-hidden', auditOpen);
+                document.documentElement.classList.toggle('overflow-hidden', auditOpen);
+            "
             @keydown.escape.window="closeAudit()">
-            <div class="w-full max-w-xl rounded-2xl bg-surface p-6 shadow-2xl border border-line-board"
+            <div class="w-full max-w-xl transform-gpu rounded-2xl bg-surface p-6 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] ring-1 ring-white/10 border border-line-board"
                 @click.outside="closeAudit()">
                 <div class="flex items-start justify-between border-b border-line-hair pb-4">
                     <div>
@@ -605,9 +609,13 @@
 
         {{-- Modal Detail Faktur & Evaluasi Plafon Klien --}}
         <div x-show="selectedRow !== null" x-cloak
-            class="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 p-4 backdrop-blur-sm"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 overscroll-contain"
+            x-effect="
+                document.body.classList.toggle('overflow-hidden', selectedRow !== null);
+                document.documentElement.classList.toggle('overflow-hidden', selectedRow !== null);
+            "
             @keydown.escape.window="closeDetail()">
-            <div class="w-full max-w-lg rounded-2xl bg-surface p-6 shadow-2xl border border-line-board"
+            <div class="w-full max-w-lg transform-gpu rounded-2xl bg-surface p-6 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] ring-1 ring-white/10 border border-line-board"
                 @click.outside="closeDetail()">
                 <div class="flex items-start justify-between border-b border-line-hair pb-4">
                     <div>

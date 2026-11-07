@@ -193,7 +193,7 @@
                             <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Penerima &amp; Waktu Serah Terima</th>
                             <th scope="col" class="px-3 py-3 text-left text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Kondisi Pengantaran</th>
                             <th scope="col" class="px-3 py-3 text-center text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Foto PoD</th>
-                            <th scope="col" class="px-3 py-3 text-right text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body">Aksi</th>
+                            <th scope="col" class="px-3 py-3 text-right text-[10px] font-semibold uppercase leading-4 tracking-[0.14em] text-ink-body min-w-[210px] whitespace-nowrap">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-line-hair">
@@ -217,6 +217,23 @@
                                 $photoCount = ($manifestPhoto ? 1 : 0) + ($dockPhoto && $dockPhoto !== $manifestPhoto ? 1 : 0);
 
                                 $returItems = $order->orderItems->filter(fn($it) => (float)($it->returned_weight ?? 0) > 0);
+                                $totalReturKg = (float) $returItems->sum('returned_weight');
+                                $returKgFormatted = number_format($totalReturKg, 1, ',', '.');
+
+                                $clientPicName = $order->user?->pic_name ?: null;
+                                $clientPhone = $order->user?->pic_phone ?: ($order->user?->phone ?: null);
+                                $rawPhone = preg_replace('/[^0-9]/', '', (string)$clientPhone);
+                                if (str_starts_with($rawPhone, '0')) {
+                                    $waPhone = '62' . substr($rawPhone, 1);
+                                } elseif (str_starts_with($rawPhone, '62')) {
+                                    $waPhone = $rawPhone;
+                                } else {
+                                    $waPhone = $rawPhone ?: '6281223239133';
+                                }
+
+                                $returWeightText = $totalReturKg > 0 ? $returKgFormatted : '0,0';
+                                $waMessage = "Halo {$clientName}, kami dari Sekretariat Koperasi Agro Green Pasundan terkait pesanan {$order->order_number} / {$sjNum}. Terdapat catatan retur barang sebesar {$returWeightText} kg. Berita Acara Retur telah kami terbitkan. Mohon konfirmasi nomor rekening / rekonsiliasi tagihan Anda. Terima kasih.";
+                                $waUrl = 'https://wa.me/' . $waPhone . '?text=' . rawurlencode($waMessage);
                             @endphp
                             <tr class="align-top transition-colors hover:bg-surface-shell/50">
                                 {{-- 1. No. SJ & Order --}}
@@ -244,7 +261,21 @@
                                 <td class="px-3 py-3.5">
                                     <div class="flex flex-col gap-0.5 max-w-[280px]">
                                         <p class="text-[12px] font-semibold leading-5 text-ink">{{ $clientName }}</p>
-                                        <p class="gpa-note leading-4 text-ink-body line-clamp-2">{{ $order->delivery_address ?: 'Gudang Utama Klien' }}</p>
+                                        @if ($clientPhone && $clientPhone !== '-' && $clientPhone !== '—')
+                                            <div class="flex items-center gap-1 text-[11px] font-medium text-emerald-700">
+                                                <x-gpa.icon name="phone" class="h-3 w-3 shrink-0 text-emerald-600" />
+                                                <span>{{ $clientPhone }}</span>
+                                                @if ($clientPicName)
+                                                    <span class="text-ink-quiet">({{ $clientPicName }})</span>
+                                                @endif
+                                            </div>
+                                        @elseif ($clientPicName)
+                                            <div class="flex items-center gap-1 text-[11px] text-ink-body">
+                                                <x-gpa.icon name="user" class="h-3 w-3 shrink-0 text-ink-quiet" />
+                                                <span>PIC: {{ $clientPicName }}</span>
+                                            </div>
+                                        @endif
+                                        <p class="gpa-note leading-4 text-ink-body line-clamp-2 mt-0.5">{{ $order->delivery_address ?: 'Gudang Utama Klien' }}</p>
                                     </div>
                                 </td>
 
@@ -280,7 +311,7 @@
                                             @endforeach
                                         </div>
                                     @elseif ($isClean)
-                                        <p class="text-[11px] leading-4 text-ink-body">Muatan utuh &amp; sesuai bobot tera</p>
+                                        <p class="text-[11px] leading-4 text-ink-body">Muatan utuh &amp; sesuai surat jalan (100% diterima)</p>
                                     @elseif ($isInTransit)
                                         <p class="text-[11px] leading-4 text-ink-body">Menunggu tiba di lokasi bongkar</p>
                                     @elseif ($isReady)
@@ -331,31 +362,44 @@
                                 </td>
 
                                 {{-- 7. Aksi --}}
-                                <td class="px-3 py-3.5 text-right">
-                                    <div class="flex flex-wrap items-center justify-end gap-1.5">
-                                        @if ($hasAnyPhoto)
-                                            <button type="button"
-                                                @click="openPhotos('{{ $manifestPhoto }}', '{{ $dockPhoto }}', '{{ $order->order_number }}', '{{ $sjNum }}', '{{ $receiver }}', '{{ $arrivalTime }}')"
-                                                title="Lihat Berkas Foto PoD Lengkap"
-                                                class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
-                                                <x-gpa.icon name="eye" class="h-3 w-3 shrink-0" />
-                                                Lihat ({{ $photoCount }})
-                                            </button>
-                                        @endif
-                                        @if ($isDiscrepancy || $returItems->isNotEmpty())
-                                            <a href="{{ route('prints.return-act', ['order_id' => $order->id]) }}" target="_blank"
-                                                title="Cetak Berita Acara Retur"
-                                                class="inline-flex items-center gap-1 rounded bg-rose-50 px-2 py-1 gpa-note font-semibold text-rose-700 outline outline-1 -outline-offset-1 outline-rose-300 transition-colors hover:bg-rose-100">
-                                                <x-gpa.icon name="file-text" class="h-3 w-3 shrink-0" />
-                                                BAP Retur
+                                <td class="px-3 py-3.5 text-right min-w-[210px] align-top">
+                                    <div class="flex flex-col items-end gap-1.5">
+                                        {{-- Kelompok 1: Dokumen Pengiriman & Foto PoD --}}
+                                        <div class="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                                            @if ($hasAnyPhoto)
+                                                <button type="button"
+                                                    @click="openPhotos('{{ $manifestPhoto }}', '{{ $dockPhoto }}', '{{ $order->order_number }}', '{{ $sjNum }}', '{{ $receiver }}', '{{ $arrivalTime }}')"
+                                                    title="Lihat Berkas Foto PoD Lengkap"
+                                                    class="inline-flex items-center gap-1 rounded bg-surface-shell px-2.5 py-1 text-[11px] font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                                                    <x-gpa.icon name="eye" class="h-3 w-3 shrink-0" />
+                                                    <span>Lihat ({{ $photoCount }})</span>
+                                                </button>
+                                            @endif
+                                            <a href="{{ route('prints.surat-jalan', ['order_id' => $order->id]) }}" target="_blank"
+                                                title="Cetak Surat Jalan"
+                                                class="inline-flex items-center gap-1 rounded bg-surface-shell px-2.5 py-1 text-[11px] font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                                                <x-gpa.icon name="printer" class="h-3 w-3 shrink-0" />
+                                                <span>Cetak SJ</span>
                                             </a>
+                                        </div>
+
+                                        {{-- Kelompok 2: Penanganan Retur (Hubungi Klien & Cetak Berita Acara) --}}
+                                        @if ($isDiscrepancy || $returItems->isNotEmpty())
+                                            <div class="flex items-center justify-end gap-1.5 whitespace-nowrap">
+                                                <a href="{{ $waUrl }}" target="_blank"
+                                                    title="Hubungi PIC Klien via WhatsApp"
+                                                    class="inline-flex items-center gap-1 rounded bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-700 outline outline-1 -outline-offset-1 outline-emerald-300 transition-colors hover:bg-emerald-100">
+                                                    <x-gpa.icon name="whatsapp" class="h-3 w-3 shrink-0 text-emerald-600" />
+                                                    <span>Hubungi WA</span>
+                                                </a>
+                                                <a href="{{ route('prints.return-act', ['order_id' => $order->id]) }}" target="_blank"
+                                                    title="Cetak Berita Acara Retur"
+                                                    class="inline-flex items-center gap-1 rounded bg-rose-50 px-2.5 py-1 text-[11px] font-semibold text-rose-700 outline outline-1 -outline-offset-1 outline-rose-300 transition-colors hover:bg-rose-100">
+                                                    <x-gpa.icon name="file-text" class="h-3 w-3 shrink-0" />
+                                                    <span>BAP Retur</span>
+                                                </a>
+                                            </div>
                                         @endif
-                                        <a href="{{ route('prints.surat-jalan', ['order_id' => $order->id]) }}" target="_blank"
-                                            title="Cetak Surat Jalan"
-                                            class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
-                                            <x-gpa.icon name="printer" class="h-3 w-3 shrink-0" />
-                                            Cetak SJ
-                                        </a>
                                     </div>
                                 </td>
                             </tr>
@@ -387,19 +431,25 @@
         {{-- Modal Pratinjau Foto PoD --}}
         <div x-cloak x-show="photoModalOpen"
             @keydown.escape.window="photoModalOpen = false"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
-            role="dialog" aria-modal="true">
-            <div class="fixed inset-0 bg-ink/75 backdrop-blur-xs transition-opacity"
-                @click="photoModalOpen = false"></div>
+            class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overscroll-contain"
+            role="dialog" aria-modal="true"
+            x-effect="
+                document.body.classList.toggle('overflow-hidden', photoModalOpen);
+                document.documentElement.classList.toggle('overflow-hidden', photoModalOpen);
+            ">
+            <div class="fixed inset-0 bg-black/80 transition-opacity"
+                @click="photoModalOpen = false"
+                @wheel.prevent
+                @touchmove.prevent></div>
 
-            <div class="relative flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-surface shadow-pop ring-1 ring-ink/10"
+            <div class="relative flex w-full max-w-4xl transform-gpu flex-col overflow-hidden rounded-2xl bg-surface shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85)] ring-1 ring-white/10 border border-line-board/80"
                 x-show="photoModalOpen"
-                x-transition:enter="ease-out duration-200"
-                x-transition:enter-start="opacity-0 scale-95"
+                x-transition:enter="ease-out duration-150"
+                x-transition:enter-start="opacity-0 scale-98"
                 x-transition:enter-end="opacity-100 scale-100"
-                x-transition:leave="ease-in duration-150"
+                x-transition:leave="ease-in duration-100"
                 x-transition:leave-start="opacity-100 scale-100"
-                x-transition:leave-end="opacity-0 scale-95">
+                x-transition:leave-end="opacity-0 scale-98">
 
                 {{-- Modal Header --}}
                 <div class="flex items-center justify-between border-b border-line-hair bg-surface-shell px-5 py-3.5">

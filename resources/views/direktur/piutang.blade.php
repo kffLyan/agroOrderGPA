@@ -40,9 +40,10 @@
                     </span>
                 </span>
                 <button type="button" @click="filterTopOnly()"
-                    class="inline-flex items-center gap-1 rounded px-2.5 py-1 text-[12px] font-semibold text-ink transition-colors hover:bg-surface-shell">
+                    :class="topFilter !== 'all' ? 'bg-brand text-accent font-bold outline outline-1 outline-accent' : 'text-ink hover:bg-surface-shell'"
+                    class="inline-flex items-center gap-1.5 rounded px-2.5 py-1 text-[12px] font-semibold transition-colors">
                     <x-gpa.icon name="filter" class="h-3 w-3" />
-                    Filter
+                    <span x-text="topFilter === 'all' ? 'Filter' : 'Filter TOP ' + topFilter + ' Hari'">Filter</span>
                 </button>
             </div>
         </header>
@@ -272,20 +273,20 @@
                     <div class="flex h-10 items-center gap-1 rounded-lg border border-line-board bg-surface px-3">
                         <x-gpa.icon name="filter" class="h-3.5 w-3.5 shrink-0 text-ink" />
                         <div class="flex items-center gap-1">
+                            <button type="button" @click="setTopFilter('all')"
+                                :class="topFilter === 'all' ? 'bg-brand text-accent' : 'text-ink hover:bg-surface-shell'"
+                                class="rounded px-2 py-1 text-[12px] font-semibold leading-4 transition-colors">
+                                Semua
+                            </button>
                             @foreach ([14, 30, 45] as $topDays)
                                 <button type="button" @click="setTopFilter('{{ $topDays }}')"
                                     :class="topFilter === '{{ $topDays }}'
                                         ? 'bg-brand text-accent'
                                         : 'text-ink hover:bg-surface-shell'"
                                     class="rounded px-2 py-1 text-[12px] font-semibold leading-4 transition-colors">
-                                    {{ $topDays }}
+                                    TOP {{ $topDays }}
                                 </button>
                             @endforeach
-                            <button type="button" @click="setTopFilter('all')"
-                                :class="topFilter === 'all' ? 'bg-brand text-accent' : 'text-ink hover:bg-surface-shell'"
-                                class="rounded px-2 py-1 text-[12px] font-semibold leading-4 transition-colors">
-                                Filter TOP
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -418,8 +419,9 @@
                                                     @csrf
                                                     <input type="hidden" name="action" value="{{ $action === 'Kunci Plafon' ? 'freeze' : 'unfreeze' }}">
                                                     <button type="submit"
+                                                        @click.prevent="toggleFreeze(rows[{{ $rowIndex }}])"
                                                         @class([
-                                                            'rounded px-2.5 py-1.5 font-mono text-[11px] font-semibold leading-[14px] tracking-[0.88px] transition-colors',
+                                                            'rounded px-2.5 py-1.5 font-mono text-[11px] font-semibold leading-[14px] tracking-[0.88px] transition-colors cursor-pointer',
                                                             'shadow-sub bg-danger text-white hover:bg-danger-ink' => !empty($row['locked']),
                                                             'bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-disabled' => empty($row['locked']),
                                                         ])>{{ $action }}</button>
@@ -427,21 +429,28 @@
                                             @elseif ($action === 'Detail Faktur')
                                                 <button type="button"
                                                     @click="openDetail(rows[{{ $rowIndex }}])"
-                                                    class="rounded px-2.5 py-1.5 font-mono text-[11px] font-semibold leading-[14px] tracking-[0.88px] transition-colors bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-disabled">
+                                                    class="rounded px-2.5 py-1.5 font-mono text-[11px] font-semibold leading-[14px] tracking-[0.88px] transition-colors bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-disabled cursor-pointer">
                                                     Detail Faktur
                                                 </button>
                                             @elseif ($action === 'Kirim Reminder WA')
                                                 <form method="POST" action="{{ route('direktur.piutang.reminder', $row['id']) }}" class="inline">
                                                     @csrf
                                                     <button type="submit"
-                                                        class="rounded px-2.5 py-1.5 font-mono text-[11px] font-semibold leading-[14px] tracking-[0.88px] transition-colors bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-disabled">
+                                                        @click.prevent="sendReminder(rows[{{ $rowIndex }}])"
+                                                        class="rounded px-2.5 py-1.5 font-mono text-[11px] font-semibold leading-[14px] tracking-[0.88px] transition-colors bg-surface-track text-ink outline outline-1 -outline-offset-1 outline-line-board hover:bg-surface-disabled cursor-pointer">
                                                         Kirim Reminder WA
                                                     </button>
                                                 </form>
+                                            @elseif ($action === 'Restrukturisasi Tagihan')
+                                                <button type="button"
+                                                    @click="restructure(rows[{{ $rowIndex }}])"
+                                                    class="rounded px-2.5 py-1.5 font-mono text-[11px] font-semibold leading-[14px] tracking-[0.88px] transition-colors bg-accent-deep text-ink hover:bg-accent cursor-pointer">
+                                                    Restrukturisasi Tagihan
+                                                </button>
                                             @else
                                                 <button type="button"
-                                                    @click="{{ $action === 'Restrukturisasi Tagihan' ? 'restructure(rows[' . $rowIndex . '])' : 'openDetail(rows[' . $rowIndex . '])' }}"
-                                                    class="rounded px-2.5 py-1.5 font-mono text-[11px] font-semibold leading-[14px] tracking-[0.88px] transition-colors bg-accent-deep text-ink hover:bg-accent">
+                                                    @click="openDetail(rows[{{ $rowIndex }}])"
+                                                    class="rounded px-2.5 py-1.5 font-mono text-[11px] font-semibold leading-[14px] tracking-[0.88px] transition-colors bg-accent-deep text-ink hover:bg-accent cursor-pointer">
                                                     {{ $action }}
                                                 </button>
                                             @endif
@@ -635,9 +644,75 @@
                         <span class="text-xs text-ink-body">Surat Jalan Terlampir:</span>
                         <span class="text-xs font-semibold text-ink" x-text="selectedRow?.sj_label"></span>
                     </div>
+
+                    {{-- Daftar Faktur Tertunggak Terlampir --}}
+                    <div class="mt-2 border-t border-line-hair pt-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-ink">Faktur Tagihan Tertunggak</h4>
+                            <span class="font-mono text-[11px] font-semibold text-ink-body" x-text="(selectedRow?.invoices?.length || 0) + ' Faktur'"></span>
+                        </div>
+
+                        <template x-if="selectedRow?.invoices && selectedRow.invoices.length > 0">
+                            <div class="flex flex-col gap-2 max-h-52 overflow-y-auto pr-1">
+                                <template x-for="inv in selectedRow.invoices" :key="inv.id">
+                                    <div class="flex items-center justify-between gap-3 rounded-xl border border-line-hair bg-surface-shell p-2.5">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-mono text-xs font-bold text-ink" x-text="inv.invoice_number"></span>
+                                                <span class="rounded px-1.5 py-0.5 text-[10px] font-bold uppercase"
+                                                    :class="inv.status === 'OVERDUE' ? 'bg-danger text-white' : 'bg-warning-cream text-warning-caution'"
+                                                    x-text="inv.status"></span>
+                                            </div>
+                                            <p class="text-[11px] text-ink-body mt-0.5">
+                                                <span class="font-bold text-ink" x-text="inv.total_label"></span> &bull; Jatuh Tempo: <span x-text="inv.due_date"></span>
+                                            </p>
+                                        </div>
+                                        <a :href="inv.print_url" target="_blank"
+                                            class="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-line-board bg-surface px-2.5 py-1 text-xs font-bold text-ink hover:bg-surface-track transition-colors shadow-xs">
+                                            <x-gpa.icon name="printer" class="h-3 w-3 text-ink-subtle" />
+                                            <span>Buka Faktur</span>
+                                        </a>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        <template x-if="!selectedRow?.invoices || selectedRow.invoices.length === 0">
+                            <div class="rounded-xl border border-dashed border-line-board bg-surface-shell/60 p-4 text-center">
+                                <p class="text-xs text-ink-body">Tidak ada faktur tertunggak untuk mitra ini. Seluruh tagihan tertib dan terverifikasi lunas.</p>
+                            </div>
+                        </template>
+                    </div>
                 </div>
 
-                <div class="mt-6 flex justify-end gap-2 border-t border-line-hair pt-4">
+                <div class="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-line-hair pt-4">
+                    <div class="flex items-center gap-2">
+                        <template x-if="selectedRow?.locked">
+                            <button type="button" @click="restructure(selectedRow); closeDetail()"
+                                class="rounded-lg bg-accent-deep px-3 py-1.5 text-xs font-bold text-ink hover:bg-accent transition-colors">
+                                Restrukturisasi Tenor
+                            </button>
+                        </template>
+                        <template x-if="selectedRow?.locked">
+                            <button type="button" @click="toggleFreeze(selectedRow); closeDetail()"
+                                class="rounded-lg bg-danger px-3 py-1.5 text-xs font-bold text-white hover:bg-danger-ink transition-colors">
+                                Lepas Freeze
+                            </button>
+                        </template>
+                        <template x-if="!selectedRow?.locked && selectedRow?.days_remaining < 0">
+                            <button type="button" @click="sendReminder(selectedRow); closeDetail()"
+                                class="rounded-lg border border-line-board bg-surface-shell px-3 py-1.5 text-xs font-bold text-ink hover:bg-surface-track transition-colors">
+                                Kirim Reminder WA
+                            </button>
+                        </template>
+                        <template x-if="!selectedRow?.locked">
+                            <button type="button" @click="toggleFreeze(selectedRow); closeDetail()"
+                                class="rounded-lg border border-line-board bg-surface-shell px-3 py-1.5 text-xs font-bold text-ink hover:bg-surface-track transition-colors">
+                                Kunci Plafon
+                            </button>
+                        </template>
+                    </div>
+
                     <button type="button" @click="closeDetail()" class="rounded-lg bg-surface-shell px-4 py-2 text-xs font-bold text-ink hover:bg-surface-track">
                         Tutup
                     </button>

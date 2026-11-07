@@ -32,7 +32,21 @@ class BukuBesarPiutangResource extends JsonResource
         $topDays = $activeContract ? (int) $activeContract->top_days : 30;
         $totalExposure = $totalUnpaidAmount;
         $limitUtilizationRate = $creditLimit > 0 ? round(($totalExposure / $creditLimit) * 100, 1) : 0;
-        $isFrozen = !empty($this->frozenClients[$client->id]) || $limitUtilizationRate > 100;
+
+        $explicitFreeze = null;
+        if (array_key_exists($client->id, $this->frozenClients)) {
+            $explicitFreeze = $this->frozenClients[$client->id];
+        } elseif (array_key_exists((string) $client->id, $this->frozenClients)) {
+            $explicitFreeze = $this->frozenClients[(string) $client->id];
+        }
+
+        if ($explicitFreeze !== null) {
+            $isFrozen = (bool) $explicitFreeze;
+        } else {
+            $isFrozen = ($limitUtilizationRate > 100);
+        }
+
+        $isDispensation = (!$isFrozen && $limitUtilizationRate > 100);
 
         // Kumpulkan daftar nomor surat jalan dan cari tanggal jatuh tempo paling awal
         $suratJalanList = [];
@@ -56,20 +70,54 @@ class BukuBesarPiutangResource extends JsonResource
         // Tentukan label dan warna status piutang
         $statusLabel = 'LANCAR';
         $statusTone = 'success';
-        if ($isFrozen || ($daysRemaining < 0 && abs($daysRemaining) > 7)) {
+        if ($isFrozen) {
             $statusLabel = 'AUTO-FREEZE PO';
             $statusTone = 'danger';
+        } elseif ($isDispensation) {
+            $statusLabel = 'DISPENSASI DIREKTUR';
+            $statusTone = 'warning';
         } elseif ($daysRemaining < 0) {
             $statusLabel = 'WARNING TEMPO';
             $statusTone = 'warning';
         }
 
         // Tentukan status verifikasi dan kode unik klien
-        $verificationTone = $isFrozen ? 'danger' : ($daysRemaining < 0 ? 'warning' : 'success');
-        $verificationLabel = $isFrozen ? 'DEFISIT PLAFON' : ($daysRemaining < 0 ? 'BUTUH KONFIRMASI WA' : 'TERVERIFIKASI FINANCE');
+        if ($isFrozen) {
+            $verificationTone = 'danger';
+            $verificationLabel = 'DEFISIT PLAFON';
+        } elseif ($isDispensation) {
+            $verificationTone = 'warning';
+            $verificationLabel = 'DISPENSASI PLAFON';
+        } elseif ($daysRemaining < 0) {
+            $verificationTone = 'warning';
+            $verificationLabel = 'BUTUH KONFIRMASI WA';
+        } else {
+            $verificationTone = 'success';
+            $verificationLabel = 'TERVERIFIKASI FINANCE';
+        }
 
         $cleanClientName = preg_replace('/[^A-Za-z]/', '', (string) $client->name) ?: 'KLI';
         $clientCode = 'B2B-' . strtoupper(substr($cleanClientName, 0, 3)) . '-' . str_pad((string) $client->id, 3, '0', STR_PAD_LEFT);
+
+        $invoicesData = $unpaidInvoices->map(fn ($inv) => [
+            'id'             => $inv->id,
+            'invoice_number' => $inv->invoice_number,
+            'grand_total'    => (float) $inv->grand_total,
+            'total_label'    => 'Rp ' . number_format($inv->grand_total, 0, ',', '.'),
+            'due_date'       => $inv->due_date ? Carbon::parse($inv->due_date)->translatedFormat('d M Y') : '—',
+            'status'         => $inv->status,
+            'print_url'      => route('prints.invoice', ['invoice' => $inv->invoice_number]),
+        ])->values()->all();
+
+        if ($isFrozen) {
+            $actions = ['Restrukturisasi Tagihan', 'Lepas Freeze'];
+        } elseif ($isDispensation) {
+            $actions = ['Detail Faktur', 'Kunci Plafon'];
+        } elseif ($daysRemaining < 0) {
+            $actions = ['Detail Faktur', 'Kirim Reminder WA', 'Kunci Plafon'];
+        } else {
+            $actions = ['Detail Faktur', 'Kunci Plafon'];
+        }
 
         return [
             'id'                => $client->id,
@@ -100,7 +148,8 @@ class BukuBesarPiutangResource extends JsonResource
             'utilisation_note'  => $limitUtilizationRate > 100 ? round($limitUtilizationRate) . '% (OVER)' : round($limitUtilizationRate) . '%',
             'utilisation_width' => min(100, $limitUtilizationRate),
             'over_limit'        => $limitUtilizationRate > 100,
-            'actions'           => $isFrozen ? ['Restrukturisasi Tagihan', 'Lepas Freeze'] : ['Detail Faktur', 'Kunci Plafon'],
+            'invoices'          => $invoicesData,
+            'actions'           => $actions,
         ];
     }
 }

@@ -30,7 +30,10 @@ export default function directorReceivables(rows = [], policy = {}, verification
         rows: (Array.isArray(rows) ? rows : []).map((row) => ({
             id: row.id,
             name: String(row.name ?? ''),
+            client_id: String(row.client_id ?? ''),
             client_code: String(row.client_code ?? ''),
+            sj_count: numberOf(row.sj_count),
+            sj_count_label: String(row.sj_count_label ?? ''),
             sj_label: String(row.sj_label ?? ''),
             outstanding: numberOf(row.outstanding),
             outstanding_label: String(row.outstanding_label ?? ''),
@@ -49,6 +52,7 @@ export default function directorReceivables(rows = [], policy = {}, verification
             utilisation_width: Math.min(numberOf(row.utilisation_width), 100),
             over_limit: Boolean(row.over_limit),
             locked: Boolean(row.locked),
+            invoices: Array.isArray(row.invoices) ? row.invoices : [],
             actions: (Array.isArray(row.actions) ? row.actions : []).map(String),
         })),
         policy: {
@@ -78,8 +82,13 @@ export default function directorReceivables(rows = [], policy = {}, verification
                 return true;
             }
 
-            return [row.name, row.client_code, row.sj_label]
-                .some((field) => field.toLowerCase().includes(needle));
+            return [
+                row.name,
+                row.client_code,
+                row.client_id,
+                row.sj_label,
+                ...(row.invoices || []).map((inv) => inv.invoice_number),
+            ].some((field) => String(field ?? '').toLowerCase().includes(needle));
         },
         matchesTop(row) {
             return this.topFilter === 'all' || String(row.top_days) === this.topFilter;
@@ -99,7 +108,7 @@ export default function directorReceivables(rows = [], policy = {}, verification
             if (! row || ! (this.matchesQuery(row) && this.matchesTop(row))) {
                 return false;
             }
-            return this.pagedRows().some((item) => item.client_id === row.client_id);
+            return this.pagedRows().some((item) => item.id === row.id);
         },
         visibleCount() {
             return this.filteredRows().length;
@@ -170,6 +179,7 @@ export default function directorReceivables(rows = [], policy = {}, verification
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': csrf,
                     },
+                    body: JSON.stringify({ action: row.locked ? 'unfreeze' : 'freeze' }),
                 });
 
                 if (response.ok) {

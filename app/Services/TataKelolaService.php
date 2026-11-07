@@ -250,7 +250,14 @@ class TataKelolaService
     public function isClientFrozen(int $clientId): bool
     {
         $frozen = $this->getFrozenClients();
-        return !empty($frozen[$clientId]) || !empty($frozen[(string) $clientId]);
+        if (array_key_exists($clientId, $frozen)) {
+            return (bool) $frozen[$clientId];
+        }
+        if (array_key_exists((string) $clientId, $frozen)) {
+            return (bool) $frozen[(string) $clientId];
+        }
+
+        return false;
     }
 
     // Mengubah status pembekuan plafon kredit klien secara dinamis dan menyimpannya secara persisten.
@@ -259,7 +266,7 @@ class TataKelolaService
         $settings = $this->getSettings();
         $frozen = $settings['frozen_clients'] ?? [];
 
-        $currentlyLocked = !empty($frozen[$clientId]) || !empty($frozen[(string) $clientId]);
+        $currentlyLocked = $this->isClientFrozen($clientId);
 
         if ($targetState !== null) {
             $isLocked = $targetState;
@@ -267,12 +274,8 @@ class TataKelolaService
             $isLocked = !$currentlyLocked;
         }
 
-        if ($isLocked) {
-            $frozen[(string) $clientId] = true;
-            $frozen[$clientId] = true;
-        } else {
-            unset($frozen[$clientId], $frozen[(string) $clientId]);
-        }
+        $frozen[(string) $clientId] = $isLocked;
+        $frozen[$clientId] = $isLocked;
 
         $settings['frozen_clients'] = $frozen;
         $this->updateSettings($settings);
@@ -286,7 +289,8 @@ class TataKelolaService
         $settings = $this->getSettings();
         $frozen = $settings['frozen_clients'] ?? [];
 
-        unset($frozen[$clientId], $frozen[(string) $clientId]);
+        $frozen[$clientId] = false;
+        $frozen[(string) $clientId] = false;
 
         $settings['frozen_clients'] = $frozen;
         $this->updateSettings($settings);

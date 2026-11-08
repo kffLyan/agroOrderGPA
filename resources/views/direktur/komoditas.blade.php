@@ -174,64 +174,53 @@
         </section>
 
         {{-- Neraca volume lima komoditas inti --}}
-        <section class="flex min-h-[420px] w-full flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
-            <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-board pb-3">
-                <h2 class="font-inter text-lg font-semibold leading-6 text-ink">Neraca Volume &amp; Komposisi 5 Komoditas Inti</h2>
+        <section class="flex w-full flex-col gap-4 rounded-2xl bg-surface p-4 shadow-card sm:p-5">
+            <header class="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                    <h2 class="font-inter text-lg font-semibold leading-6 text-ink">Neraca Volume &amp; Komposisi</h2>
+                    <p class="mt-0.5 gpa-note text-ink-subtle">Ringkasan 5 komoditas inti</p>
+                </div>
             </header>
 
-            <div class="grid flex-1 grid-cols-1 gap-4 py-1 sm:grid-cols-2 xl:grid-cols-5">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
                 @foreach ($commodityRows ?? [] as $row)
                     <button type="button" @click="inspectCommodity(@js($row))"
-                        class="flex h-full min-w-0 flex-col justify-between gap-6 rounded-xl bg-surface-shell p-4 text-left outline outline-1 -outline-offset-1 outline-line-board/60 transition-colors hover:bg-surface-muted">
-                        <span class="flex flex-col gap-1">
-                            <span class="flex items-center justify-between gap-2">
-                                <span
-                                    class="rounded px-1.5 py-0.5 text-[9px] font-bold leading-3 gpa-micro-bold text-ink outline outline-1 -outline-offset-1 outline-line-board bg-surface-shell">
-                                    {{ $row['code'] ?? '' }}
-                                </span>
-                                <span class="text-[11px] font-bold leading-[14px] tracking-[0.88px] font-mono {{ ($row['share_tone'] ?? '') === 'caution' ? 'text-warning-caution' : 'text-success-deep' }}">
-                                    {{ $row['share_label'] ?? '' }}
-                                </span>
+                        class="flex min-w-0 flex-col gap-4 rounded-xl bg-surface-shell p-4 text-left transition-colors hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-success-deep">
+                        <span class="flex min-w-0 items-start justify-between gap-2">
+                            <span class="min-w-0">
+                                <span class="block gpa-micro font-medium text-ink-subtle">{{ $row['code'] ?? '' }}</span>
+                                <span class="mt-1 block truncate text-sm font-semibold leading-5 text-ink">{{ $row['name'] ?? '' }}</span>
+                                <span class="mt-0.5 block truncate text-[11px] leading-4 text-ink-subtle">{{ $row['grade'] ?? '' }}</span>
                             </span>
-
-                            <span class="block pt-1.5 font-sans text-lg font-semibold leading-6 text-ink">
-                                {{ $row['name'] ?? '' }}
-                            </span>
-                            <span class="block font-sans text-xs leading-4 text-ink-body">{{ $row['grade'] ?? '' }}</span>
-
-                            <span class="mt-5 flex flex-col gap-2 border-y border-line-board/60 py-2">
-                                <span class="flex items-center justify-between gap-2">
-                                    <span class="font-mono text-xs leading-4 text-ink-body">Realisasi:</span>
-                                    <span class="text-right font-mono text-base font-bold leading-6 text-ink">
-                                        {{ $row['value_label'] ?? '' }}<br>Ton
-                                    </span>
-                                </span>
-
-                                <span class="flex items-center justify-between gap-2">
-                                    <span class="font-mono text-xs leading-4 text-success-deep">&bull; Binaan:</span>
-                                    <span class="font-mono text-xs leading-4 text-ink">{{ $row['farmer_label'] ?? '' }}</span>
-                                </span>
-
-                                <span class="flex items-center justify-between gap-2">
-                                    <span class="font-mono text-xs leading-4 text-success-deep">&bull; Buffer:</span>
-                                    <span class="font-mono text-xs leading-4 text-ink">{{ $row['buffer_label'] ?? '' }}</span>
-                                </span>
-
-                                <span
-                                    class="flex items-center justify-between gap-2 border-t border-surface-track pt-1">
-                                    <span class="font-mono text-xs font-medium leading-4 text-ink-body">
-                                        Sisa Kuota<br>Bebas:
-                                    </span>
-                                    <span
-                                        class="rounded px-1.5 py-0.5 font-mono text-xs font-bold leading-4 {{ ($row['headroom_tone'] ?? '') === 'danger' ? 'bg-danger-soft/40 text-danger' : 'bg-surface-shell text-ink' }}">
-                                        {{ $row['headroom_label'] ?? '' }}
-                                    </span>
-                                </span>
+                            <span class="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold {{ ($row['share_tone'] ?? '') === 'caution' ? 'bg-warning-cream text-warning-caution' : 'bg-success-soft text-success-deep' }}">
+                                {{ $row['share_label'] ?? '' }}
                             </span>
                         </span>
 
-                        <span
-                            class="w-full rounded px-1.5 py-1 text-center text-[9px] font-bold leading-3 gpa-micro-bold {{ ($row['status_tone'] ?? '') === 'caution' ? 'bg-warning-cream text-warning-caution outline outline-1 -outline-offset-1 outline-warning-caution' : 'bg-accent text-ink-strong outline outline-1 -outline-offset-1 outline-accent-deep' }}">
+                        <span class="border-t border-line-faint pt-3">
+                            <span class="block text-[10px] leading-4 text-ink-subtle">Realisasi</span>
+                            <span class="mt-0.5 block text-lg font-bold leading-6 text-ink">{{ $row['value_label'] ?? '' }} <span class="text-xs font-medium text-ink-subtle">ton</span></span>
+                        </span>
+
+                        <span class="grid grid-cols-2 gap-2 text-[11px] leading-4">
+                            <span class="rounded-lg bg-surface px-2.5 py-2">
+                                <span class="block text-ink-subtle">Binaan</span>
+                                <span class="mt-0.5 block font-semibold text-ink">{{ $row['farmer_label'] ?? '' }}</span>
+                            </span>
+                            <span class="rounded-lg bg-surface px-2.5 py-2">
+                                <span class="block text-ink-subtle">Buffer</span>
+                                <span class="mt-0.5 block font-semibold text-ink">{{ $row['buffer_label'] ?? '' }}</span>
+                            </span>
+                        </span>
+
+                        <span class="flex items-center justify-between gap-2 border-t border-line-faint pt-3">
+                            <span class="text-[11px] text-ink-subtle">Sisa kuota bebas</span>
+                            <span class="rounded-full px-2 py-0.5 text-[10px] font-semibold {{ ($row['headroom_tone'] ?? '') === 'danger' ? 'bg-danger-soft/40 text-danger' : 'bg-surface text-ink' }}">
+                                {{ $row['headroom_label'] ?? '' }}
+                            </span>
+                        </span>
+
+                        <span class="w-full rounded-full px-2 py-1 text-center text-[10px] font-semibold {{ ($row['status_tone'] ?? '') === 'caution' ? 'bg-warning-cream text-warning-caution' : 'bg-success-soft text-success-deep' }}">
                             {{ $row['status'] ?? '' }}
                         </span>
                     </button>
@@ -337,60 +326,44 @@
                 </div>
             </div>
 
-            <div class="flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-6 shadow-card">
-                <div class="flex flex-col gap-4">
-                    <header class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-line-board">
-                        <div class="flex min-w-0 flex-col gap-1">
-                            <h2 class="font-sans text-lg font-semibold leading-6 text-ink">
-                                Matriks Alokasi Kontrak B2B
-                            </h2>
-                        </div>
-
-                        <span class="rounded bg-accent px-2 py-1 text-[9px] font-bold leading-3 gpa-micro-bold text-ink-strong">
-                            {{ $totalTon > 0 ? round(($totalCommitment / $totalTon) * 100, 1) : 0 }}% SERAP
-                        </span>
-                    </header>
-
-                    <div class="flex flex-col gap-3">
-                        @forelse ($allocationsList as $row)
-                            <button type="button" @click="inspectPartner(@js($row))"
-                                class="flex items-center justify-between gap-3 rounded-xl bg-surface-shell p-3 text-left outline outline-1 -outline-offset-1 outline-line-board/60 transition-colors hover:bg-surface-muted">
-                                <span class="flex min-w-0 flex-col gap-0.5">
-                                    <span class="font-sans text-sm font-bold leading-5 text-ink">{{ $row['name'] }}</span>
-                                    <span class="font-mono text-xs leading-4 text-success-deep">
-                                        SENTRA PRODUKSI: {{ $row['sentra'] }}
-                                    </span>
-                                </span>
-
-                                <span class="flex shrink-0 flex-col items-end gap-0.5">
-                                    <span class="text-right font-mono text-sm font-bold leading-5 tracking-[0.28px] text-ink">
-                                        {{ number_format($row['commitment'], 2, '.', '') }}
-                                    </span>
-                                    <span
-                                        class="text-right font-mono text-xs font-bold leading-4 tracking-[0.28px] text-ink">
-                                        Ton/mgg
-                                    </span>
-                                    <span class="text-right font-inter text-[9px] font-semibold leading-3 tracking-[1.08px] text-success-deep">
-                                        {{ $row['priority'] }}
-                                    </span>
-                                </span>
-                            </button>
-                        @empty
-                            <p class="py-4 text-center text-xs text-ink-body">Belum ada komitmen kontrak B2B aktif dalam sistem.</p>
-                        @endforelse
+            <div class="flex h-full flex-col gap-4 rounded-2xl bg-surface p-4 shadow-card sm:p-5">
+                <header class="flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <h2 class="font-sans text-lg font-semibold leading-6 text-ink">Matriks Alokasi Kontrak B2B</h2>
+                        <p class="mt-0.5 text-xs leading-4 text-ink-subtle">{{ count($allocationsList) }} mitra aktif</p>
                     </div>
+                    <span class="shrink-0 rounded-full bg-success-soft px-2.5 py-1 text-[10px] font-semibold text-success-deep">
+                        {{ $totalTon > 0 ? round(($totalCommitment / $totalTon) * 100, 1) : 0 }}% serap
+                    </span>
+                </header>
+
+                <div class="flex flex-1 flex-col divide-y divide-line-faint">
+                    @forelse ($allocationsList as $row)
+                        <button type="button" @click="inspectPartner(@js($row))"
+                            class="flex items-center justify-between gap-3 py-3 text-left transition-colors first:pt-0 last:pb-0 hover:bg-surface-shell focus:outline-none focus-visible:ring-2 focus-visible:ring-success-deep">
+                            <span class="flex min-w-0 flex-col gap-1">
+                                <span class="truncate font-sans text-sm font-semibold leading-5 text-ink">{{ $row['name'] }}</span>
+                                <span class="truncate text-[11px] leading-4 text-ink-subtle">{{ $row['sentra'] }}</span>
+                                <span class="w-fit rounded-full bg-surface-shell px-2 py-0.5 text-[10px] font-medium text-ink-body">
+                                    {{ $row['priority'] }}
+                                </span>
+                            </span>
+                            <span class="shrink-0 text-right">
+                                <span class="block font-mono text-sm font-bold leading-5 text-ink">{{ number_format($row['commitment'], 2, '.', '') }}</span>
+                                <span class="block text-[10px] leading-4 text-ink-subtle">ton / minggu</span>
+                                <x-gpa.icon name="chevron-right" class="ml-auto mt-1 h-3 w-3 text-ink-subtle" />
+                            </span>
+                        </button>
+                    @empty
+                        <p class="py-6 text-center text-xs text-ink-body">Belum ada komitmen kontrak B2B aktif dalam sistem.</p>
+                    @endforelse
                 </div>
 
-                <footer class="border-t border-line-board pt-3">
-                    <div class="flex items-center justify-between gap-3 pt-3">
-                        <span class="text-[11px] font-medium leading-[14px] tracking-[0.88px] font-mono text-success-deep">
-                            TOTAL KOMITMEN {{ count($allocationsList) }} MITRA:
-                        </span>
-                        <span
-                            class="rounded bg-accent/60 px-2 py-0.5 text-[11px] font-bold leading-[14px] tracking-[0.88px] font-mono text-ink outline outline-1 -outline-offset-1 outline-accent-deep">
-                            {{ number_format($totalCommitment, 2, '.', '') }} Ton / Minggu
-                        </span>
-                    </div>
+                <footer class="flex items-center justify-between gap-3 rounded-xl bg-surface-shell px-3 py-2.5">
+                    <span class="text-[11px] font-medium text-ink-subtle">Total komitmen</span>
+                    <span class="text-right text-sm font-bold text-ink">
+                        {{ number_format($totalCommitment, 2, '.', '') }} <span class="text-[10px] font-medium text-ink-subtle">ton / minggu</span>
+                    </span>
                 </footer>
             </div>
         </section>

@@ -35,31 +35,39 @@ class LaporanOperasionalResource extends JsonResource
         $deltaPercent      = $estimatedQuantity > 0 ? round(($deltaKg / $estimatedQuantity) * 100, 2) : 0.0;
 
         $isPaid = $order->status === 'SELESAI' || ($order->invoice && $order->invoice->status === 'PAID');
+        $invoiceNumber = $order->invoice?->invoice_number ?: $order->order_number;
 
         return [
-            'no'              => str_pad((string) ($this->index + 1), 2, '0', STR_PAD_LEFT),
-            'invoice'         => $order->order_number,
-            'sj'              => $order->surat_jalan_number ?: ('SJ-' . date('Ym') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT)),
-            'client'          => $clientName,
-            'location'        => $deliveryAddress,
-            'commodity'       => $commodityName,
-            'estimate'        => $estimatedQuantity,
-            'estimate_label'  => number_format($estimatedQuantity, 0, ',', '.') . ' kg',
-            'net'             => $netQuantity,
-            'net_label'       => number_format($netQuantity, 1, ',', '.') . ' kg',
-            'unit_price'      => $unitPrice,
-            'value'           => $totalOrderAmount,
-            'value_label'     => 'Rp ' . number_format($totalOrderAmount, 0, ',', '.'),
-            'deviation_value' => $deltaPercent,
-            'deviation_label' => ($deltaPercent >= 0 ? '+' : '') . number_format($deltaPercent, 2, '.', '') . '%',
-            'deviation_class' => $deltaPercent < -1.0 ? 'text-warning-caution' : 'text-success-deep',
-            'blocked'         => false,
-            'status'          => $isPaid ? 'lunas' : 'top30',
-            'status_label'    => $isPaid ? 'Lunas' : 'Tempo 30',
-            'status_class'    => $isPaid
+            'order_id'          => $order->id,
+            'no'                => str_pad((string) ($this->index + 1), 2, '0', STR_PAD_LEFT),
+            'invoice'           => $order->order_number,
+            'invoice_number'    => $invoiceNumber,
+            'sj'                => $order->surat_jalan_number ?: ('SJ-' . date('Ym') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT)),
+            'client'            => $clientName,
+            'location'          => $deliveryAddress,
+            'commodity'         => $commodityName,
+            'estimate'          => $estimatedQuantity,
+            'estimate_label'    => number_format($estimatedQuantity, 0, ',', '.') . ' kg',
+            'net'               => $netQuantity,
+            'net_label'         => number_format($netQuantity, 1, ',', '.') . ' kg',
+            'unit_price'        => $unitPrice,
+            'value'             => $totalOrderAmount,
+            'value_label'       => 'Rp ' . number_format($totalOrderAmount, 0, ',', '.'),
+            'deviation_value'   => $deltaPercent,
+            'deviation_label'   => ($deltaPercent >= 0 ? '+' : '') . number_format($deltaPercent, 2, '.', '') . '%',
+            'deviation_class'   => $deltaPercent < -1.0 ? 'text-warning-caution' : 'text-success-deep',
+            'blocked'           => false,
+            'order_status'      => $order->status,
+            'is_paid'           => $isPaid,
+            'status'            => $isPaid ? 'lunas' : 'top30',
+            'status_label'      => $isPaid ? 'Lunas' : 'Tempo 30',
+            'status_class'      => $isPaid
                 ? 'bg-accent text-success-deep outline outline-1 outline-success-deep'
                 : 'bg-surface-pill text-ink-body outline outline-1 outline-line-board/70',
-            'audit_files'     => 3,
+            'surat_jalan_url'   => route('prints.surat-jalan', ['order_id' => $order->id]),
+            'faktur_url'        => route('prints.invoice', ['invoice' => $invoiceNumber]),
+            'struk_url'         => route('prints.thermal-receipt', ['invoice' => $invoiceNumber]),
+            'created_at'        => $order->created_at?->format('Y-m-d'),
         ];
     }
 }

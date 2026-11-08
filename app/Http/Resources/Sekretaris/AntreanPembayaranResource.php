@@ -38,11 +38,18 @@ class AntreanPembayaranResource extends JsonResource
         $proofFileName = $rawProofUrl ? basename($rawProofUrl) : ('BUKTI_TRANSFER_' . $payment->id . '.JPG');
         $isImage = $rawProofUrl ? (bool) preg_match('/\.(jpg|jpeg|png|webp|gif|svg)$/i', $rawProofUrl) : true;
 
+        $rawMethod = strtoupper((string) ($payment->payment_method ?: 'TRANSFER_BANK'));
+        $channelKey = match (true) {
+            str_contains($rawMethod, 'QRIS') => 'qris',
+            str_contains($rawMethod, 'TEMPO') || str_contains($rawMethod, 'GIRO') => 'giro',
+            default => 'bank',
+        };
+
         return [
             'id'              => 'PAY-' . str_pad((string) $payment->id, 4, '0', STR_PAD_LEFT),
             'payment_id'      => $payment->id,
             'invoice'         => $invoiceNumber,
-            'channel'         => strtolower($payment->payment_method ?: 'bank'),
+            'channel'         => $channelKey,
             'channel_label'   => strtoupper(str_replace('_', ' ', $payment->payment_method ?: 'Transfer Bank')),
             'time'            => $payment->created_at ? $payment->created_at->format('H:i') : date('H:i'),
             'client'          => $clientName,

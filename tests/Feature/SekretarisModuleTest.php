@@ -87,6 +87,85 @@ class SekretarisModuleTest extends TestCase
         $response->assertStatus(200);
     }
 
+    public function test_sekretaris_dashboard_verification_queue_only_displays_pending_verification_orders(): void
+    {
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $klien = User::factory()->create([
+            'role'         => 'KLIEN',
+            'client_type'  => 'B2B_KONTRAK',
+            'company_name' => 'PT Mitra Sayur Segar',
+        ]);
+
+        // Buat pesanan dengan berbagai status non-verifikasi
+        $cancelledOrder = Order::create([
+            'order_number'         => 'ORD-TEST-BATAL',
+            'user_id'              => $klien->id,
+            'order_source'         => 'WEB_PORTAL',
+            'target_delivery_date' => now()->addDay(),
+            'delivery_address'     => 'Alamat Mitra',
+            'subtotal'             => 100000,
+            'tax_amount'           => 11000,
+            'shipping_cost'        => 0,
+            'grand_total'          => 111000,
+            'status'               => 'BATAL',
+        ]);
+        $waitingPaymentOrder = Order::create([
+            'order_number'         => 'ORD-TEST-PAYMENT',
+            'user_id'              => $klien->id,
+            'order_source'         => 'WEB_PORTAL',
+            'target_delivery_date' => now()->addDay(),
+            'delivery_address'     => 'Alamat Mitra',
+            'subtotal'             => 100000,
+            'tax_amount'           => 11000,
+            'shipping_cost'        => 0,
+            'grand_total'          => 111000,
+            'status'               => 'MENUNGGU_PEMBAYARAN',
+        ]);
+        $completedOrder = Order::create([
+            'order_number'         => 'ORD-TEST-SELESAI',
+            'user_id'              => $klien->id,
+            'order_source'         => 'WEB_PORTAL',
+            'target_delivery_date' => now()->addDay(),
+            'delivery_address'     => 'Alamat Mitra',
+            'subtotal'             => 100000,
+            'tax_amount'           => 11000,
+            'shipping_cost'        => 0,
+            'grand_total'          => 111000,
+            'status'               => 'SELESAI',
+        ]);
+
+        // 1. Saat tidak ada pesanan MENUNGGU_VERIFIKASI, dashboard queueRows harus kosong (tidak menampilkan pesanan batal/selesai)
+        $responseEmpty = $this->actingAs($sekretaris)->get('/sekretaris/dashboard');
+        $responseEmpty->assertStatus(200);
+        $queueRowsEmpty = $responseEmpty->viewData('queueRows');
+        $this->assertEmpty($queueRowsEmpty, 'Antrean verifikasi dashboard harus kosong ketika tidak ada pesanan MENUNGGU_VERIFIKASI.');
+        $responseEmpty->assertSee('Tidak Ada Antrean Verifikasi');
+
+        // 2. Buat pesanan yang benar-benar MENUNGGU_VERIFIKASI
+        $pendingOrder = Order::create([
+            'order_number'         => 'ORD-TEST-PENDING',
+            'user_id'              => $klien->id,
+            'order_source'         => 'WEB_PORTAL',
+            'target_delivery_date' => now()->addDay(),
+            'delivery_address'     => 'Alamat Mitra',
+            'subtotal'             => 100000,
+            'tax_amount'           => 11000,
+            'shipping_cost'        => 0,
+            'grand_total'          => 111000,
+            'status'               => 'MENUNGGU_VERIFIKASI',
+        ]);
+
+        $responsePending = $this->actingAs($sekretaris)->get('/sekretaris/dashboard');
+        $responsePending->assertStatus(200);
+        $queueRowsPending = $responsePending->viewData('queueRows');
+        $this->assertCount(1, $queueRowsPending);
+        $this->assertEquals('ORD-TEST-PENDING', $queueRowsPending[0]['po']);
+    }
+
     public function test_sekretaris_can_view_real_orders_in_verification_queue(): void
     {
         $sekretaris = User::factory()->create([
@@ -1342,5 +1421,168 @@ class SekretarisModuleTest extends TestCase
         $response->assertSee('Sisa 12 Hari');
         $response->assertSee('Lewat 4 Hari');
         $this->assertDoesNotMatchRegularExpression('/Sisa \d+\.\d+ Hari/', $response->getContent());
+    }
+
+    public function test_sekretaris_can_consolidate_surat_jalan_into_official_invoice(): void
+    {
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $klien = User::factory()->create([
+            'role'         => 'KLIEN',
+            'client_type'  => 'B2B_KONTRAK',
+            'company_name' => 'PT Resto Sedap',
+            'is_active'    => true,
+        ]);
+
+        // Buat 2 order dengan Surat Jalan
+        $order1 = Order::create([
+            'order_number'         => 'ORD-SJ-001',
+            'surat_jalan_number'   => 'SJ-GPA-202611-0081',
+            'user_id'              => $klien->id,
+            'order_source'         => 'WEB_PORTAL',
+            'target_delivery_date' => now()->addDay(),
+            'delivery_address'     => 'Resto Sedap',
+            'subtotal'             => 1000000,
+            'tax_amount'           => 110000,
+            'shipping_cost'        => 50000,
+            'grand_total'          => 1160000,
+            'status'               => 'SELESAI',
+        ]);
+        $order2 = Order::create([
+            'order_number'         => 'ORD-SJ-002',
+            'surat_jalan_number'   => 'SJ-GPA-202611-0082',
+            'user_id'              => $klien->id,
+            'order_source'         => 'WEB_PORTAL',
+            'target_delivery_date' => now()->addDay(),
+            'delivery_address'     => 'Resto Sedap',
+            'subtotal'             => 1000000,
+            'tax_amount'           => 110000,
+            'shipping_cost'        => 50000,
+            'grand_total'          => 1160000,
+            'status'               => 'SELESAI',
+        ]);
+
+        $response = $this->actingAs($sekretaris)->postJson('/sekretaris/faktur/terbitkan', [
+            'client_id'   => $klien->id,
+            'surat_jalan' => ['SJ-GPA-202611-0081', 'SJ-GPA-202611-0082'],
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+        ]);
+
+        $data = $response->json();
+        $this->assertNotEmpty($data['invoice_number']);
+
+        $consolidatedInvoice = Invoice::where('invoice_number', $data['invoice_number'])->first();
+        $this->assertNotNull($consolidatedInvoice);
+        $this->assertEquals(2320000, (float) $consolidatedInvoice->grand_total);
+        $this->assertEquals($klien->id, $consolidatedInvoice->user_id);
+
+        $order1->refresh();
+        $order2->refresh();
+        $this->assertEquals($consolidatedInvoice->id, $order1->invoice_id);
+        $this->assertEquals($consolidatedInvoice->id, $order2->invoice_id);
+    }
+
+    public function test_sekretaris_pembayaran_queue_only_shows_payments_with_submitted_proof(): void
+    {
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $klien = User::factory()->create([
+            'role'         => 'KLIEN',
+            'client_type'  => 'B2B_KONTRAK',
+            'company_name' => 'PT Mitra Pembayaran',
+            'is_active'    => true,
+        ]);
+
+        $invoice = Invoice::create([
+            'invoice_number'  => 'INV-TEST-PROOFS',
+            'user_id'         => $klien->id,
+            'period_end'      => now()->toDateString(),
+            'subtotal_amount' => 1000000,
+            'grand_total'     => 1000000,
+            'due_date'        => now()->addDays(30)->toDateString(),
+            'status'          => 'UNPAID',
+        ]);
+
+        // 1. Payment tanpa bukti (klien belum bayar / belum ajukan bukti)
+        $unsubmittedPayment = Payment::create([
+            'invoice_id'        => $invoice->id,
+            'payment_reference' => 'PAY-TEST-NO-PROOF',
+            'payment_method'    => 'TEMPO_TOP',
+            'amount'            => 500000,
+            'proof_url'         => null,
+            'paid_at'           => null,
+            'status'            => 'MENUNGGU_VERIFIKASI',
+        ]);
+
+        // 2. Payment dengan bukti (klien sudah mengajukan konfirmasi bukti transfer)
+        $submittedPayment = Payment::create([
+            'invoice_id'        => $invoice->id,
+            'payment_reference' => 'PAY-TEST-WITH-PROOF',
+            'payment_method'    => 'TRANSFER_BANK',
+            'amount'            => 500000,
+            'proof_url'         => 'payments/test_receipt.jpg',
+            'paid_at'           => now(),
+            'status'            => 'MENUNGGU_VERIFIKASI',
+        ]);
+
+        $response = $this->actingAs($sekretaris)->get('/sekretaris/pembayaran');
+        $response->assertStatus(200);
+
+        $queueRows = $response->viewData('queueRows');
+        $paymentIds = collect($queueRows)->pluck('payment_id')->all();
+
+        $this->assertContains($submittedPayment->id, $paymentIds, 'Pembayaran yang memiliki bukti harus muncul di antrean verifikasi.');
+        $this->assertNotContains($unsubmittedPayment->id, $paymentIds, 'Pembayaran tanpa bukti (belum bayar) tidak boleh muncul di antrean verifikasi.');
+    }
+
+    public function test_sekretaris_pembayaran_rejected_count_does_not_count_po_verifikasi_rejections_without_proof(): void
+    {
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $klien = User::factory()->create([
+            'role'         => 'KLIEN',
+            'client_type'  => 'B2B_KONTRAK',
+            'company_name' => 'PT Test Rejection PO',
+            'is_active'    => true,
+        ]);
+
+        $cancelledOrder = Order::create([
+            'order_number'         => 'ORD-CANCEL-PO-001',
+            'user_id'              => $klien->id,
+            'target_delivery_date' => now()->addDays(2),
+            'delivery_address'     => 'Jl. Kebun No. 9',
+            'grand_total'          => 1200000,
+            'status'               => 'BATAL',
+        ]);
+
+        // Pembayaran dummy dari penolakan verifikasi PO (tanpa bukti bayar)
+        Payment::create([
+            'order_id'          => $cancelledOrder->id,
+            'payment_reference' => 'REJ-PO-DUMMY-001',
+            'payment_method'    => 'TRANSFER_BANK',
+            'amount'            => 1200000,
+            'status'            => 'DITOLAK',
+            'proof_url'         => null,
+            'verification_note' => 'Pembelian melebihi kuota SLA',
+        ]);
+
+        $response = $this->actingAs($sekretaris)->get('/sekretaris/pembayaran');
+        $response->assertStatus(200);
+
+        // rejectedCount pada kartu KPI harus 0 karena tidak ada bukti bayar riil yang ditolak
+        $this->assertEquals(0, $response->viewData('rejectedCount'), 'Penolakan PO tanpa bukti bayar tidak boleh dihitung sebagai Bukti Belum Sesuai.');
     }
 }

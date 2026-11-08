@@ -87,6 +87,19 @@ class KeranjangController extends Controller
         $taxSettings = $tataKelolaService->getTaxSettings();
         $shippingSettings = $tataKelolaService->getShippingSettings();
 
+        // Evaluasi pagu plafon kredit dan status pembekuan akun klien
+        $creditLimit = 0.0;
+        if ($isB2b) {
+            $creditLimit = (float) $activeContracts->sum(function ($contract) {
+                return (float) ($contract->fixed_price_per_kg * $contract->committed_volume_per_cycle * 2);
+            });
+        }
+        $unpaidTotal = (float) \App\Models\Order::where('user_id', $user->id)
+            ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])
+            ->sum('grand_total');
+        $creditAvailable = max(0.0, $creditLimit - $unpaidTotal);
+        $isFrozen = $tataKelolaService->isClientFrozen((int) $user->id);
+
         $cartDefaults = [
             'date'              => $defaultDeliveryDate,
             'window'            => '04:00 - 06:00 WIB (Subuh)',
@@ -99,6 +112,9 @@ class KeranjangController extends Controller
             'submitted_status'  => 'Menunggu Verifikasi Sekretaris',
             'tax_settings'      => $taxSettings,
             'shipping_settings' => $shippingSettings,
+            'credit_limit'      => $creditLimit,
+            'credit_available'  => $creditAvailable,
+            'is_frozen'         => $isFrozen,
         ];
 
         return view('klien.keranjang', compact(
@@ -113,6 +129,9 @@ class KeranjangController extends Controller
             'defaultAddress',
             'docks',
             'cartDefaults',
+            'creditLimit',
+            'creditAvailable',
+            'isFrozen',
             'taxSettings',
             'shippingSettings'
         ));

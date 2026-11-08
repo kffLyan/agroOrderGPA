@@ -543,15 +543,34 @@
 
                         @if ($isB2b)
                             <div class="flex flex-col gap-2 rounded-xl border border-line-hair bg-surface-shell/80 p-3.5">
-                                <div class="flex items-center gap-2">
-                                    <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success/20 text-success-deep">
-                                        <x-gpa.icon name="shield-check" class="h-3.5 w-3.5" />
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-success/20 text-success-deep">
+                                            <x-gpa.icon name="shield-check" class="h-3.5 w-3.5" />
+                                        </span>
+                                        <p class="gpa-meta-lg font-bold text-ink">Term of Payment (Tempo 30 Hari)</p>
+                                    </div>
+                                    <span class="font-mono text-xs font-bold text-success-deep">
+                                        Sisa Plafon: Rp {{ number_format($creditAvailable ?? 0, 0, ',', '.') }}
                                     </span>
-                                    <p class="gpa-meta-lg font-bold text-ink">Term of Payment (Tempo 30 Hari)</p>
                                 </div>
                                 <p class="text-xs leading-relaxed text-ink-body">
                                     Sebagai mitra B2B Kontrak, pesanan akan langsung dialokasikan ke gudang packing dan armada pengiriman segera setelah diverifikasi oleh Sekretaris Operasional. Seluruh tagihan diagregasi ke faktur konsolidasi bulanan.
                                 </p>
+                                @if (!empty($isFrozen))
+                                    <div class="mt-2 rounded-lg bg-danger/10 border border-danger/30 p-2.5 text-xs text-danger-ink font-semibold flex items-center gap-2">
+                                        <x-gpa.icon name="alert-triangle" class="h-4 w-4 shrink-0 text-danger" />
+                                        <span>Plafon kredit Anda sedang dibekukan sementara oleh Direktur Utama. Pengajuan PO tidak dapat diproses.</span>
+                                    </div>
+                                @else
+                                    <div x-cloak x-show="grandTotal() > {{ (float) ($creditAvailable ?? 0) }}" class="mt-2 rounded-lg bg-warning-soft border border-warning-deep/30 p-2.5 text-xs text-warning-deep flex items-start gap-2">
+                                        <x-gpa.icon name="alert-triangle" class="h-4 w-4 shrink-0 text-warning-deep mt-0.5" />
+                                        <div>
+                                            <strong class="font-bold">Perhatian Plafon:</strong>
+                                            <span> Estimasi total pesanan (<span class="font-mono font-bold" x-text="money(grandTotal())"></span>) melebihi sisa plafon tempo Anda (Rp {{ number_format($creditAvailable ?? 0, 0, ',', '.') }}). PO ini akan memerlukan verifikasi &amp; evaluasi khusus oleh Sekretariat.</span>
+                                        </div>
+                                    </div>
+                                @endif
                             </div>
                         @else
                             <div class="flex flex-col gap-3 rounded-xl border border-line-hair bg-surface-shell/80 p-3.5">
@@ -600,7 +619,7 @@
                         </template>
 
                         <div class="flex flex-col gap-2">
-                            <button type="submit" :disabled="empty() || isSubmitting"
+                            <button type="submit" :disabled="empty() || isSubmitting || {{ !empty($isFrozen) ? 'true' : 'false' }}"
                                 class="inline-flex items-center justify-center gap-2 rounded-lg bg-ink px-4 py-3 shadow-pop transition-colors hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50">
                                 <template x-if="!isSubmitting">
                                     <span class="inline-flex items-center gap-2">

@@ -34,13 +34,19 @@ class DashboardController extends Controller
         $completedOrders      = $allOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN']);
 
         // 2. Menghitung pembayaran yang sudah mengunggah bukti transfer dan menunggu verifikasi sekretaris
-        $pendingPaymentsCount = Payment::whereIn('status', ['MENUNGGU_VERIFIKASI', 'PENDING'])->count();
+        $pendingPaymentsCount = Payment::whereIn('status', ['MENUNGGU_VERIFIKASI', 'PENDING'])
+            ->where(function ($q) {
+                $q->where(function ($sub) {
+                    $sub->whereNotNull('proof_url')->where('proof_url', '!=', '');
+                })->orWhereNotNull('paid_at');
+            })
+            ->count();
 
         $totalTodayCount = $allOrders->where('created_at', '>=', $today)->count();
 
-        // 3. Menyiapkan baris antrean pesanan masuk yang paling mendesak untuk diverifikasi segera
-        $ordersToDisplay = $pendingOrders->isNotEmpty() ? $pendingOrders->take(6) : $allOrders->take(4);
-        $queueRows = $ordersToDisplay->map(
+        // 3. Menyiapkan baris antrean pesanan masuk yang paling mendesak untuk diverifikasi segera (hanya pesanan MENUNGGU_VERIFIKASI)
+        $ordersToDisplay = $pendingOrders->take(6);
+        $queueRows = $ordersToDisplay->values()->map(
             fn ($order) => (new AntreanDashboardResource($order))->toArray($request)
         )->all();
 

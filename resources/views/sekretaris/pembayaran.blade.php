@@ -478,15 +478,15 @@
                     <textarea x-model="note" rows="2"
                         class="w-full rounded-lg bg-surface p-3 text-xs leading-5 text-ink outline outline-1 outline-line-hair focus:outline-2 focus:outline-success-deep">{{ $default['note'] ?? '' }}</textarea>
 
-                    <div class="flex flex-wrap items-center justify-end gap-2">
+                    <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-end gap-2">
                         <button type="button" @click="saveNote()"
-                            class="inline-flex items-center gap-2 rounded-xl bg-surface-track px-4 py-2.5 gpa-micro-bold uppercase tracking-[1.08px] text-ink transition-colors hover:bg-surface-disabled">
+                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-surface-track px-4 py-2.5 gpa-micro-bold uppercase tracking-[1.08px] text-ink transition-colors hover:bg-surface-disabled w-full sm:w-auto">
                             <x-gpa.icon name="save" class="h-[15px] w-[15px] shrink-0" />
                             Simpan Catatan Audit
                         </button>
 
                         <button type="button" @click="reject()"
-                            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 gpa-meta-lg font-bold tracking-[0.88px] text-danger outline outline-2 outline-danger transition-colors hover:bg-danger-soft">
+                            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 gpa-meta-lg font-bold tracking-[0.88px] text-danger outline outline-2 outline-danger transition-colors hover:bg-danger-soft w-full sm:w-auto">
                             <x-gpa.icon name="x" class="h-4 w-4 shrink-0" />
                             Tolak Bukti Pembayaran
                         </button>
@@ -495,7 +495,7 @@
                             :class="checkComplete
                                 ? 'bg-accent-deep text-ink hover:bg-accent'
                                 : 'cursor-not-allowed bg-surface-disabled text-ink-quiet opacity-70'"
-                            class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl px-4 gpa-meta-lg font-bold tracking-[0.88px] transition-colors sm:flex-none">
+                            class="inline-flex h-11 items-center justify-center gap-2 rounded-xl px-4 gpa-meta-lg font-bold tracking-[0.88px] transition-colors w-full sm:w-auto">
                             <x-gpa.icon name="check" class="h-4 w-4 shrink-0" />
                             Setujui &amp; Tandai Lunas
                         </button>

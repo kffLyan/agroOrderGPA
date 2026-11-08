@@ -57,6 +57,17 @@ class VerifikasiPesananResource extends JsonResource
             : ($order->user && method_exists($order->user, 'contracts') ? $order->user->contracts()->where('status', 'ACTIVE')->first() : null);
         $creditLimit = $clientContract ? (float) ($clientContract->fixed_price_per_kg * $clientContract->committed_volume_per_cycle * 2) : 0;
 
+        // Hitung eksposur kredit, sisa plafon, dan status pembekuan akun klien
+        $unpaidExposure = 0.0;
+        if ($order->user) {
+            $unpaidExposure = (float) $order->user->credit_used;
+        }
+        $creditAvailable = max(0.0, $creditLimit - $unpaidExposure);
+        $isOverLimit = $isContractClient && ($totalOrderAmount > $creditAvailable);
+        $tataKelolaService = app(\App\Services\TataKelolaService::class);
+        $isClientFrozen = $order->user_id ? $tataKelolaService->isClientFrozen((int) $order->user_id) : false;
+        $creditPercent = $creditLimit > 0 ? min(100, round(($unpaidExposure / $creditLimit) * 100)) : 0;
+
         $subtotalAmount = (float) $order->subtotal_amount;
         $shippingCost = (float) $order->shipping_cost;
         $taxAmount = (float) $order->tax_amount;
@@ -68,7 +79,7 @@ class VerifikasiPesananResource extends JsonResource
             'order_id'              => $order->id,
             'client'                => $clientName,
             'is_contract'           => $isContractClient,
-            'channel'               => $order->order_source === 'WEB_PORTAL' ? 'b2b' : 'wa',
+            'channel'               => $isContractClient ? 'b2b' : 'reguler',
             'meta'                  => ($isContractClient ? 'Kontrak Mitra B2B' : 'Klien Reguler') . ' • Alamat: ' . ($order->delivery_address ?: 'Gudang Klien'),
             'entered'               => 'Masuk: ' . $order->created_at->diffForHumans(),
             'chip'                  => [
@@ -130,6 +141,16 @@ class VerifikasiPesananResource extends JsonResource
             'deliveries'            => [],
             'deliveries_total'      => 'Rp ' . number_format($totalOrderAmount, 0, ',', '.'),
             'plafon'                => $creditLimit > 0 ? ('Rp ' . number_format($creditLimit, 0, ',', '.')) : 'Sesuai Ketentuan PO',
+            'credit_limit_raw'      => $creditLimit,
+            'credit_used_raw'       => $unpaidExposure,
+            'credit_available_raw'  => $creditAvailable,
+            'is_over_limit'         => $isOverLimit,
+            'is_frozen'             => $isClientFrozen,
+            'credit_percent'        => $creditPercent,
+            'credit_limit_label'    => 'Rp ' . number_format($creditLimit, 0, ',', '.'),
+            'credit_used_label'     => 'Rp ' . number_format($unpaidExposure, 0, ',', '.'),
+            'credit_avail_label'    => 'Rp ' . number_format($creditAvailable, 0, ',', '.'),
+            'over_amount_label'     => 'Rp ' . number_format(max(0.0, $totalOrderAmount - $creditAvailable), 0, ',', '.'),
         ];
     }
 }

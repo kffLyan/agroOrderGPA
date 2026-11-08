@@ -26,7 +26,7 @@
 @endphp
 
 @section('content')
-    <div class="space-y-3" x-data="secretaryReports(@js($journalRows), @js($filterConfig), @js($tabConfig), {{ count($journalRows) }}, @js($hash))"
+    <div class="space-y-3 pb-20" x-data="secretaryReports(@js($journalRows), @js($filterConfig), @js($tabConfig), {{ count($journalRows) }}, @js($hash))"
         @gpa:search.window="query = $event.detail">
         <section class="flex flex-col gap-3 rounded-xl bg-surface p-3 sm:p-3.5 shadow-card ring-1 ring-line-hair xl:flex-row xl:items-center xl:justify-between">
             <div class="min-w-0">
@@ -82,15 +82,15 @@
 
                 <label class="block min-w-0" for="filter-client">
                     <span class="mb-1.5 block truncate gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">
-                        Kategori Pembeli
+                        Kategori / Nama Pembeli
                     </span>
                     <div class="relative">
                         <select id="filter-client" x-model="selected.client"
                             class="block h-10 w-full appearance-none rounded-lg border border-line-board bg-surface pl-3 pr-8 text-xs font-semibold text-ink transition-colors hover:border-brand focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand">
                             <option value="Semua Pembeli &amp; Mitra B2B">Semua Pembeli &amp; Mitra B2B</option>
-                            <option value="Hotel &amp; Restoran">Hotel &amp; Restoran</option>
-                            <option value="Katering Industri">Katering Industri</option>
-                            <option value="Supermarket &amp; Retail">Supermarket &amp; Retail</option>
+                            @foreach ($clientOptions ?? [] as $clientOpt)
+                                <option value="{{ $clientOpt }}">{{ $clientOpt }}</option>
+                            @endforeach
                         </select>
                         <x-gpa.icon name="chevron-down"
                             class="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-quiet" />
@@ -105,10 +105,9 @@
                         <select id="filter-commodity" x-model="selected.commodity"
                             class="block h-10 w-full appearance-none rounded-lg border border-line-board bg-surface pl-3 pr-8 text-xs font-semibold text-ink transition-colors hover:border-brand focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand">
                             <option value="Semua Sayuran Segar">Semua Sayuran Segar</option>
-                            <option value="Selada Romaine">Selada Romaine</option>
-                            <option value="Tomat Beef">Tomat Beef</option>
-                            <option value="Brokoli Super">Brokoli Super</option>
-                            <option value="Bawang Merah">Bawang Merah</option>
+                            @foreach ($commodityOptions ?? [] as $comOpt)
+                                <option value="{{ $comOpt }}">{{ $comOpt }}</option>
+                            @endforeach
                         </select>
                         <x-gpa.icon name="chevron-down"
                             class="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-quiet" />
@@ -124,8 +123,7 @@
                             class="block h-10 w-full appearance-none rounded-lg border border-line-board bg-surface pl-3 pr-8 text-xs font-semibold text-ink transition-colors hover:border-brand focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand">
                             <option value="Semua Status Tagihan">Semua Status Tagihan</option>
                             <option value="Lunas">Lunas</option>
-                            <option value="Tempo 14 Hari">Tempo 14 Hari</option>
-                            <option value="Tempo 30 Hari">Tempo 30 Hari</option>
+                            <option value="Tempo">Tempo / Piutang Berjalan</option>
                             <option value="Menunggu Verifikasi">Menunggu Verifikasi</option>
                         </select>
                         <x-gpa.icon name="chevron-down"
@@ -346,12 +344,12 @@
             </div>
         </section>
 
-        <div class="flex flex-wrap gap-1 border-b border-line-board">
+        <div class="flex flex-nowrap overflow-x-auto gap-1 border-b border-line-board pb-0.5 scrollbar-none sm:flex-wrap">
             <button type="button" @click="setTab('sales')"
                 :class="tab === 'sales'
                     ? 'bg-surface text-ink border-b-2 border-brand'
                     : 'text-ink-quiet border-b-2 border-transparent hover:text-ink-body'"
-                class="-mb-px inline-flex items-center gap-2 rounded-t-lg px-4 py-3 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
+                class="-mb-px shrink-0 whitespace-nowrap inline-flex items-center gap-2 rounded-t-lg px-4 py-3 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
                 <x-gpa.icon name="invoice" class="h-4 w-4 shrink-0" />
                 Rekapitulasi Penjualan &amp; Pesanan
             </button>
@@ -359,7 +357,7 @@
                 :class="tab === 'weighing'
                     ? 'bg-surface text-ink border-b-2 border-brand'
                     : 'text-ink-quiet border-b-2 border-transparent hover:text-ink-body'"
-                class="-mb-px inline-flex items-center gap-2 rounded-t-lg px-4 py-3 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
+                class="-mb-px shrink-0 whitespace-nowrap inline-flex items-center gap-2 rounded-t-lg px-4 py-3 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
                 <x-gpa.icon name="scale" class="h-4 w-4 shrink-0" />
                 Volume &amp; Analisis Timbangan
             </button>
@@ -367,7 +365,7 @@
                 :class="tab === 'dispatch'
                     ? 'bg-surface text-ink border-b-2 border-brand'
                     : 'text-ink-quiet border-b-2 border-transparent hover:text-ink-body'"
-                class="-mb-px inline-flex items-center gap-2 rounded-t-lg px-4 py-3 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
+                class="-mb-px shrink-0 whitespace-nowrap inline-flex items-center gap-2 rounded-t-lg px-4 py-3 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
                 <x-gpa.icon name="truck" class="h-4 w-4 shrink-0" />
                 Surat Jalan &amp; Pengiriman Supir
             </button>
@@ -375,7 +373,7 @@
                 :class="tab === 'aging'
                     ? 'bg-surface text-ink border-b-2 border-brand'
                     : 'text-ink-quiet border-b-2 border-transparent hover:text-ink-body'"
-                class="-mb-px inline-flex items-center gap-2 rounded-t-lg px-4 py-3 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
+                class="-mb-px shrink-0 whitespace-nowrap inline-flex items-center gap-2 rounded-t-lg px-4 py-3 gpa-micro-bold uppercase tracking-[1.08px] transition-colors">
                 <x-gpa.icon name="chart" class="h-4 w-4 shrink-0" />
                 Pemantauan Umur Tagihan (Tempo)
             </button>
@@ -397,7 +395,7 @@
                 </p>
             </div>
 
-            <div style="display:none" x-show="activeTab">
+            <div>
                 <div class="gpa-scroll-x">
                     <table class="w-full border-collapse text-left">
                         <thead class="bg-brand text-accent">
@@ -411,7 +409,7 @@
                                 <th scope="col" class="px-3 py-3 gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-right">Selisih</th>
                                 <th scope="col" class="px-3 py-3 gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-right">Nilai Total (Rp)</th>
                                 <th scope="col" class="px-3 py-3 gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-right">Status Bayar</th>
-                                <th scope="col" class="px-3 py-3 gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-right">Dokumen</th>
+                                <th scope="col" class="px-3 py-3 gpa-micro-bold uppercase leading-4 tracking-[1.08px] text-right">Dokumen Resmi</th>
                             </tr>
                         </thead>
 
@@ -470,31 +468,54 @@
                                         ])>{{ $row['status_label'] }}</span>
                                     </td>
 
-                                    <td class="px-3 py-4">
-                                        <span class="flex items-center justify-end gap-1.5">
-                                            @foreach (['PO Reg', 'Surat Jalan', 'Tiket Timbangan'] as $position => $file)
-                                                @if ($position < $row['audit_files'])
-                                                    <button type="button" @click="openAudit(@js($row), @js($file))"
-                                                        class="inline-flex items-center gap-1 rounded bg-accent/50 px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-success-deep outline outline-1 outline-success/40">
-                                                        <x-gpa.icon name="file-text" class="h-3 w-3 shrink-0" />
-                                                        {{ $file }}
-                                                    </button>
-                                                @else
-                                                    <span class="inline-flex items-center gap-1 rounded bg-surface-pill px-2 py-1 gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">
-                                                        <x-gpa.icon name="x" class="h-3 w-3 shrink-0" />
-                                                        Menunggu
-                                                    </span>
-                                                @endif
-                                            @endforeach
-                                        </span>
+                                    <td class="px-3 py-4 text-right">
+                                        <div class="flex items-center justify-end gap-1.5">
+                                            <a href="{{ $row['surat_jalan_url'] }}" target="_blank"
+                                                title="Cetak Surat Jalan Resmi (Nota/A5)"
+                                                class="inline-flex items-center gap-1 rounded-lg bg-surface-shell px-2.5 py-1.5 font-mono text-2xs font-bold tracking-[0.5px] text-ink outline outline-1 outline-line-board hover:bg-surface-track hover:text-success-deep transition-colors shadow-xs">
+                                                <x-gpa.icon name="truck" class="h-3 w-3 text-success-deep" />
+                                                <span>Surat Jalan</span>
+                                            </a>
+
+                                            <a href="{{ $row['faktur_url'] }}" target="_blank"
+                                                title="Cetak Faktur Tagihan Resmi"
+                                                class="inline-flex items-center gap-1 rounded-lg bg-accent/40 px-2.5 py-1.5 font-mono text-2xs font-bold tracking-[0.5px] text-success-deep outline outline-1 outline-accent hover:bg-accent transition-colors shadow-xs">
+                                                <x-gpa.icon name="invoice" class="h-3 w-3 text-success-deep" />
+                                                <span>Faktur</span>
+                                            </a>
+
+                                            <a href="{{ $row['struk_url'] }}" target="_blank"
+                                                title="Cetak Struk Kasir Thermal"
+                                                class="inline-flex items-center gap-1 rounded-lg bg-surface-shell px-2.5 py-1.5 font-mono text-2xs font-bold tracking-[0.5px] text-ink outline outline-1 outline-line-board hover:bg-surface-track hover:text-brand transition-colors shadow-xs">
+                                                <x-gpa.icon name="receipt" class="h-3 w-3 text-brand" />
+                                                <span>Struk</span>
+                                            </a>
+                                        </div>
                                     </td>
+                                </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="px-3 py-8 text-center text-sm text-ink-quiet">
+                                    <td colspan="10" class="px-3 py-8 text-center text-sm text-ink-quiet">
                                         Tidak ada pesanan sayur yang tercatat dalam rekapitulasi saat ini.
                                     </td>
                                 </tr>
                             @endforelse
+
+                            <tr x-show="visibleRows().length === 0" style="display:none">
+                                <td colspan="10" class="px-3 py-10 text-center">
+                                    <div class="flex flex-col items-center justify-center gap-2">
+                                        <span class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-surface-track text-ink-quiet">
+                                            <x-gpa.icon name="search" class="h-5 w-5" />
+                                        </span>
+                                        <p class="text-sm font-bold text-ink">Tidak ada transaksi yang cocok</p>
+                                        <p class="text-xs text-ink-quiet">Coba sesuaikan opsi filter atau pilih tab transaksi lainnya.</p>
+                                        <button type="button" @click="resetFilters()" class="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-surface-shell px-3 py-1.5 text-xs font-semibold text-brand outline outline-1 outline-line-board hover:bg-surface-track">
+                                            <x-gpa.icon name="refresh" class="h-3.5 w-3.5" />
+                                            Reset Semua Filter
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>
@@ -520,17 +541,6 @@
                         </span>
                     </div>
                 </div>
-            </div>
-
-            <div style="display:none" x-show="! activeTab"
-                class="flex flex-col items-center gap-2 px-6 py-12 text-center">
-                <span class="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-surface-track">
-                    <x-gpa.icon name="chart" class="h-5 w-5 shrink-0 text-ink-quiet" />
-                </span>
-                <p class="font-sans text-base font-bold leading-6 text-ink" x-text="activeTabLabel">Rekapitulasi Penjualan &amp; Pesanan</p>
-                <p class="max-w-md text-xs leading-5 text-ink-body">
-                    Ringkasan tab ini belum dimuat pada MVP. Jurnal buku transaksi riil dan subtotal timbangan tampil pada Tab 1.
-                </p>
             </div>
         </section>
 
@@ -649,41 +659,41 @@
             </section>
         </div>
 
-        <section class="sticky bottom-4 z-30 flex flex-col gap-5 rounded-2xl bg-surface p-6 shadow-2xl ring-1 ring-black/5 outline outline-1 outline-line-board">
-            <div class="flex flex-col gap-4 border-b border-line-soft pb-4 sm:flex-row sm:items-start sm:justify-between">
-                <div class="flex min-w-0 items-start gap-3.5">
-                    <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand shadow-sub outline outline-1 outline-success-deep">
-                        <x-gpa.icon name="lock" class="h-5 w-5 shrink-0 text-accent" />
+        <section class="sticky bottom-2 sm:bottom-4 z-30 flex flex-col gap-3 sm:gap-4 rounded-xl sm:rounded-2xl bg-surface/95 backdrop-blur-md p-3.5 sm:p-5 lg:p-6 shadow-2xl ring-1 ring-black/10 outline outline-1 outline-line-board">
+            <div class="flex flex-col gap-2 sm:gap-4 border-b border-line-soft pb-3 sm:pb-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex min-w-0 items-center sm:items-start gap-2.5 sm:gap-3.5">
+                    <span class="inline-flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-brand shadow-sub outline outline-1 outline-success-deep">
+                        <x-gpa.icon name="lock" class="h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-accent" />
                     </span>
 
-                    <div class="min-w-0">
-                        <div class="flex flex-wrap items-center gap-2 font-mono text-2xs font-bold tracking-[0.88px] text-ink">
-                            <span>Kode Pengesahan Laporan Resmi:</span>
-                            <span class="rounded bg-surface-shell px-2.5 py-1 font-mono text-xs text-success-deep outline outline-1 outline-line-board">{{ $hash }}</span>
+                    <div class="min-w-0 flex-1">
+                        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2 font-mono text-[11px] sm:text-2xs font-bold tracking-[0.5px] sm:tracking-[0.88px] text-ink">
+                            <span class="shrink-0">Kode Pengesahan Laporan Resmi:</span>
+                            <span class="rounded bg-surface-shell px-2 py-0.5 sm:px-2.5 sm:py-1 font-mono text-[11px] sm:text-xs text-success-deep outline outline-1 outline-line-board font-bold">{{ $hash }}</span>
                         </div>
 
-                        <p class="mt-2 max-w-4xl text-xs leading-5 text-ink-body">
+                        <p class="hidden sm:block mt-1 sm:mt-2 max-w-4xl text-xs leading-5 text-ink-body">
                             Laporan ini merupakan rekapitulasi resmi transaksi PT Green Pasundan Agriculture yang siap diserahkan kepada Direksi.
                         </p>
                     </div>
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center justify-end gap-2.5">
+            <div class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-2.5">
                 <a href="{{ route('sekretaris.laporan.export') }}"
-                    class="inline-flex h-10 items-center gap-2 rounded-xl px-4 gpa-micro-bold uppercase tracking-[1.08px] transition-colors shadow-sub bg-surface-shell text-ink-body outline outline-1 outline-line-board hover:bg-surface-track hover:text-ink">
-                    <x-gpa.icon name="download" class="h-4 w-4 shrink-0" />
-                    Unduh Rekap Buku Besar (.csv)
+                    class="inline-flex h-9 sm:h-10 items-center justify-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2.5 sm:px-4 text-[10px] sm:text-2xs font-mono font-bold uppercase tracking-[0.5px] sm:tracking-[1.08px] transition-colors shadow-sub bg-surface-shell text-ink-body outline outline-1 outline-line-board hover:bg-surface-track hover:text-ink text-center">
+                    <x-gpa.icon name="download" class="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                    <span class="hidden xs:inline">Unduh</span> <span>Rekap (.csv)</span>
                 </a>
                 <a href="{{ route('sekretaris.laporan.print') }}" target="_blank"
-                    class="inline-flex h-10 items-center gap-2 rounded-xl px-4 gpa-micro-bold uppercase tracking-[1.08px] transition-colors shadow-sub bg-surface-shell text-ink-body outline outline-1 outline-line-board hover:bg-surface-track hover:text-ink">
-                    <x-gpa.icon name="printer" class="h-4 w-4 shrink-0" />
-                    Cetak Format Resmi (.pdf)
+                    class="inline-flex h-9 sm:h-10 items-center justify-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl px-2.5 sm:px-4 text-[10px] sm:text-2xs font-mono font-bold uppercase tracking-[0.5px] sm:tracking-[1.08px] transition-colors shadow-sub bg-surface-shell text-ink-body outline outline-1 outline-line-board hover:bg-surface-track hover:text-ink text-center">
+                    <x-gpa.icon name="printer" class="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                    <span>Cetak PDF</span>
                 </a>
                 <button type="button" @click="act('send')"
-                    class="inline-flex h-10 items-center gap-2 rounded-xl px-4 gpa-micro-bold uppercase tracking-[1.08px] transition-colors shadow-sub bg-brand text-accent outline outline-1 outline-success-deep hover:bg-brand-deep">
+                    class="col-span-2 sm:col-span-1 inline-flex h-10 items-center justify-center gap-2 rounded-lg sm:rounded-xl px-4 text-xs sm:text-2xs font-mono font-bold uppercase tracking-[0.5px] sm:tracking-[1.08px] transition-colors shadow-sub bg-brand text-accent outline outline-1 outline-success-deep hover:bg-brand-deep w-full sm:w-auto">
                     <x-gpa.icon name="send" class="h-4 w-4 shrink-0" />
-                    Kirim Laporan ke Dasbor Direktur
+                    <span>Kirim Laporan ke Dasbor Direktur</span>
                 </button>
             </div>
         </section>

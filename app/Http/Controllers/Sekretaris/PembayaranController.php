@@ -35,14 +35,28 @@ class PembayaranController extends Controller
             ? "{$activeBank['name']} {$activeBank['account_number']} ({$activeBank['account_name']})"
             : 'Rekening Resmi Koperasi GPA';
 
-        // Menghitung metrik total pembayaran pending, pembayaran diverifikasi, dan pembayaran ditolak
-        $pendingQuery = Payment::whereIn('status', ['MENUNGGU_VERIFIKASI', 'PENDING']);
+        // Menghitung metrik total pembayaran yang sudah diajukan bukti bayarnya oleh klien
+        $pendingQuery = Payment::whereIn('status', ['MENUNGGU_VERIFIKASI', 'PENDING'])
+            ->where(function ($q) {
+                $q->where(function ($sub) {
+                    $sub->whereNotNull('proof_url')->where('proof_url', '!=', '');
+                })->orWhereNotNull('paid_at');
+            });
 
         $pendingCount  = (clone $pendingQuery)->count();
         $pendingTotal  = (float) (clone $pendingQuery)->sum('amount');
         $verifiedCount = Payment::whereIn('status', ['LUNAS', 'SUCCESS'])->count();
         $verifiedTotal = (float) Payment::whereIn('status', ['LUNAS', 'SUCCESS'])->sum('amount');
-        $rejectedCount = Payment::whereIn('status', ['DITOLAK', 'FAILED'])->count();
+
+        // Menghitung bukti transfer yang ditolak (hanya transaksi yang memang telah mengunggah bukti bayar, bukan pembatalan PO verifikasi)
+        $rejectedCount = Payment::whereIn('status', ['DITOLAK', 'FAILED'])
+            ->whereNotNull('proof_url')
+            ->where('proof_url', '!=', '')
+            ->where(function ($q) {
+                $q->whereNull('order_id')
+                  ->orWhereDoesntHave('order', fn ($oq) => $oq->where('status', 'BATAL'));
+            })
+            ->count();
 
         // Mengambil antrean pembayaran yang telah mengunggah bukti dan menunggu persetujuan
         $pendingPayments = $pendingQuery->with(['order.user', 'invoice.user', 'verifier'])
@@ -54,7 +68,13 @@ class PembayaranController extends Controller
         )->all();
 
         // Mengambil log audit riwayat transaksi pembayaran mutakhir untuk transparansi operasional
+        // Hanya menampilkan pembayaran yang memiliki bukti transfer sah atau telah disahkan lunas
         $recentPayments = Payment::with(['order.user', 'invoice.user', 'verifier'])
+            ->where(function ($q) {
+                $q->whereNotNull('proof_url')->where('proof_url', '!=', '')
+                  ->orWhereNotNull('paid_at')
+                  ->orWhereIn('status', ['LUNAS', 'SUCCESS']);
+            })
             ->latest()
             ->take(50)
             ->get();

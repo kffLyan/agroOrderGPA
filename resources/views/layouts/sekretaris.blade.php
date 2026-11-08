@@ -206,7 +206,7 @@
                 </div>
             </aside>
 
-            <main id="main-content" class="min-w-0 flex-1 px-4 py-6 lg:px-8 w-full max-w-full overflow-x-hidden">
+            <main id="main-content" class="min-w-0 flex-1 px-4 py-6 lg:px-8 w-full max-w-full">
                 @yield('content')
             </main>
         </div>

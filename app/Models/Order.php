@@ -99,5 +99,19 @@ class Order extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    // Mengambil catatan alasan penolakan pesanan dari pembayaran yang ditolak
+    public function getRejectionReasonAttribute(): ?string
+    {
+        if (isset($this->attributes['rejection_reason'])) {
+            return $this->attributes['rejection_reason'];
+        }
+
+        if ($this->relationLoaded('payments')) {
+            return $this->payments->firstWhere('status', 'DITOLAK')?->verification_note;
+        }
+
+        return $this->payments()->where('status', 'DITOLAK')->latest('id')->value('verification_note');
+    }
 }
 

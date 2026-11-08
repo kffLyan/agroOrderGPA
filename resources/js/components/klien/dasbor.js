@@ -21,9 +21,49 @@ export default function clientDashboard(catalogue = []) {
         syncedAt: '',
         statusFilter: 'all',
         draft: [],
+        dismissedBanners: {},
         quantities: Object.fromEntries(
             catalogue.map((item) => [item.key, Number(item.initial_qty ?? item.minimum_order ?? 1)]),
         ),
+
+        isBannerDismissed(key) {
+            if (this.dismissedBanners[key]) {
+                return true;
+            }
+            try {
+                return localStorage.getItem(`gpa_dismissed_banner_${key}`) === '1';
+            } catch (e) {
+                return false;
+            }
+        },
+
+        dismissBanner(key) {
+            this.dismissedBanners[key] = true;
+            try {
+                localStorage.setItem(`gpa_dismissed_banner_${key}`, '1');
+            } catch (e) {}
+
+            try {
+                const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                if (token) {
+                    fetch('/klien/notifikasi/dismiss', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': token,
+                            'Accept': 'application/json',
+                        },
+                        body: JSON.stringify({ key }),
+                    }).catch(() => {});
+                }
+            } catch (e) {}
+
+            this.$dispatch('gpa:toast', {
+                title: 'Notifikasi Ditutup',
+                message: 'Pemberitahuan telah disembunyikan dari dashboard.',
+                tone: 'neutral',
+            });
+        },
 
         init() {
             this.tickClock();

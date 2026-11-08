@@ -2,13 +2,19 @@ const normalize = (value) => String(value ?? '').toLowerCase();
 
 export default function secretaryVerification(orders = [], checklistTotal = 0) {
     const list = Array.isArray(orders) ? orders : [];
+    const urlOrder = (typeof window !== 'undefined')
+        ? new URLSearchParams(window.location.search).get('order')
+        : null;
+    const initialSelectedId = urlOrder
+        ? (list.find((o) => String(o.id) === urlOrder || String(o.order_id) === urlOrder)?.id ?? list[0]?.id ?? null)
+        : (list[0]?.id ?? null);
 
     return {
         orders: list,
         checklistTotal: Number(checklistTotal) || 0,
         filter: 'all',
         query: '',
-        selectedId: list[0]?.id ?? null,
+        selectedId: initialSelectedId,
         resolved: [],
         checked: [],
         manualShipping: 0,
@@ -75,7 +81,11 @@ export default function secretaryVerification(orders = [], checklistTotal = 0) {
                 return false;
             }
 
-            if (this.filter !== 'all' && order.channel !== this.filter) {
+            if (this.filter === 'b2b' || this.filter === 'kontrak') {
+                if (!order.is_contract) return false;
+            } else if (this.filter === 'reguler' || this.filter === 'wa') {
+                if (order.is_contract) return false;
+            } else if (this.filter !== 'all' && order.channel !== this.filter) {
                 return false;
             }
 
@@ -181,9 +191,6 @@ export default function secretaryVerification(orders = [], checklistTotal = 0) {
             this.checked = [];
         },
 
-        handleStep(step) {
-            this.run(step.label, step.message);
-        },
 
         async reject() {
             const order = this.selected;

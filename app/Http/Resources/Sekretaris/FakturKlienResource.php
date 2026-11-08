@@ -16,12 +16,18 @@ class FakturKlienResource extends JsonResource
         $documents = [];
         if ($client->relationLoaded('orders')) {
             foreach ($client->orders as $order) {
+                // Lewati jika pesanan ini sudah menjadi bagian dari faktur konsolidasi resmi
+                if ($order->invoice && $order->invoice->orders && $order->invoice->orders->count() > 1) {
+                    continue;
+                }
+
                 $netWeight = (float) $order->orderItems->sum(fn ($item) => $item->ordered_qty);
                 $totalOrderAmount = (float) $order->grand_total;
                 $commodityName = $order->orderItems->first()?->product?->name ?: 'Sayur Segar Grade A';
                 $suratJalanNumber = $order->surat_jalan_number ?: ('SJ-' . date('Ym') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT));
 
                 $documents[] = [
+                    'order_id'     => $order->id,
                     'sj'           => $suratJalanNumber,
                     'date'         => ($order->created_at ?: now())->format('d M Y'),
                     'commodity'    => $commodityName,
@@ -38,7 +44,7 @@ class FakturKlienResource extends JsonResource
         $activeContract = method_exists($client, 'contracts') ? $client->contracts()->where('status', 'ACTIVE')->first() : null;
         $isContractClient = ($client->client_type === 'B2B_KONTRAK' || $activeContract !== null);
         $topDays = $activeContract?->top_days ?: 30;
-        $creditLimit = $activeContract ? (float) ($activeContract->fixed_price_per_kg * $activeContract->committed_volume_per_cycle * 2) : 0;
+        $creditLimit = $activeContract ? (float) ($activeContract->credit_limit > 0 ? $activeContract->credit_limit : ($activeContract->fixed_price_per_kg * $activeContract->committed_volume_per_cycle * 2)) : 0;
         
         $unpaidInvoices = (float) \App\Models\Invoice::where('user_id', $client->id)
             ->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])

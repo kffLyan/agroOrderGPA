@@ -35,13 +35,14 @@ class VerifikasiPesananController extends Controller
             ->get();
 
         $formattedOrders = VerifikasiPesananResource::collection($pendingOrders)->resolve();
-        $b2bCount = count(array_filter($formattedOrders, fn($orderItem) => ($orderItem['channel'] ?? '') === 'b2b'));
-        $waCount  = count($formattedOrders) - $b2bCount;
+        $b2bCount = count(array_filter($formattedOrders, fn($orderItem) => !empty($orderItem['is_contract'])));
+        $regulerCount = count($formattedOrders) - $b2bCount;
 
         return view('sekretaris.verifikasi', [
             'mappedOrders' => $formattedOrders,
             'b2bCount'     => $b2bCount,
-            'waCount'      => $waCount,
+            'regulerCount' => $regulerCount,
+            'waCount'      => $regulerCount,
         ]);
     }
 

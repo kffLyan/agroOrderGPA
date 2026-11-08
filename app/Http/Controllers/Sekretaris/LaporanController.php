@@ -32,6 +32,9 @@ class LaporanController extends Controller
         $deliveryAccuracy     = $activeOrdersCount > 0 ? round(($completedOrdersCount / $activeOrdersCount) * 100, 1) : 100.0;
         $overallDeviation     = $totalEstimate > 0 ? round((($totalNet - $totalEstimate) / $totalEstimate) * 100, 2) : 0;
 
+        $commodityOptions = $orders->pluck('orderItems.*.product.name')->flatten()->filter()->unique()->values()->all();
+        $clientOptions    = $orders->map(fn ($o) => $o->user?->company_name ?: $o->user?->name)->filter()->unique()->values()->all();
+
         return view('sekretaris.laporan', [
             'journalRows'      => $journalRows,
             'totalEstimate'    => $totalEstimate,
@@ -39,6 +42,8 @@ class LaporanController extends Controller
             'totalValue'       => $totalValue,
             'overallDeviation' => $overallDeviation,
             'deliveryAccuracy' => $deliveryAccuracy,
+            'commodityOptions' => $commodityOptions,
+            'clientOptions'    => $clientOptions,
         ]);
     }
 

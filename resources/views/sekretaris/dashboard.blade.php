@@ -164,7 +164,7 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-line-faint">
-                                @foreach ($queueRows as $row)
+                                @forelse ($queueRows as $row)
                                     <tr x-show="isRowVisible(@js($row))" class="transition-colors hover:bg-surface-shell/60">
                                         <td class="px-4 py-4 align-top first:pl-6">
                                             <div class="flex flex-col gap-0.5">
@@ -218,22 +218,40 @@
                                             </div>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-12 text-center">
+                                            <div class="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-accent/40 text-success-deep">
+                                                <x-gpa.icon name="badge-check" class="h-5 w-5" />
+                                            </div>
+                                            <p class="mt-2.5 text-xs font-bold text-ink">Tidak Ada Antrean Verifikasi</p>
+                                            <p class="mt-0.5 gpa-note text-ink-quiet">Seluruh pesanan masuk telah selesai diproses atau belum ada purchase order (PO) baru yang menunggu validasi.</p>
+                                        </td>
+                                    </tr>
+                                @endforelse
 
-                                <tr x-cloak x-show="visibleRows(@js($queueRows)).length === 0">
-                                    <td colspan="4" class="px-6 py-10 text-center">
-                                        <p class="text-xs font-semibold text-ink">Tidak ada PO yang cocok dengan pencarian.</p>
-                                        <p class="mt-1 gpa-note text-ink-quiet">Coba nomor PO lain, nama klien, atau nama komoditas.</p>
-                                    </td>
-                                </tr>
+                                @if (! empty($queueRows))
+                                    <tr x-cloak x-show="visibleRows(@js($queueRows)).length === 0">
+                                        <td colspan="4" class="px-6 py-10 text-center">
+                                            <p class="text-xs font-semibold text-ink">Tidak ada PO yang cocok dengan pencarian.</p>
+                                            <p class="mt-1 gpa-note text-ink-quiet">Coba nomor PO lain, nama klien, atau nama komoditas.</p>
+                                        </td>
+                                    </tr>
+                                @endif
                             </tbody>
                         </table>
                     </div>
 
                     <div class="flex flex-wrap items-center justify-between gap-2 border-t border-line-soft bg-surface-shell px-6 py-3">
-                        <p class="gpa-note text-ink-body"
-                            x-text="'Menampilkan ' + visibleRows(@js($queueRows)).length + ' dari ' + pendingCount(@js($queueRows)) + ' antrean prioritas cut-off 16:00 WIB'">
-                        </p>
+                        @if (empty($queueRows))
+                            <p class="gpa-note text-ink-body">
+                                Antrean bersih &bull; Tidak ada PO tertahan sebelum cut-off 16:00 WIB
+                            </p>
+                        @else
+                            <p class="gpa-note text-ink-body"
+                                x-text="'Menampilkan ' + visibleRows(@js($queueRows)).length + ' dari ' + pendingCount(@js($queueRows)) + ' antrean prioritas cut-off 16:00 WIB'">
+                            </p>
+                        @endif
                         <div class="flex items-center gap-3">
                             <button type="button" x-cloak x-show="resolved.length > 0" @click="resolved = []"
                                 class="gpa-note text-success-deep underline underline-offset-2 hover:text-success">
@@ -267,8 +285,8 @@
                                 <x-gpa.icon name="shield" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
                             <p class="mt-2 font-sans text-lg font-bold leading-6 text-ink">{{ $pendingOrdersCount ?? 0 }} PO</p>
-                            <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Verifikasi PO</p>
-                            <p class="mt-0.5 gpa-meta text-warning-deep font-semibold">Sekretariat GPA</p>
+                            <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Menunggu Verifikasi</p>
+                            <p class="mt-0.5 gpa-meta text-warning-deep font-semibold">Sekretariat &bull; Review PO</p>
                         </li>
 
                         <li @class([
@@ -283,8 +301,8 @@
                                 <x-gpa.icon name="leaf" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
                             <p class="mt-2 font-sans text-lg font-bold leading-6 text-ink">{{ $verifiedOrdersCount ?? 0 }} PO</p>
-                            <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Alokasi Panen</p>
-                            <p class="mt-0.5 gpa-meta text-ink-body">Sentra Kebun</p>
+                            <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Penyiapan Panen</p>
+                            <p class="mt-0.5 gpa-meta text-ink-body">Sentra Kebun &bull; Kuota Terkunci</p>
                         </li>
 
                         <li @class([
@@ -299,8 +317,8 @@
                                 <x-gpa.icon name="scale" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
                             <p class="mt-2 font-sans text-lg font-bold leading-6 text-ink">{{ $readyOrdersCount ?? 0 }} PO</p>
-                            <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Siap Kirim</p>
-                            <p class="mt-0.5 gpa-meta text-ink-body">Surat Jalan Terbit</p>
+                            <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Siap Dikirim</p>
+                            <p class="mt-0.5 gpa-meta text-ink-body">Gudang &bull; Surat Jalan Terbit</p>
                         </li>
 
                         <li @class([
@@ -318,9 +336,9 @@
                                 </span>
                                 <x-gpa.icon name="truck" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
-                            <p class="mt-2 font-sans text-lg font-bold leading-6 text-ink">{{ $shippingOrdersCount ?? 0 }} Truk</p>
-                            <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Armada Chiller</p>
-                            <p class="mt-0.5 gpa-meta text-success-deep font-semibold">Suhu 2 - 6&deg;C</p>
+                            <p class="mt-2 font-sans text-lg font-bold leading-6 text-ink">{{ $shippingOrdersCount ?? 0 }} Armada</p>
+                            <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Dalam Perjalanan</p>
+                            <p class="mt-0.5 gpa-meta text-success-deep font-semibold">Armada Chiller (2 - 6&deg;C)</p>
                         </li>
 
                         <li @class([
@@ -335,8 +353,8 @@
                                 <x-gpa.icon name="check" class="h-3.5 w-3.5 shrink-0 text-ink-quiet" />
                             </div>
                             <p class="mt-2 font-sans text-lg font-bold leading-6 text-ink">{{ $completedOrdersCount ?? 0 }} PO</p>
-                            <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Selesai Dock</p>
-                            <p class="mt-0.5 gpa-meta text-ink-body">Foto PoD &amp; Surat Jalan Sah</p>
+                            <p class="gpa-meta-lg font-semibold tracking-[0.88px] text-ink">Pesanan Diterima</p>
+                            <p class="mt-0.5 gpa-meta text-ink-body">Tiba di Klien &bull; Bukti PoD Sah</p>
                         </li>
                     </ol>
 

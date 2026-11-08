@@ -125,8 +125,10 @@ class DashboardController extends Controller
         $products = Product::where('is_active', true)->take(4)->get();
         $allAvailableProducts = Product::where('is_active', true)->orderBy('name')->get();
 
-        // 9. Bukti Pembayaran Ditolak yang Membutuhkan Tindakan Klien
-        $rejectedPayment = Payment::with(['invoice', 'order', 'verifier'])
+        // 9. Penolakan Pesanan (PO Dibatalkan) & Bukti Pembayaran Ditolak yang Membutuhkan Tindakan Klien
+        $dismissedBanners = session()->get('dismissed_banners', []);
+
+        $rejectedPayment = Payment::with(['invoice', 'order.verifier'])
             ->where(function ($query) use ($user) {
                 $query->whereHas('invoice', fn ($subQuery) => $subQuery->where('user_id', $user->id))
                     ->orWhereHas('order', fn ($subQuery) => $subQuery->where('user_id', $user->id));
@@ -135,21 +137,63 @@ class DashboardController extends Controller
             ->latest('id')
             ->first();
 
+        $rejectedOrder = null;
         if ($rejectedPayment) {
-            $hasSuccessor = Payment::where(function ($query) use ($rejectedPayment) {
-                if ($rejectedPayment->invoice_id) {
-                    $query->where('invoice_id', $rejectedPayment->invoice_id);
-                } elseif ($rejectedPayment->order_id) {
-                    $query->where('order_id', $rejectedPayment->order_id);
-                }
-            })
-            ->where('id', '>', $rejectedPayment->id)
-            ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'LUNAS', 'PAID'])
-            ->exists();
+            // Jika pesanan berstatus BATAL atau tidak melampirkan file bukti bayar, ini adalah penolakan PO pengajuan pesanan
+            if ($rejectedPayment->order?->status === 'BATAL' || empty($rejectedPayment->proof_url) || str_starts_with((string) $rejectedPayment->payment_reference, 'REJ-')) {
+                $rejectedOrder = $rejectedPayment->order;
+                $rejectedPayment = null;
+            } else {
+                $hasSuccessor = Payment::where(function ($query) use ($rejectedPayment) {
+                    if ($rejectedPayment->invoice_id) {
+                        $query->where('invoice_id', $rejectedPayment->invoice_id);
+                    } elseif ($rejectedPayment->order_id) {
+                        $query->where('order_id', $rejectedPayment->order_id);
+                    }
+                })
+                ->where('id', '>', $rejectedPayment->id)
+                ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'LUNAS', 'PAID'])
+                ->exists();
 
-            if ($hasSuccessor) {
+                if ($hasSuccessor) {
+                    $rejectedPayment = null;
+                }
+            }
+        }
+
+        if (!$rejectedOrder) {
+            $rejectedOrder = Order::with(['verifier', 'payments'])
+                ->where('user_id', $user->id)
+                ->where('status', 'BATAL')
+                ->where('updated_at', '>=', now()->subHours(24))
+                ->latest('updated_at')
+                ->first();
+        }
+
+        // Jangan tampilkan penolakan pesanan jika telah diabaikan/ditutup atau klien sudah membuat pesanan baru setelahnya
+        if ($rejectedOrder) {
+            if (!empty($dismissedBanners['rejected_order_' . $rejectedOrder->id])) {
+                $rejectedOrder = null;
+            } else {
+                $hasNewerOrder = Order::where('user_id', $user->id)
+                    ->where('id', '>', $rejectedOrder->id)
+                    ->exists();
+                if ($hasNewerOrder || $rejectedOrder->updated_at < now()->subHours(24)) {
+                    $rejectedOrder = null;
+                }
+            }
+        }
+
+        // Jangan tampilkan penolakan pembayaran jika sudah ditutup atau sudah lewat dari 48 jam
+        if ($rejectedPayment) {
+            if (!empty($dismissedBanners['rejected_payment_' . $rejectedPayment->id]) || $rejectedPayment->updated_at < now()->subHours(48)) {
                 $rejectedPayment = null;
             }
+        }
+
+        // Jangan tampilkan penolakan kontrak jika sudah ditutup
+        if ($rejectedContract && !empty($dismissedBanners['rejected_contract_' . ($rejectedContract['contract_number'] ?? 'b2b')])) {
+            $rejectedContract = null;
         }
 
         // 10. Format View Models (Prinsip MVC: Controller mengolah Logika & Transformasi Data)
@@ -265,8 +309,25 @@ class DashboardController extends Controller
             'reorderData'          => $reorderData,
             'products'             => $products,
             'allAvailableProducts' => $allAvailableProducts,
+            'rejectedOrder'        => $rejectedOrder,
             'rejectedPayment'      => $rejectedPayment,
             'rejectedContract'     => $rejectedContract,
+        ]);
+    }
+
+    // Menyimpan status penutupan notifikasi (dismiss) di sesi pengguna agar tidak muncul terus-menerus
+    public function dismissBanner(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $key = $request->input('key');
+        if ($key) {
+            $dismissed = session()->get('dismissed_banners', []);
+            $dismissed[$key] = true;
+            session()->put('dismissed_banners', $dismissed);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notifikasi berhasil disembunyikan.',
         ]);
     }
 }

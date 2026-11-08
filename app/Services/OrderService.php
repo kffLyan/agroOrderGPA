@@ -247,6 +247,16 @@ class OrderService
                 throw new Exception("Hanya pesanan berstatus MENUNGGU_VERIFIKASI yang dapat disetujui.");
             }
 
+            // Validasi kepatuhan tata kelola: master freeze dan pembekuan akun klien
+            $tataKelolaService = app(TataKelolaService::class);
+            if ($tataKelolaService->isMasterFreezeActive()) {
+                $freezeReason = $tataKelolaService->getMasterFreezeReason() ?? 'Darurat Operasional';
+                throw new Exception("Persetujuan ditolak: Sistem transaksi sedang dalam status Master Freeze darurat ({$freezeReason}).");
+            }
+            if ($order->user_id && $tataKelolaService->isClientFrozen((int) $order->user_id)) {
+                throw new Exception("Persetujuan ditolak: Akun plafon kredit klien ini sedang DIBEKUKAN sementara oleh Direktur Utama.");
+            }
+
             // Mengurangi kuota stok panen komoditas di gudang sesuai rincian kuantitas pesanan
             foreach ($order->orderItems as $item) {
                 $this->stockService->allocateStock($item->product_id, (float) $item->ordered_qty);

@@ -30,12 +30,6 @@
                     <x-gpa.icon name="download" class="h-[15px] w-[15px] shrink-0" />
                     Unduh Laporan Faktur (CSV)
                 </a>
-
-                <button type="button" @click="manualInvoice()"
-                    class="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-brand px-4 py-2.5 sm:py-3 text-white shadow-sub transition-colors hover:bg-brand-deep text-xs sm:text-sm font-bold tracking-[0.88px]">
-                    <x-gpa.icon name="plus" class="h-[15px] w-[15px] shrink-0 text-accent" />
-                    Terbitkan Faktur Baru
-                </button>
             </div>
         </section>
 
@@ -189,19 +183,33 @@
                         @endforeach
                     </select>
 
-                    <div class="mt-2 flex h-11 items-center justify-between gap-4 rounded-lg bg-surface px-3 outline outline-1 outline-line-board">
-                        <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">
-                            Batas Plafon Kredit:
-                            <span class="font-mono text-ink-body" x-text="'// Plafon: ' + rupiah(creditLimit())"></span>
-                        </p>
-                        <p class="gpa-micro-bold tracking-[1.08px] text-success-deep">
-                            SISA PLAFON:
-                            <span class="font-mono" x-text="rupiah(creditSisa())">Rp 85.800.000</span>
-                        </p>
+                    <div class="mt-2 flex flex-wrap min-h-11 items-center justify-between gap-3 rounded-lg bg-surface px-3 py-2 outline outline-1 outline-line-board">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">
+                                Plafon Kredit:
+                            </span>
+                            <span class="font-mono text-xs font-bold text-ink" x-text="rupiah(creditLimit())"></span>
+                            <span class="text-xs text-ink-quiet">&bull;</span>
+                            <span class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">
+                                Terpakai:
+                            </span>
+                            <span class="font-mono text-xs font-semibold text-ink-body" x-text="rupiah(creditUsed())"></span>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <span class="gpa-micro-bold uppercase tracking-[1.08px]" :class="creditSisa() > 0 ? 'text-ink-quiet' : 'text-danger font-bold'">
+                                Sisa Plafon:
+                            </span>
+                            <span class="font-mono text-xs font-bold"
+                                :class="creditSisa() > 0 ? 'text-success-deep' : 'text-danger'"
+                                x-text="creditSisa() > 0 ? rupiah(creditSisa()) : 'Rp 0 (Melebihi Plafon)'"></span>
+                        </div>
                     </div>
 
-                    <div class="mt-1 h-1 w-full rounded-full bg-surface-track" role="presentation">
-                        <div class="h-1 rounded-full bg-success-deep transition-all" :style="'width: ' + creditPercent() + '%'"></div>
+                    <div class="mt-1 h-1.5 w-full rounded-full bg-surface-track overflow-hidden" role="presentation">
+                        <div class="h-full rounded-full transition-all"
+                            :class="creditUsed() > creditLimit() && creditLimit() > 0 ? 'bg-danger' : 'bg-success-deep'"
+                            :style="'width: ' + creditPercent() + '%'"></div>
                     </div>
                 </div>
 
@@ -298,8 +306,8 @@
                         </table>
                     </div>
 
-                    <div class="flex flex-wrap items-center justify-between gap-4 rounded-xl bg-surface-shell p-4 outline outline-1 outline-line-soft">
-                        <div class="flex flex-wrap items-center gap-6">
+                    <div class="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 rounded-xl bg-surface-shell p-3.5 sm:p-4 outline outline-1 outline-line-soft">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6 divide-y sm:divide-y-0 sm:divide-x divide-line-board">
                             <div>
                                 <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">
                                     Total Surat Jalan Dipilih
@@ -309,7 +317,7 @@
                                 </p>
                             </div>
 
-                            <div class="border-l border-line-board pl-6">
+                            <div class="pt-2 sm:pt-0 sm:pl-6">
                                 <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">
                                     Kesepakatan Tempo Pembayaran
                                 </p>
@@ -318,11 +326,11 @@
                                 </p>
                             </div>
 
-                            <div class="border-l border-line-board pl-6">
+                            <div class="pt-2 sm:pt-0 sm:pl-6">
                                 <p class="gpa-micro-bold uppercase tracking-[1.08px] text-ink-quiet">
                                     Total Nilai Faktur Tagihan
                                 </p>
-                                <p class="mt-0.5 font-sans text-lg font-bold leading-6 text-ink" x-text="rupiah(totalValue())">
+                                <p class="mt-0.5 font-sans text-base sm:text-lg font-bold leading-6 text-ink" x-text="rupiah(totalValue())">
                                     Rp 114.200.000
                                 </p>
                             </div>
@@ -332,9 +340,9 @@
                             :class="selectedDocuments.length
                                 ? 'bg-accent text-ink hover:bg-accent-deep'
                                 : 'cursor-not-allowed bg-surface-disabled text-ink-quiet opacity-70'"
-                            class="inline-flex items-center gap-2 rounded-xl px-6 py-3 shadow-sub transition-colors gpa-meta-lg font-bold tracking-[0.88px]">
+                            class="inline-flex items-center justify-center gap-2 rounded-xl px-5 sm:px-6 py-3 shadow-sub transition-colors gpa-meta-lg font-bold tracking-[0.88px] w-full lg:w-auto text-center">
                             <x-gpa.icon name="invoice" class="h-[15px] w-[15px] shrink-0" />
-                            Terbitkan Faktur Tagihan Resmi
+                            <span>Terbitkan Faktur Tagihan Resmi</span>
                         </button>
                     </div>
                 </div>

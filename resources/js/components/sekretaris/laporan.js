@@ -1,19 +1,16 @@
-const normalize = (value) => String(value ?? '').toLowerCase();
-
-const paymentKeys = {
-    'Semua Status Tagihan': 'all',
-    Lunas: 'lunas',
-    'Tempo TOP 14': 'top14',
-    'Tempo TOP 30': 'top30',
-    'Pending Verif': 'pending',
-};
+const normalize = (value) => String(value ?? '').toLowerCase().trim();
 
 export default function secretaryReports(rows = [], filters = [], tabs = [], totalTransactions = 64, hash = '') {
     const journalRows = Array.isArray(rows) ? rows : [];
     const filterList = Array.isArray(filters) ? filters : [];
     const tabList = Array.isArray(tabs) ? tabs : [];
 
-    const initial = {};
+    const initial = {
+        period: 'Bulan Berjalan',
+        client: 'Semua Pembeli & Mitra B2B',
+        commodity: 'Semua Sayuran Segar',
+        payment: 'Semua Status Tagihan',
+    };
 
     filterList.forEach((filter) => {
         initial[filter.key] = filter.value;
@@ -24,7 +21,7 @@ export default function secretaryReports(rows = [], filters = [], tabs = [], tot
         filters: filterList,
         tabs: tabList,
         query: '',
-        totalTransactions: Number(totalTransactions) || 0,
+        totalTransactions: Number(totalTransactions) || journalRows.length,
         hash: String(hash || ''),
         selected: { ...initial },
         defaults: { ...initial },
@@ -38,16 +35,8 @@ export default function secretaryReports(rows = [], filters = [], tabs = [], tot
             }
         },
 
-        get activeTab() {
-            return this.tab === 'sales';
-        },
-
         get activeTabLabel() {
-            return this.tabs.find((item) => item.key === this.tab)?.label ?? 'Tab 1';
-        },
-
-        get activePaymentKey() {
-            return paymentKeys[this.selected.payment] ?? 'all';
+            return this.tabs.find((item) => item.key === this.tab)?.label ?? 'Rekapitulasi Penjualan & Pesanan';
         },
 
         visibleRows() {
@@ -55,13 +44,49 @@ export default function secretaryReports(rows = [], filters = [], tabs = [], tot
         },
 
         matches(row) {
-            if (this.activePaymentKey !== 'all' && row.status !== this.activePaymentKey) {
-                return false;
+            // 1. Tab filter
+            if (this.tab === 'weighing') {
+                // Volume & Analisis Timbangan: yang memiliki timbangan riil (netto > 0)
+                if (!row.net || Number(row.net) <= 0) {
+                    return false;
+                }
+            } else if (this.tab === 'dispatch') {
+                // Surat Jalan & Pengiriman: pesanan yang sudah ada surat jalan / berstatus pengiriman / selesai
+                if (!['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'].includes(row.order_status) && !row.sj) {
+                    return false;
+                }
+            } else if (this.tab === 'aging') {
+                // Pemantauan Umur Tagihan (Tempo): pesanan yang belum lunas (tempo atau piutang berjalan)
+                if (row.is_paid || row.status === 'lunas') {
+                    return false;
+                }
             }
 
-            const needle = normalize(this.query).trim();
+            // 2. Filter Status Pembayaran
+            if (this.selected.payment && !this.selected.payment.includes('Semua')) {
+                const p = normalize(this.selected.payment);
+                if (p.includes('lunas') && !row.is_paid && row.status !== 'lunas') return false;
+                if (p.includes('tempo') && (row.is_paid || row.status === 'lunas')) return false;
+                if (p.includes('menunggu') && row.order_status !== 'MENUNGGU_VERIFIKASI') return false;
+            }
 
-            if (! needle) {
+            // 3. Filter Pembeli
+            if (this.selected.client && !this.selected.client.includes('Semua')) {
+                if (!normalize(row.client).includes(normalize(this.selected.client))) {
+                    return false;
+                }
+            }
+
+            // 4. Filter Komoditas
+            if (this.selected.commodity && !this.selected.commodity.includes('Semua')) {
+                if (!normalize(row.commodity).includes(normalize(this.selected.commodity))) {
+                    return false;
+                }
+            }
+
+            // 5. Search Bar
+            const needle = normalize(this.query);
+            if (!needle) {
                 return true;
             }
 
@@ -111,11 +136,7 @@ export default function secretaryReports(rows = [], filters = [], tabs = [], tot
 
         deviation(estimate, net) {
             const base = Number(estimate) || 0;
-
-            if (base <= 0) {
-                return '0.00';
-            }
-
+            if (base <= 0) return '0.00';
             return (((Number(net) - base) / base) * 100).toFixed(2);
         },
 
@@ -128,33 +149,24 @@ export default function secretaryReports(rows = [], filters = [], tabs = [], tot
         },
 
         setTab(key) {
-            if (this.tab === key) {
-                return;
-            }
-
             this.tab = key;
-
-            this.run('Tab Rekapitulasi Diubah', `${this.activeTabLabel} dimuat pada konsol rekapitulasi.`);
+            const count = this.visibleRows().length;
+            this.run('Tab Berpindah', `${this.activeTabLabel}: ${count} baris transaksi disaring.`);
         },
 
         applyFilters() {
+            const count = this.visibleRows().length;
             this.run(
-                'Filter Rekapitulasi Diterapkan',
-                `${this.selected.period} • ${this.activePaymentKey === 'all' ? 'Semua Status Tagihan' : this.selected.payment} — ${this.visibleRows().length} transaksi dihitung ulang.`
+                'Filter Diterapkan',
+                `Ditemukan ${count} transaksi sesuai kriteria yang dipilih.`
             );
         },
 
         resetFilters() {
             this.selected = { ...this.defaults };
-
-            this.run('Filter Direset', 'Seluruh parameter kembali ke default buku besar periode berjalan.');
-        },
-
-        openAudit(row, file) {
-            this.run(
-                'Berkas Audit Dibuka',
-                `${row.invoice} / ${row.sj} — ${file} (${row.audit_files}/3 berkas trifecta) ditampilkan pada viewer dokumen audit.`
-            );
+            this.query = '';
+            this.tab = 'sales';
+            this.run('Filter Direset', 'Seluruh filter telah dikembalikan ke kondisi default.');
         },
 
         act(key) {
@@ -174,7 +186,7 @@ export default function secretaryReports(rows = [], filters = [], tabs = [], tot
             }
 
             if (key === 'send') {
-                this.run('Rekapitulasi Terkirim', 'Rekapitulasi terkirim ke Konsol Direktur Utama dan tercatat pada audit log sekretariat.', 'success');
+                this.run('Laporan Terkirim', 'Rekapitulasi resmi berhasil dikirim ke Dasbor Direktur Utama.', 'success');
                 return;
             }
 

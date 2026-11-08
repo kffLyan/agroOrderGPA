@@ -169,7 +169,7 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
             return this.documents.length > 0 && this.selectedDocuments.length === this.documents.length;
         },
 
-        generate() {
+        async generate() {
             if (! this.selectedDocuments.length) {
                 this.run(
                     'Faktur Ditolak',
@@ -180,27 +180,52 @@ export default function secretaryInvoicing(clients = [], ledger = [], statusFilt
                 return;
             }
 
-            if (this.totalValue() > this.creditSisa()) {
+            const totalAmount = this.totalValue();
+            const docsCount = this.selectedDocuments.length;
+            const clientName = this.client?.name || 'Klien';
+            const sjNumbers = this.selectedDocuments.map((doc) => doc.sj);
+
+            this.run('Memproses...', 'Sedang menerbitkan faktur konsolidasi resmi di sistem...', 'info');
+
+            try {
+                const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                    || document.querySelector('input[name="_token"]')?.value
+                    || '';
+
+                const response = await fetch('/sekretaris/faktur/terbitkan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf,
+                    },
+                    body: JSON.stringify({
+                        client_id: this.clientId,
+                        surat_jalan: sjNumbers,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (! response.ok || ! data.success) {
+                    throw new Error(data.message || 'Gagal menerbitkan faktur konsolidasi.');
+                }
+
+                const isOverLimit = this.creditLimit() > 0 && this.creditUsed() > this.creditLimit();
+                const noteTitle = isOverLimit ? 'Faktur Konsolidasi Terbit (Prioritas Penagihan)' : 'Faktur Konsolidasi Resmi Terbit';
+                const tone = isOverLimit ? 'warning' : 'success';
+
                 this.run(
-                    'Plafon Kredit Melebihi Sisa',
-                    `${this.client.name}: total tagihan ${this.rupiah(this.totalValue())} melebihi sisa plafon ${this.rupiah(this.creditSisa())}.`,
-                    'danger'
+                    noteTitle,
+                    data.message || `${docsCount} Surat Jalan atas nama ${clientName} berhasil digabung ke ${data.invoice_number} (Total: ${this.rupiah(totalAmount)}).`,
+                    tone
                 );
 
-                return;
-            }
-
-            this.run(
-                'Faktur Konsolidasi Terbit',
-                `${this.documentsLabel()} atas nama ${this.client.name} — total tagihan ${this.rupiah(this.totalValue())}, jatuh tempo ${this.dueDate()}. Dokumen PDF & QR penagihan dikirim ke portal klien B2B.`
-            );
-
-            if (this.client?.name) {
-                this.query = this.client.name;
-                const ledgerSection = document.getElementById('buku-besar-faktur');
-                if (ledgerSection) {
-                    ledgerSection.scrollIntoView({ behavior: 'smooth' });
-                }
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1200);
+            } catch (err) {
+                this.run('Gagal Menerbitkan Faktur', err.message || 'Terjadi kesalahan sistem saat menyimpan faktur.', 'danger');
             }
         },
 

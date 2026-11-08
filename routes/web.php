@@ -102,6 +102,7 @@ Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name
 Route::middleware(['auth', 'verified', 'role:KLIEN'])->prefix('klien')->name('klien.')->group(function () {
     // Dasbor Operasional Klien
     Route::get('/dashboard', [KlienDashboardController::class, 'index'])->name('dashboard');
+    Route::post('/notifikasi/dismiss', [KlienDashboardController::class, 'dismissBanner'])->name('notifikasi.dismiss');
 
     // Katalog Komoditas
     Route::get('/katalog', [KlienKatalogController::class, 'index'])->name('katalog');
@@ -150,6 +151,7 @@ Route::middleware(['auth', 'role:SEKRETARIS'])->prefix('sekretaris')->name('sekr
 
     // 5. Faktur Konsolidasi & Penagihan Tempo B2B
     Route::get('/faktur', [SekretarisFakturController::class, 'index'])->name('faktur');
+    Route::post('/faktur/terbitkan', [SekretarisFakturController::class, 'store'])->name('faktur.terbitkan');
     Route::get('/faktur/export', [SekretarisFakturController::class, 'exportCsv'])->name('faktur.export');
 
     // 6. Verifikasi Pembayaran & Pencocokan Rekening Giro

@@ -207,7 +207,7 @@
                 </div>
             </aside>
 
-            <main id="main-content" class="min-w-0 flex-1 px-4 py-6 lg:px-6 w-full max-w-full overflow-x-hidden">
+            <main id="main-content" class="min-w-0 flex-1 px-4 py-6 lg:px-6 w-full max-w-full">
                 @if (isset($header) && (is_string($header) || $header instanceof \Illuminate\View\ComponentSlot || $header instanceof \Illuminate\Contracts\Support\Htmlable))
                     <div class="mb-6">
                         <h1 class="text-2xl font-bold tracking-tight text-ink">

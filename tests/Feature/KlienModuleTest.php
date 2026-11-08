@@ -890,6 +890,91 @@ class KlienModuleTest extends TestCase
         $response->assertStatus(200);
         $response->assertHeader('Content-Type', 'image/jpeg');
     }
+
+    public function test_klien_can_dismiss_rejection_banner(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-DISMISS-001',
+            'user_id'              => $klien->id,
+            'target_delivery_date' => now()->addDays(2),
+            'delivery_address'     => 'Jl. Raya Lembang No. 12',
+            'status'               => 'BATAL',
+            'grand_total'          => 500000,
+            'updated_at'           => now(),
+        ]);
+
+        \App\Models\Payment::create([
+            'order_id'          => $order->id,
+            'payment_reference' => 'REJ-DISMISS-001',
+            'payment_method'    => 'TRANSFER_BANK',
+            'amount'            => 500000,
+            'status'            => 'DITOLAK',
+            'verification_note' => 'Stok kebun tidak mencukupi untuk SLA hari ini',
+        ]);
+
+        // 1. Dasbor menampilkan banner penolakan
+        $response = $this->actingAs($klien)->get(route('klien.dashboard'));
+        $response->assertStatus(200);
+        $response->assertSee('Pengajuan Pesanan Dibatalkan');
+        $response->assertSee('Stok kebun tidak mencukupi');
+
+        // 2. Klien menutup notifikasi via endpoint dismiss
+        $dismissRes = $this->actingAs($klien)->postJson(route('klien.notifikasi.dismiss'), [
+            'key' => 'rejected_order_' . $order->id,
+        ]);
+        $dismissRes->assertStatus(200);
+        $dismissRes->assertJson(['success' => true]);
+        $dismissRes->assertSessionHas('dismissed_banners.rejected_order_' . $order->id, true);
+
+        // 3. Dasbor selanjutnya tidak menampilkan banner tersebut lagi
+        $responseAfter = $this->actingAs($klien)
+            ->withSession(['dismissed_banners' => ['rejected_order_' . $order->id => true]])
+            ->get(route('klien.dashboard'));
+        $responseAfter->assertStatus(200);
+        $responseAfter->assertDontSee('Pengajuan Pesanan Dibatalkan');
+    }
+
+    public function test_klien_does_not_see_old_rejected_order_when_newer_order_exists(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $oldOrder = Order::create([
+            'order_number'         => 'ORD-OLD-REJECT-001',
+            'user_id'              => $klien->id,
+            'target_delivery_date' => now()->addDays(2),
+            'delivery_address'     => 'Jl. Raya Lembang No. 12',
+            'status'               => 'BATAL',
+            'grand_total'          => 500000,
+            'rejection_reason'     => 'Alasan lama',
+            'updated_at'           => now(),
+        ]);
+
+        // Klien telah membuat pesanan baru setelahnya
+        Order::create([
+            'order_number'         => 'ORD-NEW-SUCCESS-002',
+            'user_id'              => $klien->id,
+            'target_delivery_date' => now()->addDays(2),
+            'delivery_address'     => 'Jl. Raya Lembang No. 12',
+            'status'               => 'MENUNGGU_VERIFIKASI',
+            'grand_total'          => 600000,
+            'updated_at'           => now(),
+        ]);
+
+        // Dasbor tidak boleh menampilkan banner penolakan lama karena klien sudah membuat pesanan baru
+        $response = $this->actingAs($klien)->get(route('klien.dashboard'));
+        $response->assertStatus(200);
+        $response->assertDontSee('Pengajuan Pesanan Dibatalkan');
+    }
 }
 
 

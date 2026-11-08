@@ -83,14 +83,14 @@ class AntreanDashboardResource extends JsonResource
                     'tone'    => 'ink',
                     'intent'  => 'approve',
                     'message' => "PO {$order->order_number} disetujui & kuota panen dikunci.",
-                    'url'     => route('sekretaris.verifikasi'),
+                    'url'     => route('sekretaris.verifikasi', ['order' => $order->id]),
                 ],
                 [
                     'label'   => 'Detail',
                     'tone'    => 'default',
                     'intent'  => 'detail',
                     'message' => "Membuka rincian pesanan {$order->order_number}.",
-                    'url'     => route('sekretaris.verifikasi'),
+                    'url'     => route('sekretaris.verifikasi', ['order' => $order->id]),
                 ],
             ],
         ];

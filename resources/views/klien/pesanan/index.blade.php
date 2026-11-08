@@ -415,8 +415,11 @@
                                 <td class="w-[12.8rem] px-4 py-4">
                                     @if ($order['weight'] !== null)
                                         @if (! empty($order['shipment_breakdown']))
-                                            <p class="flex flex-wrap items-baseline text-xs leading-4 text-ink">
-                                                @foreach ($order['shipment_breakdown'] as $part)
+                                            <p class="flex flex-wrap items-center gap-1.5 text-xs leading-4 text-ink">
+                                                @foreach ($order['shipment_breakdown'] as $index => $part)
+                                                    @if ($index > 0)
+                                                        <span class="text-ink-quiet text-[10px]">•</span>
+                                                    @endif
                                                     <span @class([
                                                         'font-semibold' => $part['label'] === 'Kirim:',
                                                         'font-normal' => $part['label'] !== 'Kirim:',

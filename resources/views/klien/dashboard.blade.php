@@ -101,10 +101,93 @@
             </div>
         </section>
 
+        @if (!empty($rejectedOrder))
+            {{-- Banner Notifikasi Pengajuan Pesanan / PO Dibatalkan Sekretariat --}}
+            <section x-data="{ localDismissed: false }"
+                x-show="!localDismissed && !isBannerDismissed('rejected_order_{{ $rejectedOrder->id }}')"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                class="relative rounded-2xl border-2 border-danger/60 bg-danger-soft/40 p-4 sm:p-5 shadow-card transition-all">
+                
+                {{-- Tombol Tutup Silang (X) di Pojok Kanan Atas --}}
+                <button type="button"
+                    @click="dismissBanner('rejected_order_{{ $rejectedOrder->id }}'); localDismissed = true"
+                    class="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-lg text-danger/70 hover:bg-danger/15 hover:text-danger transition-colors cursor-pointer"
+                    title="Tutup & jangan tampilkan lagi">
+                    <x-gpa.icon name="x" class="h-4 w-4" />
+                    <span class="sr-only">Tutup notifikasi</span>
+                </button>
+
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pr-8 sm:pr-0">
+                    <div class="flex items-start gap-3.5 min-w-0">
+                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-danger text-white shadow-sub">
+                            <x-gpa.icon name="x" class="h-6 w-6 text-white" />
+                        </span>
+                        <div class="flex flex-col gap-1 min-w-0">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="rounded bg-danger px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
+                                    Pengajuan Pesanan Dibatalkan
+                                </span>
+                                <span class="text-xs font-semibold text-danger">
+                                    PO: {{ $rejectedOrder->order_number }}
+                                </span>
+                                @if ($rejectedOrder->verifier)
+                                    <span class="text-xs text-ink-quiet">
+                                        &bull; Oleh Verifikator: <strong class="text-ink">{{ $rejectedOrder->verifier->name }}</strong>
+                                    </span>
+                                @endif
+                            </div>
+                            <h2 class="font-sans text-base font-extrabold text-ink sm:text-lg">
+                                Pengajuan PO Tidak Dapat Disetujui oleh Sekretariat GPA
+                            </h2>
+                            <p class="text-xs text-ink-body leading-relaxed max-w-2xl">
+                                Alasan penolakan: <strong class="text-danger">"{{ $rejectedOrder->rejection_reason ?: 'Kapasitas armada atau kuota stok panen tidak mencukupi.' }}"</strong>.
+                                Pesanan ini telah dibatalkan secara resmi oleh tim verifikasi. Silakan sesuaikan jumlah pesanan Anda pada katalog atau ajukan pesanan baru.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex shrink-0 flex-wrap items-center gap-2">
+                        <button type="button"
+                            @click="dismissBanner('rejected_order_{{ $rejectedOrder->id }}'); localDismissed = true"
+                            class="inline-flex items-center gap-1.5 rounded-xl border border-line-board bg-surface px-3 py-2 font-sans text-xs font-semibold text-ink-body hover:bg-surface-muted transition cursor-pointer">
+                            <span>Tutup Notifikasi</span>
+                        </button>
+                        <a href="{{ route('klien.pesanan.show', $rejectedOrder->id) }}"
+                            class="inline-flex items-center gap-1.5 rounded-xl border border-line-board bg-surface px-3.5 py-2 font-sans text-xs font-bold text-ink hover:bg-surface-muted transition">
+                            <x-gpa.icon name="eye" class="h-3.5 w-3.5 text-ink-quiet" />
+                            <span>Lihat Detail</span>
+                        </a>
+                        <a href="{{ route('klien.katalog') }}"
+                            @click="dismissBanner('rejected_order_{{ $rejectedOrder->id }}')"
+                            class="inline-flex items-center gap-2 rounded-xl bg-brand px-4 py-2 font-sans text-xs font-bold text-accent shadow-sub hover:bg-brand-hover transition">
+                            <x-gpa.icon name="plus" class="h-3.5 w-3.5 text-white" />
+                            <span>Buat Pesanan Baru</span>
+                        </a>
+                    </div>
+                </div>
+            </section>
+        @endif
+
         @if (!empty($rejectedPayment))
             {{-- Banner Notifikasi Bukti Pembayaran Ditolak Sekretariat --}}
-            <section class="rounded-2xl border-2 border-danger/60 bg-danger-soft/30 p-4 sm:p-5 shadow-card transition-all">
-                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <section x-data="{ localDismissed: false }"
+                x-show="!localDismissed && !isBannerDismissed('rejected_payment_{{ $rejectedPayment->id }}')"
+                x-transition:leave="transition ease-in duration-200"
+                x-transition:leave-start="opacity-100 scale-100"
+                x-transition:leave-end="opacity-0 scale-95"
+                class="relative rounded-2xl border-2 border-danger/60 bg-danger-soft/30 p-4 sm:p-5 shadow-card transition-all">
+                
+                {{-- Tombol Tutup Silang (X) di Pojok Kanan Atas --}}
+                <button type="button"
+                    @click="dismissBanner('rejected_payment_{{ $rejectedPayment->id }}'); localDismissed = true"
+                    class="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-lg text-danger/70 hover:bg-danger/15 hover:text-danger transition-colors cursor-pointer"
+                    title="Tutup & jangan tampilkan lagi">
+                    <x-gpa.icon name="x" class="h-4 w-4" />
+                    <span class="sr-only">Tutup notifikasi</span>
+                </button>
+
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pr-8 sm:pr-0">
                     <div class="flex items-start gap-3.5 min-w-0">
                         <span
                             class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-danger text-white shadow-sub">
@@ -134,8 +217,14 @@
                             </p>
                         </div>
                     </div>
-                    <div class="flex shrink-0 items-center gap-2">
+                    <div class="flex shrink-0 flex-wrap items-center gap-2">
+                        <button type="button"
+                            @click="dismissBanner('rejected_payment_{{ $rejectedPayment->id }}'); localDismissed = true"
+                            class="inline-flex items-center gap-1.5 rounded-xl border border-line-board bg-surface px-3 py-2 font-sans text-xs font-semibold text-ink-body hover:bg-surface-muted transition cursor-pointer">
+                            <span>Tutup Notifikasi</span>
+                        </button>
                         <a href="{{ route('klien.bukti-pembayaran', ['tagihan' => $rejectedPayment->invoice?->invoice_number, 'order_id' => $rejectedPayment->order_id]) }}"
+                            @click="dismissBanner('rejected_payment_{{ $rejectedPayment->id }}')"
                             class="inline-flex items-center gap-2 rounded-xl bg-danger px-4 py-2.5 font-sans text-xs font-bold text-white shadow-lg transition-transform hover:scale-105 hover:bg-danger/90">
                             <x-gpa.icon name="upload" class="h-4 w-4 text-white" />
                             <span>Unggah Ulang Bukti Bayar</span>
@@ -191,9 +280,23 @@
                 </section>
             @elseif ($rejectedContract)
                 {{-- Banner Pemberitahuan Penolakan Pengajuan Kontrak B2B --}}
-                <section
+                <section x-data="{ localDismissed: false }"
+                    x-show="!localDismissed && !isBannerDismissed('rejected_contract_{{ $rejectedContract['contract_number'] ?? 'b2b' }}')"
+                    x-transition:leave="transition ease-in duration-200"
+                    x-transition:leave-start="opacity-100 scale-100"
+                    x-transition:leave-end="opacity-0 scale-95"
                     class="relative overflow-hidden rounded-2xl border border-danger/40 bg-gradient-to-r from-danger/15 via-danger/5 to-surface p-5 lg:p-6 shadow-sm">
-                    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    
+                    {{-- Tombol Tutup Silang (X) di Pojok Kanan Atas --}}
+                    <button type="button"
+                        @click="dismissBanner('rejected_contract_{{ $rejectedContract['contract_number'] ?? 'b2b' }}'); localDismissed = true"
+                        class="absolute top-3 right-3 flex h-7 w-7 items-center justify-center rounded-lg text-danger/70 hover:bg-danger/15 hover:text-danger transition-colors cursor-pointer"
+                        title="Tutup & jangan tampilkan lagi">
+                        <x-gpa.icon name="x" class="h-4 w-4" />
+                        <span class="sr-only">Tutup notifikasi</span>
+                    </button>
+
+                    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between pr-8 lg:pr-0">
                         <div class="flex items-start gap-3.5 min-w-0">
                             <span
                                 class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-danger/20 text-danger">
@@ -241,7 +344,12 @@
                         </div>
 
                         <div class="flex shrink-0 flex-wrap items-center gap-2 pt-1 lg:pt-0">
-                            <button type="button" @click="showContractModal = true"
+                            <button type="button"
+                                @click="dismissBanner('rejected_contract_{{ $rejectedContract['contract_number'] ?? 'b2b' }}'); localDismissed = true"
+                                class="inline-flex items-center gap-1.5 rounded-xl border border-line-board bg-surface px-3 py-2 font-sans text-xs font-semibold text-ink-body hover:bg-surface-muted transition cursor-pointer">
+                                <span>Tutup Notifikasi</span>
+                            </button>
+                            <button type="button" @click="dismissBanner('rejected_contract_{{ $rejectedContract['contract_number'] ?? 'b2b' }}'); showContractModal = true"
                                 class="inline-flex items-center gap-2 rounded-xl bg-ink px-4 py-2.5 font-sans text-xs font-bold text-accent shadow-sm transition hover:bg-brand-deep">
                                 <x-gpa.icon name="plus" class="h-4 w-4 text-accent" />
                                 <span>Ajukan Proposal Baru</span>

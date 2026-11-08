@@ -7,7 +7,7 @@
 @endphp
 
 @section('content')
-    <div class="space-y-3" x-data="secretaryDispatch(@js($rows))"
+    <div class="space-y-3 pb-20" x-data="secretaryDispatch(@js($rows))"
         @gpa:search.window="query = $event.detail">
         <section class="flex flex-wrap items-start justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card ring-1 ring-line-hair">
             <div class="min-w-0 flex-1">
@@ -329,71 +329,68 @@
 
 
         <section
-            class="sticky bottom-4 z-30 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-ink p-4 shadow-2xl ring-1 ring-white/10 outline outline-2 outline-accent/40">
-            <div class="flex items-center gap-4">
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent">
-                    <x-gpa.icon name="lock" class="h-5 w-5 shrink-0 text-ink" />
+            class="sticky bottom-2 sm:bottom-4 z-30 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 sm:gap-4 rounded-xl sm:rounded-2xl bg-ink/95 backdrop-blur-md p-3 sm:p-4 shadow-2xl ring-1 ring-white/10 outline outline-2 outline-accent/40">
+            <div class="flex items-start sm:items-center gap-2.5 sm:gap-3.5 min-w-0">
+                <span class="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-accent">
+                    <x-gpa.icon name="lock" class="h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-ink" />
                 </span>
 
-                <div>
-                    <h2 class="font-sans text-lg font-bold leading-[1.4rem] text-accent">Pusat Kendali Otorisasi &amp; Pelepasan Armada</h2>
+                <div class="min-w-0 flex-1">
+                    <h2 class="font-sans text-sm sm:text-base lg:text-lg font-bold leading-tight sm:leading-snug text-accent">
+                        Pusat Kendali Otorisasi &amp; Pelepasan Armada
+                    </h2>
                     <template x-if="selected">
-                        <p class="mt-1 text-2xs text-accent font-medium">
-                            Pesanan Terpilih: <strong class="text-white" x-text="selected.id"></strong> &bull;
-                            Supir Ditugaskan: <strong class="text-white" x-text="selected.driver || selected.driver_name || 'Belum Ditugaskan'"></strong> &bull;
-                            Plat Armada: <strong class="text-white font-mono" x-text="(selected.plate && selected.plate !== '—') ? selected.plate : 'B 9014 KPA'"></strong>
-                        </p>
+                        <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] sm:text-2xs text-accent font-medium leading-tight">
+                            <span>PO: <strong class="text-white" x-text="selected.id"></strong></span>
+                            <span class="text-accent/60">&bull;</span>
+                            <span>Supir: <strong class="text-white" x-text="selected.driver || selected.driver_name || 'Belum Ditugaskan'"></strong></span>
+                            <span class="text-accent/60">&bull;</span>
+                            <span>Plat: <strong class="text-white font-mono" x-text="(selected.plate && selected.plate !== '—') ? selected.plate : 'B 9014 KPA'"></strong></span>
+                        </div>
                     </template>
                     <p x-cloak x-show="selected && !isReady(selected) && !['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'].includes(selected.order_status)"
-                        class="mt-1 inline-flex rounded bg-danger px-2 py-0.5 gpa-micro-bold uppercase tracking-[1.08px] text-white">
+                        class="mt-1 inline-flex rounded bg-danger px-2 py-0.5 text-[10px] sm:text-2xs font-bold uppercase tracking-[0.88px] text-white">
                         Menunggu Verifikasi Pembayaran Lunas
                     </p>
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center justify-end gap-2">
-                <button type="button" @click="saveDraft()"
-                    class="rounded-lg bg-white/10 px-5 py-2.5 text-center font-mono text-xs font-semibold tracking-[0.88px] text-canvas outline outline-1 outline-line-board/40 transition-colors hover:bg-white/15">
-                    Simpan Draf Saja
-                </button>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 w-full md:w-auto shrink-0">
+                {{-- Tombol Aksi Sekunder: Simpan Draf & Cetak Struk --}}
+                <div class="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2">
+                    <button type="button" @click="saveDraft()"
+                        class="inline-flex items-center justify-center rounded-lg bg-white/10 px-3 sm:px-4 py-2 sm:py-2.5 text-center font-mono text-xs font-semibold tracking-[0.5px] text-canvas outline outline-1 outline-line-board/40 transition-colors hover:bg-white/15 w-full sm:w-auto">
+                        Simpan Draf
+                    </button>
 
-                {{-- SESI 1: Belum Terbit -> Terbitkan & Cetak Struk --}}
+                    <template x-if="selected && (selected.order_status === 'LUNAS' || selected.state === 'ready' || isReleased(selected.id) || ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'].includes(selected.order_status))">
+                        <a :href="'/print/struk/' + (selected.id || '')" target="_blank"
+                            class="inline-flex items-center justify-center gap-1.5 rounded-lg border border-line-soft bg-surface px-3 sm:px-4 py-2 sm:py-2.5 font-mono text-xs font-bold tracking-[0.5px] text-ink shadow-xs hover:bg-surface-muted transition-colors w-full sm:w-auto">
+                            <x-gpa.icon name="receipt" class="h-3.5 w-3.5 text-brand" />
+                            <span>Cetak Struk</span>
+                        </a>
+                    </template>
+                </div>
+
+                {{-- SESI 1: Belum Terbit -> Terbitkan Surat Jalan --}}
                 <template x-if="selected && !isReleased(selected.id) && !['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'].includes(selected.order_status)">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <template x-if="selected.order_status === 'LUNAS' || selected.state === 'ready'">
-                            <a :href="'/print/struk/' + (selected.id || '')" target="_blank"
-                                class="inline-flex items-center gap-2 rounded-lg border border-line-soft bg-surface px-4 py-2.5 font-mono text-xs font-bold tracking-[0.88px] text-ink shadow-xs hover:bg-surface-muted transition-colors">
-                                <x-gpa.icon name="receipt" class="h-3.5 w-3.5 text-brand" />
-                                <span>Cetak Struk Kasir</span>
-                            </a>
-                        </template>
-
-                        <button type="button" @click="confirmRelease()" :disabled="! selected || (!isReady(selected) && selected.state !== 'ready')"
-                            :class="! selected || (!isReady(selected) && selected.state !== 'ready')
-                                ? 'cursor-not-allowed bg-surface-disabled text-ink-quiet opacity-70'
-                                : 'bg-accent text-ink hover:bg-accent-deep'"
-                            class="inline-flex items-center gap-2 rounded-lg px-6 py-2.5 font-mono text-xs font-bold tracking-[0.88px] shadow-sub transition-colors">
-                            <x-gpa.icon name="check" class="h-3.5 w-3.5 shrink-0" />
-                            <span>Kunci Data &amp; Terbitkan Surat Jalan Resmi</span>
-                        </button>
-                    </div>
+                    <button type="button" @click="confirmRelease()" :disabled="! selected || (!isReady(selected) && selected.state !== 'ready')"
+                        :class="! selected || (!isReady(selected) && selected.state !== 'ready')
+                            ? 'cursor-not-allowed bg-surface-disabled text-ink-quiet opacity-70'
+                            : 'bg-accent text-ink hover:bg-accent-deep'"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg px-4 sm:px-6 py-2.5 font-mono text-xs font-bold tracking-[0.5px] sm:tracking-[0.88px] shadow-sub transition-colors w-full sm:w-auto text-center">
+                        <x-gpa.icon name="check" class="h-3.5 w-3.5 shrink-0" />
+                        <span>Kunci Data &amp; Terbitkan Surat Jalan Resmi</span>
+                    </button>
                 </template>
 
-                {{-- SESI 2: Sudah Terbit -> Cetak Surat Jalan & Struk --}}
+                {{-- SESI 2: Sudah Terbit -> Cetak Surat Jalan Resmi --}}
                 <template x-if="selected && (isReleased(selected.id) || ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'].includes(selected.order_status))">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <a :href="'/print/struk/' + (selected.id || '')" target="_blank"
-                            class="inline-flex items-center gap-2 rounded-lg border border-line-soft bg-surface px-4 py-2.5 font-mono text-xs font-bold tracking-[0.88px] text-ink shadow-xs hover:bg-surface-muted transition-colors">
-                            <x-gpa.icon name="receipt" class="h-3.5 w-3.5 text-brand" />
-                            <span>Cetak Struk Kasir</span>
-                        </a>
-
-                        <a :href="'/print/surat-jalan?order_id=' + (selected.order_id || '')" target="_blank"
-                            class="inline-flex items-center gap-2 rounded-lg bg-accent px-6 py-2.5 font-mono text-xs font-bold tracking-[0.88px] text-ink shadow-sub hover:bg-accent-deep transition-colors">
-                            <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0" />
-                            <span>Cetak Surat Jalan (Nota/A5)</span>
-                        </a>
-                    </div>
+                    <a :href="'/print/surat-jalan?order_id=' + (selected.order_id || '')" target="_blank"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-accent px-4 sm:px-6 py-2.5 font-mono text-xs font-bold tracking-[0.5px] sm:tracking-[0.88px] text-ink shadow-sub hover:bg-accent-deep transition-colors w-full sm:w-auto text-center">
+                        <x-gpa.icon name="printer" class="h-3.5 w-3.5 shrink-0" />
+                        <span>Cetak Surat Jalan (Nota/A5)</span>
+                    </a>
                 </template>
             </div>
         </section>

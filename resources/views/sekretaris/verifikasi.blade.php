@@ -5,41 +5,24 @@
 @section('content')
     <div class="space-y-3" x-data="secretaryVerification(@js($mappedOrders ?? []), 0)"
         @gpa:search.window="query = $event.detail">
-        <section class="rounded-2xl bg-surface shadow-card overflow-hidden ring-1 ring-line-hair">
-            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-line-board/60 p-4 sm:p-6">
+        <section class="rounded-2xl bg-surface p-4 sm:p-6 shadow-card ring-1 ring-line-hair">
+            <div class="flex flex-wrap items-start justify-between gap-4">
                 <div class="min-w-0 flex-1">
-                    <h1 class="font-sans text-xl sm:text-2xl lg:text-3xl font-bold leading-tight sm:leading-10 tracking-[-0.01em] text-ink">
+                    <p class="flex items-center gap-1.5 gpa-note font-semibold text-success-deep">
+                        <x-gpa.icon name="shield" class="h-3.5 w-3.5 shrink-0" />
+                        Verifikasi &amp; Otorisasi PO Masuk
+                    </p>
+                    <h1 class="mt-1 sm:mt-2 font-sans text-xl sm:text-2xl lg:text-3xl font-bold leading-tight sm:leading-10 tracking-[-0.01em] text-ink">
                         Verifikasi Pesanan Masuk &amp; Kesiapan Panen
                     </h1>
                 </div>
 
-                <div class="shrink-0 rounded-lg bg-surface px-3 py-1.5 text-right shadow-sub outline outline-1 outline-line-board">
-                    <p class="gpa-micro text-ink-body">Tingkat Kepatuhan Verifikasi</p>
-                    <p class="gpa-meta font-bold tracking-[0.2px] text-success-deep">
+                <div class="shrink-0 rounded-xl bg-surface-shell px-3.5 py-2 text-right shadow-sub outline outline-1 outline-line-board">
+                    <p class="gpa-micro uppercase tracking-[0.5px] text-ink-quiet">Tingkat Kepatuhan Verifikasi</p>
+                    <p class="mt-0.5 font-mono text-xs sm:text-sm font-bold tracking-[0.2px] text-success-deep">
                         100% Sesuai Aturan
                     </p>
                 </div>
-            </div>
-
-            <div class="flex flex-wrap gap-2 p-4 sm:px-6 sm:py-4">
-                <button type="button" @click="handleStep({number: '01', label: 'Antrean Verifikasi Pesanan Masuk', active: true, message: 'Pesanan baru yang butuh persetujuan dan penguncian stok sayur.'})"
-                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-left font-sans text-xs font-bold transition-colors bg-brand shadow-sub text-accent">
-                    <span class="h-2 w-2 shrink-0 rounded-full bg-accent" aria-hidden="true"></span>
-                    <span>01 Antrean Verifikasi Pesanan Masuk</span>
-                    <span class="font-medium text-accent/90" x-text="'(' + pendingCount() + ' Menunggu)'"></span>
-                </button>
-
-                <button type="button" @click="handleStep({number: '02', label: 'Pencetakan Faktur & Tagihan', active: false, message: 'Penerbitan faktur tagihan untuk pesanan yang sudah selesai dikirim.'})"
-                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-left font-sans text-xs font-semibold transition-colors bg-surface text-ink-body outline outline-1 outline-line-board hover:bg-surface-muted hover:text-ink">
-                    <span class="h-2 w-2 shrink-0 rounded-full bg-line-board" aria-hidden="true"></span>
-                    <span>02 Pencetakan Faktur &amp; Tagihan</span>
-                </button>
-
-                <button type="button" @click="handleStep({number: '03', label: 'Pemeriksaan Bukti Transfer', active: false, message: 'Pengecekan bukti pembayaran dari klien reguler.'})"
-                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-left font-sans text-xs font-semibold transition-colors bg-surface text-ink-body outline outline-1 outline-line-board hover:bg-surface-muted hover:text-ink">
-                    <span class="h-2 w-2 shrink-0 rounded-full bg-line-board" aria-hidden="true"></span>
-                    <span>03 Pemeriksaan Bukti Transfer</span>
-                </button>
             </div>
         </section>
 
@@ -65,12 +48,12 @@
                         <button type="button" @click="filter = 'b2b'"
                             :class="filterClass('b2b')"
                             class="rounded px-2.5 py-1.5 gpa-micro transition-colors">
-                            Website B2B ({{ $b2bCount ?? 0 }})
+                            B2B Kontrak ({{ $b2bCount ?? 0 }})
                         </button>
-                        <button type="button" @click="filter = 'wa'"
-                            :class="filterClass('wa')"
+                        <button type="button" @click="filter = 'reguler'"
+                            :class="filterClass('reguler')"
                             class="rounded px-2.5 py-1.5 gpa-micro transition-colors">
-                            WhatsApp / Manual ({{ $waCount ?? 0 }})
+                            Klien Reguler ({{ $regulerCount ?? ($waCount ?? 0) }})
                         </button>
                     </div>
                 </div>
@@ -95,13 +78,29 @@
                                         <p class="mt-0.5 text-xs leading-5 text-ink-body">{{ $order['meta'] }}</p>
                                     </div>
 
-                                    @if (! empty($order['chip']))
-                                        <span class="shrink-0 rounded px-1.5 py-0.5 gpa-micro-bold {{ $order['chip']['class'] }}">
-                                            {{ $order['chip']['label'] }}
-                                        </span>
-                                    @else
-                                        <x-gpa.icon name="shield" class="h-5 w-5 shrink-0 text-success-deep" />
-                                    @endif
+                                    <div class="flex flex-col items-end gap-1 shrink-0">
+                                        @if (! empty($order['chip']))
+                                            <span class="rounded px-1.5 py-0.5 gpa-micro-bold {{ $order['chip']['class'] }}">
+                                                {{ $order['chip']['label'] }}
+                                            </span>
+                                        @else
+                                            <x-gpa.icon name="shield" class="h-5 w-5 shrink-0 text-success-deep" />
+                                        @endif
+
+                                        @if (!empty($order['is_frozen']))
+                                            <span class="rounded bg-danger px-1.5 py-0.5 gpa-micro-bold text-white text-[10px]">
+                                                DIBEKUKAN
+                                            </span>
+                                        @elseif (!empty($order['is_over_limit']))
+                                            <span class="rounded bg-danger-soft px-1.5 py-0.5 gpa-micro-bold text-danger-ink text-[10px]">
+                                                MELEBIHI PLAFON
+                                            </span>
+                                        @elseif (!empty($order['is_contract']))
+                                            <span class="rounded bg-accent px-1.5 py-0.5 gpa-micro-bold text-success-ink text-[10px]">
+                                                PLAFON AMAN
+                                            </span>
+                                        @endif
+                                    </div>
                                 </div>
 
                                 <div class="mt-2 grid grid-cols-2 gap-3 border-t border-line-soft pt-2">
@@ -356,6 +355,82 @@
                 </div>
             </div>
 
+            {{-- Evaluasi Plafon Kredit & Status Piutang Klien B2B --}}
+            <template x-if="selected.is_contract">
+                <div class="mt-4 rounded-xl border p-4 transition-colors"
+                    :class="selected.is_frozen ? 'border-danger bg-danger-soft/20' : (selected.is_over_limit ? 'border-warning-deep bg-warning-soft/30' : 'border-line-soft bg-surface-shell')">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-line-soft/80 pb-3">
+                        <div class="flex items-center gap-2">
+                            <x-gpa.icon name="wallet" class="h-4 w-4 text-success-deep shrink-0" />
+                            <h4 class="font-sans text-xs font-bold text-ink uppercase tracking-wider">
+                                Evaluasi Plafon Kredit Tempo &amp; Piutang Klien
+                            </h4>
+                        </div>
+                        <template x-if="selected.is_frozen">
+                            <span class="inline-flex items-center gap-1 rounded bg-danger px-2.5 py-0.5 text-2xs font-bold text-white shadow-xs">
+                                🚫 AKUN DIBEKUKAN DIREKTUR
+                            </span>
+                        </template>
+                        <template x-if="!selected.is_frozen && selected.is_over_limit">
+                            <span class="inline-flex items-center gap-1 rounded bg-danger-soft px-2.5 py-0.5 text-2xs font-bold text-danger-ink">
+                                ⚠️ MELEBIHI SISA PLAFON
+                            </span>
+                        </template>
+                        <template x-if="!selected.is_frozen && !selected.is_over_limit">
+                            <span class="inline-flex items-center gap-1 rounded bg-success-soft px-2.5 py-0.5 text-2xs font-bold text-success-ink">
+                                <x-gpa.icon name="check-circle" class="h-3 w-3" />
+                                PLAFON KREDIT AMAN
+                            </span>
+                        </template>
+                    </div>
+
+                    {{-- Metric Grid --}}
+                    <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <div class="rounded-lg bg-surface p-2.5 outline outline-1 outline-line-soft">
+                            <p class="gpa-micro text-ink-quiet">Batas Plafon Kontrak</p>
+                            <p class="font-mono text-sm font-bold text-ink mt-0.5" x-text="selected.credit_limit_label || selected.plafon"></p>
+                        </div>
+                        <div class="rounded-lg bg-surface p-2.5 outline outline-1 outline-line-soft">
+                            <p class="gpa-micro text-ink-quiet">Piutang Berjalan</p>
+                            <p class="font-mono text-sm font-bold text-ink mt-0.5" x-text="selected.credit_used_label || 'Rp 0'"></p>
+                        </div>
+                        <div class="rounded-lg bg-surface p-2.5 outline outline-1 outline-line-soft">
+                            <p class="gpa-micro text-ink-quiet">Sisa Plafon Tersedia</p>
+                            <p class="font-mono text-sm font-bold mt-0.5"
+                                :class="selected.credit_available_raw > 0 ? 'text-success-deep' : 'text-danger-ink'"
+                                x-text="selected.credit_avail_label || 'Rp 0'"></p>
+                        </div>
+                        <div class="rounded-lg bg-surface p-2.5 outline outline-1"
+                            :class="selected.is_over_limit ? 'outline-danger bg-danger-soft/30' : 'outline-line-soft'">
+                            <p class="gpa-micro text-ink-quiet">Nilai PO Saat Ini</p>
+                            <p class="font-mono text-sm font-bold mt-0.5"
+                                :class="selected.is_over_limit ? 'text-danger-ink' : 'text-ink'"
+                                x-text="formatRupiah(getGrandTotal())"></p>
+                        </div>
+                    </div>
+
+                    {{-- Alert Banner jika Overlimit atau Frozen --}}
+                    <template x-if="selected.is_frozen">
+                        <div class="mt-3 flex items-start gap-2.5 rounded-lg bg-danger/10 border border-danger/30 p-2.5 text-xs text-danger-ink">
+                            <x-gpa.icon name="alert-triangle" class="h-4 w-4 shrink-0 text-danger mt-0.5" />
+                            <div>
+                                <strong class="font-bold">Akun Plafon Klien Sedang Dibekukan:</strong>
+                                <span> Direktur Utama telah mengunci hak pemesanan tempo mitra ini karena tunggakan piutang. Pesanan ini <strong>tidak dapat disahkan</strong> sampai status freeze dibuka oleh Direksi.</span>
+                            </div>
+                        </div>
+                    </template>
+                    <template x-if="!selected.is_frozen && selected.is_over_limit">
+                        <div class="mt-3 flex items-start gap-2.5 rounded-lg bg-warning-soft border border-warning-deep/30 p-2.5 text-xs text-warning-deep">
+                            <x-gpa.icon name="alert-triangle" class="h-4 w-4 shrink-0 text-warning-deep mt-0.5" />
+                            <div>
+                                <strong class="font-bold">Peringatan Defisit Plafon:</strong>
+                                <span> Total PO ini melebihi sisa plafon kredit klien sebesar <strong class="font-mono" x-text="selected.over_amount_label"></strong>. Pastikan klien mentransfer pembayaran faktur sebelumnya atau telah memiliki memo SK Dispensasi Direktur sebelum Anda menyetujui.</span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </template>
+
             <div
                 class="mt-4 grid gap-4 rounded-xl bg-surface-shell p-4 outline outline-1 outline-line-soft sm:grid-cols-2 lg:grid-cols-4">
                 <div>
@@ -429,20 +504,28 @@
                 </div>
             </div>
 
-            <div class="sticky bottom-4 z-20 mt-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line-soft bg-surface/95 p-4 shadow-xl ring-1 ring-black/5 backdrop-blur-md">
-                <div class="flex flex-wrap items-center gap-2">
+            <div class="sticky bottom-2 sm:bottom-4 z-20 mt-6 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-3 rounded-xl border border-line-soft bg-surface/95 p-3 sm:p-4 shadow-xl ring-1 ring-black/5 backdrop-blur-md">
+                <div class="flex items-center gap-2 w-full sm:w-auto">
                     <button type="button" @click="reject()"
-                        class="inline-flex h-10 items-center gap-1.5 rounded-lg px-4 text-danger outline outline-1 outline-danger transition-colors hover:bg-danger-soft font-sans text-xs font-bold">
+                        class="inline-flex h-10 w-full sm:w-auto justify-center items-center gap-1.5 rounded-lg px-4 text-danger outline outline-1 outline-danger transition-colors hover:bg-danger-soft font-sans text-xs font-bold">
                         <x-gpa.icon name="x" class="h-3 w-3 shrink-0" />
                         Tolak Pesanan
                     </button>
                 </div>
 
-                <button type="button" @click="verify()"
-                    class="inline-flex h-11 items-center gap-2 rounded-lg bg-accent px-6 font-sans text-sm font-extrabold tracking-[0.35px] text-ink shadow-sub transition-colors hover:bg-accent-deep">
-                    <x-gpa.icon name="check" class="h-4 w-3 shrink-0" />
-                    Setujui Pesanan &amp; Terbitkan Invoice Tagihan
-                </button>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 sm:justify-end w-full sm:w-auto">
+                    <template x-if="selected.is_frozen">
+                        <span class="rounded bg-danger-soft px-2.5 py-1 text-xs font-bold text-danger-ink text-center">
+                            🚫 Akun Dibekukan Direktur — Persetujuan Dinonaktifkan
+                        </span>
+                    </template>
+                    <button type="button" @click="verify()" :disabled="selected.is_frozen"
+                        :class="selected.is_frozen ? 'opacity-40 cursor-not-allowed bg-line-board text-ink-quiet' : 'bg-accent text-ink hover:bg-accent-deep'"
+                        class="inline-flex h-11 w-full sm:w-auto justify-center items-center gap-2 rounded-lg px-4 sm:px-6 font-sans text-xs sm:text-sm font-extrabold tracking-[0.35px] shadow-sub transition-colors text-center">
+                        <x-gpa.icon name="check" class="h-4 w-4 shrink-0" />
+                        Setujui Pesanan &amp; Terbitkan Invoice Tagihan
+                    </button>
+                </div>
             </div>
         </section>
     </div>

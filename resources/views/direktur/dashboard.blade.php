@@ -138,7 +138,7 @@
         </section>
 
         {{-- KPI row --}}
-        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="KPI eksekutif">
+        <section class="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4" aria-label="KPI eksekutif">
             <article class="flex min-w-0 flex-col overflow-hidden rounded-2xl bg-surface p-4 shadow-card sm:p-5">
                 <div class="flex items-start justify-between gap-3">
                     <h2 class="text-xs font-semibold leading-4 text-ink-body">Omzet Tahun Ini</h2>
@@ -237,21 +237,21 @@
             </article>
         </section>
 
-        <section class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand/20 bg-surface-shell px-4 py-3"
+        <section class="flex flex-col items-stretch gap-3 rounded-xl border border-brand/20 bg-surface-shell px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4"
             aria-label="Pengajuan persetujuan kontrak">
-            <div class="flex min-w-0 items-center gap-3">
+            <div class="flex min-w-0 items-start gap-3 sm:items-center">
                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-brand">
                     <x-gpa.icon name="shield" class="h-4 w-4" />
                 </span>
-                <div class="min-w-0">
+                <div class="min-w-0 flex-1">
                     <p class="text-xs font-semibold text-ink">Pengajuan Persetujuan</p>
-                    <p class="text-[11px] leading-4 text-ink-subtle">
+                    <p class="break-words text-[11px] leading-4 text-ink-subtle">
                         {{ $pendingCount }} kontrak menunggu &middot; Nilai Rp {{ number_format($pendingValue, 0, ',', '.') }}
                     </p>
                 </div>
             </div>
             <a href="{{ route('direktur.kontrak.persetujuan') }}"
-                class="inline-flex shrink-0 items-center justify-center gap-1 rounded-lg bg-brand px-3 py-2 text-xs font-bold text-white transition-colors hover:bg-brand-hover">
+                class="inline-flex w-full items-center justify-center gap-1 rounded-lg bg-brand px-3 py-2.5 text-xs font-bold text-white transition-colors hover:bg-brand-hover sm:w-auto sm:shrink-0">
                 Tinjau Pengajuan ({{ $pendingCount }})
                 <x-gpa.icon name="arrow-right" class="h-3 w-3" />
             </a>
@@ -259,10 +259,10 @@
 
         {{-- Tren omzet mingguan dan pembagian komoditas --}}
         <section class="flex flex-col gap-4">
-            <div class="grid gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
-                <div class="flex flex-col gap-4">
+            <div class="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
+                <div class="flex min-w-0 flex-col gap-4">
                     {{-- Weekly revenue & volume --}}
-                    <div class="gpa-panel flex flex-col gap-5 p-5 sm:p-6">
+                    <div class="gpa-panel flex min-w-0 flex-col gap-5 p-4 sm:p-6">
                         <header class="flex flex-wrap items-start justify-between gap-4 pb-4">
                             <div class="min-w-0">
                                 <h2 class="gpa-section-title text-ink">Omzet dan Target Mingguan</h2>
@@ -283,8 +283,8 @@
                             </ul>
                         </header>
 
-                        <div class="flex gap-3 sm:gap-5">
-                            <div class="relative min-w-0 flex-1">
+                        <div class="flex min-w-0 gap-3 sm:gap-5">
+                            <div class="relative min-w-0 w-full flex-1">
                                 <div class="relative h-52 sm:h-60" role="group"
                                     aria-label="Grafik garis omzet dan target untuk lima pekan terakhir">
                                     @foreach ($weeklyChartTicks as $tick)
@@ -373,16 +373,16 @@
                 </div>
 
                 {{-- 5 Komoditas Utama --}}
-                <div class="gpa-panel flex min-h-0 flex-col gap-4 p-6">
+                <div class="gpa-panel flex min-h-[280px] min-w-0 flex-col gap-4 p-4 sm:p-6">
                     <header class="pb-3">
                         <h2 class="gpa-section-title text-ink">5 Komoditas Utama</h2>
                     </header>
 
                     <div class="flex min-h-0 flex-1 flex-col">
                         <div class="flex min-h-0 flex-1 flex-col">
-                            <div class="flex min-h-0 flex-1 gap-2 pb-2">
+                            <div class="flex min-h-0 min-w-0 flex-1 gap-2 pb-2">
                                 <div class="flex min-w-0 flex-1 flex-col">
-                                    <div class="relative min-h-0 flex-1">
+                                    <div class="relative min-h-[180px] min-w-0 w-full flex-1">
                                         @foreach ($topProductChartTicks as $tick)
                                             <div class="absolute inset-x-0 border-t border-line-board/60"
                                                 style="top: {{ 100 - $tick }}%" aria-hidden="true"></div>
@@ -442,13 +442,13 @@
             </div>
 
             {{-- Saluran penjualan --}}
-            <div class="grid gap-3 sm:grid-cols-3">
+            <div class="grid grid-cols-3 gap-2 sm:gap-3">
                 @foreach ($channelCards as $channel)
                     <article
-                        class="grid min-h-36 min-w-0 grid-cols-[minmax(0,1fr)_120px] grid-rows-[auto_1fr_auto] items-center gap-x-3 gap-y-2 rounded-xl bg-surface p-5 shadow-card">
-                        <p class="truncate gpa-note font-semibold uppercase tracking-[0.18em] text-ink-subtle">
+                        class="grid min-w-0 grid-cols-1 items-center gap-y-1 rounded-xl bg-surface p-3 shadow-card sm:min-h-36 sm:grid-cols-[minmax(0,1fr)_120px] sm:grid-rows-[auto_1fr_auto] sm:gap-x-3 sm:gap-y-2 sm:p-5">
+                        <p class="truncate gpa-note font-semibold uppercase tracking-[0.12em] text-ink-subtle sm:tracking-[0.18em]">
                             {{ $channel['label'] }}</p>
-                        <svg class="col-start-2 row-span-3 h-24 w-full" viewBox="0 0 100 80" preserveAspectRatio="none"
+                        <svg class="h-8 w-full sm:col-start-2 sm:row-span-3 sm:h-24" viewBox="0 0 100 80" preserveAspectRatio="none"
                             role="img" aria-label="Tren tonase lima pekan untuk {{ $channel['label'] }}">
                             @if ($channel['sparkline'])
                                 <polyline points="{{ $channel['sparkline'] }}" fill="none" stroke="{{ $channel['color'] }}"
@@ -456,7 +456,7 @@
                                     vector-effect="non-scaling-stroke" />
                             @endif
                         </svg>
-                        <p class="self-end font-sans text-3xl font-bold leading-none text-ink">
+                        <p class="self-end font-sans text-2xl font-bold leading-none text-ink sm:text-3xl">
                             {{ number_format($channel['data']['share'], 0) }}%
                         </p>
                         <p class="gpa-note font-semibold uppercase tracking-wider text-success-deep">

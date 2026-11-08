@@ -9,7 +9,8 @@
         $channelRows = $channelRows ?? [];
         $settlementRows = $settlementRows ?? [];
         $totalChVal = array_sum(array_column($channelRows, 'value'));
-        $channelChartPalette = ['#5145FF', '#315CF5', '#8EA7FF', '#C6D3FF'];
+        $salesLineColor = '#15803D';
+        $channelChartPalette = ['#0F766E', '#D97706', '#BE185D', '#2563EB'];
         $channelChartOffset = 0;
         $channelChartSegments = [];
         foreach ($channelRows as $index => $row) {
@@ -285,7 +286,8 @@
 
                 <ul class="flex flex-wrap items-center gap-3 pt-1">
                     <li class="flex items-center gap-1.5">
-                        <span class="h-0.5 w-4 shrink-0 bg-[#5145FF]" aria-hidden="true"></span>
+                        <span class="h-0.5 w-4 shrink-0" style="background-color: {{ $salesLineColor }}"
+                            aria-hidden="true"></span>
                         <span class="gpa-note text-ink">Realisasi</span>
                     </li>
                     <li class="flex items-center gap-1.5">
@@ -304,7 +306,7 @@
                     <div class="relative h-52 sm:h-60" role="group"
                         aria-label="Grafik garis realisasi penjualan mingguan, ceiling, dan BEP">
                         @foreach ($chartTicks as $tick)
-                            <div class="absolute inset-x-0 border-t border-[#E9EAF2]"
+                            <div class="absolute inset-x-0 border-t border-line-board/60"
                                 style="top: {{ 100 - $tick }}%" aria-hidden="true"></div>
                         @endforeach
 
@@ -312,13 +314,13 @@
                             <svg class="h-full w-full" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
                                 <defs>
                                     <linearGradient id="sales-area-gradient" x1="0" x2="0" y1="0" y2="1">
-                                        <stop offset="0%" stop-color="#5145FF" stop-opacity="0.24" />
-                                        <stop offset="100%" stop-color="#5145FF" stop-opacity="0.01" />
+                                        <stop offset="0%" stop-color="{{ $salesLineColor }}" stop-opacity="0.24" />
+                                        <stop offset="100%" stop-color="{{ $salesLineColor }}" stop-opacity="0.01" />
                                     </linearGradient>
                                 </defs>
                                 @if ($areaPath)
                                     <path d="{{ $areaPath }}" fill="url(#sales-area-gradient)" />
-                                    <path d="{{ $linePath }}" fill="none" stroke="#5145FF" stroke-width="2.5"
+                                    <path d="{{ $linePath }}" fill="none" stroke="{{ $salesLineColor }}" stroke-width="2.5"
                                         vector-effect="non-scaling-stroke" />
                                 @endif
                             </svg>
@@ -336,15 +338,18 @@
                             @endphp
                             <div class="group absolute inset-y-0 z-10 -translate-x-1/2"
                                 style="left: {{ number_format($pointX, 2, '.', '') }}%">
-                                <span class="pointer-events-none absolute bottom-0 left-1/2 w-px -translate-x-1/2 bg-[#5145FF] opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                                <span class="pointer-events-none absolute bottom-0 left-1/2 w-px -translate-x-1/2 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                                    style="background-color: {{ $salesLineColor }}"
                                     style="height: {{ number_format($chartShare, 2, '.', '') }}%"></span>
                                 <button type="button" @click="inspectWeek(@js($row))"
                                     aria-label="Lihat realisasi {{ $row['week'] }}: {{ $row['label'] }}"
                                     title="{{ $row['week'] }} · {{ $row['label'] }}"
-                                    class="absolute left-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-[#5145FF]"
+                                    class="absolute left-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full focus:outline-none focus-visible:ring-2"
+                                    style="--tw-ring-color: {{ $salesLineColor }}"
                                     style="top: {{ number_format(100 - $chartShare, 2, '.', '') }}%">
-                                    <span class="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#5145FF] shadow-sm"></span>
-                                    <span class="pointer-events-none absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg bg-[#1D1B36] px-2.5 py-1.5 text-left text-white shadow-lg group-hover:block group-focus-within:block">
+                                    <span class="absolute left-1/2 top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-sm"
+                                        style="background-color: {{ $salesLineColor }}"></span>
+                                    <span class="pointer-events-none absolute bottom-full left-1/2 mb-2 hidden -translate-x-1/2 whitespace-nowrap rounded-lg bg-ink px-2.5 py-1.5 text-left text-white shadow-lg group-hover:block group-focus-within:block">
                                         <span class="block gpa-micro">{{ $row['week'] }}</span>
                                         <span class="block gpa-note font-semibold">{{ $row['label'] }}</span>
                                     </span>
@@ -398,7 +403,7 @@
                 <div class="relative mx-auto aspect-square w-full max-w-[240px]" role="img"
                     aria-label="Diagram donat komposisi revenue dari {{ count($channelRows) }} kanal">
                     <svg class="block h-full w-full" viewBox="0 0 100 100" aria-hidden="true">
-                        <circle cx="50" cy="50" r="42" fill="none" stroke="#EEF0F8" stroke-width="16" />
+                        <circle cx="50" cy="50" r="42" fill="none" stroke="#E9EDDD" stroke-width="16" />
                         @foreach ($channelChartSegments as $segment)
                             @if ($segment['share'] > 0)
                                 @if ($segment['full'])
@@ -444,100 +449,98 @@
         </div>
 
         {{-- Neraca portofolio 5 komoditas inti --}}
-        <section class="flex flex-col gap-4 rounded-2xl bg-surface p-6 shadow-card">
-            <header class="flex flex-wrap items-start justify-between gap-3 border-b border-line-board pb-4">
+        <section class="flex flex-col gap-4 rounded-2xl bg-surface p-4 shadow-card sm:p-5">
+            <header class="flex flex-wrap items-center justify-between gap-3">
                 <div class="min-w-0 space-y-1">
-                    <h2 class="font-sans text-lg font-semibold leading-6 text-ink">Kinerja Portofolio Finansial: 5 Komoditas Inti GPA</h2>
+                    <h2 class="font-sans text-lg font-semibold leading-6 text-ink">Kinerja Portofolio Finansial</h2>
+                    <p class="gpa-note text-ink-subtle">5 komoditas inti GPA</p>
                 </div>
 
                 <button type="button" @click="verifyPortfolio()"
-                    class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-surface-track px-3 py-2 outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-disabled">
-                    <x-gpa.icon name="check-circle" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
-                    <span class="gpa-note font-bold text-ink">VERIFIED</span>
+                    class="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-success-soft/60 px-3 py-2 text-success-deep transition-colors hover:bg-success-soft">
+                    <x-gpa.icon name="check-circle" class="h-3.5 w-3.5 shrink-0" />
+                    <span class="gpa-note font-semibold">Terverifikasi</span>
                 </button>
             </header>
 
-            <div class="gpa-scroll-x overflow-x-auto py-1">
-                <table class="w-full border-collapse">
+            <div class="gpa-scroll-x overflow-x-auto">
+                <table class="w-full min-w-[1040px] border-separate border-spacing-0">
                     <caption class="sr-only">Kinerja Portofolio Finansial: 5 Komoditas Inti GPA</caption>
                     <thead>
-                        <tr class="border-b border-line-board bg-surface-track">
-                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-left">KOMODITAS &amp; SKU</th>
-                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-left">VOLUME (KG)</th>
-                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-left">HARGA (IDR/KG)</th>
-                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-left">REALISASI (IDR/KG)</th>
-                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-right">TOTAL OMZET</th>
-                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-right">GROSS PROFIT</th>
-                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-right">MARGIN</th>
-                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-right">% KONTRIBUSI</th>
-                            <th scope="col" class="px-3 py-3 gpa-micro-bold text-ink text-right">DIREKSI</th>
+                        <tr>
+                            <th scope="col" class="border-b border-line-faint px-3 py-3 text-left gpa-micro-bold text-ink-subtle">KOMODITAS</th>
+                            <th scope="col" class="border-b border-line-faint px-3 py-3 text-right gpa-micro-bold text-ink-subtle">VOLUME</th>
+                            <th scope="col" class="border-b border-line-faint px-3 py-3 text-right gpa-micro-bold text-ink-subtle">HARGA LIST</th>
+                            <th scope="col" class="border-b border-line-faint px-3 py-3 text-right gpa-micro-bold text-ink-subtle">HARGA JUAL</th>
+                            <th scope="col" class="border-b border-line-faint px-3 py-3 text-right gpa-micro-bold text-ink-subtle">OMZET</th>
+                            <th scope="col" class="border-b border-line-faint px-3 py-3 text-right gpa-micro-bold text-ink-subtle">GROSS PROFIT</th>
+                            <th scope="col" class="border-b border-line-faint px-3 py-3 text-right gpa-micro-bold text-ink-subtle">MARGIN</th>
+                            <th scope="col" class="border-b border-line-faint px-3 py-3 text-right gpa-micro-bold text-ink-subtle">KONTRIBUSI</th>
+                            <th scope="col" class="border-b border-line-faint px-3 py-3 text-right gpa-micro-bold text-ink-subtle">STATUS</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($portfolioRows ?? [] as $row)
-                            <tr class="border-b border-line-board/60">
-                                <th scope="row" class="px-3 py-4 text-left align-middle font-normal">
+                            <tr class="group transition-colors hover:bg-surface-shell/70">
+                                <th scope="row" class="border-b border-line-faint/70 px-3 py-3 text-left align-middle font-normal">
                                     <span class="flex items-center gap-2">
-                                        <span class="h-2.5 w-2.5 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
-                                        <span class="font-inter text-xs font-bold leading-4 text-ink">{{ $row['name'] }}</span>
+                                        <span class="h-2 w-2 shrink-0 rounded-full bg-success-deep" aria-hidden="true"></span>
+                                        <span class="font-inter text-xs font-semibold leading-4 text-ink">{{ $row['name'] }}</span>
                                     </span>
-                                    <span class="mt-0.5 block gpa-note font-semibold text-success-deep">{{ $row['sku'] }}</span>
+                                    <span class="ml-4 mt-0.5 block gpa-micro text-ink-subtle">{{ $row['sku'] }}</span>
                                 </th>
-                                <td class="px-3 py-4 align-middle">
+                                <td class="border-b border-line-faint/70 px-3 py-3 text-right align-middle">
                                     <span class="gpa-meta font-medium text-ink">{{ $row['volume_label'] }}</span>
-                                    <span class="mt-0.5 block gpa-note text-ink-body">kg</span>
+                                    <span class="ml-0.5 gpa-micro text-ink-subtle">kg</span>
                                 </td>
-                                <td class="px-3 py-4 align-middle">
-                                    <span class="gpa-meta font-medium text-ink">{{ $row['list_price_label'] }}</span>
+                                <td class="border-b border-line-faint/70 px-3 py-3 text-right align-middle">
+                                    <span class="gpa-meta text-ink-body">{{ $row['list_price_label'] }}</span>
                                 </td>
-                                <td class="px-3 py-4 align-middle">
-                                    <span class="gpa-meta font-medium text-success-deep">{{ $row['price_label'] }}</span>
+                                <td class="border-b border-line-faint/70 px-3 py-3 text-right align-middle">
+                                    <span class="gpa-meta font-medium text-ink">{{ $row['price_label'] }}</span>
                                 </td>
-                                <td class="px-3 py-4 text-right align-middle">
-                                    <span class="gpa-meta-lg font-bold text-ink">{{ $row['revenue_label'] }}</span>
+                                <td class="border-b border-line-faint/70 px-3 py-3 text-right align-middle">
+                                    <span class="gpa-meta-lg font-semibold text-ink">{{ $row['revenue_label'] }}</span>
                                 </td>
-                                <td class="px-3 py-4 text-right align-middle">
-                                    <span class="gpa-meta-lg font-bold text-success-deep">{{ $row['gross_label'] }}</span>
+                                <td class="border-b border-line-faint/70 px-3 py-3 text-right align-middle">
+                                    <span class="gpa-meta-lg font-semibold text-success-deep">{{ $row['gross_label'] }}</span>
                                 </td>
-                                <td class="px-3 py-4 text-right align-middle">
+                                <td class="border-b border-line-faint/70 px-3 py-3 text-right align-middle">
                                     <span
-                                        class="inline-block rounded px-2 py-0.5 text-[11px] font-semibold leading-4 gpa-meta {{ ($row['status_tone'] ?? '') === 'caution' ? 'bg-warning-cream text-warning-caution outline outline-1 -outline-offset-1 outline-warning-caution' : 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-accent-deep' }}">{{ $row['margin_label'] }}</span>
+                                        class="inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold leading-4 gpa-meta {{ ($row['status_tone'] ?? '') === 'caution' ? 'bg-warning-cream text-warning-caution' : 'bg-success-soft text-success-deep' }}">{{ $row['margin_label'] }}</span>
                                 </td>
-                                <td class="px-3 py-4 text-right align-middle">
-                                    <span class="gpa-meta-lg font-bold text-ink">{{ $row['share_label'] }}</span>
+                                <td class="border-b border-line-faint/70 px-3 py-3 text-right align-middle">
+                                    <span class="gpa-meta font-medium text-ink">{{ $row['share_label'] }}</span>
                                 </td>
-                                <td class="px-3 py-4 text-right align-middle">
+                                <td class="border-b border-line-faint/70 px-3 py-3 text-right align-middle">
                                     <button type="button" @click="inspectCommodity(@js($row))"
-                                        class="inline-flex flex-col items-end gap-1">
+                                        class="inline-flex items-center gap-2 rounded-md text-right focus:outline-none focus-visible:ring-2 focus-visible:ring-success-deep">
                                         <span
-                                            class="inline-block rounded px-2 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta {{ ($row['status_tone'] ?? '') === 'caution' ? 'bg-warning-cream text-warning-caution outline outline-1 -outline-offset-1 outline-warning-caution' : 'bg-accent text-ink outline outline-1 -outline-offset-1 outline-accent-deep' }}">{{ $row['status'] }}</span>
-                                        <span class="h-1.5 w-16 overflow-hidden rounded-full bg-surface-track" aria-hidden="true">
-                                            <span class="block h-full rounded-full bg-success-deep"
-                                                style="width: {{ $row['bar_percent'] }}%"></span>
-                                        </span>
+                                            class="inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold leading-[15px] gpa-meta {{ ($row['status_tone'] ?? '') === 'caution' ? 'bg-warning-cream text-warning-caution' : 'bg-success-soft text-success-deep' }}">{{ $row['status'] }}</span>
+                                        <x-gpa.icon name="chevron-right" class="h-3 w-3 text-ink-subtle transition-transform group-hover:translate-x-0.5" />
                                     </button>
                                 </td>
                             </tr>
                         @endforeach
                     </tbody>
                     <tfoot>
-                        <tr class="border-t-2 border-ink-quiet bg-surface-track">
+                        <tr class="bg-surface-shell">
                             <th scope="row" class="px-3 py-3 text-left align-middle gpa-meta-lg font-bold text-ink">
                                 Total 5 Komoditas
                             </th>
-                            <td class="px-3 py-3 align-middle">
+                            <td class="px-3 py-3 text-right align-middle">
                                 <span class="gpa-meta-lg font-bold text-ink">{{ number_format($volTotal ?? 0, 0, ',', '.') }} kg</span>
                             </td>
-                            <td class="px-3 py-3 text-center align-middle gpa-note text-ink-body">-</td>
-                            <td class="px-3 py-3 text-center align-middle gpa-note text-ink-body">-</td>
+                            <td class="px-3 py-3 text-right align-middle gpa-note text-ink-subtle">—</td>
+                            <td class="px-3 py-3 text-right align-middle gpa-note text-ink-subtle">—</td>
                             <td class="px-3 py-3 text-right align-middle">
                                 <span class="gpa-meta-lg font-bold text-ink">Rp {{ number_format($revTotal ?? 0, 0, ',', '.') }}</span>
                             </td>
                             <td class="px-3 py-3 text-right align-middle">
-                                <span class="gpa-meta-lg font-bold text-ink-strong">Rp {{ number_format($grossTotal ?? 0, 0, ',', '.') }}</span>
+                                <span class="gpa-meta-lg font-bold text-success-deep">Rp {{ number_format($grossTotal ?? 0, 0, ',', '.') }}</span>
                             </td>
                             <td class="px-3 py-3 text-right align-middle">
-                                <span class="inline-block rounded bg-ink-strong px-2 py-0.5 text-[11px] font-semibold leading-4 gpa-meta text-accent">{{ round((($grossTotal ?? 0) / (($revTotal ?? 1) ?: 1)) * 100, 1) }}%</span>
+                                <span class="inline-block rounded-full bg-success-soft px-2 py-0.5 text-[11px] font-semibold leading-4 gpa-meta text-success-deep">{{ round((($grossTotal ?? 0) / (($revTotal ?? 1) ?: 1)) * 100, 1) }}%</span>
                             </td>
                             <td class="px-3 py-3 text-right align-middle">
                                 <span class="gpa-meta-lg font-bold text-success-deep">100.0%</span>

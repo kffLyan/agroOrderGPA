@@ -266,10 +266,15 @@ export default function clientPaymentProof(defaults = {}) {
         },
 
         contactPic() {
+            const invoiceNo = this.selectedInvoice?.invoice_number || 'Tagihan';
+            const message = `Halo Tim Keuangan PT Green Pasundan Agriculture (GPA), saya ingin konfirmasi perihal status pembayaran faktur ${invoiceNo}. Mohon bantuan verifikasinya. Terima kasih.`;
+            const waUrl = `https://wa.me/6281112233445?text=${encodeURIComponent(message)}`;
+            window.open(waUrl, '_blank');
+
             this.$dispatch('gpa:toast', {
-                title: 'Layanan Sekretariat GPA',
-                message: 'Layanan bantuan aktif. Tim Keuangan siap membantu verifikasi pembayaran Anda.',
-                tone: 'info',
+                title: 'Menghubungkan ke WhatsApp',
+                message: 'Membuka kontak WhatsApp resmi Sekretariat & Keuangan GPA...',
+                tone: 'success',
             });
         },
 

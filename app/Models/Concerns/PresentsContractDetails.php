@@ -71,4 +71,11 @@ trait PresentsContractDetails
     {
         return 'KONTRAK AKTIF';
     }
+
+    // Menghitung batas pagu plafon kredit berdasarkan komitmen pasokan per siklus kali harga tetap
+    public function getCreditLimitAttribute(): float
+    {
+        $limit = (float) (($this->committed_volume_per_cycle ?: 0) * ($this->fixed_price_per_kg ?: 0));
+        return $limit > 0 ? $limit : 150000000.0;
+    }
 }

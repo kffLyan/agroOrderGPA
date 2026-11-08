@@ -38,7 +38,7 @@ class BuktiPembayaranController extends Controller
             ->first();
 
         $isB2b = ($user->client_type === 'B2B_KONTRAK') || ($contract !== null);
-        $creditLimit = $contract ? (float) $contract->credit_limit : ($isB2b ? 50000000.0 : 0.0);
+        $creditLimit = (float) ($contract ? $contract->credit_limit : ($isB2b ? $user->credit_limit : 0.0));
 
         $outstandingTotal = (float) Invoice::where('user_id', $user->id)
             ->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])

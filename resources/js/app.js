@@ -28,13 +28,7 @@ import sekretarisReports from './components/sekretaris/laporan';
 
 // 3. Koordinator
 import koordinatorDashboard from './components/koordinator/dasbor';
-import koordinatorConsole from './components/koordinator/konsol';
-import koordinatorWeighing from './components/koordinator/penimbangan';
 import koordinatorStock from './components/koordinator/stok';
-import koordinatorDispatch from './components/koordinator/pengiriman';
-import koordinatorHarvestPlan from './components/koordinator/rencana-panen';
-import koordinatorMonitoring from './components/koordinator/pemantauan';
-import koordinatorReturns from './components/koordinator/retur';
 
 // 4. Armada
 import armadaTasks from './components/armada/tugas';
@@ -95,20 +89,8 @@ Alpine.data('secretaryReports', sekretarisReports);
 // Koordinator
 Alpine.data('koordinatorDashboard', koordinatorDashboard);
 Alpine.data('coordinatorDashboard', koordinatorDashboard);
-Alpine.data('koordinatorConsole', koordinatorConsole);
-Alpine.data('coordinatorConsole', koordinatorConsole);
-Alpine.data('koordinatorWeighing', koordinatorWeighing);
-Alpine.data('coordinatorWeighing', koordinatorWeighing);
 Alpine.data('koordinatorStock', koordinatorStock);
 Alpine.data('coordinatorStock', koordinatorStock);
-Alpine.data('koordinatorDispatch', koordinatorDispatch);
-Alpine.data('coordinatorDispatch', koordinatorDispatch);
-Alpine.data('koordinatorHarvestPlan', koordinatorHarvestPlan);
-Alpine.data('coordinatorHarvestPlan', koordinatorHarvestPlan);
-Alpine.data('koordinatorMonitoring', koordinatorMonitoring);
-Alpine.data('coordinatorMonitoring', koordinatorMonitoring);
-Alpine.data('koordinatorReturns', koordinatorReturns);
-Alpine.data('coordinatorReturns', koordinatorReturns);
 
 // Armada
 Alpine.data('armadaTasks', armadaTasks);

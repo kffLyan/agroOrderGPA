@@ -164,7 +164,6 @@
         </nav>
 
         <x-gpa.toast />
-        <x-gpa.notifications />
         <x-gpa.dialog />
     </div>
 </body>

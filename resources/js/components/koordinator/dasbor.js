@@ -40,7 +40,7 @@ export default function coordinatorDashboard() {
         },
 
         syncScale() {
-            this.$dispatch('gpa:sync-scale');
+            this.run('Sensor Timbangan Terkalibrasi', 'Timbangan digital gudang telah disinkronkan dan siap mencatat netto panen.', 'success');
         },
     };
 }

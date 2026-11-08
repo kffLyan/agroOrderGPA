@@ -79,12 +79,23 @@ class StockService
         }
     }
 
-    // Mengembalikan kuota alokasi stok komoditas ke batch panen terbaru saat pesanan dibatalkan.
+    // Mengembalikan kuota alokasi stok komoditas ke batch panen saat pesanan dibatalkan.
     public function restoreStock(int $productId, float $qty): void
     {
         $batch = HarvestBatch::where('product_id', $productId)->latest('id')->first();
         if ($batch) {
             $batch->increment('available_quantity', $qty);
+        } else {
+            HarvestBatch::create([
+                'product_id'         => $productId,
+                'source_type'        => 'PETANI_BINAAN',
+                'supplier_name'      => 'Pengembalian Batal Pesanan',
+                'batch_date'         => now()->toDateString(),
+                'initial_quantity'   => $qty,
+                'available_quantity' => $qty,
+                'grade'              => 'A',
+                'qc_notes'           => 'Stok otomatis dipulihkan dari pembatalan pesanan.',
+            ]);
         }
     }
 }

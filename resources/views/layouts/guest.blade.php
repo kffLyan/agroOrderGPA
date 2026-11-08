@@ -31,6 +31,6 @@
                 {{ $slot }}
             </div>
         </div>
-        <x-gpa.notifications />
+        <x-gpa.toast />
     </body>
 </html>

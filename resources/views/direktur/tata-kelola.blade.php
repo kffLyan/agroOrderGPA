@@ -422,13 +422,35 @@
                 },
                 removeChannel(index) {
                     if (this.channels.length <= 1) {
-                        alert('Minimal harus ada satu kanal pembayaran.');
+                        if (typeof window.$alert === 'function') {
+                            window.$alert({
+                                title: 'Batas Minimum Kanal',
+                                message: 'Minimal harus ada satu kanal pembayaran aktif untuk menerima transaksi pembayaran klien.',
+                                tone: 'warning',
+                            });
+                        } else {
+                            window.dispatchEvent(new CustomEvent('gpa:toast', {
+                                detail: { title: 'Batas Minimum Kanal', message: 'Minimal harus ada satu kanal pembayaran aktif.', tone: 'warning' }
+                            }));
+                        }
                         return;
                     }
                     this.channels.splice(index, 1);
                 },
-                loadPopularPresets() {
-                    if (confirm('Terapkan template lengkap seluruh metode pembayaran terpopuler di Indonesia (Bank BCA, Mandiri, BRI, BNI, BSI, QRIS Standar Nasional dengan Barcode, & E-Wallet)? Anda dapat menyesuaikan kembali sebelum menekan tombol Simpan.')) {
+                async loadPopularPresets() {
+                    let confirmed = false;
+                    if (typeof window.$confirm === 'function') {
+                        confirmed = await window.$confirm({
+                            title: 'Terapkan Preset Populer',
+                            message: 'Terapkan template lengkap seluruh metode pembayaran terpopuler di Indonesia (Bank BCA, Mandiri, BRI, BNI, BSI, QRIS Standar Nasional dengan Barcode, & E-Wallet)? Anda dapat menyesuaikan kembali sebelum menekan tombol Simpan.',
+                            tone: 'info',
+                            confirmText: 'Terapkan Preset',
+                            cancelText: 'Batal',
+                        });
+                    } else {
+                        confirmed = window.confirm('Terapkan template lengkap seluruh metode pembayaran terpopuler di Indonesia?');
+                    }
+                    if (confirmed) {
                         this.channels = [
                             {
                                 id: 'bca',

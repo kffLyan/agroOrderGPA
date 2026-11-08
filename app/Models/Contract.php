@@ -33,6 +33,7 @@ class Contract extends Model
         'sentra',
         'commitment',
         'priority',
+        'credit_limit',
     ];
 
     protected $casts = [

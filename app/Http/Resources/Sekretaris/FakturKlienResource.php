@@ -44,7 +44,7 @@ class FakturKlienResource extends JsonResource
         $activeContract = method_exists($client, 'contracts') ? $client->contracts()->where('status', 'ACTIVE')->first() : null;
         $isContractClient = ($client->client_type === 'B2B_KONTRAK' || $activeContract !== null);
         $topDays = $activeContract?->top_days ?: 30;
-        $creditLimit = $activeContract ? (float) ($activeContract->credit_limit > 0 ? $activeContract->credit_limit : ($activeContract->fixed_price_per_kg * $activeContract->committed_volume_per_cycle * 2)) : 0;
+        $creditLimit = (float) ($activeContract?->credit_limit ?? 0);
         
         $unpaidInvoices = (float) \App\Models\Invoice::where('user_id', $client->id)
             ->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])

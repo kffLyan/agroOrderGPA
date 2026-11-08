@@ -153,7 +153,6 @@
     @include('public.partials.footer')
 
     <x-gpa.toast />
-    <x-gpa.notifications />
 </body>
 
 </html>

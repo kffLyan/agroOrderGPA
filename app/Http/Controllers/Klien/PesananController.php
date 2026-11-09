@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\SimpanPesananRequest;
 use App\Http\Resources\Klien\DetailPesananResource;
 use App\Models\Order;
-use App\Models\Product;
 use App\Models\User;
 use App\Services\OrderService;
 use App\Services\StockService;
@@ -91,17 +90,15 @@ class PesananController extends Controller
     {
         $user            = Auth::guard('web')->user();
         $submissionToken = $request->input('submission_token');
+        $tokenCacheKey   = $submissionToken ? "order_submission_token_{$user->id}_{$submissionToken}" : null;
 
         // Memeriksa token idempotensi untuk mencegah transaksi ganda akibat klik tombol berulang kali
-        if ($submissionToken) {
-            $tokenCacheKey = "order_submission_token_{$user->id}_{$submissionToken}";
-            if (Cache::has($tokenCacheKey)) {
-                $existingOrderId = Cache::get($tokenCacheKey);
-                $existingOrder   = Order::where('user_id', $user->id)->find($existingOrderId);
-                if ($existingOrder) {
-                    return redirect()->route('klien.pesanan.show', $existingOrder->id)
-                        ->with('info', "Pesanan {$existingOrder->order_number} telah berhasil diajukan sebelumnya.");
-                }
+        if ($tokenCacheKey && Cache::has($tokenCacheKey)) {
+            $existingOrderId = Cache::get($tokenCacheKey);
+            $existingOrder   = Order::where('user_id', $user->id)->find($existingOrderId);
+            if ($existingOrder) {
+                return redirect()->route('klien.pesanan.show', $existingOrder->id)
+                    ->with('info', "Pesanan {$existingOrder->order_number} telah berhasil diajukan sebelumnya.");
             }
         }
 
@@ -111,8 +108,8 @@ class PesananController extends Controller
             // Mendeteksi pengajuan pesanan identik dalam 90 detik terakhir guna mencegah pesanan duplikat
             $recentOrder = $this->orderService->findRecentDuplicateOrder($user, $validatedData);
             if ($recentOrder) {
-                if ($submissionToken) {
-                    Cache::put("order_submission_token_{$user->id}_{$submissionToken}", $recentOrder->id, now()->addMinutes(15));
+                if ($tokenCacheKey) {
+                    Cache::put($tokenCacheKey, $recentOrder->id, now()->addMinutes(15));
                 }
 
                 return redirect()->route('klien.pesanan.show', $recentOrder->id)
@@ -133,8 +130,8 @@ class PesananController extends Controller
             );
 
             // Menyimpan token ke cache selama 15 menit agar formulir tidak dapat dikirim berulang
-            if ($submissionToken) {
-                Cache::put("order_submission_token_{$user->id}_{$submissionToken}", $order->id, now()->addMinutes(15));
+            if ($tokenCacheKey) {
+                Cache::put($tokenCacheKey, $order->id, now()->addMinutes(15));
             }
 
             return redirect()->route('klien.pesanan.show', $order->id)
@@ -164,27 +161,7 @@ class PesananController extends Controller
         $user = Auth::guard('web')->user();
         $statusFilter = $request->query('status', 'all');
 
-        $query = Order::where('user_id', $user->id)
-            ->with(['orderItems.product', 'driver', 'verifier', 'invoice'])
-            ->orderBy('created_at', 'desc');
-
-        if ($statusFilter !== 'all' && !empty($statusFilter)) {
-            $stageMap = [
-                'verifikasi' => ['MENUNGGU_VERIFIKASI'],
-                'bayar'      => ['MENUNGGU_PEMBAYARAN'],
-                'lunas'      => ['LUNAS'],
-                'kemas'      => ['SIAP_KIRIM'],
-                'kirim'      => ['DALAM_PENGIRIMAN'],
-                'selesai'    => ['SELESAI', 'SELESAI_CATATAN'],
-                'batal'      => ['BATAL'],
-            ];
-
-            if (isset($stageMap[$statusFilter])) {
-                $query->whereIn('status', $stageMap[$statusFilter]);
-            }
-        }
-
-        $orders = $query->get();
+        $orders = $this->buildFilteredOrdersQuery($user, $statusFilter)->get();
 
         $totalKgOrder = (float) $orders->sum(fn ($order) => $order->orderItems->sum('ordered_qty'));
         $totalKgActual = $totalKgOrder;
@@ -216,38 +193,11 @@ class PesananController extends Controller
     {
         $user = Auth::guard('web')->user();
         $statusFilter = $request->query('status', 'all');
+        $filename = 'Rekap_Pesanan_PO_' . ($user->company_name ? preg_replace('/[^a-zA-Z0-9_-]/', '_', $user->company_name) : 'Klien') . '_' . date('Ymd_His') . '.csv';
 
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="Rekap_Pesanan_PO_' . ($user->company_name ? preg_replace('/[^a-zA-Z0-9_-]/', '_', $user->company_name) : 'Klien') . '_' . date('Ymd_His') . '.csv"',
-        ];
+        $orders = $this->buildFilteredOrdersQuery($user, $statusFilter)->get();
 
-        $query = Order::where('user_id', $user->id)
-            ->with(['orderItems.product', 'driver', 'verifier', 'invoice'])
-            ->orderBy('created_at', 'desc');
-
-        if ($statusFilter !== 'all' && !empty($statusFilter)) {
-            $stageMap = [
-                'verifikasi' => ['MENUNGGU_VERIFIKASI'],
-                'bayar'      => ['MENUNGGU_PEMBAYARAN'],
-                'lunas'      => ['LUNAS'],
-                'kemas'      => ['SIAP_KIRIM'],
-                'kirim'      => ['DALAM_PENGIRIMAN'],
-                'selesai'    => ['SELESAI', 'SELESAI_CATATAN'],
-                'batal'      => ['BATAL'],
-            ];
-
-            if (isset($stageMap[$statusFilter])) {
-                $query->whereIn('status', $stageMap[$statusFilter]);
-            }
-        }
-
-        $orders = $query->get();
-
-        return response()->stream(function () use ($user, $orders, $statusFilter) {
-            $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
-
+        return $this->streamCsv($filename, function ($handle) use ($user, $orders, $statusFilter) {
             fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)'], ';');
             fputcsv($handle, ['REKAPITULASI RESMI TRANSAKSI PEMESANAN (PURCHASE ORDER)'], ';');
             fputcsv($handle, ['KLIEN / MITRA B2B', $user->company_name ?: $user->name], ';');
@@ -306,8 +256,34 @@ class PesananController extends Controller
                     $order->invoice ? ($order->invoice->status === 'PAID' ? 'Lunas' : 'Faktur Terbit') : 'Belum Ditagihkan',
                 ], ';');
             }
+        });
+    }
 
-            fclose($handle);
-        }, 200, $headers);
+    /**
+     * Membangun query pesanan klien dengan eager loading dan penyaringan status siklus (DRY Helper).
+     */
+    protected function buildFilteredOrdersQuery(User $user, ?string $statusFilter = 'all')
+    {
+        $query = Order::where('user_id', $user->id)
+            ->with(['orderItems.product', 'driver', 'verifier', 'invoice'])
+            ->orderBy('created_at', 'desc');
+
+        if ($statusFilter !== 'all' && !empty($statusFilter)) {
+            $stageMap = [
+                'verifikasi' => ['MENUNGGU_VERIFIKASI'],
+                'bayar'      => ['MENUNGGU_PEMBAYARAN'],
+                'lunas'      => ['LUNAS'],
+                'kemas'      => ['SIAP_KIRIM'],
+                'kirim'      => ['DALAM_PENGIRIMAN'],
+                'selesai'    => ['SELESAI', 'SELESAI_CATATAN'],
+                'batal'      => ['BATAL'],
+            ];
+
+            if (isset($stageMap[$statusFilter])) {
+                $query->whereIn('status', $stageMap[$statusFilter]);
+            }
+        }
+
+        return $query;
     }
 }

@@ -28,10 +28,11 @@
     <x-gpa.loading-screen />
     @php
         $user = auth()->user();
+        $isB2b = (bool) ($user && $user->is_b2b);
         $clientName = $user->company_name ?: ($user->name ?: config('app.name'));
-        $clientTier = ($user && $user->client_type === 'B2B_KONTRAK') ? 'Mitra B2B Kontrak' : 'Klien Reguler Harian';
+        $clientTier = $isB2b ? 'Mitra B2B Kontrak' : 'Klien Reguler Harian';
         $clientCode = $user ? 'KL-'.str_pad($user->id, 4, '0', STR_PAD_LEFT) : '-';
-        $clientTaxStatus = ($user && $user->client_type === 'B2B_KONTRAK') ? 'PKP Terverifikasi' : 'Reguler Retail';
+        $clientTaxStatus = $isB2b ? 'PKP Terverifikasi' : 'Reguler Retail';
         $clientInitials = strtoupper(substr($user->name ?? 'KL', 0, 2));
 
         $navigation = [
@@ -68,7 +69,7 @@
                                 </span>
                                 <span
                                     class="hidden shrink-0 rounded bg-ink px-2 py-0.5 text-[10px] font-bold uppercase leading-3 tracking-[0.1em] text-accent ring-1 ring-inset ring-accent/30 sm:inline-block">
-                                    {{ ($user && $user->client_type === 'B2B_KONTRAK') ? 'Mitra B2B Kontrak' : 'Klien Reguler' }}
+                                    {{ $isB2b ? 'Mitra B2B Kontrak' : 'Klien Reguler' }}
                                 </span>
                             </span>
                             <span class="truncate text-[10px] font-medium leading-3 text-white/80 gpa-meta">

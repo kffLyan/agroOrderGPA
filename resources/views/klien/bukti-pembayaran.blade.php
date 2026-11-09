@@ -115,7 +115,7 @@
 
         {{-- Banner Pemberitahuan Bukti Pembayaran Ditolak Verifikator --}}
         @if ($rejectedPaymentForSelected && ! $pendingPaymentForSelected)
-            <div x-show="!isCurrentPaid" class="flex flex-col gap-3 rounded-2xl border-2 border-danger/60 bg-danger-soft/30 p-4 sm:p-5 shadow-card transition-all">
+            <div x-show="!isCurrentPaid && isCurrentRejected" x-cloak class="flex flex-col gap-3 rounded-2xl border-2 border-danger/60 bg-danger-soft/30 p-4 sm:p-5 shadow-card transition-all">
                 <div class="flex items-start gap-3.5">
                     <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-danger text-white shadow-sub">
                         <x-gpa.icon name="alert-triangle" class="h-6 w-6 text-white" />
@@ -175,7 +175,7 @@
 
         {{-- Banner Pemberitahuan Bukti Pembayaran Terkirim ke Sekretaris --}}
         @if ($pendingPaymentForSelected)
-            <div x-show="!isCurrentPaid" class="flex flex-col gap-3 rounded-2xl border-2 border-warning/50 bg-warning-wash p-4 sm:p-5 shadow-card transition-all">
+            <div x-show="!isCurrentPaid && isCurrentPending" x-cloak class="flex flex-col gap-3 rounded-2xl border-2 border-warning/50 bg-warning-wash p-4 sm:p-5 shadow-card transition-all">
                 <div class="flex items-start gap-3.5">
                     <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-warning-deep text-white shadow-sub">
                         <x-gpa.icon name="clock" class="h-6 w-6 text-white" />
@@ -185,7 +185,7 @@
                             <span class="rounded bg-warning-deep px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
                                 Bukti Pembayaran Terkirim
                             </span>
-                            <span class="text-xs font-semibold text-warning-deep">
+                            <span class="text-xs font-semibold text-warning-deep" x-text="'Ref: ' + (current?.payment_ref || '{{ $pendingPaymentForSelected->payment_reference ?: ('PAY-' . str_pad($pendingPaymentForSelected->id, 5, '0', STR_PAD_LEFT)) }}')">
                                 Ref: {{ $pendingPaymentForSelected->payment_reference ?: ('PAY-' . str_pad($pendingPaymentForSelected->id, 5, '0', STR_PAD_LEFT)) }}
                             </span>
                         </div>
@@ -193,15 +193,15 @@
                             Sedang Dalam Antrean Verifikasi Kasir / Sekretariat GPA
                         </h2>
                         <p class="text-xs leading-relaxed text-ink-body">
-                            Bukti transfer sebesar <strong class="text-ink">Rp {{ number_format((float) $pendingPaymentForSelected->amount, 0, ',', '.') }}</strong> atas tagihan <strong class="text-ink">{{ $selectedPo }}</strong> telah berhasil diterima sistem pada <span class="font-semibold text-ink">{{ $pendingPaymentForSelected->paid_at ? $pendingPaymentForSelected->paid_at->format('d/m/Y H:i') : $pendingPaymentForSelected->created_at->format('d/m/Y H:i') }} WIB</span>. Staf kami sedang melakukan pencocokan mutasi kas rekening bank.
+                            Bukti transfer sebesar <strong class="text-ink" x-text="current?.payable_label || 'Rp {{ number_format((float) $pendingPaymentForSelected->amount, 0, ',', '.') }}'">Rp {{ number_format((float) $pendingPaymentForSelected->amount, 0, ',', '.') }}</strong> atas tagihan <strong class="text-ink" x-text="current?.po || '{{ $selectedPo }}'">{{ $selectedPo }}</strong> telah berhasil diterima sistem pada <span class="font-semibold text-ink">{{ $pendingPaymentForSelected->paid_at ? $pendingPaymentForSelected->paid_at->format('d/m/Y H:i') : $pendingPaymentForSelected->created_at->format('d/m/Y H:i') }} WIB</span>. Staf kami sedang melakukan pencocokan mutasi kas rekening bank.
                         </p>
                         <div class="mt-2 flex flex-wrap items-center gap-3 text-xs text-ink-body border-t border-warning/30 pt-2">
-                            <span>Kanal: <strong class="text-ink">{{ strtoupper(str_replace('_', ' ', $pendingPaymentForSelected->payment_method)) }}</strong></span>
+                            <span>Kanal: <strong class="text-ink" x-text="(current?.payment_method_label || current?.payment_method || '{{ strtoupper(str_replace('_', ' ', $pendingPaymentForSelected->payment_method)) }}').replaceAll('_', ' ')">{{ strtoupper(str_replace('_', ' ', $pendingPaymentForSelected->payment_method)) }}</strong></span>
                             <span>&bull;</span>
                             <span>Status: <strong class="text-warning-deep">Menunggu Rekonsiliasi Bank</strong></span>
                             @if ($pendingPaymentForSelected->proof_url)
                                 <span>&bull;</span>
-                                <a href="{{ asset('storage/' . $pendingPaymentForSelected->proof_url) }}" target="_blank"
+                                <a :href="current?.proof_url || '{{ asset('storage/' . $pendingPaymentForSelected->proof_url) }}'" target="_blank"
                                     class="font-bold text-brand hover:underline inline-flex items-center gap-1">
                                     <x-gpa.icon name="eye" class="h-3.5 w-3.5" />
                                     Lihat Berkas Bukti yang Diunggah

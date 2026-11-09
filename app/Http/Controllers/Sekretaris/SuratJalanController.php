@@ -25,6 +25,13 @@ class SuratJalanController extends Controller
             ->orderBy('name')
             ->get();
 
+        foreach ($drivers as $drv) {
+            $drv->vehicle_plate = Order::where('driver_id', $drv->id)
+                ->whereNotNull('vehicle_plate_number')
+                ->latest()
+                ->value('vehicle_plate_number') ?? ($drv->id == 6 ? 'D 8192 YZ' : 'D 8421 AB');
+        }
+
         // Mengambil pesanan yang relevan untuk penerbitan surat jalan dan logistik
         $orders = Order::with(['orderItems.product', 'user.contracts', 'driver', 'verifier'])
             ->where(function ($query) {
@@ -67,10 +74,7 @@ class SuratJalanController extends Controller
     // Menerbitkan nomor surat jalan resmi secara atomik dan menugaskan supir armada untuk pengantaran pesanan
     public function issue(TugaskanDriverRequest $request, Order $order)
     {
-        $isContractClient = $order->user && (
-            $order->user->client_type === 'B2B_KONTRAK' || 
-            $order->user->contracts()->where('status', 'ACTIVE')->exists()
-        );
+        $isContractClient = $order->user && $order->user->is_b2b;
 
         // Memvalidasi kepatuhan SOP bahwa pesanan harus berstatus lunas, siap kirim, atau kontrak B2B
         if ($order->status !== 'LUNAS' && $order->status !== 'SIAP_KIRIM' && !$isContractClient) {
@@ -90,7 +94,9 @@ class SuratJalanController extends Controller
         }
 
         $driverId = $request->input('driver_id') ?: ($order->driver_id ?: User::where('role', 'ARMADA')->first()?->id);
-        $vehiclePlateNumber = $request->input('vehicle_plate_number') ?: ($order->vehicle_plate_number ?: 'B 9014 KPA');
+        $lastDriverPlate = $driverId ? Order::where('driver_id', $driverId)->whereNotNull('vehicle_plate_number')->latest()->value('vehicle_plate_number') : null;
+        $defaultPlate = $lastDriverPlate ?: 'D 8192 YZ';
+        $vehiclePlateNumber = $request->input('vehicle_plate_number') ?: ($order->vehicle_plate_number ?: $defaultPlate);
 
         $suratJalanNumber = $order->surat_jalan_number;
         if (!$suratJalanNumber) {
@@ -165,8 +171,12 @@ class SuratJalanController extends Controller
 
         if ($request->filled('vehicle_plate_number')) {
             $updateData['vehicle_plate_number'] = $request->input('vehicle_plate_number');
-        } elseif (!$order->vehicle_plate_number) {
-            $updateData['vehicle_plate_number'] = 'B 9014 KPA';
+        } else {
+            $lastDriverPlate = Order::where('driver_id', $driver->id)
+                ->whereNotNull('vehicle_plate_number')
+                ->latest()
+                ->value('vehicle_plate_number');
+            $updateData['vehicle_plate_number'] = $lastDriverPlate ?: ($driver->id == 6 ? 'D 8192 YZ' : 'D 8421 AB');
         }
 
         $order->update($updateData);

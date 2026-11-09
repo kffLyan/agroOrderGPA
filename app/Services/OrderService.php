@@ -27,60 +27,58 @@ class OrderService
         $this->stockService = $stockService;
     }
 
-    // Menghasilkan nomor pesanan unik berurutan bulanan dengan proteksi race-condition melalui lock cache.
-    public function generateOrderNumber(): string
-    {
-        $prefix = 'ORD-GPA-' . date('Ym') . '-';
-
-        return Cache::lock('order_number_sequence_lock', 5)->block(3, function () use ($prefix) {
-            $lastOrder = Order::where('order_number', 'LIKE', $prefix . '%')
+    /**
+     * Helper terpusat untuk menghasilkan nomor dokumen berurutan bulanan dengan proteksi race-condition (Prinsip DRY).
+     */
+    protected function generateSequentialDocumentNumber(
+        string $lockKey,
+        string $prefix,
+        string $modelClass,
+        string $column
+    ): string {
+        return Cache::lock($lockKey, 5)->block(3, function () use ($prefix, $modelClass, $column) {
+            $lastRecord = $modelClass::where($column, 'LIKE', $prefix . '%')
                 ->orderBy('id', 'desc')
                 ->first();
 
             $nextNumber = 1;
-            if ($lastOrder) {
-                $lastSequence = (int) substr($lastOrder->order_number, -4);
+            if ($lastRecord) {
+                $lastSequence = (int) substr($lastRecord->{$column}, -4);
                 $nextNumber = $lastSequence + 1;
             }
 
-            $newOrderNumber = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
+            $newNumber = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
 
-            // Pengaman ekstra jika kandidat nomor pesanan sudah terpakai di database
-            while (Order::where('order_number', $newOrderNumber)->exists()) {
+            // Pengaman ekstra jika kandidat nomor dokumen sudah terpakai di database
+            while ($modelClass::where($column, $newNumber)->exists()) {
                 $nextNumber++;
-                $newOrderNumber = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
+                $newNumber = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
             }
 
-            return $newOrderNumber;
+            return $newNumber;
         });
+    }
+
+    // Menghasilkan nomor pesanan unik berurutan bulanan dengan proteksi race-condition melalui lock cache.
+    public function generateOrderNumber(): string
+    {
+        return $this->generateSequentialDocumentNumber(
+            'order_number_sequence_lock',
+            'ORD-GPA-' . date('Ym') . '-',
+            Order::class,
+            'order_number'
+        );
     }
 
     // Menghasilkan nomor faktur komoditas berurutan bulanan dengan proteksi race-condition melalui lock cache.
     public function generateInvoiceNumber(): string
     {
-        $prefix = 'INV-GPA-' . date('Ym') . '-';
-
-        return Cache::lock('invoice_number_sequence_lock', 5)->block(3, function () use ($prefix) {
-            $lastInvoice = Invoice::where('invoice_number', 'LIKE', $prefix . '%')
-                ->orderBy('id', 'desc')
-                ->first();
-
-            $nextNumber = 1;
-            if ($lastInvoice) {
-                $lastSequence = (int) substr($lastInvoice->invoice_number, -4);
-                $nextNumber = $lastSequence + 1;
-            }
-
-            $newInvoiceNumber = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
-
-            // Pengaman ekstra jika kandidat nomor faktur sudah terpakai di database
-            while (Invoice::where('invoice_number', $newInvoiceNumber)->exists()) {
-                $nextNumber++;
-                $newInvoiceNumber = $prefix . str_pad((string) $nextNumber, 4, '0', STR_PAD_LEFT);
-            }
-
-            return $newInvoiceNumber;
-        });
+        return $this->generateSequentialDocumentNumber(
+            'invoice_number_sequence_lock',
+            'INV-GPA-' . date('Ym') . '-',
+            Invoice::class,
+            'invoice_number'
+        );
     }
 
     // Menentukan harga satuan komoditas berdasarkan kontrak B2B aktif atau harga dasar katalog.

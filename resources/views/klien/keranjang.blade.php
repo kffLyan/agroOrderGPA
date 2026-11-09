@@ -6,36 +6,14 @@
     $user = $user ?? auth()->user();
     $isB2b = ($user->client_type === 'B2B_KONTRAK');
 
-    $commodities = ($products ?? collect())->map(function ($product) use ($activeContracts, $stockMap) {
-        $hasContract = $activeContracts->has($product->id);
-        $contract = $activeContracts->get($product->id);
-        $effectivePrice = $hasContract ? (float) $contract->fixed_price_per_kg : (float) $product->base_price;
-        $stock = $stockMap[$product->id] ?? 0;
-        $moq = (float) ($product->minimum_order ?? 10);
+    $commodities = $commodities ?? ($products ?? collect())->map(
+        fn ($product) => (new \App\Http\Resources\Klien\KeranjangKomoditasResource($product, $activeContracts ?? collect(), $stockMap ?? []))->toArray(request())
+    )->values()->all();
 
-        return [
-            'key'        => (string) $product->id,
-            'id'         => $product->id,
-            'sku'        => $product->sku ?? ('SKU-' . $product->id),
-            'name'       => $product->name,
-            'image_url'  => asset($product->image_path),
-            'grade'      => $product->grade ?: 'Grade A',
-            'packaging'  => "Krat Plastik Higienis 10 {$product->unit}",
-            'origin'     => 'Lembang',
-            'cold_chain' => '2-6°C',
-            'price'      => $effectivePrice,
-            'stock'      => $stock,
-            'moq'        => $moq,
-            'step'       => 1,
-            'crate_kg'   => 10,
-            'pack_label' => 'Krat',
-        ];
-    })->values()->all();
+    $defaultDeliveryDate = $defaultDeliveryDate ?? now()->addDay()->format('Y-m-d');
+    $defaultAddress = $defaultAddress ?? ($user->address ?: '');
 
-    $defaultDeliveryDate = now()->addDay()->format('Y-m-d');
-    $defaultAddress = $user->address ?: '';
-
-    $docks = [
+    $docks = $docks ?? [
         [
             'key'      => 'dock-utama',
             'name'     => $user->company_name ?: ($user->name ?: 'Alamat Terdaftar'),
@@ -58,7 +36,7 @@
     $taxSettings = $taxSettings ?? app(\App\Services\TataKelolaService::class)->getTaxSettings();
     $shippingSettings = $shippingSettings ?? app(\App\Services\TataKelolaService::class)->getShippingSettings();
 
-    $cartDefaults = [
+    $cartDefaults = $cartDefaults ?? [
         'date'              => $defaultDeliveryDate,
         'window'            => '04:00 - 06:00 WIB (Subuh)',
         'driver_note'       => 'Harap konfirmasi ke PIC dock penerimaan 30 menit sebelum armada tiba.',

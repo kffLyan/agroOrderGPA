@@ -340,6 +340,12 @@ trait PresentsOrderDetails
         };
     }
 
+    // Mengambil metode pembayaran mentah dari rekaman pembayaran terkait
+    public function getPaymentMethodAttribute(): ?string
+    {
+        return $this->payments ? $this->payments->sortByDesc('id')->first()?->payment_method : null;
+    }
+
     // Label representasi metode pembayaran pesanan (bebas underscore)
     public function getPaymentMethodLabelAttribute(): string
     {
@@ -447,7 +453,11 @@ trait PresentsOrderDetails
 
     public function getDriverNoteAttribute(): string
     {
-        return $this->driver ? ("Supir: " . $this->driver->name) : 'Armada belum ditugaskan';
+        if (!$this->driver) {
+            return 'Armada belum ditugaskan';
+        }
+
+        return "Supir: {$this->driver->name}" . ($this->vehicle_plate_number ? " • {$this->vehicle_plate_number}" : '');
     }
 
     public function getShipmentNoteAttribute(): string

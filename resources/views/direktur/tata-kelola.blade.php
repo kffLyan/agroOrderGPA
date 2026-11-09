@@ -40,6 +40,40 @@
     <div class="mx-auto flex w-full min-w-0 max-w-[1280px] flex-col gap-6"
         x-data="directorGovernance(@js($auditRows))">
 
+        @if (!empty($settings['master_freeze_active']))
+            {{-- Alert Banner Darurat saat Master Freeze Aktif --}}
+            <div class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-danger/10 border-2 border-danger p-4 sm:p-5 shadow-sm text-danger animate-pulse">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-danger text-white">
+                        <x-gpa.icon name="alert-triangle" class="h-5 w-5" />
+                    </span>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-base">STATUS SISTEM: MASTER FREEZE SEDANG AKTIF</span>
+                            <span class="rounded bg-danger px-2 py-0.5 text-[10px] font-extrabold text-white uppercase tracking-wider">Kunci Darurat</span>
+                        </div>
+                        <p class="text-xs text-ink-body mt-0.5">
+                            Alasan Pembekuan: <strong class="text-ink">{{ $settings['master_freeze_reason'] ?? 'Audit Forensik & Stok Opname Direksi' }}</strong>
+                            &bull; Sejak: <span class="font-mono text-ink">{{ $settings['master_freeze_engaged_at'] ?? 'Aktif' }}</span>
+                        </p>
+                    </div>
+                </div>
+                <form method="POST" action="{{ route('direktur.tata-kelola.master-freeze') }}" class="inline"
+                    data-gpa-confirm="Apakah Anda yakin ingin MEMULIHKAN transaksi dan menonaktifkan Master Freeze? Seluruh input pesanan klien akan kembali beroperasi normal."
+                    data-gpa-title="Pulihkan Transaksi Normal"
+                    data-gpa-tone="brand"
+                    data-gpa-ok="Ya, Pulihkan Transaksi">
+                    @csrf
+                    <input type="hidden" name="freeze" value="0">
+                    <button type="submit"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-danger px-4 py-2 text-xs font-bold text-white shadow-sub hover:bg-danger/90 transition">
+                        <x-gpa.icon name="check-circle" class="h-4 w-4" />
+                        Cabut Master Freeze &amp; Normalkan Sistem
+                    </button>
+                </form>
+            </div>
+        @endif
+
         {{-- Page header --}}
         <section class="flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-surface p-4 sm:p-6 shadow-card">
             <div class="min-w-0 space-y-1">
@@ -49,16 +83,47 @@
             </div>
 
             <div class="flex w-full flex-col sm:w-auto sm:flex-row sm:flex-wrap sm:items-center gap-2">
+                @if (!empty($settings['master_freeze_active']))
+                    <form method="POST" action="{{ route('direktur.tata-kelola.master-freeze') }}" class="inline w-full sm:w-auto"
+                        data-gpa-confirm="Apakah Anda yakin ingin MEMULIHKAN transaksi dan menonaktifkan Master Freeze? Seluruh input pesanan klien akan kembali beroperasi normal."
+                        data-gpa-title="Pulihkan Transaksi Normal"
+                        data-gpa-tone="brand"
+                        data-gpa-ok="Ya, Pulihkan Transaksi">
+                        @csrf
+                        <input type="hidden" name="freeze" value="0">
+                        <button type="submit"
+                            class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded bg-danger px-3.5 py-2 gpa-meta font-bold text-white shadow-sub transition-opacity hover:opacity-90 animate-pulse">
+                            <x-gpa.icon name="alert-triangle" class="h-3.5 w-3.5 shrink-0 text-white" />
+                            MASTER FREEZE: AKTIF (Pulihkan)
+                        </button>
+                    </form>
+                @else
+                    <form method="POST" action="{{ route('direktur.tata-kelola.master-freeze') }}" class="inline w-full sm:w-auto"
+                        data-gpa-confirm="Apakah Anda yakin ingin MENGAKTIFKAN Master Freeze? Seluruh input pesanan klien (Web & WhatsApp) akan dibekukan seketika untuk audit / stok opname."
+                        data-gpa-title="Konfirmasi Sakelar Darurat Master Freeze"
+                        data-gpa-tone="danger"
+                        data-gpa-ok="Ya, Aktifkan Master Freeze">
+                        @csrf
+                        <input type="hidden" name="freeze" value="1">
+                        <input type="hidden" name="reason" value="Audit Forensik & Stok Opname Direksi">
+                        <button type="submit"
+                            class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-bold text-danger outline outline-1 -outline-offset-1 outline-danger/50 transition-colors hover:bg-danger/10">
+                            <x-gpa.icon name="alert-triangle" class="h-3.5 w-3.5 shrink-0 text-danger" />
+                            Sakelar Darurat Master Freeze
+                        </button>
+                    </form>
+                @endif
+
                 <a href="{{ route('direktur.users.index') }}"
                     class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="users" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
                     Kelola Akun Pengguna &amp; RBAC
                 </a>
-                <button type="button" @click="exportAudit()"
+                <a href="{{ route('direktur.tata-kelola.export-audit') }}"
                     class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded bg-surface-shell px-3 py-2 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                     <x-gpa.icon name="download" class="h-3.5 w-3.5 shrink-0 text-success-deep" />
                     Export Full Audit Log (.CSV)
-                </button>
+                </a>
                 <button type="button" @click="verifyIntegrity()"
                     class="inline-flex w-full sm:w-auto items-center justify-center gap-1.5 rounded bg-accent px-3 py-2 gpa-meta font-bold text-ink shadow-sub outline outline-1 -outline-offset-1 outline-success-deep transition-opacity hover:opacity-90">
                     <x-gpa.icon name="shield" class="h-3.5 w-3.5 shrink-0" />

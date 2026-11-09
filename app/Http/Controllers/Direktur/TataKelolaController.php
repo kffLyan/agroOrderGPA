@@ -161,17 +161,10 @@ class TataKelolaController extends Controller
     // Mengunduh rekam jejak audit forensik lengkap (append-only audit trail) dalam format CSV
     public function exportAuditLog(Request $request): StreamedResponse
     {
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="Full_Audit_Trail_' . date('Ymd_His') . '.csv"',
-        ];
-
+        $filename = 'Full_Audit_Trail_' . date('Ymd_His') . '.csv';
         $logs = $this->tataKelolaService->getAuditLogs();
 
-        return response()->stream(function () use ($logs) {
-            $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
-
+        return $this->streamCsv($filename, function ($handle) use ($logs) {
             fputcsv($handle, ['LOG AUDIT FORENSIK APPEND-ONLY SHA-256 - KOPERASI GPA'], ';');
             fputcsv($handle, ['TANGGAL CETAK', date('d-m-Y H:i:s') . ' WIB'], ';');
             fputcsv($handle, [], ';');
@@ -189,9 +182,7 @@ class TataKelolaController extends Controller
                     $log['hash'] ?? '',
                 ], ';');
             }
-
-            fclose($handle);
-        }, 200, $headers);
+        });
     }
 
     // Menyimpan konfigurasi rekening bank dan barcode QRIS resmi koperasi beserta bukti logo digital

@@ -174,11 +174,11 @@
                 </div>
 
                 <div class="flex flex-col gap-1 border-t border-line-hair pt-4">
-                    <button type="button" @click="run('Pengaturan', 'Modul pengaturan koordinator sedang disiapkan.')"
+                    <a href="{{ route('profile.edit') }}"
                         class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left gpa-body text-ink-quiet transition-colors hover:bg-surface-shell hover:text-ink">
                         <x-gpa.icon name="settings" class="h-3.5 w-3.5 shrink-0" />
                         Pengaturan
-                    </button>
+                    </a>
                     @auth
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

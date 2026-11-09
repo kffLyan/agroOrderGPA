@@ -24,11 +24,10 @@ class ProfileController extends Controller
             $contract = $user->contracts()
                 ->where('status', 'ACTIVE')
                 ->latest()
-                ->first()
-                ?? $user->contracts()->latest()->first();
+                ->first();
         }
 
-        $isB2b = ($user->client_type === 'B2B_KONTRAK' || $contract !== null);
+        $isB2b = (bool) $user->is_b2b;
 
         $creditLimit = 0.0;
         if ($isB2b) {

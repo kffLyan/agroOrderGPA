@@ -45,6 +45,8 @@ class Order extends Model
         'weight_chip',
         'scale_note',
         'payment',
+        'payment_method',
+        'payment_method_label',
         'driver_name',
     ];
 

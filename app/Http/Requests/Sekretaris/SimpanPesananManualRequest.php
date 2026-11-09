@@ -30,7 +30,7 @@ class SimpanPesananManualRequest extends FormRequest
 
         if ($this->has('client_id')) {
             $clientId = $this->input('client_id');
-            if ($clientId === '' || $clientId === 'null' || $clientId === null) {
+            if ($clientId === '' || $clientId === 'null' || $clientId === null || $clientId === 0 || $clientId === '0') {
                 $this->merge(['client_id' => null]);
             }
         }

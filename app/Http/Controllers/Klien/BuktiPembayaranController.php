@@ -38,7 +38,7 @@ class BuktiPembayaranController extends Controller
             ->where('status', 'ACTIVE')
             ->first();
 
-        $isB2b = ($user->client_type === 'B2B_KONTRAK') || ($contract !== null);
+        $isB2b = (bool) $user->is_b2b;
         $creditLimit = (float) ($contract ? $contract->credit_limit : ($isB2b ? $user->credit_limit : 0.0));
 
         $outstandingTotal = (float) Invoice::where('user_id', $user->id)
@@ -93,7 +93,8 @@ class BuktiPembayaranController extends Controller
             ? $dbPayments->first(function ($payment) use ($selectedPo) {
                 $invoiceNumber = $payment->invoice?->invoice_number ?: ($payment->order?->order_number ?: '');
                 return $invoiceNumber === $selectedPo 
-                    && in_array($payment->status, ['MENUNGGU_VERIFIKASI', 'PENDING']);
+                    && in_array($payment->status, ['MENUNGGU_VERIFIKASI', 'PENDING'])
+                    && !empty($payment->proof_url);
             })
             : null;    
 
@@ -115,7 +116,12 @@ class BuktiPembayaranController extends Controller
             'note'           => '',
         ];
 
-        $history = $dbPayments;
+        // Hanya tampilkan entri pembayaran yang memiliki berkas bukti transfer atau berstatus final
+        $history = $dbPayments->filter(function ($payment) {
+            return !empty($payment->proof_url)
+                || !empty($payment->paid_at)
+                || in_array($payment->status, ['LUNAS', 'DITOLAK', 'REJECTED']);
+        })->values();
 
         $tataKelolaService = app(TataKelolaService::class);
         $paymentChannels = $tataKelolaService->getActivePaymentChannels();

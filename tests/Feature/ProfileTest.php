@@ -21,6 +21,26 @@ class ProfileTest extends TestCase
         $response->assertOk();
     }
 
+    public function test_koordinator_profile_page_is_displayed_with_internal_role(): void
+    {
+        $koordinator = User::factory()->create([
+            'role' => 'KOORDINATOR',
+            'name' => 'Budi Koordinator',
+            'email' => 'koordinator@agroorder.gpa',
+        ]);
+
+        $response = $this
+            ->actingAs($koordinator)
+            ->get('/profile');
+
+        $response->assertOk();
+        $response->assertSee('Portal Koordinator');
+        $response->assertSee('Profil Koordinator Panen');
+        $response->assertSee('ID Koordinator: KOR-');
+        $response->assertSee('Koordinator Panen &amp; QC Mutu', false);
+        $response->assertDontSee('Klien Reguler (Spot Market)');
+    }
+
     public function test_profile_information_can_be_updated(): void
     {
         $user = User::factory()->create();

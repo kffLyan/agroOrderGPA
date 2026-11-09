@@ -88,7 +88,7 @@ trait PresentsPaymentDetails
 
     public function getVerifierPendingAttribute(): bool
     {
-        return ! (bool) $this->verifier_id;
+        return ! (bool) $this->verified_by;
     }
 
     public function getReceiptPendingAttribute(): bool

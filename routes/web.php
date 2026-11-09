@@ -209,6 +209,7 @@ Route::middleware(['auth', 'role:ARMADA'])->prefix('armada')->name('armada.')->g
     // 2. Surat Jalan Digital & Rincian Muatan
     Route::get('/surat-jalan', [ArmadaSuratJalanController::class, 'index'])->name('surat-jalan');
     Route::post('/surat-jalan/{order}/mulai', [ArmadaSuratJalanController::class, 'startRoute'])->name('surat-jalan.mulai');
+    Route::post('/surat-jalan/{order}/plat', [ArmadaSuratJalanController::class, 'updatePlate'])->name('surat-jalan.update-plat');
 
     // 3. Bukti Terima Digital (Proof of Delivery / PoD)
     Route::get('/bukti-terima', [ArmadaBuktiTerimaController::class, 'index'])->name('bukti-terima');
@@ -216,6 +217,7 @@ Route::middleware(['auth', 'role:ARMADA'])->prefix('armada')->name('armada.')->g
 
     // 4. Status Kendaraan, Telemetri IoT & Kelaikan Shift
     Route::get('/status-kendaraan', [ArmadaStatusKendaraanController::class, 'index'])->name('status-kendaraan');
+    Route::post('/status-kendaraan/plat', [ArmadaStatusKendaraanController::class, 'updatePlate'])->name('status-kendaraan.update-plat');
 });
 
 // Modul eksekutif Direktur Utama untuk analitika omzet, otorisasi margin kontrak, audit trail, dan tata kelola

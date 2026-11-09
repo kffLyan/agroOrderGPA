@@ -6,11 +6,14 @@
     @php
         $isStarted = $currentOrder && in_array($currentOrder->status, ['DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']);
 
+        $activePlate = $currentOrder?->vehicle_plate_number ?: ($plate !== '—' ? $plate : 'D 8192 YZ');
+
         $gatePass = [
             'expiry_minutes'      => 45,
             'is_started'          => $isStarted,
             'pic_phone'           => $currentOrder?->user?->phone ?: '—',
             'destination_address' => $currentOrder?->delivery_address ?: '',
+            'plate'               => $activePlate,
         ];
 
         $sjNumber = $currentOrder?->surat_jalan_number
@@ -39,7 +42,13 @@
     @endphp
 
     <div class="mx-auto flex w-full max-w-[512px] flex-col gap-4 px-4 pb-24"
-        x-data="armadaDispatch(@js($gatePass))">
+        x-data="{
+            ...armadaDispatch(@js($gatePass)),
+            showDepartureModal: false,
+            showEditPlateModal: false,
+            confirmedPlate: '{{ $activePlate }}',
+            quickPlates: ['D 8192 YZ', 'D 8421 AB', 'B 9014 KPA']
+        }">
 
         {{-- Judul halaman --}}
         <section class="no-print flex flex-col gap-1 rounded-2xl bg-surface p-4 shadow-card">
@@ -113,6 +122,19 @@
                     <span class="font-mono text-xs text-ink-body">
                         <span>Ref PO: </span><span class="font-bold text-ink">#{{ $poNumber }}</span>
                     </span>
+
+                    <div class="mt-1 flex items-center gap-1.5 flex-wrap">
+                        <span class="font-mono text-[10px] text-ink-quiet uppercase">Armada:</span>
+                        <span class="rounded bg-surface-shell px-2 py-0.5 font-mono text-[11px] font-extrabold text-ink outline outline-1 outline-line-board">
+                            {{ $activePlate }}
+                        </span>
+                        @if ($currentOrder && !$isStarted)
+                            <button type="button" @click="showEditPlateModal = true"
+                                class="font-mono text-[10px] font-bold text-accent-deep underline hover:text-ink">
+                                [Ubah Plat]
+                            </button>
+                        @endif
+                    </div>
 
                     <a href="{{ route('prints.surat-jalan', ['order_id' => $currentOrder?->id]) }}" target="_blank"
                         class="no-print mt-1.5 inline-flex items-center gap-1.5 rounded-lg bg-surface-shell px-2.5 py-1 font-mono text-[10px] font-bold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-disabled">
@@ -331,6 +353,7 @@
             @if ($currentOrder)
                 <form id="start-route-form" method="POST" action="{{ route('armada.surat-jalan.mulai', $currentOrder->id) }}" class="hidden">
                     @csrf
+                    <input type="hidden" name="vehicle_plate_number" :value="confirmedPlate">
                 </form>
             @endif
 
@@ -348,7 +371,7 @@
                         </a>
                     @endif
                 @else
-                    <button type="button" @click="startRoute()"
+                    <button type="button" @click="showDepartureModal = true"
                         class="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-ink font-mono text-sm font-bold text-accent shadow-pop transition-transform active:scale-[0.98]">
                         <span>MULAI PENGIRIMAN</span>
                         <x-gpa.icon name="arrow-right" class="h-4 w-4" />
@@ -364,5 +387,145 @@
                 </button>
             </div>
         </section>
+
+        {{-- Modal Dialog Konfirmasi Keberangkatan & Input Plat Kendaraan --}}
+        <div x-show="showDepartureModal"
+            x-cloak
+            class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-ink/70 backdrop-blur-xs transition-opacity"
+            @keydown.escape.window="showDepartureModal = false">
+            <div class="w-full max-w-md rounded-2xl bg-surface p-5 shadow-2xl outline outline-1 outline-line-board space-y-4"
+                @click.outside="showDepartureModal = false">
+                
+                <header class="flex items-start justify-between gap-3 border-b border-surface-shell pb-3">
+                    <div class="flex items-center gap-2.5">
+                        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-accent text-ink shadow-sm">
+                            <x-gpa.icon name="truck" class="h-5 w-5" />
+                        </span>
+                        <div>
+                            <span class="rounded bg-accent/40 px-1.5 py-0.5 font-mono text-[9px] font-bold text-ink uppercase">CHECKLIST KEBERANGKATAN</span>
+                            <h3 class="text-base font-bold text-ink">Konfirmasi Armada Truk</h3>
+                        </div>
+                    </div>
+                    <button type="button" @click="showDepartureModal = false" class="text-ink-quiet hover:text-ink text-sm font-bold">✕</button>
+                </header>
+
+                <p class="text-xs text-ink-body leading-relaxed">
+                    Pastikan nomor pelat kendaraan operasional sesuai dengan fisik truk chiller yang Anda bawa untuk pengantaran <strong>{{ $sjNumber }}</strong>.
+                </p>
+
+                {{-- Input Plat Kendaraan --}}
+                <div class="space-y-2">
+                    <label class="block font-mono text-2xs font-bold uppercase tracking-wider text-ink-body">
+                        Nomor Pelat / Polisi Truk Chiller <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text"
+                        x-model="confirmedPlate"
+                        placeholder="Contoh: D 8192 YZ"
+                        maxlength="20"
+                        class="w-full rounded-xl bg-surface-shell px-3 py-2.5 font-mono text-base font-extrabold uppercase tracking-widest text-ink outline outline-1 outline-line-board focus:outline-2 focus:outline-brand focus:bg-white text-center">
+
+                    {{-- Quick selection chips --}}
+                    <div class="flex items-center justify-center gap-1.5 pt-1 flex-wrap">
+                        <span class="text-2xs text-ink-quiet font-medium">Opsi Cepat:</span>
+                        <template x-for="qp in quickPlates" :key="qp">
+                            <button type="button"
+                                @click="confirmedPlate = qp"
+                                :class="confirmedPlate === qp ? 'bg-ink text-accent outline-ink font-bold' : 'bg-surface-shell text-ink-body outline-line-board font-medium hover:text-ink'"
+                                class="rounded-lg px-2.5 py-1 font-mono text-2xs outline outline-1 transition-all"
+                                x-text="qp">
+                            </button>
+                        </template>
+                    </div>
+                </div>
+
+                {{-- Checklist Ringkas Kesiapan Logistik --}}
+                <div class="rounded-xl bg-surface-shell p-3 space-y-1.5 text-xs text-ink-body outline outline-1 outline-line-board/50">
+                    <div class="flex items-center gap-2 font-mono text-2xs text-success-deep font-semibold">
+                        <x-gpa.icon name="check" class="h-3.5 w-3.5 shrink-0" />
+                        <span>Suhu Reefer Boks: +3.8°C (Cold-Chain Dingin Optimal)</span>
+                    </div>
+                    <div class="flex items-center gap-2 font-mono text-2xs text-success-deep font-semibold">
+                        <x-gpa.icon name="check" class="h-3.5 w-3.5 shrink-0" />
+                        <span>Total Netto Muatan: {{ number_format($totalWeight, 1, ',', '.') }} kg ({{ $totalCrates }} Krat Tersegel)</span>
+                    </div>
+                    <div class="flex items-center gap-2 font-mono text-2xs text-success-deep font-semibold">
+                        <x-gpa.icon name="check" class="h-3.5 w-3.5 shrink-0" />
+                        <span>Gate Pass Dermaga Terbuka &amp; GPS Siap Melacak</span>
+                    </div>
+                </div>
+
+                {{-- Action Buttons --}}
+                <div class="flex items-center gap-2 pt-2">
+                    <button type="button" @click="showDepartureModal = false"
+                        class="flex-1 rounded-xl bg-surface py-2.5 font-mono text-xs font-bold text-ink outline outline-1 outline-line-board hover:bg-surface-disabled">
+                        Batal
+                    </button>
+                    <button type="button"
+                        @click="if (confirmedPlate.trim() !== '') { startRoute(); showDepartureModal = false; } else { run('Perhatian', 'Nomor pelat tidak boleh kosong.', 'danger'); }"
+                        class="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-ink py-2.5 font-mono text-xs font-bold text-accent shadow-pop hover:opacity-90">
+                        <span>Konfirmasi &amp; Berangkat</span>
+                        <x-gpa.icon name="arrow-right" class="h-3.5 w-3.5" />
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {{-- Modal Dialog Ubah Plat Armada Pesanan --}}
+        @if ($currentOrder)
+            <div x-show="showEditPlateModal"
+                x-cloak
+                class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-ink/70 backdrop-blur-xs transition-opacity"
+                @keydown.escape.window="showEditPlateModal = false">
+                <div class="w-full max-w-md rounded-2xl bg-surface p-5 shadow-2xl outline outline-1 outline-line-board space-y-4"
+                    @click.outside="showEditPlateModal = false">
+                    
+                    <header class="flex items-start justify-between gap-3 border-b border-surface-shell pb-3">
+                        <div class="flex items-center gap-2">
+                            <x-gpa.icon name="truck" class="h-4 w-4 text-brand" />
+                            <h3 class="text-sm font-bold text-ink">Ubah Nomor Pelat Armada</h3>
+                        </div>
+                        <button type="button" @click="showEditPlateModal = false" class="text-ink-quiet hover:text-ink text-sm font-bold">✕</button>
+                    </header>
+
+                    <form method="POST" action="{{ route('armada.surat-jalan.update-plat', $currentOrder->id) }}" class="space-y-4">
+                        @csrf
+                        <div class="space-y-2">
+                            <label class="block font-mono text-2xs font-bold uppercase text-ink-body">
+                                Nomor Polisi / Pelat Baru <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                name="vehicle_plate_number"
+                                x-model="confirmedPlate"
+                                required
+                                maxlength="20"
+                                class="w-full rounded-xl bg-surface-shell px-3 py-2.5 font-mono text-base font-extrabold uppercase tracking-widest text-ink outline outline-1 outline-line-board text-center focus:bg-white focus:outline-brand">
+
+                            <div class="flex items-center justify-center gap-1.5 pt-1 flex-wrap">
+                                <span class="text-2xs text-ink-quiet font-medium">Opsi Cepat:</span>
+                                <template x-for="qp in quickPlates" :key="qp">
+                                    <button type="button"
+                                        @click="confirmedPlate = qp"
+                                        :class="confirmedPlate === qp ? 'bg-ink text-accent outline-ink font-bold' : 'bg-surface-shell text-ink-body outline-line-board font-medium hover:text-ink'"
+                                        class="rounded-lg px-2.5 py-1 font-mono text-2xs outline outline-1 transition-all"
+                                        x-text="qp">
+                                    </button>
+                                </template>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-1">
+                            <button type="button" @click="showEditPlateModal = false"
+                                class="flex-1 rounded-xl bg-surface py-2.5 font-mono text-xs font-bold text-ink outline outline-1 outline-line-board hover:bg-surface-disabled">
+                                Batal
+                            </button>
+                            <button type="submit"
+                                class="flex-1 rounded-xl bg-accent py-2.5 font-mono text-xs font-bold text-ink shadow-sub hover:bg-accent-deep">
+                                Simpan Plat
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endif
     </div>
 @endsection

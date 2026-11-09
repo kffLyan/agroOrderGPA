@@ -144,6 +144,7 @@ export default function direkturTataKelola(rows = [], labels = {}) {
         /* ---------- header actions ---------- */
 
         exportAudit() {
+            window.location.href = '/direktur/tata-kelola/export-audit';
             this.run(
                 'Ekspor Catatan Audit',
                 'Data catatan riwayat audit sedang diunduh dalam format .CSV.',

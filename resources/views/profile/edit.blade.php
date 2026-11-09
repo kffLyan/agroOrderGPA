@@ -12,6 +12,7 @@
         'ARMADA' => 'Portal Armada',
         'DIREKTUR' => 'Portal Direksi',
         'SEKRETARIS' => 'Portal Sekretariat',
+        'KOORDINATOR' => 'Portal Koordinator',
         default => 'Portal Klien',
     };
 
@@ -20,13 +21,14 @@
         'DIREKTUR' => 'Direksi Koperasi GPA',
         'SEKRETARIS' => 'Sekretariat Operasional',
         'KOORDINATOR' => 'Koordinator Panen',
-        default => ($user->client_type === 'B2B_KONTRAK' || $contract) ? 'Klien Kontrak B2B' : 'Klien Reguler',
+        default => $user->is_b2b ? 'Klien Kontrak B2B' : 'Klien Reguler',
     };
 
     $titleHeading = match($role) {
         'ARMADA' => 'Profil Awak Armada',
         'DIREKTUR' => 'Profil Direksi Koperasi',
         'SEKRETARIS' => 'Profil Petugas Sekretariat',
+        'KOORDINATOR' => 'Profil Koordinator Panen',
         default => 'Profil Akun Klien',
     };
 
@@ -34,6 +36,7 @@
         'ARMADA' => 'Kelola informasi identitas supir pengiriman dan keamanan kredensial akun logistik Anda.',
         'DIREKTUR' => 'Kelola informasi identitas eksekutif dan keamanan akun pengesahan bisnis Anda.',
         'SEKRETARIS' => 'Kelola informasi staf administrasi operasional dan keamanan kredensial sistem Anda.',
+        'KOORDINATOR' => 'Kelola informasi identitas koordinator panen, kontak penugasan lapangan, dan keamanan akun Anda.',
         default => 'Kelola informasi profil perwakilan pengadaan, alamat pengiriman dapur komoditas, dan keamanan akun B2B Anda.',
     };
 
@@ -41,6 +44,7 @@
         'ARMADA' => 'ID Supir: ARM-' . str_pad($user->id, 2, '0', STR_PAD_LEFT),
         'DIREKTUR' => 'ID Direksi: DIR-' . str_pad($user->id, 2, '0', STR_PAD_LEFT),
         'SEKRETARIS' => 'ID Staf: SEK-' . str_pad($user->id, 2, '0', STR_PAD_LEFT),
+        'KOORDINATOR' => 'ID Koordinator: KOR-' . str_pad($user->id, 2, '0', STR_PAD_LEFT),
         default => 'ID Klien: ' . ($clientId ?? ('BYR-KPN-' . str_pad($user->id, 3, '0', STR_PAD_LEFT))),
     };
 @endphp
@@ -126,12 +130,12 @@
                 </span>
             </div>
         </div>
-    @elseif ($role === 'DIREKTUR' || $role === 'SEKRETARIS')
+    @elseif ($role === 'DIREKTUR' || $role === 'SEKRETARIS' || $role === 'KOORDINATOR')
         <div class="mt-6 flex flex-col gap-3 rounded-xl border border-line bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-2.5">
                 <span class="font-mono text-xs font-bold uppercase text-ink">info</span>
                 <p class="font-mono text-xs text-ink">
-                    Akun pengguna internal tingkat <strong>{{ $role === 'DIREKTUR' ? 'Eksekutif Direksi' : 'Staf Sekretariat' }}</strong> AgroOrder GPA.
+                    Akun pengguna internal tingkat <strong>{{ match($role) { 'DIREKTUR' => 'Eksekutif Direksi', 'SEKRETARIS' => 'Staf Sekretariat', 'KOORDINATOR' => 'Koordinator Panen & QC', default => 'Internal' } }}</strong> AgroOrder GPA.
                 </p>
             </div>
             <div>
@@ -184,7 +188,7 @@
                         <div class="flex items-center gap-2">
                             <x-gpa.icon name="user" class="h-4 w-4 text-ink-subtle" />
                             <h2 class="font-mono text-xs font-bold uppercase tracking-wider text-ink">
-                                01. INFORMASI PROFIL {{ $role === 'ARMADA' ? 'PENGEMUDI' : ($role === 'KLIEN' ? '& ENTITAS USAHA' : 'PENGGUNA') }}
+                                01. INFORMASI PROFIL {{ $role === 'ARMADA' ? 'PENGEMUDI' : ($role === 'KLIEN' ? '& ENTITAS USAHA' : ($role === 'KOORDINATOR' ? 'KOORDINATOR LAPANGAN' : 'PENGGUNA')) }}
                             </h2>
                         </div>
                         <span class="rounded border border-line bg-canvas px-2.5 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-ink-subtle">
@@ -196,11 +200,11 @@
                         {{-- Nama Lengkap --}}
                         <div>
                             <label for="name" class="block font-mono text-[11px] font-bold uppercase tracking-wider text-ink">
-                                Nama Lengkap {{ $role === 'ARMADA' ? 'Awak Pengemudi' : ($role === 'KLIEN' ? 'PIC (Penanggung Jawab Pengadaan)' : 'Pengguna') }} <span class="text-red-500">*</span>
+                                Nama Lengkap {{ $role === 'ARMADA' ? 'Awak Pengemudi' : ($role === 'KLIEN' ? 'PIC (Penanggung Jawab Pengadaan)' : ($role === 'KOORDINATOR' ? 'Koordinator Panen' : 'Pengguna')) }} <span class="text-red-500">*</span>
                             </label>
                             <input id="name" name="name" type="text" required
                                 value="{{ old('name', $user->name) }}"
-                                placeholder="Contoh: {{ $role === 'ARMADA' ? 'Asep Supriatna' : 'Hendra Kurniawan' }}"
+                                placeholder="Contoh: {{ $role === 'ARMADA' ? 'Asep Supriatna' : ($role === 'KOORDINATOR' ? 'Budi Santoso' : 'Hendra Kurniawan') }}"
                                 class="mt-1.5 block w-full rounded-lg border border-line bg-canvas/40 px-3.5 py-2.5 font-sans text-sm text-ink placeholder:text-ink-subtle/60 focus:border-brand focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand">
                             @error('name')
                                 <p class="mt-1 font-mono text-[11px] text-red-600">{{ $message }}</p>
@@ -280,11 +284,11 @@
                         {{-- Nama Usaha / Unit --}}
                         <div>
                             <label for="company_name" class="block font-mono text-[11px] font-bold uppercase tracking-wider text-ink">
-                                {{ $role === 'ARMADA' ? 'Pangkalan / Home Base Armada' : ($role === 'KLIEN' ? 'Nama Usaha / Badan Hukum PT' : 'Instansi / Divisi') }} <span class="font-normal text-ink-subtle">(Opsional)</span>
+                                {{ $role === 'ARMADA' ? 'Pangkalan / Home Base Armada' : ($role === 'KLIEN' ? 'Nama Usaha / Badan Hukum PT' : ($role === 'KOORDINATOR' ? 'Wilayah / Sentra Panen Binaan' : 'Instansi / Divisi')) }} <span class="font-normal text-ink-subtle">(Opsional)</span>
                             </label>
                             <input id="company_name" name="company_name" type="text"
-                                value="{{ old('company_name', $user->company_name ?? ($role === 'ARMADA' ? 'Sentra Logistik GPA Ciwidey' : 'PT Kuliner Prima Nusantara')) }}"
-                                placeholder="{{ $role === 'ARMADA' ? 'Sentra Logistik GPA Ciwidey' : 'PT Kuliner Prima Nusantara' }}"
+                                value="{{ old('company_name', $user->company_name ?? ($role === 'ARMADA' ? 'Sentra Logistik GPA Ciwidey' : ($role === 'KOORDINATOR' ? 'Sentra Panen Ciwidey & Lembang' : 'PT Kuliner Prima Nusantara'))) }}"
+                                placeholder="{{ $role === 'ARMADA' ? 'Sentra Logistik GPA Ciwidey' : ($role === 'KOORDINATOR' ? 'Sentra Panen Ciwidey & Lembang' : 'PT Kuliner Prima Nusantara') }}"
                                 class="mt-1.5 block w-full rounded-lg border border-line bg-canvas/40 px-3.5 py-2.5 font-sans text-sm text-ink placeholder:text-ink-subtle/60 focus:border-brand focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand">
                             @error('company_name')
                                 <p class="mt-1 font-mono text-[11px] text-red-600">{{ $message }}</p>
@@ -294,13 +298,13 @@
                         {{-- Alamat Lengkap --}}
                         <div>
                             <label for="address" class="block font-mono text-[11px] font-bold uppercase tracking-wider text-ink">
-                                {{ $role === 'ARMADA' ? 'Alamat Domisili Pengemudi' : ($role === 'KLIEN' ? 'Alamat Lengkap Pengiriman / Receiving Dapur' : 'Alamat Domisili') }} <span class="text-red-500">*</span>
+                                {{ $role === 'ARMADA' ? 'Alamat Domisili Pengemudi' : ($role === 'KLIEN' ? 'Alamat Lengkap Pengiriman / Receiving Dapur' : 'Alamat Domisili Petugas') }} <span class="text-red-500">*</span>
                             </label>
                             <textarea id="address" name="address" rows="3"
-                                placeholder="{{ $role === 'ARMADA' ? 'Jl. Ciwidey No. 12, Bandung' : 'Jl. Lapangan Tembak No. 45, Ciracas, Jakarta Timur 13740' }}"
-                                class="mt-1.5 block w-full resize-none rounded-lg border border-line bg-canvas/40 p-3.5 font-sans text-sm text-ink placeholder:text-ink-subtle/60 focus:border-brand focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand">{{ old('address', $user->address ?? ($role === 'ARMADA' ? 'Pangkalan Sentral Hub Bogor' : 'Jl. Lapangan Tembak No. 45, Ciracas, Pasar Rebo, Jakarta Timur 13740')) }}</textarea>
+                                placeholder="{{ $role === 'ARMADA' ? 'Jl. Ciwidey No. 12, Bandung' : ($role === 'KOORDINATOR' ? 'Posko Timbang Ciwidey, Bandung' : 'Jl. Lapangan Tembak No. 45, Ciracas, Jakarta Timur 13740') }}"
+                                class="mt-1.5 block w-full resize-none rounded-lg border border-line bg-canvas/40 p-3.5 font-sans text-sm text-ink placeholder:text-ink-subtle/60 focus:border-brand focus:bg-white focus:outline-none focus:ring-1 focus:ring-brand">{{ old('address', $user->address ?? ($role === 'ARMADA' ? 'Pangkalan Sentral Hub Bogor' : ($role === 'KOORDINATOR' ? 'Posko Lapangan Ciwidey' : 'Jl. Lapangan Tembak No. 45, Ciracas, Pasar Rebo, Jakarta Timur 13740'))) }}</textarea>
                             <p class="mt-1.5 font-mono text-[11px] text-ink-subtle">
-                                {{ $role === 'ARMADA' ? 'Alamat domisili operasional awak pengemudi armada.' : 'Alamat ini dijadikan lokasi default tujuan pengiriman pesanan AgroOrder GPA.' }}
+                                {{ $role === 'ARMADA' ? 'Alamat domisili operasional awak pengemudi armada.' : ($role === 'KOORDINATOR' ? 'Alamat domisili operasional koordinator lapangan.' : 'Alamat ini dijadikan lokasi default tujuan pengiriman pesanan AgroOrder GPA.') }}
                             </p>
                             @error('address')
                                 <p class="mt-1 font-mono text-[11px] text-red-600">{{ $message }}</p>
@@ -468,7 +472,7 @@
                             </div>
                         </div>
                     </div>
-                @elseif ($role === 'DIREKTUR' || $role === 'SEKRETARIS')
+                @elseif ($role === 'DIREKTUR' || $role === 'SEKRETARIS' || $role === 'KOORDINATOR')
                     {{-- CARD: OTORITAS SISTEM INTERNAL --}}
                     <div class="rounded-xl border border-line bg-white p-6 shadow-sm">
                         <div class="flex items-center justify-between border-b border-line pb-4">
@@ -486,10 +490,10 @@
                         <div class="mt-4">
                             <p class="font-mono text-[11px] text-ink-subtle">Tingkat Hak Akses:</p>
                             <p class="mt-0.5 font-sans text-sm font-bold text-ink">
-                                {{ $role === 'DIREKTUR' ? 'Dewan Direksi Eksekutif' : 'Staf Administrasi Sekretariat' }}
+                                {{ match($role) { 'DIREKTUR' => 'Dewan Direksi Eksekutif', 'SEKRETARIS' => 'Staf Administrasi Sekretariat', 'KOORDINATOR' => 'Koordinator Panen & QC Mutu', default => 'Internal Koperasi' } }}
                             </p>
                             <p class="mt-1 font-mono text-[11px] text-ink-subtle">
-                                Divisi: <span class="text-ink font-semibold">{{ $role === 'DIREKTUR' ? 'Manajemen & Tata Kelola' : 'Operasional & Verifikasi' }}</span>
+                                Divisi: <span class="text-ink font-semibold">{{ match($role) { 'DIREKTUR' => 'Manajemen & Tata Kelola', 'SEKRETARIS' => 'Operasional & Verifikasi', 'KOORDINATOR' => 'Panen, Sortir & Manajemen Stok', default => 'Operasional' } }}</span>
                             </p>
                         </div>
 
@@ -499,8 +503,12 @@
                                 <span class="text-right font-semibold text-ink">Koperasi GPA</span>
                             </div>
                             <div class="flex items-start justify-between gap-2">
-                                <span class="text-ink-subtle text-[11px]">Akses Audit Trail:</span>
-                                <span class="text-right font-semibold text-ink">Penuh &amp; Terverifikasi</span>
+                                <span class="text-ink-subtle text-[11px]">Cakupan Wewenang:</span>
+                                <span class="text-right font-semibold text-ink">{{ match($role) { 'DIREKTUR' => 'Penuh & Tata Kelola', 'SEKRETARIS' => 'Verifikasi & Logistik', 'KOORDINATOR' => 'Input Panen & Buffer Stok', default => 'Internal' } }}</span>
+                            </div>
+                            <div class="flex items-start justify-between gap-2">
+                                <span class="text-ink-subtle text-[11px]">Status Kredensial:</span>
+                                <span class="text-right font-semibold text-success-deep">Aktif &amp; Terverifikasi</span>
                             </div>
                         </div>
                     </div>
@@ -596,7 +604,7 @@
                         </h2>
                     </div>
                     <p class="mt-2 text-xs leading-relaxed text-ink-subtle">
-                        {{ $role === 'ARMADA' ? 'Pertanyaan terkait rute pengantaran atau surat tugas armada dapat dikoordinasikan langsung ke Dispatch Hub.' : 'Perubahan data entitas resmi memerlukan peninjauan oleh tim administrasi AgroOrder GPA.' }}
+                        {{ $role === 'ARMADA' ? 'Pertanyaan terkait rute pengantaran atau surat tugas armada dapat dikoordinasikan langsung ke Dispatch Hub.' : ($role === 'KOORDINATOR' ? 'Pertanyaan terkait alokasi kuota panen atau QC mutu dapat dikoordinasikan dengan Sekretariat GPA.' : 'Perubahan data entitas resmi memerlukan peninjauan oleh tim administrasi AgroOrder GPA.') }}
                     </p>
                     <a href="{{ route('public.kontak') }}"
                         class="mt-4 inline-flex items-center gap-1.5 font-mono text-xs font-bold text-ink hover:text-brand hover:underline">

@@ -65,6 +65,10 @@ class SuratJalanArmadaController extends Controller
             abort(403, 'Akses Ditolak: Pesanan ini ditugaskan kepada supir armada lain.');
         }
 
+        $request->validate([
+            'vehicle_plate_number' => ['nullable', 'string', 'max:20'],
+        ]);
+
         if ($order->status !== 'SELESAI') {
             $order->status = 'DALAM_PENGIRIMAN';
             if (!$order->departure_time) {
@@ -73,11 +77,35 @@ class SuratJalanArmadaController extends Controller
             if (!$order->driver_id && $user) {
                 $order->driver_id = $user->id;
             }
+            if ($request->filled('vehicle_plate_number')) {
+                $order->vehicle_plate_number = strtoupper(trim((string) $request->input('vehicle_plate_number')));
+            } elseif (!$order->vehicle_plate_number) {
+                $order->vehicle_plate_number = 'D 8192 YZ';
+            }
             $order->save();
         }
 
         return redirect()
             ->route('armada.surat-jalan', ['order_id' => $order->id])
-            ->with('success', 'Pengiriman telah dimulai! Rute pengantaran menuju lokasi penerima dibuka.');
+            ->with('success', 'Pengiriman telah dimulai! Rute pengantaran menuju lokasi penerima dibuka dengan armada ' . ($order->vehicle_plate_number ?: 'Truk Chiller GPA') . '.');
+    }
+
+    // Memperbarui nomor pelat kendaraan armada pada surat jalan pesanan
+    public function updatePlate(Request $request, Order $order): RedirectResponse
+    {
+        $user = Auth::user();
+
+        if ($order->driver_id && $order->driver_id !== $user->id) {
+            abort(403, 'Akses Ditolak: Pesanan ini ditugaskan kepada supir armada lain.');
+        }
+
+        $validated = $request->validate([
+            'vehicle_plate_number' => ['required', 'string', 'max:20'],
+        ]);
+
+        $order->vehicle_plate_number = strtoupper(trim($validated['vehicle_plate_number']));
+        $order->save();
+
+        return back()->with('success', "Nomor pelat armada untuk pesanan #{$order->order_number} berhasil diperbarui menjadi {$order->vehicle_plate_number}.");
     }
 }

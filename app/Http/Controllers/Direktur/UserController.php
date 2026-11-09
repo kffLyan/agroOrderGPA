@@ -195,15 +195,9 @@ class UserController extends Controller
     // Ekspor berkas CSV matriks hak akses RBAC untuk kebutuhan audit tata kelola
     public function exportRbacCsv(): StreamedResponse
     {
-        $headers = [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="Matriks_RBAC_GPA_' . date('Ymd') . '.csv"',
-        ];
+        $filename = 'Matriks_RBAC_GPA_' . date('Ymd') . '.csv';
 
-        return response()->stream(function () {
-            $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
-
+        return $this->streamCsv($filename, function ($handle) {
             fputcsv($handle, ['KOPERASI GREEN PASUNDAN AGRICULTURE - MATRIKS HAK AKSES RBAC'], ';');
             fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB'], ';');
             fputcsv($handle, [], ';');
@@ -221,8 +215,7 @@ class UserController extends Controller
             foreach ($matrix as $row) {
                 fputcsv($handle, $row, ';');
             }
-            fclose($handle);
-        }, 200, $headers);
+        });
     }
 
     // Hapus akun pengguna dari database dan catat riwayat penghapusan ke audit log

@@ -21,7 +21,7 @@ class DashboardController extends Controller
     public function index(Request $request): View
     {
         $user = auth()->user();
-        $isContractClient = ($user->client_type === 'B2B_KONTRAK');
+        $isContractClient = (bool) $user->is_b2b;
 
         // 1. Data Kontrak Aktif Klien & Pengajuan Pending
         $contract = Contract::with('product')

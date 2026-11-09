@@ -1489,6 +1489,62 @@ class SekretarisModuleTest extends TestCase
         $this->assertEquals($consolidatedInvoice->id, $order2->invoice_id);
     }
 
+    public function test_sekretaris_cannot_consolidate_already_paid_surat_jalan_into_invoice(): void
+    {
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $klien = User::factory()->create([
+            'role'         => 'KLIEN',
+            'client_type'  => 'B2B_KONTRAK',
+            'company_name' => 'PT Resto Lunas',
+            'is_active'    => true,
+        ]);
+
+        // Pesanan 1: Selesai tetapi SUDAH LUNAS
+        $paidOrder = Order::create([
+            'order_number'         => 'ORD-SJ-PAID-001',
+            'surat_jalan_number'   => 'SJ-GPA-202611-PAID',
+            'user_id'              => $klien->id,
+            'order_source'         => 'WEB_PORTAL',
+            'target_delivery_date' => now()->addDay(),
+            'delivery_address'     => 'Resto Lunas',
+            'subtotal'             => 500000,
+            'tax_amount'           => 55000,
+            'shipping_cost'        => 25000,
+            'grand_total'          => 580000,
+            'status'               => 'SELESAI',
+        ]);
+
+        Payment::create([
+            'order_id'          => $paidOrder->id,
+            'payment_reference' => 'PAY-PAID-001',
+            'payment_method'    => 'TRANSFER_MANUAL',
+            'amount'            => 580000,
+            'status'            => 'LUNAS',
+            'paid_at'           => now(),
+        ]);
+
+        // 1. Verifikasi FakturKlienResource tidak menampilkan pesanan yang sudah lunas
+        $klien->load(['orders' => fn($q) => $q->whereIn('status', ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'])->with(['orderItems.product', 'invoice.orders', 'payments'])]);
+        $resource = (new \App\Http\Resources\Sekretaris\FakturKlienResource($klien))->toArray(request());
+        $this->assertEmpty($resource['documents']);
+
+        // 2. Verifikasi endpoint terbitkan faktur menolak jika surat jalan yang dikirim sudah lunas
+        $response = $this->actingAs($sekretaris)->postJson('/sekretaris/faktur/terbitkan', [
+            'client_id'   => $klien->id,
+            'surat_jalan' => ['SJ-GPA-202611-PAID'],
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJson([
+            'success' => false,
+            'message' => 'Tidak ditemukan surat jalan yang valid (belum lunas) untuk diterbitkan faktur.',
+        ]);
+    }
+
     public function test_sekretaris_pembayaran_queue_only_shows_payments_with_submitted_proof(): void
     {
         $sekretaris = User::factory()->create([

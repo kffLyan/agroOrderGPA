@@ -31,9 +31,9 @@
                     'BATAL' => 'Pesanan Dibatalkan',
                     default => 'Menunggu Verifikasi Kuota',
                 },
-                'driver' => in_array($ord->status, ['DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? $driverName : null,
+                'driver' => in_array($ord->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? $driverName : null,
                 'sj' => in_array($ord->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? $sjNumber : null,
-                'driver_note' => in_array($ord->status, ['DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? ($ord->vehicle_plate_number ?: 'Chiller Truck Ready') : 'Menunggu Alokasi Supir',
+                'driver_note' => in_array($ord->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN']) ? ($ord->vehicle_plate_number ? "Truk Chiller • {$ord->vehicle_plate_number}" : 'Chiller Truck Ready') : 'Menunggu Alokasi Supir',
                 'status' => match ($ord->status) {
                     'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi',
                     'MENUNGGU_PEMBAYARAN' => 'Menunggu Pembayaran',

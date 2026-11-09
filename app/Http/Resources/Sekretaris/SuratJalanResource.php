@@ -17,7 +17,9 @@ class SuratJalanResource extends JsonResource
 
         $driver = $order->driver;
         $driverName = $driver?->name ?: 'Belum Ditugaskan';
-        $plateNumber = $order->vehicle_plate_number ?: '—';
+        $plateNumber = $order->vehicle_plate_number ?: (
+            $driver ? (Order::where('driver_id', $driver->id)->whereNotNull('vehicle_plate_number')->latest()->value('vehicle_plate_number') ?? ($driver->id == 6 ? 'D 8192 YZ' : 'D 8421 AB')) : '—'
+        );
         $fleetName = $driver ? 'Armada Logistik GPA' : 'Menunggu Penugasan';
 
         $suratJalanNumber = $order->surat_jalan_number ?: ('SJ-GPA-' . date('Ym') . '-' . str_pad((string) $order->id, 4, '0', STR_PAD_LEFT));

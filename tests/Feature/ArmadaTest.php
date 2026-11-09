@@ -182,4 +182,99 @@ class ArmadaTest extends TestCase
         $responseBudiPod = $this->actingAs($driverBudi)->get('/armada/bukti-terima?order_id=' . $orderJoko->id);
         $responseBudiPod->assertStatus(403);
     }
+
+    public function test_driver_can_confirm_plate_and_start_route(): void
+    {
+        $driver = User::factory()->create([
+            'role'      => 'ARMADA',
+            'is_active' => true,
+        ]);
+
+        $client = User::factory()->create(['role' => 'KLIEN', 'name' => 'Klien Mitra']);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-START-001',
+            'user_id'              => $client->id,
+            'driver_id'            => $driver->id,
+            'order_source'         => 'WEB_PORTAL',
+            'status'               => 'SIAP_KIRIM',
+            'target_delivery_date' => now()->addDay(),
+            'vehicle_plate_number' => 'B 9014 KPA',
+            'surat_jalan_number'   => 'SJ-20261103-0002',
+            'delivery_address'     => 'Restoran Pasundan',
+            'grand_total'          => 2000000,
+        ]);
+
+        $response = $this->actingAs($driver)->post("/armada/surat-jalan/{$order->id}/mulai", [
+            'vehicle_plate_number' => 'D 8192 YZ',
+        ]);
+
+        $response->assertRedirect("/armada/surat-jalan?order_id={$order->id}");
+        $order->refresh();
+        $this->assertEquals('DALAM_PENGIRIMAN', $order->status);
+        $this->assertEquals('D 8192 YZ', $order->vehicle_plate_number);
+        $this->assertNotNull($order->departure_time);
+    }
+
+    public function test_driver_can_update_plate_from_surat_jalan(): void
+    {
+        $driver = User::factory()->create([
+            'role'      => 'ARMADA',
+            'is_active' => true,
+        ]);
+
+        $client = User::factory()->create(['role' => 'KLIEN', 'name' => 'Klien Mitra']);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-PLATE-001',
+            'user_id'              => $client->id,
+            'driver_id'            => $driver->id,
+            'order_source'         => 'WEB_PORTAL',
+            'status'               => 'SIAP_KIRIM',
+            'target_delivery_date' => now()->addDay(),
+            'vehicle_plate_number' => 'B 9014 KPA',
+            'surat_jalan_number'   => 'SJ-20261103-0003',
+            'delivery_address'     => 'Restoran Pasundan',
+            'grand_total'          => 2000000,
+        ]);
+
+        $response = $this->actingAs($driver)->post("/armada/surat-jalan/{$order->id}/plat", [
+            'vehicle_plate_number' => 'D 8421 AB',
+        ]);
+
+        $response->assertRedirect();
+        $order->refresh();
+        $this->assertEquals('D 8421 AB', $order->vehicle_plate_number);
+    }
+
+    public function test_driver_can_update_plate_from_status_kendaraan(): void
+    {
+        $driver = User::factory()->create([
+            'role'      => 'ARMADA',
+            'is_active' => true,
+        ]);
+
+        $client = User::factory()->create(['role' => 'KLIEN', 'name' => 'Klien Mitra']);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-FLEET-001',
+            'user_id'              => $client->id,
+            'driver_id'            => $driver->id,
+            'order_source'         => 'WEB_PORTAL',
+            'status'               => 'SIAP_KIRIM',
+            'target_delivery_date' => now()->addDay(),
+            'vehicle_plate_number' => 'B 9014 KPA',
+            'surat_jalan_number'   => 'SJ-20261103-0004',
+            'delivery_address'     => 'Restoran Pasundan',
+            'grand_total'          => 2000000,
+        ]);
+
+        $response = $this->actingAs($driver)->post('/armada/status-kendaraan/plat', [
+            'vehicle_plate_number' => 'D 8192 YZ',
+        ]);
+
+        $response->assertRedirect();
+        $order->refresh();
+        $this->assertEquals('D 8192 YZ', $order->vehicle_plate_number);
+    }
 }

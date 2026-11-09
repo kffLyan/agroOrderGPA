@@ -79,13 +79,23 @@ trait PresentsUserProfile
         return $this->pic_name ?: ($this->name ?: '—');
     }
 
+    // Memeriksa apakah klien merupakan mitra B2B kontrak resmi atau memiliki kontrak aktif berjalan
+    public function getIsB2bAttribute(): bool
+    {
+        if ($this->client_type === 'B2B_KONTRAK') {
+            return true;
+        }
+
+        if ($this->relationLoaded('contracts')) {
+            return $this->contracts->where('status', 'ACTIVE')->isNotEmpty();
+        }
+
+        return $this->contracts()->where('status', 'ACTIVE')->exists();
+    }
+
     // Label tipe entitas kemitraan klien bebas underscore
     public function getClientTypeLabelAttribute(): string
     {
-        return match ($this->client_type) {
-            'B2B_KONTRAK' => 'Mitra B2B Kontrak',
-            'REGULER'     => 'Pelanggan Reguler',
-            default       => $this->client_type ? ucwords(strtolower(str_replace('_', ' ', $this->client_type))) : 'Pelanggan Reguler',
-        };
+        return $this->is_b2b ? 'Mitra B2B Kontrak' : 'Pelanggan Reguler';
     }
 }

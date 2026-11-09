@@ -25,7 +25,7 @@ class SimpanPesananRequest extends FormRequest
             'target_delivery_date' => ['required', 'date', 'after:today'],
             'delivery_address'     => ['required', 'string', 'max:500'],
             'payment_method'       => ['required', 'in:TRANSFER_BANK,QRIS,COD,TEMPO_TOP'],
-            'payment_proof'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+            'payment_proof'        => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
             'shipping_cost'        => ['nullable', 'numeric', 'min:0'],
             'tax_rate'             => ['nullable', 'numeric', 'min:0', 'max:100'],
             'tax_amount'           => ['nullable', 'numeric', 'min:0'],

@@ -6,11 +6,21 @@
     @php
         $user = auth()->user();
         $code = $user ? 'SK-' . str_pad($user->id, 4, '0', STR_PAD_LEFT) : 'SK-001';
-        $clientCode = $clientUser ? ('CLI-' . str_pad($clientUser->id, 4, '0', STR_PAD_LEFT)) : '—';
-        $clientName = $clientUser?->company_name ?: ($clientUser?->name ?: '—');
-        $clientContact = $clientUser?->pic_name ?: ($clientUser?->name ?: '—');
-        $clientPhone = $clientUser?->phone ?: '—';
-        $clientAddress = $clientUser?->address ?: '—';
+        $firstClient = $clients[0] ?? null;
+        $clientData = $clientData ?? [
+            'id'          => $firstClient['id'] ?? ($clientUser?->id),
+            'code'        => $firstClient['code'] ?? ($clientUser ? $clientUser->code : '—'),
+            'name'        => $firstClient['name'] ?? ($clientUser?->company_name ?: ($clientUser?->name ?: '—')),
+            'contact'     => $firstClient['contact'] ?? ($clientUser?->contact ?: '—'),
+            'phone'       => $firstClient['phone'] ?? ($clientUser?->phone ?: '—'),
+            'address'     => $firstClient['address'] ?? ($clientUser?->address ?: '—'),
+            'active_mode' => 'registered',
+            'credit'      => [
+                'limit' => $firstClient['credit_limit'] ?? ($creditLimit ?? 0.0),
+                'used'  => $firstClient['credit_used'] ?? ($usedCredit ?? 0.0),
+            ],
+        ];
+        $clientCode = $clientData['code'] ?? ($firstClient['code'] ?? ($clientUser?->code ?? '—'));
 
         $creditLimit = $creditLimit ?? 0.0;
         $usedCredit = $usedCredit ?? 0.0;
@@ -33,19 +43,6 @@
             'warehouse'       => 'Gudang Konsolidasi Ciwidey',
         ];
         $sourceData = $source;
-        $clientData = [
-            'id'          => $clientUser?->id,
-            'code'        => $clientCode,
-            'name'        => $clientName,
-            'contact'     => $clientContact,
-            'phone'       => $clientPhone,
-            'address'     => $clientAddress,
-            'active_mode' => 'registered',
-            'credit'      => [
-                'limit' => $creditLimit,
-                'used'  => $usedCredit,
-            ],
-        ];
         $logisticsData = [
             'date'    => now()->addDay()->format('Y-m-d'),
             'arrival' => 'Pagi Hari (05:00 - 08:00 WIB)',
@@ -173,7 +170,9 @@
 
                     <div x-show="clientMode === 'registered'" class="flex items-center gap-2">
                         <label class="gpa-label text-ink-quiet" for="manual-client-select">Pilih Mitra:</label>
-                        <select id="manual-client-select" @change="selectClient($event.target.value)"
+                        <select id="manual-client-select"
+                            x-model="selectedClientId"
+                            @change="selectClient($event.target.value)"
                             class="gpa-control min-w-[260px] font-sans text-xs font-bold text-brand">
                             @foreach ($clients as $cl)
                                 <option value="{{ $cl['id'] }}" :selected="selectedClientId == {{ $cl['id'] }}">
@@ -188,8 +187,10 @@
                     <div>
                         <label class="gpa-label" for="manual-client-name">Nama Klien / Perusahaan</label>
                         <input id="manual-client-name" type="text" x-model="client.name" class="gpa-control mt-1.5"
+                            :readonly="clientMode === 'registered'"
+                            :class="clientMode === 'registered' ? 'bg-surface-shell cursor-default font-semibold text-brand' : ''"
                             placeholder="Contoh: CV Barokah Sejahtera">
-                        <span class="gpa-hint mt-1">Segmen: Hotel, Resto &amp; Katering</span>
+                        <span class="gpa-hint mt-1" x-text="clientMode === 'registered' ? 'Terikat otomatis ke mitra yang dipilih di dropdown' : 'Segmen: Hotel, Resto & Katering'">Segmen: Hotel, Resto &amp; Katering</span>
                     </div>
 
                     <div>

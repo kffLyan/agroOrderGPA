@@ -783,6 +783,85 @@ class KlienModuleTest extends TestCase
         $resp3->assertSee('Faktur Ini Telah Lunas &amp; Diverifikasi Sah oleh Sekretariat GPA', false);
     }
 
+    public function test_klien_first_time_payment_proof_page_does_not_show_pending_banner_when_no_proof_uploaded(): void
+    {
+        $klien = User::factory()->create([
+            'role'        => 'KLIEN',
+            'client_type' => 'REGULER',
+            'is_active'   => true,
+        ]);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-TEST-FIRST-TIME',
+            'user_id'              => $klien->id,
+            'order_source'         => 'WEB_PORTAL',
+            'delivery_address'     => 'Jl. Raya Pasundan No. 42, Bandung',
+            'status'               => 'MENUNGGU_PEMBAYARAN',
+            'grand_total'          => 498400.00,
+            'payment_method'       => 'TRANSFER_BANK',
+            'target_delivery_date' => now()->addDays(2),
+        ]);
+
+        $invoice = \App\Models\Invoice::create([
+            'invoice_number'  => 'INV-GPA-202611-0002',
+            'user_id'         => $klien->id,
+            'subtotal_amount' => 440000.00,
+            'grand_total'     => 498400.00,
+            'status'          => 'UNPAID',
+            'period_start'    => now(),
+            'period_end'      => now()->addDays(2),
+            'due_date'        => now()->addDays(30),
+        ]);
+
+        $order->update(['invoice_id' => $invoice->id]);
+
+        // Payment placeholder dibuat saat checkout tanpa berkas bukti bayar
+        $placeholderPayment = \App\Models\Payment::create([
+            'order_id'          => $order->id,
+            'invoice_id'        => $invoice->id,
+            'payment_reference' => 'PAY-6AF4722EB886C',
+            'payment_method'    => 'TRANSFER_BANK',
+            'amount'            => 498400.00,
+            'proof_url'         => null,
+            'paid_at'           => null,
+            'status'            => 'MENUNGGU_VERIFIKASI',
+        ]);
+
+        $response = $this->actingAs($klien)->get(route('klien.bukti-pembayaran', ['tagihan' => $invoice->invoice_number]));
+        $response->assertStatus(200);
+
+        // Tidak boleh menampilkan banner bukti terkirim jika berkas bukti belum pernah diunggah
+        $response->assertDontSee('Sedang Dalam Antrean Verifikasi Kasir / Sekretariat GPA');
+        $response->assertDontSee('Bukti Pembayaran Terkirim');
+
+        // View data harus menunjukkan belum bayar dan stage 1
+        $this->assertNull($response->viewData('pendingPaymentForSelected'));
+        $invoices = $response->viewData('invoices');
+        $this->assertNotEmpty($invoices);
+        $this->assertFalse($invoices[0]['is_pending']);
+        $this->assertEquals(1, $invoices[0]['verification_stage']);
+        $this->assertEquals('BELUM_BAYAR', $invoices[0]['verification_status']);
+        $this->assertEquals('Menunggu Pembayaran', $invoices[0]['status_chip']);
+
+        // Ketika bukti transfer diunggah (simulasi upload bukti bayar)
+        $placeholderPayment->update([
+            'proof_url' => 'payments/bukti_transfer_sample.jpg',
+            'paid_at'   => now(),
+        ]);
+
+        $responseWithProof = $this->actingAs($klien)->get(route('klien.bukti-pembayaran', ['tagihan' => $invoice->invoice_number]));
+        $responseWithProof->assertStatus(200);
+
+        // Banner antrean verifikasi sekarang HARUS muncul karena bukti sudah diunggah
+        $responseWithProof->assertSee('Sedang Dalam Antrean Verifikasi Kasir / Sekretariat GPA');
+        $responseWithProof->assertSee('Bukti Pembayaran Terkirim');
+        $this->assertNotNull($responseWithProof->viewData('pendingPaymentForSelected'));
+        $invoicesAfterUpload = $responseWithProof->viewData('invoices');
+        $this->assertTrue($invoicesAfterUpload[0]['is_pending']);
+        $this->assertEquals(2, $invoicesAfterUpload[0]['verification_stage']);
+        $this->assertEquals('MENUNGGU_VERIFIKASI', $invoicesAfterUpload[0]['verification_status']);
+    }
+
     public function test_payment_proof_store_rejects_upload_for_already_paid_invoice(): void
     {
         $klien = User::factory()->create([
@@ -974,6 +1053,44 @@ class KlienModuleTest extends TestCase
         $response = $this->actingAs($klien)->get(route('klien.dashboard'));
         $response->assertStatus(200);
         $response->assertDontSee('Pengajuan Pesanan Dibatalkan');
+    }
+
+    public function test_klien_can_view_updated_vehicle_plate_number(): void
+    {
+        $klien = User::factory()->create([
+            'role'        => 'KLIEN',
+            'client_type' => 'REGULER',
+            'is_active'   => true,
+        ]);
+
+        $driver = User::factory()->create([
+            'name'      => 'Joko Driver',
+            'role'      => 'ARMADA',
+            'is_active' => true,
+        ]);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-PLATE-CHECK-001',
+            'user_id'              => $klien->id,
+            'driver_id'            => $driver->id,
+            'status'               => 'DALAM_PENGIRIMAN',
+            'surat_jalan_number'   => 'SJ-202611-9988',
+            'vehicle_plate_number' => 'D 8192 YZ',
+            'target_delivery_date' => now()->addDays(1),
+            'delivery_address'     => 'Jl. Buah Batu No. 100',
+            'grand_total'          => 750000,
+        ]);
+
+        // Klien memeriksa detail pesanan
+        $response = $this->actingAs($klien)->get(route('klien.pesanan.show', $order->id));
+        $response->assertStatus(200);
+        $response->assertSee('D 8192 YZ');
+        $response->assertSee('Joko Driver');
+
+        // Klien memeriksa daftar riwayat pesanan
+        $responseIndex = $this->actingAs($klien)->get(route('klien.pesanan.index'));
+        $responseIndex->assertStatus(200);
+        $responseIndex->assertSee('D 8192 YZ');
     }
 }
 

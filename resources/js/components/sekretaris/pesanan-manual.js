@@ -78,6 +78,22 @@ export default function secretaryManualOrder(
         paymentCustomNote: '',
         cashAmount: 0,
 
+        init() {
+            if (this.clientMode === 'registered') {
+                const targetId = this.selectedClientId || this.client?.id || (this.clients[0]?.id ?? null);
+                if (targetId) {
+                    this.selectClient(targetId);
+                }
+            }
+            if (typeof this.$watch === 'function') {
+                this.$watch('selectedClientId', (newId) => {
+                    if (this.clientMode === 'registered' && newId) {
+                        this.selectClient(newId);
+                    }
+                });
+            }
+        },
+
         get selectedChannel() {
             return this.channels.find((c) => c.id === this.selectedChannelId) ?? this.channels[0] ?? {
                 id: 'bca',
@@ -629,7 +645,10 @@ export default function secretaryManualOrder(
 
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
             const formData = new FormData();
-            formData.append('client_id', this.clientMode === 'registered' ? (this.client.id || '') : '');
+            const resolvedClientId = this.clientMode === 'registered'
+                ? (this.selectedClientId || this.client?.id || (this.clients[0]?.id ?? ''))
+                : '';
+            formData.append('client_id', resolvedClientId);
             formData.append('client_name', this.client.name?.trim() ? this.client.name.trim() : 'Pelanggan Walk-In');
             formData.append('client_contact', this.client.contact?.trim() ? this.client.contact.trim() : '');
             formData.append('client_phone', this.client.phone?.trim() ? this.client.phone.trim() : '');

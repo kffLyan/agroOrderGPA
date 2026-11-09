@@ -25,7 +25,9 @@ class FakturController extends Controller
         // Mengambil data klien B2B beserta pesanan sah yang telah siap kirim, dalam perjalanan, atau selesai
         $clientsQuery = User::where('client_type', 'B2B_KONTRAK')
             ->orWhere('role', 'KLIEN')
-            ->with(['orders' => fn($orderQuery) => $orderQuery->whereIn('status', ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'])->with(['orderItems.product', 'invoice.orders'])])
+            ->with(['orders' => fn($orderQuery) => $orderQuery->whereIn('status', ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'])
+                ->with(['orderItems.product', 'invoice.orders', 'payments', 'invoice.payments'])
+            ])
             ->get();
 
         if ($clientsQuery->isEmpty()) {
@@ -85,7 +87,7 @@ class FakturController extends Controller
             $client = User::with('contracts')->findOrFail($clientId);
 
             // Ambil seluruh pesanan yang nomor surat jalannya dipilih
-            $orders = Order::with(['orderItems', 'payments'])
+            $orders = Order::with(['orderItems', 'payments', 'invoice.orders', 'invoice.payments'])
                 ->where('user_id', $clientId)
                 ->where(function ($query) use ($sjList) {
                     $query->whereIn('surat_jalan_number', $sjList)
@@ -94,14 +96,39 @@ class FakturController extends Controller
                 ->lockForUpdate()
                 ->get();
 
+            // Filter ketat: Hanya Surat Jalan yang sah dan belum lunas yang dapat dikonsolidasikan
+            $orders = $orders->filter(function ($order) {
+                // Lewati jika pesanan ini sudah menjadi bagian dari faktur konsolidasi resmi (> 1 pesanan)
+                if ($order->invoice && $order->invoice->orders && $order->invoice->orders->count() > 1) {
+                    return false;
+                }
+
+                // Lewati jika pesanan atau faktur sudah berstatus lunas
+                if ($order->status === 'LUNAS' || ($order->invoice && in_array($order->invoice->status, ['PAID', 'LUNAS']))) {
+                    return false;
+                }
+
+                // Lewati jika ada pembayaran pesanan yang sudah lunas/terverifikasi
+                if ($order->payments->whereIn('status', ['LUNAS', 'VERIFIED', 'PAID', 'SUCCESS'])->isNotEmpty()) {
+                    return false;
+                }
+
+                // Lewati jika ada pembayaran faktur yang sudah lunas/terverifikasi
+                if ($order->invoice && $order->invoice->payments->whereIn('status', ['LUNAS', 'VERIFIED', 'PAID', 'SUCCESS'])->isNotEmpty()) {
+                    return false;
+                }
+
+                return true;
+            });
+
             if ($orders->isEmpty()) {
                 if ($request->wantsJson() || $request->ajax()) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Tidak ditemukan surat jalan yang valid untuk diterbitkan faktur.',
+                        'message' => 'Tidak ditemukan surat jalan yang valid (belum lunas) untuk diterbitkan faktur.',
                     ], 422);
                 }
-                return back()->withErrors(['error' => 'Tidak ditemukan surat jalan yang valid untuk diterbitkan faktur.']);
+                return back()->withErrors(['error' => 'Tidak ditemukan surat jalan yang valid (belum lunas) untuk diterbitkan faktur.']);
             }
 
             // Hitung subtotal dan grand total gabungan dari semua pesanan yang dipilih
@@ -196,15 +223,9 @@ class FakturController extends Controller
     // Mengekspor rekapitulasi buku besar faktur penagihan dan piutang B2B ke format CSV untuk arsip akuntansi
     public function exportCsv(Request $request): StreamedResponse
     {
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="Laporan_Faktur_Tagihan_GPA_' . date('Ymd_His') . '.csv"',
-        ];
+        $filename = 'Laporan_Faktur_Tagihan_GPA_' . date('Ymd_His') . '.csv';
 
-        return response()->stream(function () {
-            $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
-
+        return $this->streamCsv($filename, function ($handle) {
             fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)'], ';');
             fputcsv($handle, ['BUKU BESAR FAKTUR PENAGIHAN & MONITORING TEMPO PEMBAYARAN (TOP)'], ';');
             fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB'], ';');
@@ -240,8 +261,6 @@ class FakturController extends Controller
                     $invoice->status === 'PAID' ? 'Lunas' : ($invoice->status === 'OVERDUE' ? 'Jatuh Tempo' : 'Belum Lunas'),
                 ], ';');
             }
-
-            fclose($handle);
-        }, 200, $headers);
+        });
     }
 }

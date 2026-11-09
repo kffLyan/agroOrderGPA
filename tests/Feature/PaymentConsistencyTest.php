@@ -10,6 +10,7 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -124,5 +125,107 @@ class PaymentConsistencyTest extends TestCase
         // Tidak boleh bertambah menjadi 2 baris pembayaran ganda
         $this->assertEquals(1, Payment::where('invoice_id', $invoice->id)->count());
         $res2->assertSessionHas('info');
+    }
+
+    /**
+     * 3. PENGUJIAN STATUS VERIFIER PENDING PADA MODEL PAYMENT:
+     * verifier_pending harus bernilai false jika verified_by terisi, dan true jika verified_by null.
+     */
+    public function test_payment_verifier_pending_attribute_reflects_actual_verified_by_status(): void
+    {
+        $sekretaris = User::factory()->create(['role' => 'SEKRETARIS', 'is_active' => true]);
+
+        $unverifiedPayment = new Payment([
+            'verified_by' => null,
+            'status'      => 'MENUNGGU_VERIFIKASI',
+        ]);
+        $this->assertTrue($unverifiedPayment->verifier_pending);
+
+        $verifiedPayment = new Payment([
+            'verified_by' => $sekretaris->id,
+            'status'      => 'LUNAS',
+        ]);
+        $this->assertFalse($verifiedPayment->verifier_pending);
+    }
+
+    /**
+     * 4. PENGUJIAN ACCESSOR PAYMENT METHOD PADA MODEL ORDER:
+     * Accessor payment_method harus mengambil metode pembayaran dari rekaman pembayaran terkait.
+     */
+    public function test_order_payment_method_accessor_resolves_from_associated_payments(): void
+    {
+        $klien = User::factory()->create(['role' => 'KLIEN', 'is_active' => true]);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-METH-001',
+            'user_id'              => $klien->id,
+            'target_delivery_date' => now()->addDays(2),
+            'delivery_address'     => 'Jl. Buah Batu No. 10',
+            'grand_total'          => 150000,
+            'status'               => OrderStatus::MENUNGGU_VERIFIKASI->value,
+        ]);
+
+        $this->assertNull($order->payment_method);
+
+        Payment::create([
+            'order_id'          => $order->id,
+            'payment_reference' => 'PAY-METH-001',
+            'payment_method'    => 'QRIS',
+            'amount'            => 150000,
+            'status'            => 'MENUNGGU_VERIFIKASI',
+        ]);
+
+        $this->assertEquals('QRIS', $order->fresh()->payment_method);
+        $this->assertEquals('QRIS Instan', $order->fresh()->payment_method_label);
+    }
+
+    /**
+     * 5. PENGUJIAN PENERIMAAN BUKTI BAYAR PDF PADA CHECKOUT PESANAN:
+     * SimpanPesananRequest harus mengizinkan bukti bayar berformat PDF.
+     */
+    public function test_simpan_pesanan_request_accepts_pdf_payment_proof(): void
+    {
+        $klien = User::factory()->create(['role' => 'KLIEN', 'is_active' => true]);
+
+        $product = Product::create([
+            'sku'           => 'GPA-KOL-PDF01',
+            'name'          => 'Kol Segar Lembang',
+            'unit'          => 'kg',
+            'grade'         => 'Grade A',
+            'base_price'    => 8000,
+            'minimum_order' => 5,
+            'is_active'     => true,
+        ]);
+
+        HarvestBatch::create([
+            'product_id'         => $product->id,
+            'batch_date'         => now()->toDateString(),
+            'source_type'        => 'PETANI_BINAAN',
+            'supplier_name'      => 'Petani Lembang',
+            'initial_quantity'   => 500,
+            'available_quantity' => 500,
+            'inputted_by'        => $klien->id,
+        ]);
+
+        $pdfProof = UploadedFile::fake()->create('bukti_transfer.pdf', 150, 'application/pdf');
+
+        $response = $this->actingAs($klien)->post('/klien/pesanan', [
+            'target_delivery_date' => now()->addDays(2)->format('Y-m-d'),
+            'delivery_address'     => 'Restoran Sunda, Bandung',
+            'payment_method'       => 'TRANSFER_BANK',
+            'payment_proof'        => $pdfProof,
+            'items'                => [
+                [
+                    'product_id' => $product->id,
+                    'quantity'   => 10,
+                ],
+            ],
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('orders', [
+            'user_id' => $klien->id,
+            'status'  => OrderStatus::MENUNGGU_VERIFIKASI->value,
+        ]);
     }
 }

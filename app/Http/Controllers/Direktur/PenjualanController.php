@@ -218,8 +218,9 @@ class PenjualanController extends Controller
         $b2bRevenue = (float) Order::whereHas('user', fn ($query) => $query->where('client_type', 'B2B_KONTRAK'))
             ->sum('grand_total');
         $retailRevenue = (float) Order::whereHas('user', fn ($query) => $query->where('client_type', 'REGULER'))
+            ->whereNotIn('order_source', ['WHATSAPP_ADMIN', 'MANUAL_SEKRETARIS'])
             ->sum('grand_total');
-        $manualRevenue = (float) Order::where('order_source', 'MANUAL_SEKRETARIS')
+        $manualRevenue = (float) Order::whereIn('order_source', ['WHATSAPP_ADMIN', 'MANUAL_SEKRETARIS'])
             ->sum('grand_total');
 
         $totalChannelRevenue = $b2bRevenue + $retailRevenue + $manualRevenue;
@@ -251,10 +252,10 @@ class PenjualanController extends Controller
         ];
 
         // 6. Rekonsiliasi kas berdasarkan metode pembayaran yang digunakan mitra (Transfer, TOP Tempo, QRIS, Kasir)
-        $bankTransferRevenue = (float) Payment::where('status', 'VERIFIED')->where('payment_method', 'TRANSFER_BANK')->sum('amount');
-        $gatewayRevenue = (float) Payment::where('status', 'VERIFIED')->where('payment_method', 'MIDTRANS')->sum('amount');
+        $bankTransferRevenue = (float) Payment::whereIn('status', ['LUNAS', 'VERIFIED'])->where('payment_method', 'TRANSFER_BANK')->sum('amount');
+        $gatewayRevenue = (float) Payment::whereIn('status', ['LUNAS', 'VERIFIED'])->whereIn('payment_method', ['MIDTRANS', 'QRIS'])->sum('amount');
         $topReceivableRevenue = (float) Invoice::whereIn('status', ['UNPAID', 'OVERDUE'])->sum('grand_total');
-        $cashRevenue = (float) Payment::where('status', 'VERIFIED')->where('payment_method', 'CASH')->sum('amount');
+        $cashRevenue = (float) Payment::whereIn('status', ['LUNAS', 'VERIFIED'])->where('payment_method', 'CASH')->sum('amount');
 
         $totalSettled = $bankTransferRevenue + $gatewayRevenue + $topReceivableRevenue + $cashRevenue;
         $totalSettledDivisor = $totalSettled > 0 ? $totalSettled : 1;
@@ -328,15 +329,9 @@ class PenjualanController extends Controller
     // Mengunduh rekapitulasi data riwayat penjualan eksekutif dalam format berkas CSV
     public function exportCsv(): StreamedResponse
     {
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="rekap_penjualan_gpa_' . date('Ymd_His') . '.csv"',
-        ];
+        $filename = 'rekap_penjualan_gpa_' . date('Ymd_His') . '.csv';
 
-        return response()->stream(function () {
-            $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
-
+        return $this->streamCsv($filename, function ($handle) {
             fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)'], ';');
             fputcsv($handle, ['REKAPITULASI RESMI PENJUALAN EKSEKUTIF & REALISASI OMZET'], ';');
             fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB'], ';');
@@ -391,8 +386,6 @@ class PenjualanController extends Controller
                     $order->invoice ? ($order->invoice->status === 'PAID' ? 'Lunas' : 'Faktur Terbit') : 'Belum Ditagihkan',
                 ], ';');
             }
-
-            fclose($handle);
-        }, 200, $headers);
+        });
     }
 }

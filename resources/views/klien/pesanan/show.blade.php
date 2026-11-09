@@ -572,7 +572,7 @@
                         Surat Jalan &amp; Armada
                     </p>
                     <p class="text-[11px] leading-4 text-ink-body">
-                        {{ $order->surat_jalan_number ? "Surat Jalan {$order->surat_jalan_number} diterbitkan oleh Sekretaris." : 'Surat jalan diterbitkan setelah pembayaran lunas.' }}
+                        {{ $order->surat_jalan_number ? ("Surat Jalan {$order->surat_jalan_number} diterbitkan" . ($order->driver ? " (Supir: {$order->driver->name}" . ($order->vehicle_plate_number ? " • {$order->vehicle_plate_number}" : '') . ")" : ' oleh Sekretaris.')) : 'Surat jalan diterbitkan setelah pembayaran lunas.' }}
                     </p>
                 </li>
 

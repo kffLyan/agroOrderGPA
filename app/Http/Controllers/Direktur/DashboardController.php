@@ -150,8 +150,10 @@ class DashboardController extends Controller
 
         // 8. Distribusi tonase penjualan menurut saluran distribusi (B2B Kontrak, Reguler, dan Manual)
         $horecaKg = (float) OrderItem::whereHas('order.user', fn ($query) => $query->where('client_type', 'B2B_KONTRAK'))->sum('ordered_qty');
-        $retailKg = (float) OrderItem::whereHas('order.user', fn ($query) => $query->where('client_type', 'REGULER'))->sum('ordered_qty');
-        $manualKg = (float) OrderItem::whereHas('order', fn ($query) => $query->where('order_source', 'MANUAL_SEKRETARIS'))->sum('ordered_qty');
+        $retailKg = (float) OrderItem::whereHas('order.user', fn ($query) => $query->where('client_type', 'REGULER'))
+            ->whereHas('order', fn ($query) => $query->whereNotIn('order_source', ['WHATSAPP_ADMIN', 'MANUAL_SEKRETARIS']))
+            ->sum('ordered_qty');
+        $manualKg = (float) OrderItem::whereHas('order', fn ($query) => $query->whereIn('order_source', ['WHATSAPP_ADMIN', 'MANUAL_SEKRETARIS']))->sum('ordered_qty');
 
         $channelData = [
             'horeca' => [

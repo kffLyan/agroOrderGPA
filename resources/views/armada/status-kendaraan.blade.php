@@ -13,7 +13,12 @@
     @endphp
 
     <div class="mx-auto flex w-full max-w-[512px] flex-col gap-4 px-4 pb-24"
-        x-data="armadaStatus">
+        x-data="{
+            ...armadaStatus(),
+            showEditPlateModal: false,
+            editPlate: '{{ $plate !== '—' ? $plate : 'D 8192 YZ' }}',
+            quickPlates: ['D 8192 YZ', 'D 8421 AB', 'B 9014 KPA']
+        }">
 
         {{-- Status telemetri operasional kendaraan --}}
         <section class="flex items-center justify-between gap-3 rounded-2xl bg-surface p-4 shadow-card border-l-4 border-accent">
@@ -73,7 +78,13 @@
                 </div>
 
                 <div class="flex flex-col gap-0.5 rounded-xl bg-surface-shell p-2.5 outline outline-1 -outline-offset-1 outline-line-board/50">
-                    <span class="font-mono text-[9px] font-bold text-ink-quiet uppercase">NOMOR POLISI KENDARAAN</span>
+                    <div class="flex items-center justify-between">
+                        <span class="font-mono text-[9px] font-bold text-ink-quiet uppercase">NOMOR POLISI KENDARAAN</span>
+                        <button type="button" @click="showEditPlateModal = true"
+                            class="font-mono text-[10px] font-bold text-accent-deep underline hover:text-ink">
+                            [Ubah Plat]
+                        </button>
+                    </div>
                     <span class="font-mono text-sm font-extrabold text-ink">{{ $plate }}</span>
                     <span class="text-[10px] text-ink-body">Uji KIR &amp; STNK Berlaku Sah</span>
                 </div>
@@ -303,5 +314,65 @@
         <p class="text-center font-mono text-[10px] text-ink-quiet pt-2">
             GREEN PASUNDAN AGRIKULTUR &bull; SISTEM ARMADA LOGISTIK &bull; VERSI LAPANGAN TERHUBUNG
         </p>
+
+        {{-- Modal Dialog Ubah Plat Kendaraan Armada --}}
+        <div x-show="showEditPlateModal"
+            x-cloak
+            class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-ink/70 backdrop-blur-xs transition-opacity"
+            @keydown.escape.window="showEditPlateModal = false">
+            <div class="w-full max-w-md rounded-2xl bg-surface p-5 shadow-2xl outline outline-1 outline-line-board space-y-4"
+                @click.outside="showEditPlateModal = false">
+                
+                <header class="flex items-start justify-between gap-3 border-b border-surface-shell pb-3">
+                    <div class="flex items-center gap-2">
+                        <x-gpa.icon name="truck" class="h-4 w-4 text-brand" />
+                        <h3 class="text-sm font-bold text-ink">Perbarui Nomor Pelat Armada</h3>
+                    </div>
+                    <button type="button" @click="showEditPlateModal = false" class="text-ink-quiet hover:text-ink text-sm font-bold">✕</button>
+                </header>
+
+                <p class="text-xs text-ink-body leading-relaxed">
+                    Ubah nomor pelat truk chiller yang Anda bawa hari ini. Perubahan ini otomatis tersimpan ke pesanan aktif pengantaran Anda.
+                </p>
+
+                <form method="POST" action="{{ route('armada.status-kendaraan.update-plat') }}" class="space-y-4">
+                    @csrf
+                    <div class="space-y-2">
+                        <label class="block font-mono text-2xs font-bold uppercase text-ink-body">
+                            Nomor Polisi / Pelat Baru <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                            name="vehicle_plate_number"
+                            x-model="editPlate"
+                            required
+                            maxlength="20"
+                            class="w-full rounded-xl bg-surface-shell px-3 py-2.5 font-mono text-base font-extrabold uppercase tracking-widest text-ink outline outline-1 outline-line-board text-center focus:bg-white focus:outline-brand">
+
+                        <div class="flex items-center justify-center gap-1.5 pt-1 flex-wrap">
+                            <span class="text-2xs text-ink-quiet font-medium">Opsi Cepat:</span>
+                            <template x-for="qp in quickPlates" :key="qp">
+                                <button type="button"
+                                    @click="editPlate = qp"
+                                    :class="editPlate === qp ? 'bg-ink text-accent outline-ink font-bold' : 'bg-surface-shell text-ink-body outline-line-board font-medium hover:text-ink'"
+                                    class="rounded-lg px-2.5 py-1 font-mono text-2xs outline outline-1 transition-all"
+                                    x-text="qp">
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 pt-1">
+                        <button type="button" @click="showEditPlateModal = false"
+                            class="flex-1 rounded-xl bg-surface py-2.5 font-mono text-xs font-bold text-ink outline outline-1 outline-line-board hover:bg-surface-disabled">
+                            Batal
+                        </button>
+                        <button type="submit"
+                            class="flex-1 rounded-xl bg-accent py-2.5 font-mono text-xs font-bold text-ink shadow-sub hover:bg-accent-deep">
+                            Simpan Plat Kendaraan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 @endsection

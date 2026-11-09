@@ -225,7 +225,7 @@
                         </div>
 
                         <p class="shrink-0 gpa-micro font-semibold uppercase tracking-[1.08px] text-ink-quiet">
-                            Tercatat otomatis dari surat jalan yang sudah terbit
+                            Tercatat otomatis dari surat jalan belum lunas yang sudah terbit
                         </p>
                     </div>
 
@@ -257,7 +257,7 @@
                                                 Tidak Ada Surat Jalan Siap Difakturkan
                                             </p>
                                             <p class="max-w-md text-xs text-ink-body">
-                                                Klien ini belum memiliki pengiriman berstatus <em>Siap Kirim</em> atau <em>Selesai</em> yang belum difakturkan. Surat jalan akan masuk otomatis saat pengiriman diterbitkan.
+                                                Klien ini belum memiliki pengiriman berstatus <em>Siap Kirim</em> atau <em>Selesai</em> yang belum difakturkan / belum lunas. Surat jalan yang belum lunas akan masuk otomatis saat pengiriman diterbitkan.
                                             </p>
                                         </div>
                                     </td>

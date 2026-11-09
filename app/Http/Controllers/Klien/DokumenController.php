@@ -28,7 +28,7 @@ class DokumenController extends Controller
         $unpaidAmount = (float) $rawInvoices->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])->sum('grand_total');
         $settledAmount = (float) $rawInvoices->where('status', 'PAID')->sum('grand_total');
 
-        $isB2b = ($user?->client_type === 'B2B_KONTRAK') || ($user && $user->contracts()->where('status', 'ACTIVE')->exists());
+        $isB2b = (bool) $user?->is_b2b;
 
         $activeContracts = Contract::where('user_id', $userId)
             ->where('status', 'ACTIVE')
@@ -100,21 +100,14 @@ class DokumenController extends Controller
     {
         $userId = Auth::guard('web')->id();
         $user = Auth::guard('web')->user();
-
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="Rekap_Faktur_GPA_' . ($user->company_name ? preg_replace('/[^a-zA-Z0-9_-]/', '_', $user->company_name) : 'Klien') . '_' . date('Ymd_His') . '.csv"',
-        ];
+        $filename = 'Rekap_Faktur_GPA_' . ($user->company_name ? preg_replace('/[^a-zA-Z0-9_-]/', '_', $user->company_name) : 'Klien') . '_' . date('Ymd_His') . '.csv';
 
         $invoices = Invoice::where('user_id', $userId)
             ->with(['orders.orderItems', 'payments'])
             ->orderBy('due_date', 'desc')
             ->get();
 
-        return response()->stream(function () use ($user, $invoices) {
-            $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
-
+        return $this->streamCsv($filename, function ($handle) use ($user, $invoices) {
             fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)'], ';');
             fputcsv($handle, ['REKAPITULASI RESMI FAKTUR KONSOLIDASI & STATUS TAGIHAN TEMPO'], ';');
             fputcsv($handle, ['KLIEN / MITRA B2B', $user->company_name ?: $user->name], ';');
@@ -159,8 +152,6 @@ class DokumenController extends Controller
                     $statusLabel,
                 ], ';');
             }
-
-            fclose($handle);
-        }, 200, $headers);
+        });
     }
 }

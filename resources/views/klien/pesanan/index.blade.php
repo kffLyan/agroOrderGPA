@@ -104,7 +104,7 @@
             'sj'                  => $order->surat_jalan_number,
             'sj_pending'          => 'SJ Belum Terbit',
             'vehicle'             => $order->vehicle_plate_number ?: ($order->driver ? 'Truk Chiller GPA' : null),
-            'driver_note'         => $order->driver ? "Supir: {$order->driver->name}" : 'Armada belum ditugaskan',
+            'driver_note'         => $order->driver ? ("Supir: {$order->driver->name}" . ($order->vehicle_plate_number ? " • {$order->vehicle_plate_number}" : '')) : 'Armada belum ditugaskan',
             'shipment_tone'       => $order->status === 'DALAM_PENGIRIMAN' ? 'success' : 'default',
             'shipment_note'       => $order->status === 'DALAM_PENGIRIMAN' ? 'ETA < 45 Menit Dock' : '',
             'status'              => $statusText,

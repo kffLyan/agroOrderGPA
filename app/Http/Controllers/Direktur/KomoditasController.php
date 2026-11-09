@@ -120,15 +120,9 @@ class KomoditasController extends Controller
     // Mengunduh rekapitulasi data neraca volume komoditas dalam format berkas CSV
     public function exportCsv(Request $request): StreamedResponse
     {
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="Volume_Komoditas_' . date('Ymd') . '.csv"',
-        ];
+        $filename = 'Volume_Komoditas_' . date('Ymd') . '.csv';
 
-        return response()->stream(function () {
-            $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
-
+        return $this->streamCsv($filename, function ($handle) {
             fputcsv($handle, ['LAPORAN NERACA VOLUME KOMODITAS & SUPPLY CHAIN KOPERASI GPA'], ';');
             fputcsv($handle, ['WAKTU EKSPOR', date('d-m-Y H:i:s') . ' WIB'], ';');
             fputcsv($handle, [], ';');
@@ -153,8 +147,6 @@ class KomoditasController extends Controller
                     $statusLabel,
                 ], ';');
             }
-
-            fclose($handle);
-        }, 200, $headers);
+        });
     }
 }

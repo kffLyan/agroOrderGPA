@@ -196,7 +196,7 @@
                                             <div class="rounded-lg border border-line-board/70 bg-surface-shell/40 px-3 py-2 shadow-xs">
                                                 <p class="text-xs font-bold text-ink" x-text="r.driver || r.driver_name || 'Belum Ditugaskan'"></p>
                                                 <div class="mt-1 flex items-center justify-between text-2xs text-ink-body">
-                                                    <span class="font-mono text-brand font-semibold" x-text="'Plat: ' + (r.plate && r.plate !== '—' ? r.plate : 'B 9014 KPA')"></span>
+                                                    <span class="font-mono text-brand font-semibold" x-text="'Plat: ' + (r.plate && r.plate !== '—' ? r.plate : '—')"></span>
                                                     <span class="inline-flex items-center gap-0.5 text-success-deep font-semibold">
                                                         <x-gpa.icon name="check" class="h-2.5 w-2.5" />
                                                         Sah Terbit
@@ -211,7 +211,10 @@
                                         <div class="space-y-1.5 min-w-[210px]">
                                             <div class="flex items-center justify-between">
                                                 <span class="text-2xs font-bold uppercase tracking-wider text-ink-muted">Tugaskan Supir:</span>
-                                                <span class="font-mono text-2xs font-semibold text-brand" title="Plat Armada" x-text="r.plate && r.plate !== '—' ? r.plate : 'B 9014 KPA'"></span>
+                                                <span class="font-mono text-2xs font-semibold"
+                                                    :class="r.plate && r.plate !== '—' ? 'text-brand' : 'text-ink-quiet'"
+                                                    title="Plat Armada"
+                                                    x-text="r.plate && r.plate !== '—' ? r.plate : 'Menunggu Supir'"></span>
                                             </div>
 
                                             <div class="relative">
@@ -222,7 +225,7 @@
                                                     <option value="" disabled :selected="!r.driver_id">-- Pilih Supir Armada --</option>
                                                     @foreach ($drivers as $drv)
                                                         <option value="{{ $drv->id }}">
-                                                            {{ $drv->name }} ({{ $drv->phone ?: 'Armada' }})
+                                                            {{ $drv->name }} • {{ $drv->vehicle_plate ?: 'Truk Chiller' }}
                                                         </option>
                                                     @endforeach
                                                 </select>
@@ -345,7 +348,7 @@
                             <span class="text-accent/60">&bull;</span>
                             <span>Supir: <strong class="text-white" x-text="selected.driver || selected.driver_name || 'Belum Ditugaskan'"></strong></span>
                             <span class="text-accent/60">&bull;</span>
-                            <span>Plat: <strong class="text-white font-mono" x-text="(selected.plate && selected.plate !== '—') ? selected.plate : 'B 9014 KPA'"></strong></span>
+                            <span>Plat: <strong class="text-white font-mono" x-text="(selected.plate && selected.plate !== '—') ? selected.plate : 'Menunggu Penugasan'"></strong></span>
                         </div>
                     </template>
                     <p x-cloak x-show="selected && !isReady(selected) && !['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI', 'SELESAI_CATATAN'].includes(selected.order_status)"

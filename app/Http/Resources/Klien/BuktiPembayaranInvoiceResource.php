@@ -31,9 +31,10 @@ class BuktiPembayaranInvoiceResource extends JsonResource
                 return $payment->invoice_id === $invoice->id || $invoiceNumber === $invoice->invoice_number;
             }) : null);
 
+        $hasRealProof = !empty($latestPayment?->proof_url);
         $isPaid = ($invoice->status === 'PAID') || ($latestPayment && in_array($latestPayment->status, ['LUNAS', 'VERIFIED']));
         $isRejected = ($latestPayment && in_array($latestPayment->status, ['DITOLAK', 'REJECTED']));
-        $isPending = (($latestPayment && in_array($latestPayment->status, ['MENUNGGU_VERIFIKASI', 'PENDING'])) || $invoice->has_pending_proof) && ! $isPaid;
+        $isPending = (($latestPayment && in_array($latestPayment->status, ['MENUNGGU_VERIFIKASI', 'PENDING']) && $hasRealProof) || $invoice->has_pending_proof) && ! $isPaid;
 
         $verificationStage = $isPaid ? 3 : ($isPending ? 2 : 1);
         $verificationStatus = $isPaid ? 'LUNAS' : ($isPending ? 'MENUNGGU_VERIFIKASI' : ($isRejected ? 'DITOLAK' : 'BELUM_BAYAR'));
@@ -50,7 +51,7 @@ class BuktiPembayaranInvoiceResource extends JsonResource
                 'PAID'    => 'Lunas Sah',
                 'OVERDUE' => 'Lewat Jatuh Tempo',
                 'PARTIAL' => 'Terbayar Sebagian',
-                default   => ($invoice->has_pending_proof ? 'Menunggu Verifikasi Pembayaran' : 'Menunggu Pembayaran'),
+                default   => ($isPending ? 'Menunggu Verifikasi Pembayaran' : 'Menunggu Pembayaran'),
             },
             'due_note'            => $invoice->due_date ? 'Jatuh tempo pada: ' . $invoice->due_date->translatedFormat('d F Y') : 'Jatuh tempo TOP 30 Hari',
             'gross_label'         => 'Rp ' . number_format($gross, 0, ',', '.'),
@@ -69,10 +70,12 @@ class BuktiPembayaranInvoiceResource extends JsonResource
             'status'              => $invoice->status,
             'payment_id'          => $latestPayment?->id,
             'payment_code'        => $latestPayment?->code,
-            'payment_ref'         => $latestPayment ? ($latestPayment->payment_reference ?: 'PAY-' . str_pad((string) $latestPayment->id, 5, '0', STR_PAD_LEFT)) : '-',
+            'payment_ref'         => ($latestPayment && ($hasRealProof || $isPaid || $isRejected)) ? ($latestPayment->payment_reference ?: 'PAY-' . str_pad((string) $latestPayment->id, 5, '0', STR_PAD_LEFT)) : '-',
             'payment_method'      => $latestPayment ? ($latestPayment->method_label ?? str_replace('_', ' ', $latestPayment->payment_method)) : 'Transfer Bank',
             'payment_method_label'=> $latestPayment ? ($latestPayment->method_label ?? str_replace('_', ' ', $latestPayment->payment_method)) : 'Transfer Bank',
-            'paid_at'             => $latestPayment?->paid_at ? $latestPayment->paid_at->translatedFormat('d F Y H:i') : ($latestPayment?->created_at ? $latestPayment->created_at->translatedFormat('d F Y H:i') : null),
+            'paid_at'             => $isPaid
+                ? ($latestPayment?->paid_at ? $latestPayment->paid_at->translatedFormat('d F Y H:i') : ($latestPayment?->created_at ? $latestPayment->created_at->translatedFormat('d F Y H:i') : null))
+                : (($hasRealProof && $latestPayment?->paid_at) ? $latestPayment->paid_at->translatedFormat('d F Y H:i') : null),
             'verifier_name'       => $latestPayment?->verifier?->name ?: 'Staf Sekretariat Keuangan GPA',
             'verification_note'   => $latestPayment?->verification_note,
             'receipt_number'      => $isPaid ? ('KWT-' . str_pad((string) ($latestPayment?->id ?? $invoice->id), 5, '0', STR_PAD_LEFT)) : null,

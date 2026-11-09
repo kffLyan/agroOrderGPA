@@ -163,15 +163,9 @@ class PrintLaporanController extends Controller
         }
 
         // B. JIKA PENGGUNA MEMILIH FORMAT DATA MENTAH (.CSV)
-        $headerBerkas = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="Laporan_Penjualan_GPA_' . date('Ymd_His') . '.csv"',
-        ];
+        $namaBerkasCsv = 'Laporan_Penjualan_GPA_' . date('Ymd_His') . '.csv';
 
-        return response()->stream(function () use ($dataCetak, $dataKlien, $labelPeriode) {
-            $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
-
+        return $this->streamCsv($namaBerkasCsv, function ($handle) use ($dataCetak, $dataKlien, $labelPeriode) {
             fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)'], ';');
             fputcsv($handle, ['REKAPITULASI RESMI PENJUALAN EKSEKUTIF & JURNAL TRANSAKSI KONSOLIDASI'], ';');
             fputcsv($handle, ['CAKUPAN PERIODE', $labelPeriode], ';');
@@ -245,9 +239,7 @@ class PrintLaporanController extends Controller
                     $c['status_label'],
                 ], ';');
             }
-
-            fclose($handle);
-        }, 200, $headerBerkas);
+        });
     }
 
     // Membangun payload cetak Laporan Resmi Eksekutif Penjualan GPA A4 dengan kalkulasi pendapatan dan ringkasan komoditas.

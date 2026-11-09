@@ -50,15 +50,9 @@ class LaporanController extends Controller
     // Mengekspor rekapitulasi data penimbangan dan status pelunasan transaksi ke berkas CSV
     public function exportCsv(Request $request): StreamedResponse
     {
-        $headers = [
-            'Content-Type'        => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="Rekap_Laporan_Operasional_GPA_' . date('Ymd_His') . '.csv"',
-        ];
+        $filename = 'Rekap_Laporan_Operasional_GPA_' . date('Ymd_His') . '.csv';
 
-        return response()->stream(function () {
-            $handle = fopen('php://output', 'w');
-            fputs($handle, "\xEF\xBB\xBFsep=;\r\n");
-
+        return $this->streamCsv($filename, function ($handle) {
             fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)'], ';');
             fputcsv($handle, ['JURNAL REKAPITULASI OPERASIONAL, PENIMBANGAN & PENJUALAN'], ';');
             fputcsv($handle, ['WAKTU CETAK', date('d/m/Y H:i') . ' WIB'], ';');
@@ -111,9 +105,7 @@ class LaporanController extends Controller
                     $isPaid ? 'Lunas' : 'Tempo 30 Hari',
                 ], ';');
             }
-
-            fclose($handle);
-        }, 200, $headers);
+        });
     }
 
     // Menyiapkan lembar cetak dokumen rekapitulasi operasional resmi untuk kebutuhan arsip sekretaris

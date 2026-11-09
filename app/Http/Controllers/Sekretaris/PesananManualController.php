@@ -192,7 +192,9 @@ class PesananManualController extends Controller
             $client = User::where('role', 'KLIEN')
                 ->where(function ($q) use ($clientName) {
                     $q->where('company_name', $clientName)
-                      ->orWhere('name', $clientName);
+                      ->orWhere('name', $clientName)
+                      ->orWhere('company_name', 'LIKE', '%' . $clientName . '%')
+                      ->orWhere('name', 'LIKE', '%' . $clientName . '%');
                 })
                 ->first();
 
@@ -220,6 +222,19 @@ class PesananManualController extends Controller
                     'email_verified_at' => now(),
                     'password'          => Hash::make(Str::random(16)),
                 ]);
+            }
+        } else {
+            // Sinkronkan data kontak terbaru jika ada pembaruan di form
+            $contactUpdates = [];
+            if (!empty($validated['client_phone']) && !in_array($validated['client_phone'], ['0812-3456-7890', '—', '-'])) {
+                $contactUpdates['phone'] = trim($validated['client_phone']);
+                $contactUpdates['pic_phone'] = trim($validated['client_phone']);
+            }
+            if (!empty($validated['client_contact']) && !in_array($validated['client_contact'], ['—', '-'])) {
+                $contactUpdates['pic_name'] = trim($validated['client_contact']);
+            }
+            if (!empty($contactUpdates)) {
+                $client->update($contactUpdates);
             }
         }
 

@@ -17,9 +17,28 @@ class FakturKlienResource extends JsonResource
         $documents = [];
         if ($client->relationLoaded('orders')) {
             foreach ($client->orders as $order) {
-                // Lewati jika pesanan ini sudah menjadi bagian dari faktur konsolidasi resmi
+                // 1. Lewati jika pesanan ini sudah menjadi bagian dari faktur konsolidasi resmi (> 1 pesanan)
                 if ($order->invoice && $order->invoice->orders && $order->invoice->orders->count() > 1) {
                     continue;
+                }
+
+                // 2. Lewati jika pesanan atau faktur sudah berstatus lunas
+                if ($order->status === 'LUNAS' || ($order->invoice && in_array($order->invoice->status, ['PAID', 'LUNAS']))) {
+                    continue;
+                }
+
+                // 3. Lewati jika pembayaran pesanan ini sudah disetujui / diverifikasi lunas
+                $payments = $order->relationLoaded('payments') ? $order->payments : $order->payments()->get();
+                if ($payments->whereIn('status', ['LUNAS', 'VERIFIED', 'PAID', 'SUCCESS'])->isNotEmpty()) {
+                    continue;
+                }
+
+                // 4. Lewati jika pembayaran faktur terkait sudah disetujui / diverifikasi lunas
+                if ($order->invoice) {
+                    $invPayments = $order->invoice->relationLoaded('payments') ? $order->invoice->payments : $order->invoice->payments()->get();
+                    if ($invPayments->whereIn('status', ['LUNAS', 'VERIFIED', 'PAID', 'SUCCESS'])->isNotEmpty()) {
+                        continue;
+                    }
                 }
 
                 $netWeight = (float) $order->orderItems->sum(fn ($item) => $item->ordered_qty);

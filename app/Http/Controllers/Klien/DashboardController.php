@@ -8,9 +8,12 @@ use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Services\TataKelolaService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Throwable;
 
 class DashboardController extends Controller
 {
@@ -36,9 +39,9 @@ class DashboardController extends Controller
         $rejectedContract = null;
         if (!$isContractClient && !$pendingContract) {
             try {
-                $settings = app(\App\Services\TataKelolaService::class)->getSettings();
+                $settings = app(TataKelolaService::class)->getSettings();
                 $rejectedContract = $settings['rejected_contracts'][$user->id] ?? null;
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $rejectedContract = null;
             }
         }
@@ -316,7 +319,7 @@ class DashboardController extends Controller
     }
 
     // Menyimpan status penutupan notifikasi (dismiss) di sesi pengguna agar tidak muncul terus-menerus
-    public function dismissBanner(Request $request): \Illuminate\Http\JsonResponse
+    public function dismissBanner(Request $request): JsonResponse
     {
         $key = $request->input('key');
         if ($key) {

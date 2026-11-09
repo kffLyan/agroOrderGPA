@@ -112,10 +112,28 @@
     <div class="no-print sticky top-0 z-30 border-b border-line-board bg-white/95 backdrop-blur shadow-sub">
         <div class="mx-auto flex max-w-[297mm] items-center justify-between gap-3 px-4 py-2.5">
             <div class="flex items-center gap-2">
-                <a href="{{ route('klien.dokumen') }}"
+                @php
+                    $currentUser = auth()->user();
+                    $backUrl = match($currentUser?->role) {
+                        'SEKRETARIS'  => route('sekretaris.faktur'),
+                        'DIREKTUR'    => route('direktur.piutang.index'),
+                        'KOORDINATOR' => route('koordinator.dashboard'),
+                        'ARMADA'      => route('armada.tugas'),
+                        'KLIEN'       => route('klien.dokumen'),
+                        default       => url('/dashboard'),
+                    };
+                    $backLabel = match($currentUser?->role) {
+                        'SEKRETARIS'  => 'Kembali ke Faktur Sekretaris',
+                        'DIREKTUR'    => 'Kembali ke Monitoring Piutang',
+                        'KOORDINATOR' => 'Kembali ke Dasbor',
+                        default       => 'Kembali ke Pusat Dokumen',
+                    };
+                @endphp
+                <a href="{{ $backUrl }}"
+                    onclick="if (window.history.length > 1) { window.history.back(); return false; } else { window.close(); setTimeout(function() { window.location.href = '{{ $backUrl }}'; }, 150); return false; }"
                     class="inline-flex items-center gap-1.5 rounded-lg border border-line-board bg-surface px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-surface-shell">
                     <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5" />
-                    Kembali ke Pusat Dokumen
+                    <span>{{ $backLabel }}</span>
                 </a>
                 <span class="rounded bg-brand/10 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-brand">
                     REKAP RESMI FAKTUR KONSOLIDASI (A4 LANDSCAPE)

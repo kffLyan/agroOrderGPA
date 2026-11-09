@@ -6,7 +6,7 @@ use App\Models\HarvestBatch;
 use App\Models\Product;
 use Exception;
 
-// Layanan pengelolaan kuota stok panen komoditas di gudang dengan mekanisme First-In-First-Out (FIFO).
+// Layanan pengelolaan kuota total stok komoditas di gudang konsolidasi.
 class StockService
 {
     // Menghitung total akumulasi stok panen yang tersedia di gudang untuk satu komoditas spesifik.
@@ -45,10 +45,10 @@ class StockService
         return $this->getAvailableStock($productId) >= $neededQty;
     }
 
-    // Mengalokasikan pemotongan stok panen gudang berbasis FIFO dengan penguncian baris kueri.
+    // Mengalokasikan pemotongan total stok komoditas di gudang saat pesanan disetujui.
     public function allocateStock(int $productId, float $neededQty): void
     {
-        // Mengambil kumpulan batch panen dari tanggal terlama (FIFO) dengan penguncian pesimistik
+        // Mengambil data stok pasokan yang tersedia di gudang dengan penguncian pesimistik
         $batches = HarvestBatch::where('product_id', $productId)
             ->where('available_quantity', '>', 0)
             ->orderBy('batch_date', 'asc')

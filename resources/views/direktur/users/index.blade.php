@@ -55,6 +55,8 @@
                 'online'        => $u->id === $currentUser?->id,
                 'login'         => $u->id === $currentUser?->id ? 'Online Now' : 'Hari ini',
                 'login_meta'    => $u->email,
+                'client_type'   => $u->client_type ?? 'REGULER',
+                'client_type_label' => ($u->client_type === 'B2B_KONTRAK') ? 'Mitra Kontrak B2B' : 'Klien Reguler',
                 'show_url'      => route('direktur.users.show', $u->id),
                 'edit_url'      => route('direktur.users.edit', $u->id),
                 'delete_url'    => route('direktur.users.destroy', $u->id),
@@ -417,7 +419,17 @@
                     <button type="button" @click="setRole('client')"
                         :class="roleClass('client')"
                         class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
-                        Klien
+                        Semua Klien
+                    </button>
+                    <button type="button" @click="setRole('client_kontrak')"
+                        :class="roleClass('client_kontrak')"
+                        class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
+                        Klien Kontrak
+                    </button>
+                    <button type="button" @click="setRole('client_reguler')"
+                        :class="roleClass('client_reguler')"
+                        class="rounded px-2.5 py-1 text-center outline outline-1 -outline-offset-1 gpa-note transition-colors">
+                        Klien Reguler
                     </button>
                 </div>
             </header>

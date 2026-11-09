@@ -124,6 +124,8 @@ class BukuBesarPiutangResource extends JsonResource
             'name'              => $client->company_name ?: $client->name,
             'client_id'         => 'ID-KLIEN:' . $clientCode,
             'client_code'       => $clientCode,
+            'client_type'       => $client->client_type ?: ($activeContract ? 'B2B_KONTRAK' : 'REGULER'),
+            'client_type_label' => ($client->client_type === 'B2B_KONTRAK' || $activeContract) ? 'Mitra Kontrak B2B' : 'Klien Reguler',
             'locked'            => $isFrozen,
             'sj_count'          => count($suratJalanList),
             'sj_count_label'    => count($suratJalanList) > 0 ? (count($suratJalanList) . ' Surat Jalan') : 'Belum Ada SJ',

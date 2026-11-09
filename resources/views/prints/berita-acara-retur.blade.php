@@ -80,18 +80,22 @@
             $backUrl = match($currentUser?->role) {
                 'SEKRETARIS'  => route('sekretaris.monitoring-pod'),
                 'KOORDINATOR' => route('koordinator.dashboard'),
-                'ARMADA'      => route('armada.riwayat'),
-                default       => route('klien.dokumen'),
+                'ARMADA'      => route('armada.bukti-terima'),
+                'DIREKTUR'    => route('direktur.dashboard'),
+                'KLIEN'       => route('klien.dokumen'),
+                default       => url('/dashboard'),
             };
             $backLabel = match($currentUser?->role) {
                 'SEKRETARIS'  => 'Kembali ke Monitoring PoD',
                 'KOORDINATOR' => 'Kembali ke Dashboard',
-                'ARMADA'      => 'Kembali ke Riwayat Armada',
+                'ARMADA'      => 'Kembali ke Bukti Terima Armada',
+                'DIREKTUR'    => 'Kembali ke Dasbor Direktur',
                 default       => 'Kembali ke Portal Klien',
             };
         @endphp
 
         <a href="{{ $backUrl }}"
+            onclick="if (window.history.length > 1) { window.history.back(); return false; } else { window.close(); setTimeout(function() { window.location.href = '{{ $backUrl }}'; }, 150); return false; }"
             class="inline-flex items-center gap-1.5 rounded border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 transition-colors hover:bg-gray-100">
             <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5 text-gray-500" />
             <span>{{ $backLabel }}</span>

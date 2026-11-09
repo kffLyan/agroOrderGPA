@@ -764,26 +764,62 @@
         </section>
 
         {{-- Ringkasan Pesanan & Kontrak Terbaru --}}
-        <section class="grid gap-6 lg:grid-cols-2">
+        <section class="grid gap-6 lg:grid-cols-2" x-data="{ orderFilter: 'ALL' }">
             <div class="rounded-2xl bg-surface p-6 shadow-card space-y-4">
-                <div class="flex items-center justify-between border-b border-line-board/60 pb-3">
-                    <h2 class="gpa-section-title text-ink">Pesanan B2B Terkini</h2>
-                    <span class="text-xs text-ink-quiet">Pengawasan Transaksi</span>
+                <div class="flex flex-wrap items-center justify-between border-b border-line-board/60 pb-3 gap-2">
+                    <div>
+                        <h2 class="gpa-section-title text-ink">Supervisi Pesanan Terkini</h2>
+                        <span class="text-xs text-ink-quiet">Pengawasan Transaksi B2B Kontrak &amp; Reguler</span>
+                    </div>
+
+                    {{-- Tombol Filter Kategori Klien --}}
+                    <div class="flex items-center gap-1 rounded-lg bg-surface-shell p-1 border border-line-hair text-[11px]">
+                        <button type="button" @click="orderFilter = 'ALL'"
+                            :class="orderFilter === 'ALL' ? 'bg-surface text-ink font-bold shadow-xs' : 'text-ink-quiet hover:text-ink'"
+                            class="rounded px-2.5 py-1 transition-colors">
+                            Semua
+                        </button>
+                        <button type="button" @click="orderFilter = 'B2B_KONTRAK'"
+                            :class="orderFilter === 'B2B_KONTRAK' ? 'bg-brand text-white font-bold shadow-xs' : 'text-ink-quiet hover:text-ink'"
+                            class="rounded px-2.5 py-1 transition-colors">
+                            Kontrak B2B
+                        </button>
+                        <button type="button" @click="orderFilter = 'REGULER'"
+                            :class="orderFilter === 'REGULER' ? 'bg-accent-deep text-white font-bold shadow-xs' : 'text-ink-quiet hover:text-ink'"
+                            class="rounded px-2.5 py-1 transition-colors">
+                            Klien Reguler
+                        </button>
+                    </div>
                 </div>
-                <div class="divide-y divide-line-board/40">
+                <div class="divide-y divide-line-board/40 max-h-[460px] overflow-y-auto pr-1">
                     @forelse($recentOrders ?? [] as $order)
-                        <div class="py-2.5 flex items-center justify-between text-xs">
-                            <div>
-                                <span class="font-mono font-bold text-ink">{{ $order->order_number }}</span>
-                                <span
-                                    class="text-ink-quiet block text-[11px]">{{ $order->user?->company_name ?? $order->user?->name ?? 'Klien' }}</span>
+                        @php
+                            $isB2b = ($order->user?->client_type === 'B2B_KONTRAK');
+                            $clientTypeKey = $isB2b ? 'B2B_KONTRAK' : 'REGULER';
+                        @endphp
+                        <a href="{{ route('direktur.inspeksi-pesanan.show', $order->id) }}"
+                            x-show="orderFilter === 'ALL' || orderFilter === '{{ $clientTypeKey }}'"
+                            title="Klik untuk buka lembar inspeksi pengawasan 360°"
+                            class="group -mx-2 flex items-center justify-between rounded-xl px-2 py-2.5 text-xs transition-colors hover:bg-surface-shell">
+                            <div class="space-y-0.5">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-mono font-bold text-ink group-hover:text-brand flex items-center gap-1.5">
+                                        {{ $order->order_number }}
+                                        <x-gpa.icon name="external-link" class="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-brand" />
+                                    </span>
+                                    @if($isB2b)
+                                        <span class="rounded bg-accent/40 px-1.5 py-0.2 text-[9px] font-bold text-success-deep outline outline-1 outline-success-deep font-mono">B2B KONTRAK</span>
+                                    @else
+                                        <span class="rounded bg-surface-shell px-1.5 py-0.2 text-[9px] font-bold text-ink-quiet outline outline-1 outline-line-board font-mono">REGULER</span>
+                                    @endif
+                                </div>
+                                <span class="text-ink-quiet block text-[11px]">{{ $order->user?->company_name ?? $order->user?->name ?? 'Klien' }}</span>
                             </div>
                             <div class="text-right">
-                                <span class="font-semibold text-ink">Rp
-                                    {{ number_format($order->grand_total, 0, ',', '.') }}</span>
+                                <span class="font-semibold text-ink">Rp {{ number_format($order->grand_total, 0, ',', '.') }}</span>
                                 <span class="block text-[10px] text-accent-deep font-bold">{{ $order->status }}</span>
                             </div>
-                        </div>
+                        </a>
                     @empty
                         <p class="py-4 text-center text-xs text-ink-quiet">Belum ada pesanan terbaru.</p>
                     @endforelse

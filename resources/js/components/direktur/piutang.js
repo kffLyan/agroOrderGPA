@@ -12,6 +12,7 @@ export default function directorReceivables(rows = [], policy = {}, verification
     return {
         query: '',
         topFilter: 'all',
+        clientTypeFilter: 'all',
         activeContracts: numberOf(activeContracts),
         selectedRow: null,
         auditOpen: false,
@@ -32,6 +33,8 @@ export default function directorReceivables(rows = [], policy = {}, verification
             name: String(row.name ?? ''),
             client_id: String(row.client_id ?? ''),
             client_code: String(row.client_code ?? ''),
+            client_type: String(row.client_type ?? 'REGULER'),
+            client_type_label: String(row.client_type_label ?? 'Klien Reguler'),
             sj_count: numberOf(row.sj_count),
             sj_count_label: String(row.sj_count_label ?? ''),
             sj_label: String(row.sj_label ?? ''),
@@ -93,8 +96,18 @@ export default function directorReceivables(rows = [], policy = {}, verification
         matchesTop(row) {
             return this.topFilter === 'all' || String(row.top_days) === this.topFilter;
         },
+        matchesClientType(row) {
+            if (this.clientTypeFilter === 'all') {
+                return true;
+            }
+            return row.client_type === this.clientTypeFilter;
+        },
+        setClientTypeFilter(type) {
+            this.clientTypeFilter = type;
+            this.page = 1;
+        },
         filteredRows() {
-            return this.rows.filter((row) => this.matchesQuery(row) && this.matchesTop(row));
+            return this.rows.filter((row) => this.matchesQuery(row) && this.matchesTop(row) && this.matchesClientType(row));
         },
         get lastPage() {
             return Math.max(1, Math.ceil(this.filteredRows().length / this.perPage));
@@ -105,7 +118,7 @@ export default function directorReceivables(rows = [], policy = {}, verification
         },
         rowVisible(index) {
             const row = this.rows[index];
-            if (! row || ! (this.matchesQuery(row) && this.matchesTop(row))) {
+            if (! row || ! (this.matchesQuery(row) && this.matchesTop(row) && this.matchesClientType(row))) {
                 return false;
             }
             return this.pagedRows().some((item) => item.id === row.id);

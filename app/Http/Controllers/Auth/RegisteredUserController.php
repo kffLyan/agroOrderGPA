@@ -9,7 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
+use Illuminate\Validation\Rules\Password as PasswordRule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -35,7 +35,7 @@ class RegisteredUserController extends Controller
             'phone'        => ['required', 'string', 'max:25'],
             'company_name' => ['nullable', 'string', 'max:150'],
             'address'      => ['required', 'string'],
-            'password'     => ['required', 'confirmed', Rules\Password::defaults()],
+            'password'     => ['required', 'confirmed', PasswordRule::defaults()],
         ], [
             'name.required'        => 'Nama lengkap / kontak PIC wajib diisi.',
             'email.required'       => 'Alamat email wajib diisi.',

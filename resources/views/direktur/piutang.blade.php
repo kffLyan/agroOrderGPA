@@ -276,7 +276,7 @@
                             <button type="button" @click="setTopFilter('all')"
                                 :class="topFilter === 'all' ? 'bg-brand text-accent' : 'text-ink hover:bg-surface-shell'"
                                 class="rounded px-2 py-1 text-[12px] font-semibold leading-4 transition-colors">
-                                Semua
+                                Semua TOP
                             </button>
                             @foreach ([14, 30, 45] as $topDays)
                                 <button type="button" @click="setTopFilter('{{ $topDays }}')"
@@ -287,6 +287,28 @@
                                     TOP {{ $topDays }}
                                 </button>
                             @endforeach
+                        </div>
+                    </div>
+
+                    {{-- Filter Kategori Klien (Kontrak vs Reguler) --}}
+                    <div class="flex h-10 items-center gap-1 rounded-lg border border-line-board bg-surface px-2">
+                        <span class="text-[11px] font-bold text-ink-subtle uppercase px-1">Klien:</span>
+                        <div class="flex items-center gap-1">
+                            <button type="button" @click="setClientTypeFilter('all')"
+                                :class="clientTypeFilter === 'all' ? 'bg-brand text-accent font-bold' : 'text-ink hover:bg-surface-shell'"
+                                class="rounded px-2 py-1 text-[12px] font-semibold leading-4 transition-colors">
+                                Semua
+                            </button>
+                            <button type="button" @click="setClientTypeFilter('B2B_KONTRAK')"
+                                :class="clientTypeFilter === 'B2B_KONTRAK' ? 'bg-brand text-accent font-bold' : 'text-ink hover:bg-surface-shell'"
+                                class="rounded px-2 py-1 text-[12px] font-semibold leading-4 transition-colors">
+                                Kontrak B2B
+                            </button>
+                            <button type="button" @click="setClientTypeFilter('REGULER')"
+                                :class="clientTypeFilter === 'REGULER' ? 'bg-brand text-accent font-bold' : 'text-ink hover:bg-surface-shell'"
+                                class="rounded px-2 py-1 text-[12px] font-semibold leading-4 transition-colors">
+                                Reguler
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -328,7 +350,7 @@
                                     'border-t border-line-board hover:bg-surface-base/40' => empty($row['locked']),
                                 ])>
                                 <th scope="row" class="px-4 py-3">
-                                    <span class="flex items-center gap-2.5">
+                                    <div class="flex items-center gap-2 flex-wrap">
                                         <span @class([
                                             'text-[14px] font-bold leading-5',
                                             'text-danger' => !empty($row['locked']),
@@ -337,7 +359,13 @@
                                         @if (!empty($row['locked']))
                                             <x-gpa.icon name="lock" class="h-3.5 w-3.5 shrink-0 text-danger" />
                                         @endif
-                                    </span>
+                                        <template x-if="row.client_type === 'B2B_KONTRAK'">
+                                            <span class="rounded bg-accent/40 px-1.5 py-0.5 text-[9px] font-bold text-success-deep outline outline-1 outline-success-deep font-mono">B2B KONTRAK</span>
+                                        </template>
+                                        <template x-if="row.client_type !== 'B2B_KONTRAK'">
+                                            <span class="rounded bg-surface-shell px-1.5 py-0.5 text-[9px] font-bold text-ink-quiet outline outline-1 outline-line-board font-mono">REGULER</span>
+                                        </template>
+                                    </div>
                                     <span class="text-[9px] font-semibold leading-3 tracking-[1.08px] {{ !empty($row['locked']) ? 'text-danger' : 'text-success-deep' }} {{ $mono }}">
                                         {{ $row['client_id'] }}@if (!empty($row['locked'])) [LOCKED]@endif
                                     </span>

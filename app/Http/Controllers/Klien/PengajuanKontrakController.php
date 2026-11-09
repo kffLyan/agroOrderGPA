@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Klien\SimpanPengajuanKontrakRequest;
 use App\Models\Contract;
 use App\Models\Product;
+use App\Services\TataKelolaService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Throwable;
 
 // Controller pengajuan proposal kontrak kemitraan B2B untuk Klien
 class PengajuanKontrakController extends Controller
@@ -60,13 +62,13 @@ class PengajuanKontrakController extends Controller
 
         // Hapus riwayat penolakan lama saat klien berhasil mengajukan proposal baru
         try {
-            $tataKelolaService = app(\App\Services\TataKelolaService::class);
+            $tataKelolaService = app(TataKelolaService::class);
             $settings = $tataKelolaService->getSettings();
             if (isset($settings['rejected_contracts'][$user->id])) {
                 unset($settings['rejected_contracts'][$user->id]);
                 $tataKelolaService->updateSettings($settings);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Abaikan jika service tidak dapat diakses
         }
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Klien;
 
 use App\Http\Controllers\Controller;
 use App\Models\Contract;
+use App\Models\Order;
 use App\Models\Product;
 use App\Services\TataKelolaService;
 use App\Services\OrderService;
@@ -94,7 +95,7 @@ class KeranjangController extends Controller
                 return (float) ($contract->fixed_price_per_kg * $contract->committed_volume_per_cycle * 2);
             });
         }
-        $unpaidTotal = (float) \App\Models\Order::where('user_id', $user->id)
+        $unpaidTotal = (float) Order::where('user_id', $user->id)
             ->whereIn('status', ['MENUNGGU_VERIFIKASI', 'MENUNGGU_PEMBAYARAN', 'LUNAS', 'SIAP_KIRIM', 'DALAM_PENGIRIMAN'])
             ->sum('grand_total');
         $creditAvailable = max(0.0, $creditLimit - $unpaidTotal);

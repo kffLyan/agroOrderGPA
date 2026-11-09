@@ -120,10 +120,23 @@
     <div class="no-print sticky top-0 z-30 border-b border-line-board bg-white/95 backdrop-blur shadow-sub">
         <div class="mx-auto flex max-w-[297mm] items-center justify-between gap-3 px-4 py-2.5">
             <div class="flex items-center gap-2">
-                <a href="{{ route('direktur.laporan.index', request()->query()) }}"
+                @php
+                    $currentUser = auth()->user();
+                    $backUrl = match($currentUser?->role) {
+                        'SEKRETARIS' => route('sekretaris.laporan'),
+                        'DIREKTUR'   => route('direktur.laporan.index', request()->query()),
+                        default      => url('/dashboard'),
+                    };
+                    $backLabel = match($currentUser?->role) {
+                        'SEKRETARIS' => 'Kembali ke Laporan Sekretaris',
+                        default      => 'Kembali ke Laporan',
+                    };
+                @endphp
+                <a href="{{ $backUrl }}"
+                    onclick="if (window.history.length > 1) { window.history.back(); return false; } else { window.close(); setTimeout(function() { window.location.href = '{{ $backUrl }}'; }, 150); return false; }"
                     class="inline-flex items-center gap-1.5 rounded-lg border border-line-board bg-surface px-3 py-1.5 text-xs font-medium text-ink transition-colors hover:bg-surface-shell">
                     <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5" />
-                    Kembali ke Laporan
+                    <span>{{ $backLabel }}</span>
                 </a>
                 <span class="rounded bg-brand/10 px-2 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-brand">
                     ARSIP EKSEKUTIF DIREKTUR (A4 LANDSCAPE)

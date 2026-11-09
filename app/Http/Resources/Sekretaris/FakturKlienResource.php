@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Sekretaris;
 
+use App\Models\Invoice;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -46,7 +47,7 @@ class FakturKlienResource extends JsonResource
         $topDays = $activeContract?->top_days ?: 30;
         $creditLimit = (float) ($activeContract?->credit_limit ?? 0);
         
-        $unpaidInvoices = (float) \App\Models\Invoice::where('user_id', $client->id)
+        $unpaidInvoices = (float) Invoice::where('user_id', $client->id)
             ->whereIn('status', ['UNPAID', 'PARTIAL', 'OVERDUE'])
             ->sum('grand_total');
         $uninvoicedOrders = (float) $client->orders()

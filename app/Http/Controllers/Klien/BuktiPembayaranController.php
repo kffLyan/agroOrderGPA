@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Services\TataKelolaService;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -208,7 +209,7 @@ class BuktiPembayaranController extends Controller
         if (! empty($validated['transfer_at'] ?? null)) {
             try {
                 $paidAt = Carbon::createFromFormat('d/m/Y H:i', $validated['transfer_at']);
-            } catch (\Exception $exception) {
+            } catch (Exception $exception) {
                 $paidAt = Carbon::now();
             }
         }
@@ -274,7 +275,7 @@ class BuktiPembayaranController extends Controller
                 : ('Bukti pembayaran faktur ' . $validated['invoice_po'] . ' berhasil diunggah. Menunggu konfirmasi verifikasi Staf Sekretariat.');
 
             return redirect()->route('klien.dokumen')->with($flashKey, $flashMsg);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             DB::rollBack();
 
             if ($request->wantsJson()) {

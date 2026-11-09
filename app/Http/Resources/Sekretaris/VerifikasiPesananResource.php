@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Sekretaris;
 
+use App\Services\TataKelolaService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -64,7 +65,7 @@ class VerifikasiPesananResource extends JsonResource
         }
         $creditAvailable = max(0.0, $creditLimit - $unpaidExposure);
         $isOverLimit = $isContractClient && ($totalOrderAmount > $creditAvailable);
-        $tataKelolaService = app(\App\Services\TataKelolaService::class);
+        $tataKelolaService = app(TataKelolaService::class);
         $isClientFrozen = $order->user_id ? $tataKelolaService->isClientFrozen((int) $order->user_id) : false;
         $creditPercent = $creditLimit > 0 ? min(100, round(($unpaidExposure / $creditLimit) * 100)) : 0;
 

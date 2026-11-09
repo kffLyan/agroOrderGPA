@@ -8,6 +8,7 @@ use App\Http\Requests\Direktur\PerbaruiUserRequest;
 use App\Models\User;
 use App\Services\TataKelolaService;
 use Exception;
+use Throwable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -186,7 +187,7 @@ class UserController extends Controller
             );
 
             return back()->with('success', 'Prosedur Darurat Berhasil: Seluruh sesi aktif pengguna lain di semua terminal berhasil diputus seketika.');
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             return back()->with('error', 'Gagal memutus sesi: ' . $exception->getMessage());
         }
     }

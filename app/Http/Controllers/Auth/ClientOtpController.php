@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class ClientOtpController extends Controller
 {
@@ -62,7 +63,7 @@ class ClientOtpController extends Controller
 
         try {
             Mail::to($email)->send(new RegistrationOtpMail($code, $email));
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             report($exception);
             if (! app()->environment(['local', 'testing'])) {
                 $detail = config('app.debug') ? ' (' . $exception->getMessage() . ')' : '';

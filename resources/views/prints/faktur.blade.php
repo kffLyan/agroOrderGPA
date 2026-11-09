@@ -104,16 +104,22 @@
                     $currentUser = auth()->user();
                     $backUrl = match($currentUser?->role) {
                         'SEKRETARIS' => route('sekretaris.faktur'),
-                        'DIREKTUR'   => route('direktur.piutang'),
-                        default      => route('klien.dokumen'),
+                        'DIREKTUR'   => route('direktur.piutang.index'),
+                        'ARMADA'     => route('armada.dashboard'),
+                        'KOORDINATOR'=> route('koordinator.dashboard'),
+                        'KLIEN'      => route('klien.dokumen'),
+                        default      => url('/dashboard'),
                     };
                     $backLabel = match($currentUser?->role) {
                         'SEKRETARIS' => 'Kembali ke Faktur',
                         'DIREKTUR'   => 'Kembali ke Piutang',
+                        'ARMADA'     => 'Kembali ke Dasbor',
+                        'KOORDINATOR'=> 'Kembali ke Dasbor',
                         default      => 'Kembali ke Dokumen',
                     };
                 @endphp
                 <a href="{{ $backUrl }}"
+                    onclick="if (window.history.length > 1) { window.history.back(); return false; } else { window.close(); setTimeout(function() { window.location.href = '{{ $backUrl }}'; }, 150); return false; }"
                     class="inline-flex items-center gap-1.5 rounded-lg border border-line-strong bg-white px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:bg-surface-sunken">
                     <x-gpa.icon name="arrow-left" class="h-3.5 w-3.5" />
                     <span>{{ $backLabel }}</span>

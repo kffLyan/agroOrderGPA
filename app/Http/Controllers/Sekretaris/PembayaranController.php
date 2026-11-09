@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Services\TataKelolaService;
 use App\Services\OrderService;
+use Exception;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -107,7 +108,7 @@ class PembayaranController extends Controller
         if ($order && $order->status === 'MENUNGGU_VERIFIKASI') {
             try {
                 $order = $orderService->approveOrder($order->id, Auth::id() ?: 1);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 if ($request->wantsJson() || $request->ajax()) {
                     return response()->json(['success' => false, 'message' => 'Gagal menyetujui pesanan: ' . $e->getMessage()], 422);
                 }

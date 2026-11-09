@@ -134,8 +134,18 @@ export default function directorAccess(users = []) {
                 return false;
             }
 
-            if (this.roleFilter !== 'all' && this.roleFilter !== String(user.role_key)) {
-                return false;
+            if (this.roleFilter !== 'all') {
+                if (this.roleFilter === 'client_kontrak') {
+                    if (user.role_key !== 'client' || user.client_type !== 'B2B_KONTRAK') {
+                        return false;
+                    }
+                } else if (this.roleFilter === 'client_reguler') {
+                    if (user.role_key !== 'client' || user.client_type === 'B2B_KONTRAK') {
+                        return false;
+                    }
+                } else if (this.roleFilter !== String(user.role_key)) {
+                    return false;
+                }
             }
 
             const needle = this.userSearch.trim().toLowerCase();

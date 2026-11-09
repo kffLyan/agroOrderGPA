@@ -174,7 +174,7 @@ class DashboardController extends Controller
             $channelData['manual']['share'] = 100 - $channelData['horeca']['share'] - $channelData['retail']['share'];
         }
 
-        $recentOrders = Order::with('user')->latest()->take(5)->get();
+        $recentOrders = Order::with('user')->latest()->take(20)->get();
         $recentContracts = Contract::with(['user', 'product'])->latest()->take(5)->get();
 
         return view('direktur.dashboard', [

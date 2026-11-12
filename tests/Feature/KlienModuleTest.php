@@ -1,0 +1,1099 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\Invoice;
+use App\Models\Order;
+use App\Models\Payment;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+
+class KlienModuleTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_guest_is_redirected_to_login(): void
+    {
+        $response = $this->get('/klien/dashboard');
+        $response->assertRedirect('/login');
+    }
+
+    public function test_non_klien_user_cannot_access_klien_routes(): void
+    {
+        $direktur = User::factory()->create([
+            'role' => 'DIREKTUR',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($direktur)->get('/klien/dashboard');
+        $response->assertStatus(403);
+    }
+
+    public function test_klien_can_access_all_five_core_steps(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'company_name' => 'PT Mitra Agro Perkasa',
+            'is_active' => true,
+        ]);
+
+        // Langkah 5: Dashboard
+        $response = $this->actingAs($klien)->get('/klien/dashboard');
+        $response->assertStatus(200);
+
+        // Langkah 1: Katalog Komoditas
+        $response = $this->actingAs($klien)->get('/klien/katalog');
+        $response->assertStatus(200);
+
+        // Langkah 2: Keranjang & Pemesanan
+        $response = $this->actingAs($klien)->get('/klien/keranjang');
+        $response->assertStatus(200);
+
+        // Langkah 3: Riwayat & Pelacakan Pesanan
+        $response = $this->actingAs($klien)->get('/klien/pesanan');
+        $response->assertStatus(200);
+
+        // Langkah 4: Pusat Dokumen & Bukti Bayar
+        $response = $this->actingAs($klien)->get('/klien/dokumen');
+        $response->assertStatus(200);
+
+        $response = $this->actingAs($klien)->get('/klien/bukti-pembayaran');
+        $response->assertStatus(200);
+    }
+
+    public function test_klien_can_submit_order_with_tempo_top_without_database_errors(): void
+    {
+        $koordinator = User::factory()->create([
+            'role' => 'KOORDINATOR',
+            'is_active' => true,
+        ]);
+
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'company_name' => 'PT Aerofood ACS Indonesia',
+            'is_active' => true,
+        ]);
+
+        $product = \App\Models\Product::create([
+            'sku' => 'GPA-VGT-RMN01',
+            'name' => 'Selada Romaine Hydroponic Super',
+            'unit' => 'kg',
+            'grade' => 'Grade A',
+            'base_price' => 14000.00,
+            'minimum_order' => 10.00,
+            'is_active' => true,
+        ]);
+
+        \App\Models\HarvestBatch::create([
+            'product_id' => $product->id,
+            'source_type' => 'PETANI_BINAAN',
+            'supplier_name' => 'Kelompok Tani Panundaan',
+            'batch_date' => now()->toDateString(),
+            'initial_quantity' => 1000.00,
+            'available_quantity' => 1000.00,
+            'inputted_by' => $koordinator->id,
+        ]);
+
+        $response = $this->actingAs($klien)->post('/klien/pesanan', [
+            'target_delivery_date' => now()->addDays(2)->format('Y-m-d'),
+            'delivery_address' => 'Bandara Soekarno Hatta Loading Dock',
+            'payment_method' => 'TEMPO_TOP',
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'quantity' => 20,
+                ],
+            ],
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('orders', [
+            'user_id' => $klien->id,
+            'status' => 'MENUNGGU_VERIFIKASI',
+        ]);
+        $this->assertDatabaseHas('payments', [
+            'payment_method' => 'TEMPO_TOP',
+            'status' => 'MENUNGGU_VERIFIKASI',
+        ]);
+
+        $order = \App\Models\Order::where('user_id', $klien->id)->first();
+        $response->assertRedirect(route('klien.pesanan.show', $order->id));
+
+        // Test show order tracking page
+        $showResponse = $this->actingAs($klien)->get(route('klien.pesanan.show', $order->id));
+        $showResponse->assertStatus(200);
+    }
+
+    public function test_klien_order_double_submission_is_prevented(): void
+    {
+        $koordinator = User::factory()->create([
+            'role' => 'KOORDINATOR',
+            'is_active' => true,
+        ]);
+
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'company_name' => 'PT Resto Sejahtera',
+            'is_active' => true,
+        ]);
+
+        $product = \App\Models\Product::create([
+            'sku' => 'GPA-VGT-KL01',
+            'name' => 'Kailan Baby',
+            'unit' => 'kg',
+            'grade' => 'Grade A',
+            'base_price' => 18000.00,
+            'minimum_order' => 5.00,
+            'is_active' => true,
+        ]);
+
+        \App\Models\HarvestBatch::create([
+            'product_id' => $product->id,
+            'source_type' => 'PETANI_BINAAN',
+            'supplier_name' => 'Kelompok Tani Lembang',
+            'batch_date' => now()->toDateString(),
+            'initial_quantity' => 500.00,
+            'available_quantity' => 500.00,
+            'inputted_by' => $koordinator->id,
+        ]);
+
+        $payload = [
+            'submission_token' => 'unique-token-test-1234',
+            'target_delivery_date' => now()->addDays(2)->format('Y-m-d'),
+            'delivery_address' => 'Gudang Utama Resto',
+            'payment_method' => 'TEMPO_TOP',
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'quantity' => 25,
+                ],
+            ],
+        ];
+
+        // Pengajuan pertama
+        $response1 = $this->actingAs($klien)->post('/klien/pesanan', $payload);
+        $order = \App\Models\Order::where('user_id', $klien->id)->first();
+        $this->assertNotNull($order);
+        $response1->assertRedirect(route('klien.pesanan.show', $order->id));
+
+        // Pengajuan kedua dengan token sama (misal: double click)
+        $response2 = $this->actingAs($klien)->post('/klien/pesanan', $payload);
+        $response2->assertRedirect(route('klien.pesanan.show', $order->id));
+
+        // Pengajuan ketiga dengan token berbeda tapi item dan tanggal identik (misal: back browser lalu submit ulang)
+        $payloadWithNewToken = array_merge($payload, ['submission_token' => 'new-token-5678']);
+        $response3 = $this->actingAs($klien)->post('/klien/pesanan', $payloadWithNewToken);
+        $response3->assertRedirect(route('klien.pesanan.show', $order->id));
+
+        // Pastikan pesanan di database tetap HANYA 1 (tidak duplikat)
+        $this->assertEquals(1, \App\Models\Order::where('user_id', $klien->id)->count());
+    }
+
+    public function test_sekretaris_can_approve_order_to_menunggu_pembayaran(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $sekretaris = User::factory()->create([
+            'role' => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $koordinator = User::factory()->create([
+            'role' => 'KOORDINATOR',
+            'is_active' => true,
+        ]);
+
+        $product = \App\Models\Product::create([
+            'sku' => 'GPA-VGT-RMN02',
+            'name' => 'Selada Romaine B',
+            'unit' => 'kg',
+            'grade' => 'Grade A',
+            'base_price' => 14000.00,
+            'minimum_order' => 10.00,
+            'is_active' => true,
+        ]);
+
+        \App\Models\HarvestBatch::create([
+            'product_id' => $product->id,
+            'source_type' => 'PETANI_BINAAN',
+            'supplier_name' => 'Kelompok Tani Panundaan',
+            'batch_date' => now()->toDateString(),
+            'initial_quantity' => 500.00,
+            'available_quantity' => 500.00,
+            'inputted_by' => $koordinator->id,
+        ]);
+
+        $order = \App\Models\Order::create([
+            'order_number' => 'ORD-GPA-202610-9999',
+            'user_id' => $klien->id,
+            'target_delivery_date' => now()->addDays(2)->toDateString(),
+            'delivery_address' => 'Jl. Test No. 1',
+            'grand_total' => 280000.00,
+            'status' => 'MENUNGGU_VERIFIKASI',
+        ]);
+
+        \App\Models\OrderItem::create([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'ordered_qty' => 20.00,
+            'unit_price' => 14000.00,
+            'subtotal' => 280000.00,
+        ]);
+
+        $response = $this->actingAs($sekretaris)->post("/sekretaris/verifikasi/{$order->id}/setujui");
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'MENUNGGU_PEMBAYARAN',
+            'verified_by' => $sekretaris->id,
+        ]);
+    }
+
+    public function test_klien_can_upload_payment_proof_with_valid_status(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $invoice = \App\Models\Invoice::create([
+            'invoice_number' => 'INV-TEST-001',
+            'user_id' => $klien->id,
+            'period_start' => now()->subDays(15)->toDateString(),
+            'period_end' => now()->toDateString(),
+            'subtotal_amount' => 5000000.00,
+            'grand_total' => 5000000.00,
+            'due_date' => now()->addDays(15)->toDateString(),
+            'status' => 'UNPAID',
+        ]);
+
+        $response = $this->actingAs($klien)->post('/klien/bukti-pembayaran', [
+            'invoice_po' => $invoice->invoice_number,
+            'amount' => 5000000,
+            'sender_bank' => 'BCA',
+            'sender_account' => '0821-1234-5678',
+            'reference' => 'TRX-123456',
+            'transfer_at' => now()->format('d/m/Y H:i'),
+            'note' => 'Pelunasan tagihan tempo konsolidasi',
+        ]);
+
+        $response->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('payments', [
+            'invoice_id' => $invoice->id,
+            'status' => 'MENUNGGU_VERIFIKASI',
+            'payment_reference' => 'TRX-123456',
+        ]);
+    }
+
+    public function test_klien_can_view_orders_print_rekap_pdf(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($klien)->get(route('klien.pesanan.print-rekap'));
+        $response->assertStatus(200);
+        $response->assertSee('REKAPITULASI RESMI TRANSAKSI PEMESANAN');
+        $response->assertSee('GREEN PASUNDAN AGRICULTURE');
+    }
+
+    public function test_klien_can_view_documents_print_rekap_pdf(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($klien)->get(route('klien.dokumen.print-rekap'));
+        $response->assertStatus(200);
+        $response->assertSee('REKAPITULASI RESMI FAKTUR KONSOLIDASI');
+        $response->assertSee('GREEN PASUNDAN AGRICULTURE');
+    }
+
+    public function test_klien_can_export_orders_csv(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($klien)->get(route('klien.pesanan.export'));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
+    }
+
+    public function test_klien_can_export_documents_csv(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($klien)->get(route('klien.dokumen.export'));
+        $response->assertStatus(200);
+        $this->assertStringContainsString('text/csv', (string) $response->headers->get('content-type'));
+    }
+
+    public function test_regular_client_sees_b2b_contract_invitation_banner(): void
+    {
+        $regulerClient = User::factory()->create([
+            'role'        => 'KLIEN',
+            'client_type' => 'REGULER',
+            'is_active'   => true,
+        ]);
+
+        $response = $this->actingAs($regulerClient)->get(route('klien.dashboard'));
+        $response->assertStatus(200);
+        $response->assertSee('Tingkatkan Akun ke Kemitraan B2B Kontrak Resmi');
+        $response->assertSee('Ajukan Kontrak Kemitraan B2B');
+    }
+
+    public function test_regular_client_can_propose_b2b_contract_and_direktur_approves(): void
+    {
+        $regulerClient = User::factory()->create([
+            'role'        => 'KLIEN',
+            'client_type' => 'REGULER',
+            'is_active'   => true,
+        ]);
+
+        $direktur = User::factory()->create([
+            'role'      => 'DIREKTUR',
+            'is_active' => true,
+        ]);
+
+        $product = \App\Models\Product::create([
+            'sku'           => 'GPA-VGT-TMT99',
+            'name'          => 'Tomat Organik Spesial',
+            'unit'          => 'kg',
+            'grade'         => 'Grade A',
+            'base_price'    => 20000.00,
+            'minimum_order' => 10.00,
+            'is_active'     => true,
+        ]);
+
+        // 1. Klien reguler mengajukan kontrak B2B
+        $response = $this->actingAs($regulerClient)->post(route('klien.pengajuan-kontrak'), [
+            'product_id'                 => $product->id,
+            'committed_volume_per_cycle' => 200,
+            'top_days'                   => 30,
+        ]);
+
+        $response->assertRedirect(route('klien.dashboard'));
+        $response->assertSessionHas('success');
+
+        $contract = \App\Models\Contract::where('user_id', $regulerClient->id)->first();
+        $this->assertNotNull($contract);
+        $this->assertEquals('PENDING_APPROVAL', $contract->status);
+
+        // 2. Klien melihat banner status pending di dasbor
+        $dashResponse = $this->actingAs($regulerClient)->get(route('klien.dashboard'));
+        $dashResponse->assertStatus(200);
+        $dashResponse->assertSee('Pengajuan Kontrak Kemitraan B2B Sedang Ditinjau Direktur Utama');
+        $dashResponse->assertSee($contract->contract_number);
+
+        // 3. Direktur menyetujui kontrak kemitraan
+        $approveResponse = $this->actingAs($direktur)->post(route('direktur.kontrak.approve', $contract->id));
+        $approveResponse->assertSessionHas('success');
+
+        $contract->refresh();
+        $this->assertEquals('ACTIVE', $contract->status);
+        $this->assertEquals($direktur->id, $contract->approved_by);
+
+        // 4. Client otomatis ter-upgrade menjadi B2B_KONTRAK
+        $regulerClient->refresh();
+        $this->assertEquals('B2B_KONTRAK', $regulerClient->client_type);
+    }
+
+    public function test_klien_can_submit_contract_proposal_with_custom_proposed_price(): void
+    {
+        $regulerClient = User::factory()->create([
+            'role'        => 'KLIEN',
+            'client_type' => 'REGULER',
+            'is_active'   => true,
+            'phone'       => '081298765432',
+        ]);
+
+        $product = \App\Models\Product::create([
+            'sku'           => 'GPA-PRC-001',
+            'name'          => 'Brokoli Organik Lembang',
+            'unit'          => 'kg',
+            'grade'         => 'Grade A',
+            'base_price'    => 24000.00,
+            'minimum_order' => 10.00,
+            'is_active'     => true,
+        ]);
+
+        $response = $this->actingAs($regulerClient)->post(route('klien.pengajuan-kontrak'), [
+            'product_id'                 => $product->id,
+            'committed_volume_per_cycle' => 500,
+            'proposed_price_per_kg'      => 21000,
+            'top_days'                   => 30,
+        ]);
+
+        $response->assertRedirect(route('klien.dashboard'));
+        $response->assertSessionHas('success');
+
+        $contract = \App\Models\Contract::where('user_id', $regulerClient->id)->first();
+        $this->assertNotNull($contract);
+        $this->assertEquals(21000.00, (float) $contract->fixed_price_per_kg);
+        $this->assertEquals('PENDING_APPROVAL', $contract->status);
+    }
+
+    public function test_regular_client_sees_rejection_banner_when_contract_proposal_is_rejected_by_direktur(): void
+    {
+        $regulerClient = User::factory()->create([
+            'role'        => 'KLIEN',
+            'client_type' => 'REGULER',
+            'is_active'   => true,
+            'phone'       => '081298765432',
+        ]);
+
+        $direktur = User::factory()->create([
+            'role'      => 'DIREKTUR',
+            'is_active' => true,
+        ]);
+
+        $product = \App\Models\Product::create([
+            'sku'           => 'GPA-REJ-001',
+            'name'          => 'Selada Romaine Segar',
+            'unit'          => 'kg',
+            'grade'         => 'Grade A',
+            'base_price'    => 18000.00,
+            'minimum_order' => 10.00,
+            'is_active'     => true,
+        ]);
+
+        // 1. Klien mengajukan proposal
+        $this->actingAs($regulerClient)->post(route('klien.pengajuan-kontrak'), [
+            'product_id'                 => $product->id,
+            'committed_volume_per_cycle' => 100,
+            'proposed_price_per_kg'      => 12000,
+            'top_days'                   => 30,
+        ]);
+
+        $contract = \App\Models\Contract::where('user_id', $regulerClient->id)->latest()->first();
+        $this->assertNotNull($contract);
+
+        // 2. Direktur menolak proposal dengan alasan spesifik
+        $rejectionReason = 'Margin harga Rp 12.000/kg terlalu rendah dari HPP kebun dan volume 100kg belum mencapai batas minimal kelayakan.';
+        $rejectResponse = $this->actingAs($direktur)->post(route('direktur.kontrak.reject', $contract->id), [
+            'rejection_reason' => $rejectionReason,
+        ]);
+        $rejectResponse->assertSessionHas('success');
+
+        $contract->refresh();
+        $this->assertEquals('TERMINATED', $contract->status);
+
+        // 3. Klien membuka dasbor dan melihat pemberitahuan penolakan beserta alasan Direktur
+        $dashResponse = $this->actingAs($regulerClient)->get(route('klien.dashboard'));
+        $dashResponse->assertStatus(200);
+        $dashResponse->assertSee('Pengajuan Kontrak Ditolak');
+        $dashResponse->assertSee($contract->contract_number);
+        $dashResponse->assertSee($rejectionReason);
+        $dashResponse->assertSee('Ajukan Proposal Baru');
+
+        // 4. Klien mengajukan proposal baru dengan penyesuaian harga & volume
+        $resubmitResponse = $this->actingAs($regulerClient)->post(route('klien.pengajuan-kontrak'), [
+            'product_id'                 => $product->id,
+            'committed_volume_per_cycle' => 300,
+            'proposed_price_per_kg'      => 16000,
+            'top_days'                   => 30,
+        ]);
+        $resubmitResponse->assertRedirect(route('klien.dashboard'));
+
+        // 5. Notifikasi penolakan lama bersih dan digantikan banner pengajuan sedang ditinjau
+        $dashResponseAfter = $this->actingAs($regulerClient)->get(route('klien.dashboard'));
+        $dashResponseAfter->assertStatus(200);
+        $dashResponseAfter->assertDontSee('Pengajuan Kontrak Ditolak');
+        $dashResponseAfter->assertSee('Pengajuan Kontrak Kemitraan B2B Sedang Ditinjau Direktur Utama');
+    }
+
+    public function test_klien_order_detail_shows_bayar_sekarang_when_status_menunggu_pembayaran(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-TEST-1001',
+            'user_id'              => $klien->id,
+            'order_source'         => 'WEB_PORTAL',
+            'target_delivery_date' => now()->addDays(2),
+            'delivery_address'     => 'Jl. Raya Mitra No. 1, Jakarta',
+            'status'               => 'MENUNGGU_PEMBAYARAN',
+            'grand_total'          => 1500000,
+        ]);
+
+        $response = $this->actingAs($klien)->get(route('klien.pesanan.show', $order->id));
+        $response->assertStatus(200);
+        $response->assertSee('Bayar Sekarang');
+        $response->assertSee('Menunggu Pembayaran');
+    }
+
+    public function test_klien_can_view_payment_proof_with_payment_channels(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-TEST-1002',
+            'user_id'              => $klien->id,
+            'order_source'         => 'WEB_PORTAL',
+            'target_delivery_date' => now()->addDays(2),
+            'delivery_address'     => 'Jl. Industri Mitra No. 5, Bogor',
+            'status'               => 'MENUNGGU_PEMBAYARAN',
+            'grand_total'          => 2000000,
+        ]);
+
+        $invoice = Invoice::create([
+            'invoice_number' => 'INV-TEST-001',
+            'user_id' => $klien->id,
+            'subtotal_amount' => 2000000,
+            'grand_total' => 2000000,
+            'status' => 'UNPAID',
+            'period_start' => now(),
+            'period_end' => now()->addDays(7),
+            'due_date' => now()->addDays(30),
+        ]);
+
+        $response = $this->actingAs($klien)->get(route('klien.bukti-pembayaran', ['tagihan' => $invoice->invoice_number, 'order_id' => $order->id]));
+        $response->assertStatus(200);
+        $response->assertSee('Pilih Kanal Pembayaran Resmi GPA');
+        $response->assertSee('Bank BCA');
+        $response->assertSee('QRIS');
+        $response->assertSee('Pelacakan Status Verifikasi');
+        $response->assertSee('Live Pipeline');
+        $response->assertSee('xl:sticky');
+        $response->assertSee('xl:top-[84px]');
+    }
+
+    public function test_klien_order_detail_shows_completed_banner_and_valid_pod_when_order_is_selesai(): void
+    {
+        $klien = User::factory()->create([
+            'role'        => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active'   => true,
+        ]);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-TEST-9999',
+            'user_id'              => $klien->id,
+            'order_source'         => 'WEB_PORTAL',
+            'target_delivery_date' => now(),
+            'delivery_address'     => 'Dock Bongkar Sentra Klien',
+            'status'               => 'SELESAI',
+            'grand_total'          => 1500000,
+            'received_by_name'     => 'Pak Joko Dock Head',
+            'arrival_time'         => now(),
+            'pod_photo_url'        => 'uploads/pod/pod_test.jpg',
+            'surat_jalan_number'   => 'SJ-GPA-202610-9999',
+        ]);
+
+        $response = $this->actingAs($klien)->get(route('klien.pesanan.show', $order->id));
+        $response->assertStatus(200);
+        $response->assertSee('Transaksi Tuntas &bull; Barang Diterima', false);
+        $response->assertSee('Pak Joko Dock Head');
+        $response->assertSee('SJ-GPA-202610-9999');
+        $response->assertSee('uploads/pod/pod_test.jpg');
+    }
+
+    public function test_pod_photo_asset_url_accessor_formats_url_safely(): void
+    {
+        $order1 = new Order(['pod_photo_url' => 'uploads/pod/sample.jpg']);
+        $this->assertStringContainsString('uploads/pod/sample.jpg', $order1->pod_photo_asset_url);
+        $this->assertStringNotContainsString('storage/uploads', $order1->pod_photo_asset_url);
+
+        $order2 = new Order(['pod_photo_url' => 'pod/sample2.jpg']);
+        $this->assertStringContainsString('storage/pod/sample2.jpg', $order2->pod_photo_asset_url);
+    }
+
+    public function test_klien_sees_rejection_notification_when_payment_verification_is_rejected(): void
+    {
+        $klien = User::factory()->create([
+            'role'        => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active'   => true,
+        ]);
+
+        $sekretaris = User::factory()->create([
+            'role'      => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-REJECT-001',
+            'user_id'              => $klien->id,
+            'order_source'         => 'WEB_PORTAL',
+            'target_delivery_date' => now()->addDays(2),
+            'delivery_address'     => 'Dock Sentra Klien',
+            'status'               => 'MENUNGGU_PEMBAYARAN',
+            'grand_total'          => 2500000,
+        ]);
+
+        $invoice = Invoice::create([
+            'invoice_number'  => 'INV-REJECT-001',
+            'user_id'         => $klien->id,
+            'subtotal_amount' => 2500000,
+            'grand_total'     => 2500000,
+            'status'          => 'UNPAID',
+            'period_start'    => now()->subDays(5),
+            'period_end'      => now(),
+            'due_date'        => now()->addDays(25),
+        ]);
+
+        $order->update(['invoice_id' => $invoice->id]);
+
+        $payment = Payment::create([
+            'order_id'          => $order->id,
+            'invoice_id'        => $invoice->id,
+            'payment_reference' => 'PAY-TRANSFER-777',
+            'payment_method'    => 'TRANSFER_MANUAL',
+            'amount'            => 2500000,
+            'status'            => 'MENUNGGU_VERIFIKASI',
+            'proof_url'         => 'payments/proof_invalid.jpg',
+            'paid_at'           => now(),
+        ]);
+
+        // Sekretaris menolak bukti pembayaran dengan catatan
+        $rejectionNote = 'Nominal transfer Rp 2.000.000 tidak sesuai tagihan Rp 2.500.000.';
+        $rejectResponse = $this->actingAs($sekretaris)->post("/sekretaris/pembayaran/{$payment->id}/tolak", [
+            'note' => $rejectionNote,
+        ]);
+        $rejectResponse->assertRedirect();
+
+        $payment->refresh();
+        $this->assertEquals('DITOLAK', $payment->status);
+        $this->assertEquals($rejectionNote, $payment->verification_note);
+
+        // Klien mengakses Dashboard: harus ada banner penolakan dan instruksi re-upload
+        $dashResponse = $this->actingAs($klien)->get(route('klien.dashboard'));
+        $dashResponse->assertStatus(200);
+        $dashResponse->assertSee('Bukti Pembayaran Ditolak Verifikator');
+        $dashResponse->assertSee($rejectionNote);
+        $dashResponse->assertSee('Unggah Ulang Bukti Bayar');
+
+        // Klien mengakses Form Bukti Pembayaran: harus ada alert penolakan dan form aktif
+        $proofResponse = $this->actingAs($klien)->get(route('klien.bukti-pembayaran', ['tagihan' => $invoice->invoice_number]));
+        $proofResponse->assertStatus(200);
+        $proofResponse->assertSee('Verifikasi Pembayaran Ditolak');
+        $proofResponse->assertSee($rejectionNote);
+        $proofResponse->assertSee('PAY-TRANSFER-777');
+        $proofResponse->assertSee('Silakan Unggah Ulang Bukti Pembayaran');
+
+        // Klien mengakses Detail Pesanan: harus ada banner penolakan
+        $orderResponse = $this->actingAs($klien)->get(route('klien.pesanan.show', $order->id));
+        $orderResponse->assertStatus(200);
+        $orderResponse->assertSee('Verifikasi Pembayaran Ditolak');
+        $orderResponse->assertSee($rejectionNote);
+        $orderResponse->assertSee('Unggah Ulang Bukti Pembayaran');
+
+        // Klien mengakses Daftar Pesanan: status badge harus menunjukkan bukti bayar ditolak
+        $ordersResponse = $this->actingAs($klien)->get(route('klien.pesanan.index'));
+        $ordersResponse->assertStatus(200);
+        $ordersResponse->assertSee('Bukti Bayar Ditolak');
+
+        // Klien mengakses Pusat Dokumen: status tagihan menunjukkan bukti bayar ditolak
+        $docsResponse = $this->actingAs($klien)->get(route('klien.dokumen'));
+        $docsResponse->assertStatus(200);
+        $docsResponse->assertSee('Bukti Bayar Ditolak');
+        $docsResponse->assertSee('Unggah Ulang Bukti');
+    }
+
+    public function test_payment_proof_view_does_not_throw_undefined_selected_po_and_shows_locked_when_paid(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $sekretaris = User::factory()->create([
+            'role' => 'SEKRETARIS',
+            'is_active' => true,
+        ]);
+
+        $order = \App\Models\Order::create([
+            'order_number' => 'ORD-GPA-202610-8888',
+            'user_id' => $klien->id,
+            'target_delivery_date' => now()->addDays(2)->toDateString(),
+            'delivery_address' => 'Jl. Kebun Raya No. 10',
+            'grand_total' => 1500000.00,
+            'status' => 'LUNAS',
+        ]);
+
+        $invoice = \App\Models\Invoice::create([
+            'invoice_number' => 'INV-GPA-202610-8888',
+            'user_id' => $klien->id,
+            'subtotal_amount' => 1500000.00,
+            'grand_total' => 1500000.00,
+            'status' => 'PAID',
+            'period_start' => now()->startOfMonth(),
+            'period_end' => now()->endOfMonth(),
+            'due_date' => now()->addDays(30),
+        ]);
+
+        $order->update(['invoice_id' => $invoice->id]);
+
+        $payment = \App\Models\Payment::create([
+            'invoice_id' => $invoice->id,
+            'order_id' => $order->id,
+            'payment_reference' => 'PAY-VERIFIED-888',
+            'payment_method' => 'TRANSFER_BANK',
+            'amount' => 1500000.00,
+            'status' => 'LUNAS',
+            'paid_at' => now(),
+            'verified_by' => $sekretaris->id,
+            'verified_at' => now(),
+            'verification_note' => 'Pembayaran lunas sesuai mutasi rekening koran.',
+        ]);
+
+        // 1. Akses tanpa parameter tagihan
+        $resp1 = $this->actingAs($klien)->get(route('klien.bukti-pembayaran'));
+        $resp1->assertStatus(200);
+        $resp1->assertSee('Faktur Ini Telah Lunas &amp; Diverifikasi Sah oleh Sekretariat GPA', false);
+        $resp1->assertSee('Pengesahan Pembayaran Lunas (Status Terkunci)');
+
+        // 2. Akses dengan parameter nomor order (ORD-...)
+        $resp2 = $this->actingAs($klien)->get(route('klien.bukti-pembayaran', ['tagihan' => $order->order_number]));
+        $resp2->assertStatus(200);
+        $resp2->assertSee('Faktur Ini Telah Lunas &amp; Diverifikasi Sah oleh Sekretariat GPA', false);
+
+        // 3. Akses dengan parameter invoice_number
+        $resp3 = $this->actingAs($klien)->get(route('klien.bukti-pembayaran', ['tagihan' => $invoice->invoice_number]));
+        $resp3->assertStatus(200);
+        $resp3->assertSee('Faktur Ini Telah Lunas &amp; Diverifikasi Sah oleh Sekretariat GPA', false);
+    }
+
+    public function test_klien_first_time_payment_proof_page_does_not_show_pending_banner_when_no_proof_uploaded(): void
+    {
+        $klien = User::factory()->create([
+            'role'        => 'KLIEN',
+            'client_type' => 'REGULER',
+            'is_active'   => true,
+        ]);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-TEST-FIRST-TIME',
+            'user_id'              => $klien->id,
+            'order_source'         => 'WEB_PORTAL',
+            'delivery_address'     => 'Jl. Raya Pasundan No. 42, Bandung',
+            'status'               => 'MENUNGGU_PEMBAYARAN',
+            'grand_total'          => 498400.00,
+            'payment_method'       => 'TRANSFER_BANK',
+            'target_delivery_date' => now()->addDays(2),
+        ]);
+
+        $invoice = \App\Models\Invoice::create([
+            'invoice_number'  => 'INV-GPA-202611-0002',
+            'user_id'         => $klien->id,
+            'subtotal_amount' => 440000.00,
+            'grand_total'     => 498400.00,
+            'status'          => 'UNPAID',
+            'period_start'    => now(),
+            'period_end'      => now()->addDays(2),
+            'due_date'        => now()->addDays(30),
+        ]);
+
+        $order->update(['invoice_id' => $invoice->id]);
+
+        // Payment placeholder dibuat saat checkout tanpa berkas bukti bayar
+        $placeholderPayment = \App\Models\Payment::create([
+            'order_id'          => $order->id,
+            'invoice_id'        => $invoice->id,
+            'payment_reference' => 'PAY-6AF4722EB886C',
+            'payment_method'    => 'TRANSFER_BANK',
+            'amount'            => 498400.00,
+            'proof_url'         => null,
+            'paid_at'           => null,
+            'status'            => 'MENUNGGU_VERIFIKASI',
+        ]);
+
+        $response = $this->actingAs($klien)->get(route('klien.bukti-pembayaran', ['tagihan' => $invoice->invoice_number]));
+        $response->assertStatus(200);
+
+        // Tidak boleh menampilkan banner bukti terkirim jika berkas bukti belum pernah diunggah
+        $response->assertDontSee('Sedang Dalam Antrean Verifikasi Kasir / Sekretariat GPA');
+        $response->assertDontSee('Bukti Pembayaran Terkirim');
+
+        // View data harus menunjukkan belum bayar dan stage 1
+        $this->assertNull($response->viewData('pendingPaymentForSelected'));
+        $invoices = $response->viewData('invoices');
+        $this->assertNotEmpty($invoices);
+        $this->assertFalse($invoices[0]['is_pending']);
+        $this->assertEquals(1, $invoices[0]['verification_stage']);
+        $this->assertEquals('BELUM_BAYAR', $invoices[0]['verification_status']);
+        $this->assertEquals('Menunggu Pembayaran', $invoices[0]['status_chip']);
+
+        // Ketika bukti transfer diunggah (simulasi upload bukti bayar)
+        $placeholderPayment->update([
+            'proof_url' => 'payments/bukti_transfer_sample.jpg',
+            'paid_at'   => now(),
+        ]);
+
+        $responseWithProof = $this->actingAs($klien)->get(route('klien.bukti-pembayaran', ['tagihan' => $invoice->invoice_number]));
+        $responseWithProof->assertStatus(200);
+
+        // Banner antrean verifikasi sekarang HARUS muncul karena bukti sudah diunggah
+        $responseWithProof->assertSee('Sedang Dalam Antrean Verifikasi Kasir / Sekretariat GPA');
+        $responseWithProof->assertSee('Bukti Pembayaran Terkirim');
+        $this->assertNotNull($responseWithProof->viewData('pendingPaymentForSelected'));
+        $invoicesAfterUpload = $responseWithProof->viewData('invoices');
+        $this->assertTrue($invoicesAfterUpload[0]['is_pending']);
+        $this->assertEquals(2, $invoicesAfterUpload[0]['verification_stage']);
+        $this->assertEquals('MENUNGGU_VERIFIKASI', $invoicesAfterUpload[0]['verification_status']);
+    }
+
+    public function test_payment_proof_store_rejects_upload_for_already_paid_invoice(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $invoice = \App\Models\Invoice::create([
+            'invoice_number' => 'INV-GPA-PAID-999',
+            'user_id' => $klien->id,
+            'subtotal_amount' => 1000000.00,
+            'grand_total' => 1000000.00,
+            'status' => 'PAID',
+            'period_start' => now()->startOfMonth(),
+            'period_end' => now()->endOfMonth(),
+            'due_date' => now()->addDays(30),
+        ]);
+
+        $response = $this->actingAs($klien)->postJson(route('klien.bukti-pembayaran.store'), [
+            'invoice_po' => $invoice->invoice_number,
+            'amount' => 1000000,
+            'sender_bank' => 'BCA',
+            'sender_account' => '1234567890',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJson([
+            'success' => false,
+        ]);
+        $this->assertStringContainsString('sudah lunas dan terverifikasi sah', $response->json('message'));
+    }
+
+    public function test_reuploading_payment_proof_preserves_payment_id_and_updates_data(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $invoice = \App\Models\Invoice::create([
+            'invoice_number' => 'INV-GPA-EDIT-001',
+            'user_id' => $klien->id,
+            'subtotal_amount' => 500000.00,
+            'grand_total' => 500000.00,
+            'status' => 'UNPAID',
+            'period_start' => now()->startOfMonth(),
+            'period_end' => now()->endOfMonth(),
+            'due_date' => now()->addDays(30),
+        ]);
+
+        // 1. Unggah pertama kali
+        $firstUpload = $this->actingAs($klien)->postJson(route('klien.bukti-pembayaran.store'), [
+            'invoice_po' => $invoice->invoice_number,
+            'amount' => 500000,
+            'sender_bank' => 'BCA',
+            'sender_account' => '111-222-333',
+            'reference' => 'REF-ORIGINAL-01',
+            'note' => 'Catatan pertama',
+        ]);
+
+        $firstUpload->assertStatus(200);
+        $paymentId = $firstUpload->json('payment_id');
+        $this->assertNotNull($paymentId);
+
+        // 2. Edit / unggah ulang bukti pembayaran untuk invoice yang sama
+        $secondUpload = $this->actingAs($klien)->postJson(route('klien.bukti-pembayaran.store'), [
+            'invoice_po' => $invoice->invoice_number,
+            'payment_id' => $paymentId,
+            'amount' => 500000,
+            'sender_bank' => 'Bank Mandiri',
+            'sender_account' => '999-888-777',
+            'reference' => 'REF-UPDATED-02',
+            'note' => 'Catatan revisi klien',
+        ]);
+
+        $secondUpload->assertStatus(200);
+        $updatedPaymentId = $secondUpload->json('payment_id');
+
+        // Pastikan ID pembayaran tetap persis sama (tidak membuat record baru)
+        $this->assertEquals($paymentId, $updatedPaymentId);
+
+        // Pastikan data di database terbarukan
+        $this->assertDatabaseHas('payments', [
+            'id' => $paymentId,
+            'invoice_id' => $invoice->id,
+            'payment_reference' => 'REF-UPDATED-02',
+            'payment_method' => 'TRANSFER_BANK',
+            'status' => 'MENUNGGU_VERIFIKASI',
+            'verification_note' => 'Catatan revisi klien',
+        ]);
+
+        // Pastikan jumlah total pembayaran untuk invoice ini hanya 1
+        $this->assertEquals(1, \App\Models\Payment::where('invoice_id', $invoice->id)->count());
+    }
+
+    public function test_storage_route_serves_uploaded_payment_proof(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+        $fakeFile = \Illuminate\Http\UploadedFile::fake()->image('test_transfer.jpg');
+        $path = $fakeFile->store('payments', 'public');
+
+        $response = $this->get('/storage/' . $path);
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Type', 'image/jpeg');
+    }
+
+    public function test_klien_can_dismiss_rejection_banner(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-DISMISS-001',
+            'user_id'              => $klien->id,
+            'target_delivery_date' => now()->addDays(2),
+            'delivery_address'     => 'Jl. Raya Lembang No. 12',
+            'status'               => 'BATAL',
+            'grand_total'          => 500000,
+            'updated_at'           => now(),
+        ]);
+
+        \App\Models\Payment::create([
+            'order_id'          => $order->id,
+            'payment_reference' => 'REJ-DISMISS-001',
+            'payment_method'    => 'TRANSFER_BANK',
+            'amount'            => 500000,
+            'status'            => 'DITOLAK',
+            'verification_note' => 'Stok kebun tidak mencukupi untuk SLA hari ini',
+        ]);
+
+        // 1. Dasbor menampilkan banner penolakan
+        $response = $this->actingAs($klien)->get(route('klien.dashboard'));
+        $response->assertStatus(200);
+        $response->assertSee('Pengajuan Pesanan Dibatalkan');
+        $response->assertSee('Stok kebun tidak mencukupi');
+
+        // 2. Klien menutup notifikasi via endpoint dismiss
+        $dismissRes = $this->actingAs($klien)->postJson(route('klien.notifikasi.dismiss'), [
+            'key' => 'rejected_order_' . $order->id,
+        ]);
+        $dismissRes->assertStatus(200);
+        $dismissRes->assertJson(['success' => true]);
+        $dismissRes->assertSessionHas('dismissed_banners.rejected_order_' . $order->id, true);
+
+        // 3. Dasbor selanjutnya tidak menampilkan banner tersebut lagi
+        $responseAfter = $this->actingAs($klien)
+            ->withSession(['dismissed_banners' => ['rejected_order_' . $order->id => true]])
+            ->get(route('klien.dashboard'));
+        $responseAfter->assertStatus(200);
+        $responseAfter->assertDontSee('Pengajuan Pesanan Dibatalkan');
+    }
+
+    public function test_klien_does_not_see_old_rejected_order_when_newer_order_exists(): void
+    {
+        $klien = User::factory()->create([
+            'role' => 'KLIEN',
+            'client_type' => 'B2B_KONTRAK',
+            'is_active' => true,
+        ]);
+
+        $oldOrder = Order::create([
+            'order_number'         => 'ORD-OLD-REJECT-001',
+            'user_id'              => $klien->id,
+            'target_delivery_date' => now()->addDays(2),
+            'delivery_address'     => 'Jl. Raya Lembang No. 12',
+            'status'               => 'BATAL',
+            'grand_total'          => 500000,
+            'rejection_reason'     => 'Alasan lama',
+            'updated_at'           => now(),
+        ]);
+
+        // Klien telah membuat pesanan baru setelahnya
+        Order::create([
+            'order_number'         => 'ORD-NEW-SUCCESS-002',
+            'user_id'              => $klien->id,
+            'target_delivery_date' => now()->addDays(2),
+            'delivery_address'     => 'Jl. Raya Lembang No. 12',
+            'status'               => 'MENUNGGU_VERIFIKASI',
+            'grand_total'          => 600000,
+            'updated_at'           => now(),
+        ]);
+
+        // Dasbor tidak boleh menampilkan banner penolakan lama karena klien sudah membuat pesanan baru
+        $response = $this->actingAs($klien)->get(route('klien.dashboard'));
+        $response->assertStatus(200);
+        $response->assertDontSee('Pengajuan Pesanan Dibatalkan');
+    }
+
+    public function test_klien_can_view_updated_vehicle_plate_number(): void
+    {
+        $klien = User::factory()->create([
+            'role'        => 'KLIEN',
+            'client_type' => 'REGULER',
+            'is_active'   => true,
+        ]);
+
+        $driver = User::factory()->create([
+            'name'      => 'Joko Driver',
+            'role'      => 'ARMADA',
+            'is_active' => true,
+        ]);
+
+        $order = Order::create([
+            'order_number'         => 'ORD-PLATE-CHECK-001',
+            'user_id'              => $klien->id,
+            'driver_id'            => $driver->id,
+            'status'               => 'DALAM_PENGIRIMAN',
+            'surat_jalan_number'   => 'SJ-202611-9988',
+            'vehicle_plate_number' => 'D 8192 YZ',
+            'target_delivery_date' => now()->addDays(1),
+            'delivery_address'     => 'Jl. Buah Batu No. 100',
+            'grand_total'          => 750000,
+        ]);
+
+        // Klien memeriksa detail pesanan
+        $response = $this->actingAs($klien)->get(route('klien.pesanan.show', $order->id));
+        $response->assertStatus(200);
+        $response->assertSee('D 8192 YZ');
+        $response->assertSee('Joko Driver');
+
+        // Klien memeriksa daftar riwayat pesanan
+        $responseIndex = $this->actingAs($klien)->get(route('klien.pesanan.index'));
+        $responseIndex->assertStatus(200);
+        $responseIndex->assertSee('D 8192 YZ');
+    }
+}
+
+
+
+

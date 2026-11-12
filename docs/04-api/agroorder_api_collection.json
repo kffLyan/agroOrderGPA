@@ -1,0 +1,728 @@
+{
+  "info": {
+    "_postman_id": "a9e88d92-563b-4cd3-a162-81736b043912",
+    "name": "AgroOrder GPA - Core B2B Supply Chain API (UKK RPL 2026)",
+    "description": "Koleksi resmi pengujian endpoint transaksi, siklus rantai pasok agribisnis, verifikasi sekretaris, armada logistik, dan pelacakan PoD untuk Uji Kompetensi Keahlian (UKK) Rekayasa Perangkat Lunak 2026/2027.\n\nKoperasi Produsen Agro Green Pasundan (GPA).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01. Autentikasi & Sesi (Auth)",
+      "item": [
+        {
+          "name": "1.1 Login Pengguna (Klien / Staf)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "email",
+                  "value": "klien.sariwangi@agroorder.gpa",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "password123",
+                  "type": "text"
+                },
+                {
+                  "key": "remember",
+                  "value": "true",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            },
+            "description": "Mengautentikasi pengguna berdasarkan email dan kata sandi, serta membentuk sesi pengguna aktif berbasis peran (Klien, Sekretaris, Koordinator, Armada, Direktur)."
+          },
+          "response": [
+            {
+              "name": "Login Sukses (Redirect Dashboard)",
+              "originalRequest": {
+                "method": "POST",
+                "url": "{{baseUrl}}/login"
+              },
+              "status": "Found",
+              "code": 302,
+              "_postman_previewlanguage": "html",
+              "header": [
+                {
+                  "key": "Location",
+                  "value": "/dashboard"
+                }
+              ],
+              "body": ""
+            }
+          ]
+        },
+        {
+          "name": "1.2 Logout Pengguna",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["logout"]
+            },
+            "description": "Menghancurkan sesi pengguna aktif dan mengarahkan kembali ke halaman beranda publik."
+          },
+          "response": [
+            {
+              "name": "Logout Berhasil",
+              "status": "Found",
+              "code": 302,
+              "header": [
+                {
+                  "key": "Location",
+                  "value": "/"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02. Klien B2B - Pemesanan & Pembayaran",
+      "item": [
+        {
+          "name": "2.1 Daftar Riwayat Pesanan (Filtered)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "text/html,application/xhtml+xml"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/pesanan?status=semua",
+              "host": ["{{baseUrl}}"],
+              "path": ["pesanan"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "semua",
+                  "description": "Filter status siklus: semua, verifikasi, bayar, lunas, kemas, kirim, selesai, batal"
+                }
+              ]
+            },
+            "description": "Menampilkan daftar seluruh pesanan milik klien aktif dengan Eager Loading relasi produk dan status siklus pesanan."
+          },
+          "response": [
+            {
+              "name": "Daftar Pesanan Ditemukan",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "html",
+              "body": "<!-- HTML view klien.pesanan.index -->"
+            }
+          ]
+        },
+        {
+          "name": "2.2 Checkout Pesanan Baru (Simpan PO)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "target_delivery_date",
+                  "value": "2026-11-15",
+                  "type": "text"
+                },
+                {
+                  "key": "delivery_address",
+                  "value": "Dock 2 Pasar Induk Caringin, Jl. Soekarno Hatta No. 20, Bandung",
+                  "type": "text"
+                },
+                {
+                  "key": "payment_method",
+                  "value": "TRANSFER_BANK",
+                  "type": "text"
+                },
+                {
+                  "key": "items[0][product_id]",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "items[0][ordered_qty]",
+                  "value": "100.00",
+                  "type": "text"
+                },
+                {
+                  "key": "items[1][product_id]",
+                  "value": "2",
+                  "type": "text"
+                },
+                {
+                  "key": "items[1][ordered_qty]",
+                  "value": "50.00",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/pesanan",
+              "host": ["{{baseUrl}}"],
+              "path": ["pesanan"]
+            },
+            "description": "Menyimpan purchase order (PO) baru klien secara transaksional (DB Transaction), mengunci grand total dan memicu status awal MENUNGGU_VERIFIKASI."
+          },
+          "response": [
+            {
+              "name": "Pesanan Berhasil Diajukan",
+              "status": "Found",
+              "code": 302,
+              "header": [
+                {
+                  "key": "Location",
+                  "value": "/pesanan/1"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "2.3 Detail Visual Tracking & Foto PoD",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/pesanan/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["pesanan", "1"]
+            },
+            "description": "Menampilkan detail satu pesanan, visual stepper 5 tahap pengiriman, rincian item produk, dan foto serah terima PoD."
+          },
+          "response": [
+            {
+              "name": "Tampilan Detail Pesanan",
+              "status": "OK",
+              "code": 200
+            }
+          ]
+        },
+        {
+          "name": "2.4 Unggah Bukti Pembayaran Faktur",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "order_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "payment_method",
+                  "value": "TRANSFER_BANK",
+                  "type": "text"
+                },
+                {
+                  "key": "amount",
+                  "value": "2500000",
+                  "type": "text"
+                },
+                {
+                  "key": "proof_file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bukti-pembayaran",
+              "host": ["{{baseUrl}}"],
+              "path": ["bukti-pembayaran"]
+            },
+            "description": "Mengunggah berkas foto bukti transfer bank oleh klien atas tagihan pesanan aktif."
+          },
+          "response": [
+            {
+              "name": "Bukti Berhasil Diunggah",
+              "status": "Found",
+              "code": 302
+            }
+          ]
+        },
+        {
+          "name": "2.5 Tutup Banner Notifikasi Penolakan (AJAX)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"key\": \"rejected_order_1\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/notifikasi/dismiss",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifikasi", "dismiss"]
+            },
+            "description": "Menyimpan status penutupan notifikasi penolakan ke sesi browser klien agar banner tidak muncul lagi saat refresh."
+          },
+          "response": [
+            {
+              "name": "Notifikasi Berhasil Diredam",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "body": "{\n  \"success\": true,\n  \"message\": \"Notifikasi berhasil disembunyikan.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "2.6 Ekspor Rekap Transaksi ke CSV (Streaming)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/pesanan/export?status=all",
+              "host": ["{{baseUrl}}"],
+              "path": ["pesanan", "export"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "all"
+                }
+              ]
+            },
+            "description": "Mengekspor daftar transaksi pemesanan klien ke format CSV dengan teknik streamCsv(), UTF-8 BOM, dan pemisah titik koma untuk Microsoft Excel."
+          },
+          "response": [
+            {
+              "name": "Unduhan Berkas CSV Siap",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "text/csv; charset=UTF-8"
+                },
+                {
+                  "key": "Content-Disposition",
+                  "value": "attachment; filename=\"Rekap_Pesanan_PO_Klien_20261110.csv\""
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03. Sekretariat - Verifikasi & Operasional",
+      "item": [
+        {
+          "name": "3.1 Setujui Pengajuan Pesanan PO",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/sekretaris/verifikasi/1/setujui",
+              "host": ["{{baseUrl}}"],
+              "path": ["sekretaris", "verifikasi", "1", "setujui"]
+            },
+            "description": "Sekretaris memvalidasi ketersediaan stok panen petani dan menyetujui pesanan PO klien."
+          },
+          "response": [
+            {
+              "name": "Pesanan Disetujui",
+              "status": "Found",
+              "code": 302
+            }
+          ]
+        },
+        {
+          "name": "3.2 Tolak Pengajuan Pesanan PO",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "rejection_reason",
+                  "value": "Stok panen tomat gagal tera grading A di tingkat kebun.",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sekretaris/verifikasi/1/tolak",
+              "host": ["{{baseUrl}}"],
+              "path": ["sekretaris", "verifikasi", "1", "tolak"]
+            },
+            "description": "Sekretaris membatalkan pesanan PO dengan melampirkan alasan penolakan tertulis yang akan tampil di dashboard klien."
+          },
+          "response": [
+            {
+              "name": "Pesanan Berhasil Ditolak",
+              "status": "Found",
+              "code": 302
+            }
+          ]
+        },
+        {
+          "name": "3.3 Verifikasi Pembayaran (Setujui)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/sekretaris/pembayaran/1/setujui",
+              "host": ["{{baseUrl}}"],
+              "path": ["sekretaris", "pembayaran", "1", "setujui"]
+            },
+            "description": "Sekretaris memverifikasi dana transfer telah masuk rekening kas koperasi GPA dan mengubah status menjadi LUNAS."
+          },
+          "response": [
+            {
+              "name": "Pembayaran Lunas",
+              "status": "Found",
+              "code": 302
+            }
+          ]
+        },
+        {
+          "name": "3.4 Tolak Bukti Transfer Pembayaran",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "rejection_reason",
+                  "value": "Foto struk transfer terpotong dan mutasi rekening belum terbaca.",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sekretaris/pembayaran/1/tolak",
+              "host": ["{{baseUrl}}"],
+              "path": ["sekretaris", "pembayaran", "1", "tolak"]
+            },
+            "description": "Sekretaris menolak foto bukti pembayaran yang tidak sah atau buram."
+          },
+          "response": [
+            {
+              "name": "Bukti Ditolak",
+              "status": "Found",
+              "code": 302
+            }
+          ]
+        },
+        {
+          "name": "3.5 Penerbitan Surat Jalan & Penugasan Armada",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "driver_id",
+                  "value": "4",
+                  "type": "text"
+                },
+                {
+                  "key": "vehicle_plate_number",
+                  "value": "D 8122 GPA",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sekretaris/surat-jalan/1/tugaskan-supir",
+              "host": ["{{baseUrl}}"],
+              "path": ["sekretaris", "surat-jalan", "1", "tugaskan-supir"]
+            },
+            "description": "Menerbitkan nomor Surat Jalan resmi dan menugaskan supir armada untuk pengiriman pesanan (status berubah menjadi SIAP_KIRIM)."
+          },
+          "response": [
+            {
+              "name": "Surat Jalan Terbit",
+              "status": "Found",
+              "code": 302
+            }
+          ]
+        },
+        {
+          "name": "3.6 Input Pesanan Manual B2B (Sekretaris)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "client_id",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "target_delivery_date",
+                  "value": "2026-11-12",
+                  "type": "text"
+                },
+                {
+                  "key": "delivery_address",
+                  "value": "Dock Hotel Savoy Homann, Jl. Asia Afrika No. 112, Bandung",
+                  "type": "text"
+                },
+                {
+                  "key": "payment_method",
+                  "value": "TEMPO_TOP",
+                  "type": "text"
+                },
+                {
+                  "key": "items[0][product_id]",
+                  "value": "1",
+                  "type": "text"
+                },
+                {
+                  "key": "items[0][ordered_qty]",
+                  "value": "80.00",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/sekretaris/pesanan-manual",
+              "host": ["{{baseUrl}}"],
+              "path": ["sekretaris", "pesanan-manual"]
+            },
+            "description": "Memasukkan pesanan langsung dari pelanggan offline atau via WhatsApp dengan sinkronisasi otomatis ke akun klien terdaftar."
+          },
+          "response": [
+            {
+              "name": "Pesanan Manual Tersimpan",
+              "status": "Found",
+              "code": 302
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "04. Armada Logistik & PoD",
+      "item": [
+        {
+          "name": "4.1 Konfirmasi Truk Berangkat (Mulai Rute)",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/armada/surat-jalan/1/mulai",
+              "host": ["{{baseUrl}}"],
+              "path": ["armada", "surat-jalan", "1", "mulai"]
+            },
+            "description": "Driver armada mengonfirmasi keberangkatan dari gudang GPA, mencatat departure_time, dan memicu status DALAM_PENGIRIMAN."
+          },
+          "response": [
+            {
+              "name": "Armada Menuju Dock Klien",
+              "status": "Found",
+              "code": 302
+            }
+          ]
+        },
+        {
+          "name": "4.2 Finalisasi Serah Terima Barang (PoD Selesai)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "manifest_photo",
+                  "type": "file",
+                  "src": "",
+                  "description": "Foto timbangan berat netto sebelum muat"
+                },
+                {
+                  "key": "dock_photo",
+                  "type": "file",
+                  "src": "",
+                  "description": "Foto serah terima fisik di dermaga klien"
+                },
+                {
+                  "key": "recipient_name",
+                  "value": "Agus Triyono (Kepala Gudang Klien)",
+                  "type": "text"
+                },
+                {
+                  "key": "received_notes",
+                  "value": "Seluruh sayuran diterima segar dalam kondisi prima.",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/armada/bukti-terima/1/selesai",
+              "host": ["{{baseUrl}}"],
+              "path": ["armada", "bukti-terima", "1", "selesai"]
+            },
+            "description": "Driver menyelesaikan pengiriman dengan mengunggah foto bukti serah terima (Proof of Delivery), mengunci arrival_time, dan mengubah status menjadi SELESAI."
+          },
+          "response": [
+            {
+              "name": "Pengiriman Berhasil Dituntaskan",
+              "status": "Found",
+              "code": 302
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "05. Dokumen Cetak Format Resmi A4",
+      "item": [
+        {
+          "name": "5.1 Cetak Surat Jalan Resmi (A4)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/print/surat-jalan?order_id=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["print", "surat-jalan"],
+              "query": [
+                {
+                  "key": "order_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Menampilkan lembar cetak Surat Jalan resmi format A4 dengan barcode/QR dan kolom tanda tangan supir serta penerima."
+          },
+          "response": [
+            {
+              "name": "Dokumen Surat Jalan",
+              "status": "OK",
+              "code": 200
+            }
+          ]
+        },
+        {
+          "name": "5.2 Cetak Faktur Tagihan (Invoice A4)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/print/faktur/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["print", "faktur", "1"]
+            },
+            "description": "Menampilkan dokumen cetak Faktur Pajak/Tagihan resmi dengan rincian subtotal, PPN, dan rekening kas GPA."
+          },
+          "response": [
+            {
+              "name": "Dokumen Faktur Terbit",
+              "status": "OK",
+              "code": 200
+            }
+          ]
+        },
+        {
+          "name": "5.3 Cetak Struk Kasir Thermal (58mm/80mm)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/print/struk/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["print", "struk", "1"]
+            },
+            "description": "Format struk kasir mini kompatibel printer bluetooth/POS thermal receipt."
+          },
+          "response": [
+            {
+              "name": "Struk Kasir Siap Cetak",
+              "status": "OK",
+              "code": 200
+            }
+          ]
+        },
+        {
+          "name": "5.4 Cetak Berita Acara Retur Komoditas",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/print/berita-acara-retur?order_id=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["print", "berita-acara-retur"],
+              "query": [
+                {
+                  "key": "order_id",
+                  "value": "1"
+                }
+              ]
+            },
+            "description": "Menampilkan lembar berita acara pengembalian sayuran retur yang rusak atau susut mutu."
+          },
+          "response": [
+            {
+              "name": "Berita Acara Retur",
+              "status": "OK",
+              "code": 200
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+

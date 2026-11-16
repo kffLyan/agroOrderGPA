@@ -35,13 +35,13 @@ class PesananController extends Controller
 
         // Mengelompokkan total kuantitas pesanan berdasarkan status operasional (verifikasi, bayar, kirim, selesai)
         $counts = [
-            'all'        => $allOrders->count(),
+            'all' => $allOrders->count(),
             'verifikasi' => $allOrders->where('status', 'MENUNGGU_VERIFIKASI')->count(),
-            'bayar'      => $allOrders->whereIn('status', ['MENUNGGU_PEMBAYARAN', 'LUNAS'])->count(),
-            'kemas'      => $allOrders->where('status', 'SIAP_KIRIM')->count(),
-            'kirim'      => $allOrders->where('status', 'DALAM_PENGIRIMAN')->count(),
-            'selesai'    => $allOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count(),
-            'batal'      => $allOrders->where('status', 'BATAL')->count(),
+            'bayar' => $allOrders->whereIn('status', ['MENUNGGU_PEMBAYARAN', 'LUNAS'])->count(),
+            'kemas' => $allOrders->where('status', 'SIAP_KIRIM')->count(),
+            'kirim' => $allOrders->where('status', 'DALAM_PENGIRIMAN')->count(),
+            'selesai' => $allOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count(),
+            'batal' => $allOrders->where('status', 'BATAL')->count(),
         ];
 
         $statusTabs = [
@@ -54,27 +54,142 @@ class PesananController extends Controller
             ['label' => 'Dibatalkan', 'value' => 'batal', 'count' => $counts['batal']],
         ];
 
-        $orders = $allOrders;
+        $rawOrders = $allOrders ?? ($orders ?? collect());
+
+        $orders = $rawOrders->map(function ($order) {
+            $totalOrderedQty = (float) ($order->orderItems ? $order->orderItems->sum('ordered_qty') : 0);
+            $totalActualWeight = $totalOrderedQty;
+            $hasWeighed = true;
+            $deviationKg = 0;
+            $deviationPercent = 0;
+
+            $hasPendingProof = ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_pending_proof);
+            $hasRejectedProof = ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_rejected_proof);
+
+            $stage = match ($order->status) {
+                'MENUNGGU_VERIFIKASI' => 'verifikasi',
+                'MENUNGGU_PEMBAYARAN', 'LUNAS' => 'bayar',
+                'SIAP_KIRIM' => 'kemas',
+                'DALAM_PENGIRIMAN' => 'kirim',
+                'SELESAI', 'SELESAI_CATATAN' => 'selesai',
+                'BATAL' => 'batal',
+                default => 'verifikasi',
+            };
+
+            $statusTone = match ($order->status) {
+                'MENUNGGU_VERIFIKASI' => 'warning',
+                'MENUNGGU_PEMBAYARAN' => $hasRejectedProof ? 'danger' : ($hasPendingProof ? 'warning' : 'brand'),
+                'LUNAS' => 'accent',
+                'SIAP_KIRIM' => 'accent',
+                'DALAM_PENGIRIMAN' => 'brand',
+                'SELESAI', 'SELESAI_CATATAN' => 'pill',
+                'BATAL' => 'track',
+                default => 'track',
+            };
+
+            $statusText = match ($order->status) {
+                'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi',
+                'MENUNGGU_PEMBAYARAN' => $hasRejectedProof ? 'Bukti Bayar Ditolak' : ($hasPendingProof ? 'Menunggu Verifikasi Pembayaran' : 'Menunggu Pembayaran'),
+                'LUNAS' => 'Lunas Terverifikasi',
+                'SIAP_KIRIM' => 'Surat Jalan Terbit',
+                'DALAM_PENGIRIMAN' => 'Armada Menuju Dock',
+                'SELESAI' => 'Selesai Diterima Dock',
+                'SELESAI_CATATAN' => 'Selesai (Ada Catatan Retur)',
+                'BATAL' => 'Pesanan Dibatalkan',
+                default => $order->status,
+            };
+
+            $commoditiesStr = $order->orderItems ? $order->orderItems->map(function ($item) {
+                return ($item->product->name ?? 'Komoditas').' ('.number_format($item->ordered_qty, 0, ',', '.').' kg)';
+            })->join(', ') : '';
+
+            $latestPayment = $order->payments->sortByDesc('id')->first();
+            $rawPaymentMethod = strtoupper((string) ($latestPayment?->payment_method ?? ($order->payment_method ?? 'TEMPO_TOP')));
+            $resolvedPaymentKey = match (true) {
+                str_contains($rawPaymentMethod, 'QRIS') => 'qris',
+                str_contains($rawPaymentMethod, 'TRANSFER') => 'transfer',
+                str_contains($rawPaymentMethod, 'CASH') => 'cash',
+                default => 'tempo',
+            };
+
+            return [
+                'id' => $order->id,
+                'po' => $order->order_number,
+                'date' => $order->created_at ? $order->created_at->format('d M Y') : '-',
+                'time' => $order->created_at ? $order->created_at->format('H:i').' WIB' : '-',
+                'hub' => 'lembang',
+                'hub_chip' => 'Sentra Lembang',
+                'stage' => $stage,
+                'commodities' => $commoditiesStr ?: 'Komoditas Pertanian Segar',
+                'estimated_weight' => $totalOrderedQty,
+                'estimated_label' => number_format($totalOrderedQty, 0, ',', '.'),
+                'grade_tone' => 'success',
+                'grade_note' => 'Grade A & Super (Sortasi Bersih)',
+                'weight' => $hasWeighed ? $totalActualWeight : null,
+                'weight_label_value' => $hasWeighed ? number_format($totalActualWeight, 1, ',', '.') : null,
+                'weight_label' => 'KG NETTO',
+                'weight_tone' => $deviationPercent > 1 ? 'warning' : 'default',
+                'weight_pending' => 'Menunggu Verifikasi & Alokasi',
+                'weight_chip' => in_array($order->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI']) ? 'Netto Sah' : null,
+                'scale_note' => $hasWeighed ? 'Netto Sah Surat Jalan' : 'Menunggu verifikasi kuota',
+                'scale_target' => 'Toleransi Susut < 0.5%',
+                'scale_tone' => 'default',
+                'deviation_percent' => $deviationPercent,
+                'deviation_label' => $hasWeighed ? ($deviationKg >= 0 ? "+{$deviationKg} kg (+{$deviationPercent}%)" : "{$deviationKg} kg (-{$deviationPercent}%)") : '0%',
+                'shipment_breakdown' => $hasWeighed ? [
+                    ['label' => 'Pesan:', 'value' => number_format($totalOrderedQty, 0).' kg', 'tone' => 'default'],
+                    ['label' => 'Kirim:', 'value' => number_format($totalActualWeight, 1).' kg', 'tone' => 'default'],
+                ] : [],
+                'sj' => $order->surat_jalan_number,
+                'sj_pending' => 'SJ Belum Terbit',
+                'vehicle' => $order->vehicle_plate_number ?: ($order->driver ? 'Truk Chiller GPA' : null),
+                'driver_note' => $order->driver ? ("Supir: {$order->driver->name}".($order->vehicle_plate_number ? " • {$order->vehicle_plate_number}" : '')) : 'Armada belum ditugaskan',
+                'shipment_tone' => $order->status === 'DALAM_PENGIRIMAN' ? 'success' : 'default',
+                'shipment_note' => $order->status === 'DALAM_PENGIRIMAN' ? 'ETA < 45 Menit Dock' : '',
+                'status' => $statusText,
+                'status_tone' => $statusTone,
+                'status_meta' => 'Order '.($order->order_source === 'WEB_PORTAL' ? 'Web Portal' : 'Routine'),
+                'status_note' => $order->status === 'BATAL'
+                    ? ('Alasan: '.($order->rejection_reason ?: 'Ditolak Verifikasi Sekretariat'))
+                    : ($hasRejectedProof
+                        ? ('Ditolak: '.($order->rejected_proof_payment?->verification_note ?: 'Bukti transfer tidak valid/ditolak. Silakan unggah ulang.'))
+                        : ($hasPendingProof
+                            ? 'Bukti bayar terkirim ke Sekretaris • Menunggu verifikasi'
+                            : ($order->status === 'MENUNGGU_VERIFIKASI'
+                                ? 'SLA Verifikasi < 2 Jam'
+                                : ($order->status === 'MENUNGGU_PEMBAYARAN'
+                                    ? 'Menunggu unggah bukti transfer'
+                                    : 'Proses Operasional Berjalan')))),
+                'total' => (float) $order->grand_total,
+                'total_note' => 'Total Nilai Tagihan',
+                'total_chip' => $order->invoice_id ? 'Faktur Terbit' : 'Belum Ditagihkan',
+                'total_chip_tone' => $order->invoice_id ? 'success' : 'default',
+                'payment' => $resolvedPaymentKey,
+            ];
+        })->values()->all();
 
         $pagination = [
-            'page'        => 1,
-            'per_page'    => max(1, $orders->count()),
-            'total'       => $orders->count(),
-            'total_pages' => 1,
-            'last_page'   => 1,
+            'page' => 1,
+            'per_page' => 10,
+            'total' => count($orders),
+            'total_pages' => max(1, (int) ceil(count($orders) / 10)),
+            'last_page' => max(1, (int) ceil(count($orders) / 10)),
         ];
 
+        $totalKgOrder = (float) $rawOrders->sum(fn ($o) => $o->orderItems ? $o->orderItems->sum('ordered_qty') : 0);
+        $totalKgActual = $totalKgOrder;
+
         // Menghitung akumulasi tonase komoditas yang dipesan klien dalam kilogram
-        $totalKgOrder  = (float) $allOrders->sum(fn($order) => $order->orderItems ? $order->orderItems->sum('ordered_qty') : 0);
+        $totalKgOrder = (float) $allOrders->sum(fn ($order) => $order->orderItems ? $order->orderItems->sum('ordered_qty') : 0);
         $totalKgActual = $totalKgOrder;
 
         return view('klien.pesanan.index', [
-            'rawOrders'     => $allOrders,
-            'orders'        => $orders,
-            'counts'        => $counts,
-            'statusTabs'    => $statusTabs,
-            'pagination'    => $pagination,
-            'totalKgOrder'  => $totalKgOrder,
+            'rawOrders' => $allOrders,
+            'orders' => $orders,
+            'counts' => $counts,
+            'statusTabs' => $statusTabs,
+            'pagination' => $pagination,
+            'totalKgOrder' => $totalKgOrder,
             'totalKgActual' => $totalKgActual,
         ]);
     }
@@ -88,14 +203,14 @@ class PesananController extends Controller
     // Memproses pengajuan pesanan baru, memvalidasi idempotensi duplikasi, dan mengarahkan ke antrean verifikasi
     public function store(SimpanPesananRequest $request)
     {
-        $user            = Auth::guard('web')->user();
+        $user = Auth::guard('web')->user();
         $submissionToken = $request->input('submission_token');
-        $tokenCacheKey   = $submissionToken ? "order_submission_token_{$user->id}_{$submissionToken}" : null;
+        $tokenCacheKey = $submissionToken ? "order_submission_token_{$user->id}_{$submissionToken}" : null;
 
         // Memeriksa token idempotensi untuk mencegah transaksi ganda akibat klik tombol berulang kali
         if ($tokenCacheKey && Cache::has($tokenCacheKey)) {
             $existingOrderId = Cache::get($tokenCacheKey);
-            $existingOrder   = Order::where('user_id', $user->id)->find($existingOrderId);
+            $existingOrder = Order::where('user_id', $user->id)->find($existingOrderId);
             if ($existingOrder) {
                 return redirect()->route('klien.pesanan.show', $existingOrder->id)
                     ->with('info', "Pesanan {$existingOrder->order_number} telah berhasil diajukan sebelumnya.");
@@ -168,10 +283,10 @@ class PesananController extends Controller
         $totalValue = (float) $orders->sum('grand_total');
         $countOrders = $orders->count();
 
-        $docNumber = 'DOC/GPA-REKAP/' . now()->format('Ym') . '/' . str_pad((string) $user->id, 4, '0', STR_PAD_LEFT);
-        $printDate = now()->translatedFormat('d F Y, H:i') . ' WIB';
+        $docNumber = 'DOC/GPA-REKAP/'.now()->format('Ym').'/'.str_pad((string) $user->id, 4, '0', STR_PAD_LEFT);
+        $printDate = now()->translatedFormat('d F Y, H:i').' WIB';
         $koordinatorName = User::where('role', 'KOORDINATOR')->first()?->name ?? 'Koordinator Lapangan GPA';
-        $sekretarisName  = User::where('role', 'SEKRETARIS')->first()?->name ?? 'Sekretaris GPA';
+        $sekretarisName = User::where('role', 'SEKRETARIS')->first()?->name ?? 'Sekretaris GPA';
 
         return view('prints.klien-orders-rekap', compact(
             'user',
@@ -193,7 +308,7 @@ class PesananController extends Controller
     {
         $user = Auth::guard('web')->user();
         $statusFilter = $request->query('status', 'all');
-        $filename = 'Rekap_Pesanan_PO_' . ($user->company_name ? preg_replace('/[^a-zA-Z0-9_-]/', '_', $user->company_name) : 'Klien') . '_' . date('Ymd_His') . '.csv';
+        $filename = 'Rekap_Pesanan_PO_'.($user->company_name ? preg_replace('/[^a-zA-Z0-9_-]/', '_', $user->company_name) : 'Klien').'_'.date('Ymd_His').'.csv';
 
         $orders = $this->buildFilteredOrdersQuery($user, $statusFilter)->get();
 
@@ -201,7 +316,7 @@ class PesananController extends Controller
             fputcsv($handle, ['KOPERASI PRODUSEN AGRO GREEN PASUNDAN (GPA)'], ';');
             fputcsv($handle, ['REKAPITULASI RESMI TRANSAKSI PEMESANAN (PURCHASE ORDER)'], ';');
             fputcsv($handle, ['KLIEN / MITRA B2B', $user->company_name ?: $user->name], ';');
-            fputcsv($handle, ['WAKTU EKSPOR', date('d/m/Y H:i') . ' WIB'], ';');
+            fputcsv($handle, ['WAKTU EKSPOR', date('d/m/Y H:i').' WIB'], ';');
             fputcsv($handle, ['FILTER STATUS', ucwords(strtolower(str_replace('_', ' ', $statusFilter)))], ';');
             fputcsv($handle, [], ';');
             fputcsv($handle, [
@@ -232,13 +347,13 @@ class PesananController extends Controller
                 $statusLabel = match ($order->status) {
                     'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi',
                     'MENUNGGU_PEMBAYARAN' => 'Menunggu Pembayaran',
-                    'LUNAS'               => 'Lunas',
-                    'SIAP_KIRIM'          => 'Siap Kirim',
-                    'DALAM_PENGIRIMAN'    => 'Dalam Pengiriman',
-                    'SELESAI'             => 'Selesai',
-                    'SELESAI_CATATAN'     => 'Selesai (Catatan)',
-                    'BATAL'               => 'Dibatalkan',
-                    default               => ucwords(strtolower(str_replace('_', ' ', $order->status))),
+                    'LUNAS' => 'Lunas',
+                    'SIAP_KIRIM' => 'Siap Kirim',
+                    'DALAM_PENGIRIMAN' => 'Dalam Pengiriman',
+                    'SELESAI' => 'Selesai',
+                    'SELESAI_CATATAN' => 'Selesai (Catatan)',
+                    'BATAL' => 'Dibatalkan',
+                    default => ucwords(strtolower(str_replace('_', ' ', $order->status))),
                 };
 
                 fputcsv($handle, [
@@ -248,7 +363,7 @@ class PesananController extends Controller
                     $commoditiesList ?: 'Sayuran Segar Pasundan',
                     number_format($orderedKg, 2, '.', ''),
                     $hasWeighed ? number_format($actualKg, 2, '.', '') : 'Belum Timbang',
-                    $hasWeighed ? (($diffPct >= 0 ? '+' : '') . $diffPct . '%') : '-',
+                    $hasWeighed ? (($diffPct >= 0 ? '+' : '').$diffPct.'%') : '-',
                     $order->surat_jalan_number ?: '-',
                     $order->vehicle ?: ($order->vehicle_plate_number ?: '-'),
                     $statusLabel,
@@ -259,24 +374,24 @@ class PesananController extends Controller
         });
     }
 
-    /**
-     * Membangun query pesanan klien dengan eager loading dan penyaringan status siklus (DRY Helper).
-     */
+
+    // Membangun query pesanan klien dengan eager loading dan penyaringan status siklus (DRY Helper).
+    // Filter status pesanan
     protected function buildFilteredOrdersQuery(User $user, ?string $statusFilter = 'all')
     {
         $query = Order::where('user_id', $user->id)
             ->with(['orderItems.product', 'driver', 'verifier', 'invoice'])
             ->orderBy('created_at', 'desc');
 
-        if ($statusFilter !== 'all' && !empty($statusFilter)) {
+        if ($statusFilter !== 'all' && ! empty($statusFilter)) {
             $stageMap = [
                 'verifikasi' => ['MENUNGGU_VERIFIKASI'],
-                'bayar'      => ['MENUNGGU_PEMBAYARAN'],
-                'lunas'      => ['LUNAS'],
-                'kemas'      => ['SIAP_KIRIM'],
-                'kirim'      => ['DALAM_PENGIRIMAN'],
-                'selesai'    => ['SELESAI', 'SELESAI_CATATAN'],
-                'batal'      => ['BATAL'],
+                'bayar' => ['MENUNGGU_PEMBAYARAN'],
+                'lunas' => ['LUNAS'],
+                'kemas' => ['SIAP_KIRIM'],
+                'kirim' => ['DALAM_PENGIRIMAN'],
+                'selesai' => ['SELESAI', 'SELESAI_CATATAN'],
+                'batal' => ['BATAL'],
             ];
 
             if (isset($stageMap[$statusFilter])) {

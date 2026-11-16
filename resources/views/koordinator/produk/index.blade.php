@@ -99,9 +99,11 @@
                                 $stokTersedia = (float) $prod->harvestBatches->sum('available_quantity');
                             @endphp
                             <tr class="align-top transition-colors hover:bg-surface-shell/50">
+
                                 <td class="px-3 py-3.5">
                                     <span class="gpa-note text-ink-body">{{ $idx + 1 }}</span>
                                 </td>
+
                                 <td class="px-3 py-3.5">
                                     @if ($prod->image_path || $prod->image_url)
                                         <img src="{{ asset($prod->image_path ?: $prod->image_url) }}" alt="{{ $prod->name }}" class="h-24 w-24 rounded-lg border border-line-board object-cover" onerror="this.onerror=null;this.src='{{ asset('gpaleaves.png') }}';">
@@ -111,6 +113,7 @@
                                         </div>
                                     @endif
                                 </td>
+
                                 <td class="px-3 py-3.5">
                                     <span class="font-mono text-[11px] font-semibold leading-5 text-ink">{{ $prod->sku }}</span>
                                 </td>
@@ -119,6 +122,7 @@
                                         {{ $prod->name }}
                                     </a>
                                 </td>
+
                                 <td class="px-3 py-3.5">
                                     <span class="inline-block rounded bg-surface-shell px-1.5 py-0.5 font-mono text-[10px] font-semibold leading-[15px] text-ink outline outline-1 -outline-offset-1 outline-line-board">{{ $prod->grade ?? '—' }}</span>
                                 </td>
@@ -141,25 +145,30 @@
                                         <span class="inline-block rounded px-1.5 py-0.5 text-[10px] font-bold leading-[15px] gpa-meta bg-surface-track text-ink-body outline outline-1 -outline-offset-1 outline-line-board">NONAKTIF</span>
                                     @endif
                                 </td>
+
                                 <td class="px-3 py-3.5 text-right">
                                     <div class="flex flex-wrap items-center justify-end gap-1.5">
+
                                         <a href="{{ route('koordinator.produk.show', $prod) }}"
                                             title="Lihat Detail Komoditas"
                                             class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                                             <x-gpa.icon name="eye" class="h-3 w-3 shrink-0" />
                                             Detail
                                         </a>
+
                                         <form method="POST" action="{{ route('koordinator.produk.toggle-status', $prod) }}" class="inline">
                                             @csrf
                                             <button type="submit" class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                                                 {{ $prod->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                                             </button>
                                         </form>
+
                                         <a href="{{ route('koordinator.produk.edit', $prod) }}"
                                             class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
                                             <x-gpa.icon name="settings" class="h-3 w-3 shrink-0" />
                                             Edit
                                         </a>
+
                                         <form method="POST" action="{{ route('koordinator.produk.destroy', $prod) }}" class="inline"
                                             onsubmit="return confirm('Apakah Anda yakin ingin menghapus komoditas {{ $prod->name }}?');">
                                             @csrf
@@ -169,6 +178,7 @@
                                                 Hapus
                                             </button>
                                         </form>
+                                        
                                     </div>
                                 </td>
                             </tr>

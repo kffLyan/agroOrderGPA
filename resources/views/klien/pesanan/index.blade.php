@@ -3,143 +3,6 @@
 @section('title', 'Daftar Pesanan Saya (Orders Management)')
 
 @php
-    $rawOrders = $rawOrders ?? ($orders ?? collect());
-
-    // Hitung count status tabs
-    $counts = [
-        'all'        => $rawOrders->count(),
-        'verifikasi' => $rawOrders->where('status', 'MENUNGGU_VERIFIKASI')->count(),
-        'bayar'      => $rawOrders->whereIn('status', ['MENUNGGU_PEMBAYARAN', 'LUNAS'])->count(),
-        'kemas'      => $rawOrders->where('status', 'SIAP_KIRIM')->count(),
-        'kirim'      => $rawOrders->where('status', 'DALAM_PENGIRIMAN')->count(),
-        'selesai'    => $rawOrders->whereIn('status', ['SELESAI', 'SELESAI_CATATAN'])->count(),
-        'batal'      => $rawOrders->where('status', 'BATAL')->count(),
-    ];
-
-    $statusTabs = [
-        ['label' => 'Semua Pesanan', 'value' => 'all', 'count' => $counts['all']],
-        ['label' => 'Menunggu Verifikasi', 'value' => 'verifikasi', 'count' => $counts['verifikasi']],
-        ['label' => 'Faktur & Pembayaran', 'value' => 'bayar', 'count' => $counts['bayar']],
-        ['label' => 'Siap Kirim', 'value' => 'kemas', 'count' => $counts['kemas']],
-        ['label' => 'Dalam Armada Chiller', 'value' => 'kirim', 'count' => $counts['kirim']],
-        ['label' => 'Selesai & Sah Diterima', 'value' => 'selesai', 'count' => $counts['selesai']],
-        ['label' => 'Dibatalkan', 'value' => 'batal', 'count' => $counts['batal']],
-    ];
-
-    $orders = $rawOrders->map(function ($order) {
-        $totalOrderedQty = (float) ($order->orderItems ? $order->orderItems->sum('ordered_qty') : 0);
-        $totalActualWeight = $totalOrderedQty;
-        $hasWeighed = true;
-        $deviationKg = 0;
-        $deviationPercent = 0;
-
-        $hasPendingProof = ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_pending_proof);
-        $hasRejectedProof = ($order->status === 'MENUNGGU_PEMBAYARAN' && $order->has_rejected_proof);
-
-        $stage = match ($order->status) {
-            'MENUNGGU_VERIFIKASI'                      => 'verifikasi',
-            'MENUNGGU_PEMBAYARAN', 'LUNAS'             => 'bayar',
-            'SIAP_KIRIM'                               => 'kemas',
-            'DALAM_PENGIRIMAN'                         => 'kirim',
-            'SELESAI', 'SELESAI_CATATAN'               => 'selesai',
-            'BATAL'                                    => 'batal',
-            default                                    => 'verifikasi',
-        };
-
-        $statusTone = match ($order->status) {
-            'MENUNGGU_VERIFIKASI'        => 'warning',
-            'MENUNGGU_PEMBAYARAN'        => $hasRejectedProof ? 'danger' : ($hasPendingProof ? 'warning' : 'brand'),
-            'LUNAS'                      => 'accent',
-            'SIAP_KIRIM'                 => 'accent',
-            'DALAM_PENGIRIMAN'           => 'brand',
-            'SELESAI', 'SELESAI_CATATAN' => 'pill',
-            'BATAL'                      => 'track',
-            default                      => 'track',
-        };
-
-        $statusText = match ($order->status) {
-            'MENUNGGU_VERIFIKASI' => 'Menunggu Verifikasi',
-            'MENUNGGU_PEMBAYARAN' => $hasRejectedProof ? 'Bukti Bayar Ditolak' : ($hasPendingProof ? 'Menunggu Verifikasi Pembayaran' : 'Menunggu Pembayaran'),
-            'LUNAS'               => 'Lunas Terverifikasi',
-            'SIAP_KIRIM'          => 'Surat Jalan Terbit',
-            'DALAM_PENGIRIMAN'    => 'Armada Menuju Dock',
-            'SELESAI'             => 'Selesai Diterima Dock',
-            'SELESAI_CATATAN'     => 'Selesai (Ada Catatan Retur)',
-            'BATAL'               => 'Pesanan Dibatalkan',
-            default               => $order->status,
-        };
-
-        $commoditiesStr = $order->orderItems ? $order->orderItems->map(function ($item) {
-            return ($item->product->name ?? 'Komoditas') . ' (' . number_format($item->ordered_qty, 0, ',', '.') . ' kg)';
-        })->join(', ') : '';
-
-        return [
-            'id'                  => $order->id,
-            'po'                  => $order->order_number,
-            'date'                => $order->created_at ? $order->created_at->format('d M Y') : '-',
-            'time'                => $order->created_at ? $order->created_at->format('H:i') . ' WIB' : '-',
-            'hub'                 => 'lembang',
-            'hub_chip'            => 'Sentra Lembang',
-            'stage'               => $stage,
-            'commodities'         => $commoditiesStr ?: 'Komoditas Pertanian Segar',
-            'estimated_weight'    => $totalOrderedQty,
-            'estimated_label'     => number_format($totalOrderedQty, 0, ',', '.'),
-            'grade_tone'          => 'success',
-            'grade_note'          => 'Grade A & Super (Sortasi Bersih)',
-            'weight'              => $hasWeighed ? $totalActualWeight : null,
-            'weight_label_value'  => $hasWeighed ? number_format($totalActualWeight, 1, ',', '.') : null,
-            'weight_label'        => 'KG NETTO',
-            'weight_tone'         => $deviationPercent > 1 ? 'warning' : 'default',
-            'weight_pending'      => 'Menunggu Verifikasi & Alokasi',
-            'weight_chip'         => in_array($order->status, ['SIAP_KIRIM', 'DALAM_PENGIRIMAN', 'SELESAI']) ? 'Netto Sah' : null,
-            'scale_note'          => $hasWeighed ? 'Netto Sah Surat Jalan' : 'Menunggu verifikasi kuota',
-            'scale_target'        => 'Toleransi Susut < 0.5%',
-            'scale_tone'          => 'default',
-            'deviation_percent'   => $deviationPercent,
-            'deviation_label'     => $hasWeighed ? ($deviationKg >= 0 ? "+{$deviationKg} kg (+{$deviationPercent}%)" : "{$deviationKg} kg (-{$deviationPercent}%)") : '0%',
-            'shipment_breakdown'  => $hasWeighed ? [
-                ['label' => 'Pesan:', 'value' => number_format($totalOrderedQty, 0) . ' kg', 'tone' => 'default'],
-                ['label' => 'Kirim:', 'value' => number_format($totalActualWeight, 1) . ' kg', 'tone' => 'default'],
-            ] : [],
-            'sj'                  => $order->surat_jalan_number,
-            'sj_pending'          => 'SJ Belum Terbit',
-            'vehicle'             => $order->vehicle_plate_number ?: ($order->driver ? 'Truk Chiller GPA' : null),
-            'driver_note'         => $order->driver ? ("Supir: {$order->driver->name}" . ($order->vehicle_plate_number ? " • {$order->vehicle_plate_number}" : '')) : 'Armada belum ditugaskan',
-            'shipment_tone'       => $order->status === 'DALAM_PENGIRIMAN' ? 'success' : 'default',
-            'shipment_note'       => $order->status === 'DALAM_PENGIRIMAN' ? 'ETA < 45 Menit Dock' : '',
-            'status'              => $statusText,
-            'status_tone'         => $statusTone,
-            'status_meta'         => 'Order ' . ($order->order_source === 'WEB_PORTAL' ? 'Web Portal' : 'Routine'),
-            'status_note'         => $order->status === 'BATAL'
-                ? ('Alasan: ' . ($order->rejection_reason ?: 'Ditolak Verifikasi Sekretariat'))
-                : ($hasRejectedProof
-                    ? ('Ditolak: ' . ($order->rejected_proof_payment?->verification_note ?: 'Bukti transfer tidak valid/ditolak. Silakan unggah ulang.'))
-                    : ($hasPendingProof
-                        ? 'Bukti bayar terkirim ke Sekretaris • Menunggu verifikasi'
-                        : ($order->status === 'MENUNGGU_VERIFIKASI'
-                            ? 'SLA Verifikasi < 2 Jam'
-                            : ($order->status === 'MENUNGGU_PEMBAYARAN'
-                                ? 'Menunggu unggah bukti transfer'
-                                : 'Proses Operasional Berjalan')))),
-            'total'               => (float) $order->grand_total,
-            'total_note'          => 'Total Nilai Tagihan',
-            'total_chip'          => $order->invoice_id ? 'Faktur Terbit' : 'Belum Ditagihkan',
-            'total_chip_tone'     => $order->invoice_id ? 'success' : 'default',
-            'payment'             => 'tempo',
-        ];
-    })->values()->all();
-
-    $pagination = [
-        'page'        => 1,
-        'per_page'    => 10,
-        'total'       => count($orders),
-        'total_pages' => max(1, (int) ceil(count($orders) / 10)),
-        'last_page'   => max(1, (int) ceil(count($orders) / 10)),
-    ];
-
-    $totalKgOrder = (float) $rawOrders->sum(fn($o) => $o->orderItems ? $o->orderItems->sum('ordered_qty') : 0);
-    $totalKgActual = $totalKgOrder;
-
     $rupiah = fn ($value) => 'Rp '.number_format($value, 0, ',', '.');
 
     $statusStyles = [
@@ -268,7 +131,7 @@
         {{-- Tab status pesanan --}}
         {{-- ------------------------------------------------------------------ --}}
         <div class="gpa-scroll-x overflow-hidden pb-1">
-            <div class="flex items-center gap-2" role="tablist" aria-label="Filter status pesanan">
+            <div class="items-center gap-2" role="tablist" aria-label="Filter status pesanan">
                 @foreach ($statusTabs as $tab)
                     @php
                         $isActive = $loop->first;
@@ -308,17 +171,6 @@
                         <option value="all">Semua Waktu</option>
                         <option value="30d">30 Hari Terakhir</option>
                         <option value="mtd">Bulan Berjalan</option>
-                    </select>
-                </label>
-
-                {{-- Sentra Panen --}}
-                <label class="flex min-w-0 flex-col justify-center gap-1 rounded-lg border border-line-soft/70 bg-canvas px-2.5 py-1.5 sm:h-10 sm:flex-row sm:items-center sm:py-1">
-                    <span class="gpa-micro text-ink-body">Sentra Panen</span>
-                    <select x-model="hub" @change="page = 1"
-                        class="w-full min-w-0 cursor-pointer truncate border-0 bg-transparent p-0 pr-5 text-xs font-semibold leading-4 text-ink focus:ring-0 sm:w-auto sm:max-w-32">
-                        <option value="all">Semua Sentra GPA</option>
-                        <option value="lembang">Sentra Lembang</option>
-                        <option value="ciwidey">Sentra Ciwidey</option>
                     </select>
                 </label>
 

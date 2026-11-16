@@ -194,7 +194,7 @@
                                             class="text-[13px] font-bold leading-snug text-ink hover:text-brand hover:underline">
                                             {{ $prod->name }}
                                         </a>
-                                        <p class="mt-0.5 text-[11px] text-ink-body truncate max-w-xs">
+                                        <p class="mt-0.5 text-[11px] text-ink-body max-w-xs">
                                             {{ $prod->description ?: 'Komoditas hortikultura binaan GPA' }}
                                         </p>
                                     </div>
@@ -235,7 +235,7 @@
                             {{-- Kontrak Terikat --}}
                             <td class="px-3 py-3.5">
                                 <span class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-0.5 gpa-meta font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board">
-                                    <x-gpa.icon name="badge-check" class="h-3 w-3 text-accent" />
+                                    <x-gpa.icon name="badge-check" class="h-3 w-3 text-success-deep" />
                                     {{ $activeContractsCount }} Kontrak B2B
                                 </span>
                             </td>
@@ -262,6 +262,14 @@
                                         <x-gpa.icon name="eye" class="h-3 w-3 shrink-0" />
                                         Detail
                                     </a>
+
+                                    {{-- Tombol Aktifkan / Nonaktifkan Komoditas --}}
+                                    <form method="POST" action="{{ route('direktur.produk.toggle-status', $prod) }}" class="inline">
+                                            @csrf
+                                            <button type="submit" class="inline-flex items-center gap-1 rounded bg-surface-shell px-2 py-1 gpa-note font-semibold text-ink outline outline-1 -outline-offset-1 outline-line-board transition-colors hover:bg-surface-muted">
+                                                {{ $prod->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
+                                            </button>
+                                    </form>
 
                                     <a href="{{ route('direktur.produk.edit', $prod->id) }}"
                                         title="Ubah Data Komoditas"

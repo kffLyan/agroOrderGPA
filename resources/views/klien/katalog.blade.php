@@ -272,6 +272,8 @@
                     <header class="flex flex-col gap-1.5 border-b border-line-soft bg-surface-shell p-2.5 sm:p-4">
                         <div class="flex items-start justify-between gap-1.5">
                             <span class="shrink-0 rounded-md px-1.5 sm:px-2 py-0.5 ring-1 ring-inset gpa-micro-bold"
+
+                            {{-- stok habis --}}
                                 :class="chipClass(card.availability_tone)" x-text="card.availability"></span>
                         </div>
 
@@ -476,7 +478,7 @@
 
                 {{-- Konten Promosi & Benefit (Scrollable) --}}
                 <div class="mt-4 flex flex-1 flex-col gap-4 overflow-y-auto pr-1 gpa-scrollbar">
-                    
+
                     {{-- 4 Pilar Keuntungan Utama --}}
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div class="rounded-xl border border-line-hair bg-surface-shell/40 p-3.5 flex flex-col gap-1.5 hover:border-accent transition-colors">

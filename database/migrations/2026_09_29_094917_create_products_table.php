@@ -21,6 +21,8 @@ return new class extends Migration
             $table->decimal('minimum_order', 10, 2)->default(1.00);
             $table->string('image_url', 255)->nullable();
             $table->text('description')->nullable();
+
+            // Pemblokiran produk sementara
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

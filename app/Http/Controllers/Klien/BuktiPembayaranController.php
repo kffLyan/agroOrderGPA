@@ -223,6 +223,8 @@ class BuktiPembayaranController extends Controller
         DB::beginTransaction();
         try {
             $paymentMethod = $request->input('payment_method');
+
+            // Validasi Payment Method
             if (empty($paymentMethod)) {
                 $paymentMethod = str_contains(strtoupper($validated['sender_bank']), 'QRIS') ? 'QRIS' : 'TRANSFER_BANK';
             }

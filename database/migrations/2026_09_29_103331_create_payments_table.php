@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('order_id')->nullable()->constrained('orders')->onDelete('set null')->onUpdate('cascade');
             $table->foreignId('invoice_id')->nullable()->constrained('invoices')->onDelete('set null')->onUpdate('cascade');
             $table->string('payment_reference', 100)->unique();
+            // Field method pembayaran dan untuk beberapa enum di folder app/enums
             $table->string('payment_method', 50)->default('TRANSFER_BANK');
             $table->decimal('amount', 14, 2);
             $table->string('proof_url', 255)->nullable();

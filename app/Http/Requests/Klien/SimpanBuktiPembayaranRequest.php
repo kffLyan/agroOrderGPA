@@ -21,6 +21,7 @@ class SimpanBuktiPembayaranRequest extends FormRequest
             'payment_id'     => ['nullable', 'integer'],
             'invoice_po'     => ['required', 'string'],
             'amount'         => ['required', 'numeric', 'min:1'],
+            // validasi payment method
             'sender_bank'    => ['required', 'string', 'max:100'],
             'sender_account' => ['required', 'string', 'max:50'],
             'reference'      => ['nullable', 'string', 'max:100'],

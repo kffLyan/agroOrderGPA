@@ -7,7 +7,7 @@ use App\Models\User;
 
 class OrderPolicy
 {
-    // Otorisasi wewenang pengguna melihat rincian transaksi pesanan (Anti-IDOR).
+    // Otorisasi wewenang pengguna melihat rincian transaksi pesanan.
     public function view(User $user, Order $order): bool
     {
         // 1. Direktur & Sekretaris diizinkan melihat seluruh data pesanan rantai pasok
@@ -15,7 +15,7 @@ class OrderPolicy
             return true;
         }
 
-        // 2. Klien HANYA diizinkan melihat pesanan miliknya sendiri (Anti-IDOR)
+        // 2. Klien HANYA diizinkan melihat pesanan miliknya sendiri.
         return $user->id === $order->user_id;
     }
 

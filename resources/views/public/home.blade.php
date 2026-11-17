@@ -214,21 +214,7 @@
                 @forelse ($products as $product)
                     @php
                         $stock = (float) $product->harvestBatches->sum('available_quantity');
-                        $nameLower = strtolower($product->name);
-                        $image = 'gpaleaves.png';
-                        if (str_contains($nameLower, 'selada') || str_contains($nameLower, 'lettuce') || str_contains($nameLower, 'romaine')) {
-                            $image = 'lettuce.jpg';
-                        } elseif (str_contains($nameLower, 'brokoli') || str_contains($nameLower, 'broccoli')) {
-                            $image = 'broccoli.jpg';
-                        } elseif (str_contains($nameLower, 'tomat') || str_contains($nameLower, 'tomato')) {
-                            $image = 'tomato.jpg';
-                        } elseif (str_contains($nameLower, 'stroberi') || str_contains($nameLower, 'strawberry') || str_contains($nameLower, 'berry')) {
-                            $image = 'strawberry.jpg';
-                        } elseif (str_contains($nameLower, 'kol') || str_contains($nameLower, 'cabbage') || str_contains($nameLower, 'kubis')) {
-                            $image = 'cabbage.jpg';
-                        } elseif ($product->image_url && file_exists(public_path($product->image_url))) {
-                            $image = $product->image_url;
-                        }
+                        $image = $product->image_path ?: 'gpaleaves.png';
                     @endphp
                     <li class="flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm">
                         <div class="aspect-[4/3] w-full shrink-0 overflow-hidden bg-surface-muted sm:aspect-[16/10]">
@@ -298,7 +284,7 @@
                                             Rp {{ number_format($product->base_price, 0, ',', '.') }}/{{ $product->unit }}
                                         </span>
                                     </p>
-                                    <x-gpa.btn :href="route('public.catalog')" variant="accent" size="sm"
+                                    <x-gpa.btn :href="route('public.catalog') . '#komoditas-' . $product->key" variant="accent" size="sm"
                                         class="w-full shrink-0 sm:w-auto">
                                         Pesan
                                     </x-gpa.btn>

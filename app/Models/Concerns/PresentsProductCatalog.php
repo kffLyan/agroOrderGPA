@@ -53,8 +53,9 @@ trait PresentsProductCatalog
     // Resolusi path aset gambar komoditas dengan fallback gambar representatif
     public function getImagePathAttribute(): string
     {
-        if (!empty($this->image_url)) {
-            $cleanPath = ltrim($this->image_url, '/');
+        $rawUrl = $this->attributes['image_url'] ?? null;
+        if (!empty($rawUrl)) {
+            $cleanPath = ltrim($rawUrl, '/');
 
             // Prioritaskan path gambar kustom yang disimpan di folder storage/ atau products/
             if (str_starts_with($cleanPath, 'storage/') || str_starts_with($cleanPath, 'products/')) {
@@ -67,8 +68,8 @@ trait PresentsProductCatalog
             if (file_exists(public_path('storage/' . $cleanPath))) {
                 return 'storage/' . $cleanPath;
             }
-            if (str_starts_with($this->image_url, 'http://') || str_starts_with($this->image_url, 'https://')) {
-                return $this->image_url;
+            if (str_starts_with($rawUrl, 'http://') || str_starts_with($rawUrl, 'https://')) {
+                return $rawUrl;
             }
         }
 
@@ -90,6 +91,18 @@ trait PresentsProductCatalog
         }
 
         return 'gpaleaves.png';
+    }
+
+    // URL lengkap gambar komoditas untuk konsumsi frontend dan JSON serialization
+    public function getImageUrlAttribute(): string
+    {
+        $raw = $this->attributes['image_url'] ?? null;
+        if (!empty($raw) && (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://'))) {
+            return $raw;
+        }
+
+        $path = $this->image_path;
+        return str_starts_with($path, 'http') ? $path : asset($path);
     }
 
     public function getFormattedBasePriceAttribute(): string

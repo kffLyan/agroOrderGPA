@@ -6,6 +6,7 @@ use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class AuthorizationSecurityTest extends TestCase
@@ -166,11 +167,16 @@ class AuthorizationSecurityTest extends TestCase
             'status'          => 'UNPAID',
         ]);
 
+        $fakeProof = UploadedFile::fake()->image('bukti_transfer.jpg', 600, 400);
+
         $response = $this->actingAs($klienA)->post('/klien/bukti-pembayaran', [
             'invoice_po'     => $invoiceB->invoice_number,
             'amount'         => 500000,
             'sender_bank'    => 'BCA',
             'sender_account' => '1234567890',
+            'reference'      => 'REF-IDOR-01',
+            'transfer_at'    => now()->format('d/m/Y H:i'),
+            'proof_file'     => $fakeProof,
         ]);
 
         $response->assertSessionHasErrors('invoice_po');

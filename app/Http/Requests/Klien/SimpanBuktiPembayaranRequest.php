@@ -18,16 +18,15 @@ class SimpanBuktiPembayaranRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_id'     => ['nullable', 'integer'],
-            'invoice_po'     => ['required', 'string'],
-            'amount'         => ['required', 'numeric', 'min:1'],
-            'sender_bank'    => ['required', 'string', 'max:100'],
+            'payment_id' => ['nullable', 'integer'],
+            'invoice_po' => ['required', 'string'],
+            'amount' => ['required', 'numeric', 'min:1'],
+            'sender_bank' => ['required', 'string', 'max:100'],
             'sender_account' => ['required', 'string', 'max:50'],
-            'reference'      => ['nullable', 'string', 'max:100'],
-            'transfer_at'    => ['nullable', 'string', 'max:50'],
-            'note'           => ['nullable', 'string', 'max:500'],
-            'proof_file'     => ['nullable', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:5120'],
+            'reference' => ['required', 'string', 'max:100'],
+            'transfer_at' => ['required', 'string', 'max:50'],
+            'note' => ['nullable', 'string', 'max:500'],
+            'proof_file' => ['required_without:payment_id', 'file', 'mimes:jpeg,jpg,png,pdf', 'max:5120'],
         ];
     }
 }
-

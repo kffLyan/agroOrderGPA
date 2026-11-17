@@ -289,12 +289,16 @@ export default function clientCatalog(items = []) {
             } else {
                 const pkg = item.packaging || 'Krat Plastik Higienis 10 kg';
                 const orig = item.origin || 'Lembang';
+                const rawImg = item.image_url || item.image_path || 'gpaleaves.png';
+                const resolvedImg = rawImg.startsWith('http') || rawImg.startsWith('/') ? rawImg : '/' + rawImg;
+
                 this.draft.push({
                     key: String(item.key),
                     id: item.id,
                     sku: item.sku || item.code || `SKU-${item.id}`,
                     grade: item.grade || 'Grade A',
                     name: item.name,
+                    image_url: resolvedImg,
                     packaging: `${pkg} • Origin: ${orig}`,
                     cold_chain: item.cold_chain || '2-6°C',
                     price: item.price,

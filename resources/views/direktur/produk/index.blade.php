@@ -271,14 +271,14 @@
                                     </a>
 
                                     <form action="{{ route('direktur.produk.destroy', $prod->id) }}" method="POST" class="inline"
-                                        data-gpa-confirm="Apakah Anda yakin ingin menghapus atau menonaktifkan komoditas {{ addslashes($prod->name) }}?"
+                                        data-gpa-confirm="Apakah Anda yakin ingin menghapus komoditas {{ addslashes($prod->name) }}?"
                                         data-gpa-title="Hapus Komoditas"
                                         data-gpa-tone="danger"
                                         data-gpa-ok="Hapus Komoditas">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit"
-                                            title="Hapus / Nonaktifkan Komoditas"
+                                            title="Hapus Komoditas"
                                             class="inline-flex items-center gap-1 rounded bg-red-50 text-red-700 px-2 py-1 gpa-note font-semibold outline outline-1 -outline-offset-1 outline-red-200 transition-colors hover:bg-red-100">
                                             <x-gpa.icon name="trash" class="h-3 w-3 shrink-0 text-red-600" />
                                             Hapus

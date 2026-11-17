@@ -104,12 +104,17 @@ class PaymentConsistencyTest extends TestCase
             'status'          => 'UNPAID',
         ]);
 
+        $fakeProof = UploadedFile::fake()->image('bukti_transfer.jpg', 600, 400);
+
         // Kirim bukti transfer pertama
         $res1 = $this->actingAs($klien)->post('/klien/bukti-pembayaran', [
             'invoice_po'     => $invoice->invoice_number,
             'amount'         => 500000,
             'sender_bank'    => 'BCA',
             'sender_account' => '123456789',
+            'reference'      => 'REF-DUP-01',
+            'transfer_at'    => now()->format('d/m/Y H:i'),
+            'proof_file'     => $fakeProof,
         ]);
         $res1->assertSessionHasNoErrors();
         $this->assertEquals(1, Payment::where('invoice_id', $invoice->id)->count());
@@ -120,6 +125,9 @@ class PaymentConsistencyTest extends TestCase
             'amount'         => 500000,
             'sender_bank'    => 'BCA',
             'sender_account' => '123456789',
+            'reference'      => 'REF-DUP-02',
+            'transfer_at'    => now()->format('d/m/Y H:i'),
+            'proof_file'     => $fakeProof,
         ]);
 
         // Tidak boleh bertambah menjadi 2 baris pembayaran ganda

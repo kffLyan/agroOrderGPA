@@ -249,6 +249,7 @@ class FrontendAjaxEndpointsRouteTest extends TestCase
             'sender_bank'    => 'BCA',
             'sender_account' => '1234567890',
             'reference'      => 'TRX-998877',
+            'transfer_at'    => now()->format('d/m/Y H:i'),
             'proof_file'     => $fakeImage,
         ]);
 

@@ -198,6 +198,8 @@ class SecurityTest extends TestCase
             'amount'         => 1500000,
             'sender_bank'    => 'Bank Mandiri',
             'sender_account' => '987654321',
+            'reference'      => 'REF-SEC-002',
+            'transfer_at'    => now()->format('d/m/Y H:i'),
             'proof_file'     => $validImage,
         ]);
 

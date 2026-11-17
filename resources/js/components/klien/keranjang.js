@@ -112,7 +112,10 @@ export default function clientCart(commodities = [], demoLines = [], defaults = 
         },
 
         hydrate(entry) {
-            const item = this.commodities.find((candidate) => String(candidate.key) === String(entry.key));
+            const item = this.commodities.find((candidate) =>
+                String(candidate.key) === String(entry.key) ||
+                (entry.id && Number(candidate.id) === Number(entry.id))
+            );
 
             if (!item) {
                 return { ...entry };
@@ -130,6 +133,7 @@ export default function clientCart(commodities = [], demoLines = [], defaults = 
                 ...entry,
                 sku: entry.sku ?? item.sku,
                 grade: entry.grade ?? item.grade,
+                image_url: entry.image_url || item.image_url,
                 packaging: packagingText,
                 cold_chain: entry.cold_chain ?? item.cold_chain,
                 stock: entry.stock ?? item.stock,
@@ -146,9 +150,11 @@ export default function clientCart(commodities = [], demoLines = [], defaults = 
         persist() {
             writeDraft(this.lines.map((line) => ({
                 key: line.key,
+                id: line.id,
                 sku: line.sku,
                 grade: line.grade,
                 name: line.name,
+                image_url: line.image_url,
                 packaging: line.packaging,
                 cold_chain: line.cold_chain,
                 price: line.price,

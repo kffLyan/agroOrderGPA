@@ -210,7 +210,7 @@ class DirekturProductCrudTest extends TestCase
         $response->assertSessionHas('success');
 
         $this->product->refresh();
-        $this->assertStringStartsWith('storage/products/prod_', $this->product->image_url);
+        $this->assertStringStartsWith('storage/products/prod_', $this->product->getRawOriginal('image_url'));
         $this->assertStringStartsWith('storage/products/prod_', $this->product->image_path);
     }
 

@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class KlienModuleTest extends TestCase
@@ -276,6 +277,8 @@ class KlienModuleTest extends TestCase
             'status' => 'UNPAID',
         ]);
 
+        $fakeProof = UploadedFile::fake()->image('bukti_transfer.jpg', 600, 400);
+
         $response = $this->actingAs($klien)->post('/klien/bukti-pembayaran', [
             'invoice_po' => $invoice->invoice_number,
             'amount' => 5000000,
@@ -284,6 +287,7 @@ class KlienModuleTest extends TestCase
             'reference' => 'TRX-123456',
             'transfer_at' => now()->format('d/m/Y H:i'),
             'note' => 'Pelunasan tagihan tempo konsolidasi',
+            'proof_file' => $fakeProof,
         ]);
 
         $response->assertSessionHasNoErrors();
@@ -881,11 +885,16 @@ class KlienModuleTest extends TestCase
             'due_date' => now()->addDays(30),
         ]);
 
+        $fakeProof = UploadedFile::fake()->image('bukti_transfer.jpg', 600, 400);
+
         $response = $this->actingAs($klien)->postJson(route('klien.bukti-pembayaran.store'), [
             'invoice_po' => $invoice->invoice_number,
             'amount' => 1000000,
             'sender_bank' => 'BCA',
             'sender_account' => '1234567890',
+            'reference' => 'REF-ALREADY-PAID',
+            'transfer_at' => now()->format('d/m/Y H:i'),
+            'proof_file' => $fakeProof,
         ]);
 
         $response->assertStatus(422);
@@ -914,6 +923,8 @@ class KlienModuleTest extends TestCase
             'due_date' => now()->addDays(30),
         ]);
 
+        $fakeProof = UploadedFile::fake()->image('bukti_transfer.jpg', 600, 400);
+
         // 1. Unggah pertama kali
         $firstUpload = $this->actingAs($klien)->postJson(route('klien.bukti-pembayaran.store'), [
             'invoice_po' => $invoice->invoice_number,
@@ -921,7 +932,9 @@ class KlienModuleTest extends TestCase
             'sender_bank' => 'BCA',
             'sender_account' => '111-222-333',
             'reference' => 'REF-ORIGINAL-01',
+            'transfer_at' => now()->format('d/m/Y H:i'),
             'note' => 'Catatan pertama',
+            'proof_file' => $fakeProof,
         ]);
 
         $firstUpload->assertStatus(200);
@@ -936,6 +949,7 @@ class KlienModuleTest extends TestCase
             'sender_bank' => 'Bank Mandiri',
             'sender_account' => '999-888-777',
             'reference' => 'REF-UPDATED-02',
+            'transfer_at' => now()->format('d/m/Y H:i'),
             'note' => 'Catatan revisi klien',
         ]);
 

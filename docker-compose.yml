@@ -12,9 +12,9 @@ services:
     environment:
       - DB_HOST=db
       - DB_PORT=3306
-      - DB_DATABASE=${DB_DATABASE:-db_agroorder}
-      - DB_USERNAME=${DOCKER_DB_USER:-agro_user}
-      - DB_PASSWORD=${DB_PASSWORD:-agro_password}
+      - DB_DATABASE=agroorder_db
+      - DB_USERNAME=demo_app_db
+      - DB_PASSWORD=demopass123
       - AUTO_MIGRATE=${AUTO_MIGRATE:-true}
     depends_on:
       db:
@@ -29,12 +29,10 @@ services:
     container_name: agroorder_db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
-      MYSQL_DATABASE: ${DB_DATABASE:-db_agroorder}
-      MYSQL_USER: ${DOCKER_DB_USER:-agro_user}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-agro_password}
-    ports:
-      - "${FORWARD_DB_PORT:-3306}:3306"
+      MYSQL_ROOT_PASSWORD: demopass123
+      MYSQL_DATABASE: agroorder_db
+      MYSQL_USER: demo_app_db
+      MYSQL_PASSWORD: demopass123
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:

@@ -1,0 +1,57 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agroorder_app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-1029}:80"
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-db_agroorder}
+      - DB_USERNAME=${DOCKER_DB_USER:-agro_user}
+      - DB_PASSWORD=${DB_PASSWORD:-agro_password}
+      - AUTO_MIGRATE=${AUTO_MIGRATE:-true}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - storage_data:/var/www/html/storage/app/public
+    networks:
+      - agro_network
+
+  db:
+    image: mysql:8.0
+    container_name: agroorder_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${DB_DATABASE:-db_agroorder}
+      MYSQL_USER: ${DOCKER_DB_USER:-agro_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-agro_password}
+    ports:
+      - "${FORWARD_DB_PORT:-3306}:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${DB_ROOT_PASSWORD:-root_password}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - agro_network
+
+volumes:
+  db_data:
+    driver: local
+  storage_data:
+    driver: local
+
+networks:
+  agro_network:
+    driver: bridge

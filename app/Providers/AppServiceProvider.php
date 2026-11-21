@@ -21,7 +21,7 @@ class AppServiceProvider extends ServiceProvider
     // Menginisialisasi konfigurasi zona waktu, lokal Carbon, dan view composer halaman error.
     public function boot(): void
     {
-        if (config('app.env') === 'production') {
+        if (config('app.env') === 'production' && str_starts_with(config('app.url', ''), 'https://')) {
             URL::forceScheme('https');
         }
 
@@ -32,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
             $user = Auth::user();
             $detectedRole = $user?->role;
 
-            if (! $detectedRole) {
+            if (!$detectedRole) {
                 if (Request::is('direktur*') || Request::is('*/direktur*')) {
                     $detectedRole = 'DIREKTUR';
                 } elseif (Request::is('sekretaris*') || Request::is('*/sekretaris*')) {
@@ -47,26 +47,26 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $dashboardUrl = match ($detectedRole) {
-                'DIREKTUR'    => route('direktur.dashboard'),
-                'SEKRETARIS'  => route('sekretaris.dashboard'),
+                'DIREKTUR' => route('direktur.dashboard'),
+                'SEKRETARIS' => route('sekretaris.dashboard'),
                 'KOORDINATOR' => route('koordinator.dashboard'),
-                'ARMADA'      => route('armada.dashboard'),
-                'KLIEN'       => route('klien.dashboard'),
-                default       => $user ? route('dashboard') : route('public.home'),
+                'ARMADA' => route('armada.dashboard'),
+                'KLIEN' => route('klien.dashboard'),
+                default => $user ? route('dashboard') : route('public.home'),
             };
 
             $dashboardLabel = match ($detectedRole) {
-                'DIREKTUR'    => 'Kembali ke Dashboard Direktur',
-                'SEKRETARIS'  => 'Kembali ke Dashboard Sekretaris',
+                'DIREKTUR' => 'Kembali ke Dashboard Direktur',
+                'SEKRETARIS' => 'Kembali ke Dashboard Sekretaris',
                 'KOORDINATOR' => 'Kembali ke Dashboard Koordinator',
-                'ARMADA'      => 'Kembali ke Dashboard Armada',
-                'KLIEN'       => 'Kembali ke Dashboard Klien',
-                default       => $user ? 'Kembali ke Dashboard' : 'Kembali ke Beranda',
+                'ARMADA' => 'Kembali ke Dashboard Armada',
+                'KLIEN' => 'Kembali ke Dashboard Klien',
+                default => $user ? 'Kembali ke Dashboard' : 'Kembali ke Beranda',
             };
 
             $view->with([
-                'detectedRole'   => $detectedRole,
-                'dashboardUrl'   => $dashboardUrl,
+                'detectedRole' => $detectedRole,
+                'dashboardUrl' => $dashboardUrl,
                 'dashboardLabel' => $dashboardLabel,
             ]);
         });

@@ -32,11 +32,11 @@ services:
       MYSQL_ROOT_PASSWORD: demopass123
       MYSQL_DATABASE: agroorder_db
       MYSQL_USER: demo_app_db
-      MYSQL_PASSWORD: demopass123
+      MYSQL_PASSWORD: demopass123`
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${DB_ROOT_PASSWORD:-root_password}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-pdemopass123"]
       interval: 5s
       timeout: 5s
       retries: 10
